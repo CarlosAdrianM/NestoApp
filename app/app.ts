@@ -2,14 +2,15 @@
 
 import { Type }                    from 'angular2/core';
 import { App, IonicApp, Platform } from 'ionic-angular';
-import { ClickerList }             from './pages/clickerList/clickerList';
 import { Page2 }                   from './pages/page2/page2';
+import { ExtractoCliente }         from './pages/ExtractoCliente/ExtractoCliente';
+import { PlantillaVenta }          from './pages/PlantillaVenta/PlantillaVenta';
 
 @App({
   templateUrl: 'build/app.html',
   config: {}, // http://ionicframework.com/docs/v2/api/config/Config/
 })
-export class ClickerApp {
+export class NestoApp {
 
   private rootPage: Type;
   private pages: Array<{title: string, component: Type}>;
@@ -21,13 +22,14 @@ export class ClickerApp {
     this.app = app;
     this.platform = platform;
 
-    this.rootPage = ClickerList;
+    this.rootPage = PlantillaVenta;
     this.initializeApp();
 
     // set our app's pages
     this.pages = [
-      { title: 'Clickers', component: ClickerList },
-      { title: 'Goodbye Ionic', component: Page2 },
+        { title: 'Plantilla Venta', component: PlantillaVenta },
+        { title: 'Extracto Cliente', component: ExtractoCliente },
+        { title: 'Goodbye Ionic', component: Page2 },
     ];
   }
 

@@ -1,11 +1,11 @@
-describe('ClickerApp', () => {
+describe('NestoApp', () => {
 
   beforeEach(() => {
     browser.get('');
   });
 
   it('should have a title', () => {
-    expect(browser.getTitle()).toEqual('Ionic');
+    expect(browser.getTitle()).toEqual('Plantilla Venta');
   });
 
   it('should have <nav>', () => {
@@ -13,7 +13,7 @@ describe('ClickerApp', () => {
   });
 
   it('should have correct nav text for Home', () => {
-    expect(element(by.css('ion-navbar:first-child')).getText()).toEqual('Clickers');
+    expect(element(by.css('ion-navbar:first-child')).getText()).toEqual('Plantilla Venta');
   });
 
   it('has a menu button that displays the left menu', () => {
@@ -21,9 +21,9 @@ describe('ClickerApp', () => {
     expect(element.all(by.css('.toolbar-title')).first().getText()).toEqual('Menu');
   });
 
-  it('the left menu has a link with title Clickers', () => {
+  it('the left menu has a link with title Extracto Cliente', () => {
     element(by.css('.bar-button-menutoggle')).click();
-    expect(element.all(by.css('ion-label')).first().getText()).toEqual('Clickers');
+    expect(element.all(by.css('ion-label')).first().getText()).toEqual('Plantilla Venta');
   });
 
   it('the left menu has a link with title Goodbye Ionic', () => {

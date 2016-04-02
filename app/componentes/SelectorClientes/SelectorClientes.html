@@ -1,0 +1,12 @@
+﻿<ion-searchbar placeholder="Introduce algún dato del cliente" [(ngModel)]="searchQuery" (keyup.enter)="getClientes()"></ion-searchbar>
+<ion-list>
+    <ion-item *ngFor="#cliente of clientes" (click)="seleccionarCliente(cliente)">
+        <ion-avatar item-left>
+            <img src="build/componentes/SelectorClientes/img/cliente.png" height="40" width="40">
+        </ion-avatar>
+        <h2 text-wrap>{{ cliente.nombre }}</h2>
+        <h3 text-wrap>{{ cliente.direccion }}</h3>
+        <p text-wrap>{{ cliente.cliente }} - {{ cliente.telefono }}</p>
+        <p text-wrap>{{ cliente.comentarios }}</p>
+    </ion-item>
+</ion-list>
