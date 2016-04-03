@@ -1,6 +1,7 @@
-﻿import {Component, Injectable, Output, EventEmitter} from 'angular2/core';
+﻿import {Component, Injectable} from 'angular2/core';
 import {Searchbar, List, Item, Alert, NavController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
+import {SelectorBase} from '../SelectorBase/SelectorBase';
 
 @Component({
     selector: 'selector-clientes',
@@ -10,32 +11,29 @@ import {SelectorClientesService} from './SelectorClientes.service';
 })
 
 @Injectable()
-export class SelectorClientes {
-    private searchQuery: string;
-    private clientes: any[];
+export class SelectorClientes extends SelectorBase {
     private errorMessage: string;
     private servicio: SelectorClientesService;
     private nav: NavController;
 
-    @Output() private seleccionar: EventEmitter<any> = new EventEmitter();
-
     constructor(servicio: SelectorClientesService, nav: NavController) {
-        this.searchQuery = '';
+        super();
         this.servicio = servicio;
         this.nav = nav;
     }
 
-    public getClientes(): void {
-        this.servicio.getClientes(this.searchQuery).subscribe(
+    public cargarDatos(filtro: string): void {
+        this.servicio.getClientes(filtro).subscribe(
             data => {
-                this.clientes = data;
-                if (this.clientes.length === 0) {
+                if (data.length === 0) {
                     let alert: Alert = Alert.create({
                         title: 'Error',
-                        subTitle: 'No se encuentra ningún cliente que coincida con ' + this.searchQuery,
+                        subTitle: 'No se encuentra ningún cliente que coincida con ' + filtro,
                         buttons: ['Ok'],
                     });
                     this.nav.present(alert);
+                } else {
+                    this.inicializarDatos(data);
                 }
             },
             error => this.errorMessage = <any>error

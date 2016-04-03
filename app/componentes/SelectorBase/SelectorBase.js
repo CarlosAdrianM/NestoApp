@@ -15,23 +15,37 @@ var SelectorBase = (function () {
     SelectorBase.prototype.seleccionarDato = function (dato) {
         this.seleccionar.emit(dato);
     };
-    SelectorBase.prototype.filtrarBusqueda = function (filtro) {
-        if (this.datosInicial) {
-        }
-        else {
-            this.cargarDatos(filtro);
-            this.datosInicial = this.datos;
+    SelectorBase.prototype.filtrarBusqueda = function (searchbar) {
+        var filtro = searchbar.value.toUpperCase();
+        if (this.datos && filtro.length >= 3) {
+            this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
         }
     };
-    SelectorBase.prototype.fijarFiltro = function (filtro) {
-        if (this.filtroDatos === '') {
+    SelectorBase.prototype.fijarFiltro = function (searchbar) {
+        var filtro = searchbar.target.value.toUpperCase();
+        if (!this.datosInicial || this.datosInicial.length === 0) {
+            this.cargarDatos(filtro);
+        }
+        else if (filtro === '') {
             this.datos = this.datosInicial;
+            this.datosFiltrados = this.datosInicial;
         }
         else {
-            //angular.copy($scope.model.productosFiltrados, $scope.productos);
-            this.datos = this.datos.filter(function (f) { return f.texto.contains(filtro); });
+            this.datos = this.aplicarFiltro(this.datos, filtro);
+            this.datosFiltrados = this.datos;
         }
-        this.filtroDatos = '';
+        filtro = '';
+    };
+    SelectorBase.prototype.aplicarFiltro = function (datos, filtro) {
+        return datos.filter(function (f) { return Object.keys(f).some(function (key) { return (f[key] && (typeof f[key] === "string" || f[key] instanceof String)) ? f[key].toUpperCase().indexOf(filtro) > -1 : false; }); });
+    };
+    SelectorBase.prototype.inicializarDatos = function (datos) {
+        this.datos = datos;
+        this.datosInicial = datos;
+        this.datosFiltrados = datos;
+    };
+    SelectorBase.prototype.resetearFiltros = function () {
+        this.inicializarDatos([]);
     };
     __decorate([
         core_1.Output(), 

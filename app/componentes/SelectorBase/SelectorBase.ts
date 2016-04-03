@@ -3,35 +3,56 @@
 export abstract class SelectorBase {
 
     private datos: any[];
+    private datosFiltrados: any[];
     private datosInicial: any[];
-    private errorMessage: string;
-    private filtroDatos: string;
 
-    @Output() private seleccionar: EventEmitter<any> = new EventEmitter();
+    @Output() public seleccionar: EventEmitter<any> = new EventEmitter();
 
     public seleccionarDato(dato: any): void {
         this.seleccionar.emit(dato);
     }
 
-    public filtrarBusqueda(filtro: string): void {
-        if (this.datosInicial) {
-            //filtrar datos
-        } else {
+    public filtrarBusqueda(searchbar: any): void {
+        let filtro: string = searchbar.value.toUpperCase();
+
+        if (this.datos && filtro.length >= 3) {
+            this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
+        }
+    }
+
+    public fijarFiltro(searchbar: any): void {
+        let filtro: string = searchbar.target.value.toUpperCase();
+        if (!this.datosInicial || this.datosInicial.length === 0) {
             this.cargarDatos(filtro);
-            this.datosInicial = this.datos;
-        }
-    }
-
-    public fijarFiltro(filtro: string): void {
-        if (this.filtroDatos === '') {
+        } else if (filtro === '') {
             this.datos = this.datosInicial;
+            this.datosFiltrados = this.datosInicial;
         } else {
-            //angular.copy($scope.model.productosFiltrados, $scope.productos);
-            this.datos = this.datos.filter(f => f.texto.contains(filtro));
+            this.datos = this.aplicarFiltro(this.datos, filtro);
+            this.datosFiltrados = this.datos;
         }
-        this.filtroDatos = '';
+        filtro = '';
     }
 
-    public abstract cargarDatos(filtro: string): void;
+    private aplicarFiltro(datos: any[], filtro: string): any[] {
+        return datos.filter(
+            f => Object.keys(f).some(
+                (key) => (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
+                    f[key].toUpperCase().indexOf(filtro) > -1 : false
+            )
+        );
+    }
+
+    public abstract cargarDatos(filtro: any): void;
+
+    public inicializarDatos(datos: any[]): void {
+        this.datos = datos;
+        this.datosInicial = datos;
+        this.datosFiltrados = datos;
+    }
+
+    public resetearFiltros(): void {
+        this.inicializarDatos([]);
+    }
 
 }
