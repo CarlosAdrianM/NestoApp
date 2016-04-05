@@ -1,0 +1,7 @@
+﻿<ion-list>
+    <ion-item *ngFor="#producto of datos" (click)="abrirDetalle(producto)">
+        <h2>{{producto.texto}}</h2>
+        <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+        <ion-badge item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
+    </ion-item>
+</ion-list>

@@ -17,7 +17,7 @@ var SelectorBase = (function () {
     };
     SelectorBase.prototype.filtrarBusqueda = function (searchbar) {
         var filtro = searchbar.value.toUpperCase();
-        if (this.datos && filtro.length >= 3) {
+        if (this.datos) {
             this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
         }
     };
@@ -34,10 +34,11 @@ var SelectorBase = (function () {
             this.datos = this.aplicarFiltro(this.datos, filtro);
             this.datosFiltrados = this.datos;
         }
-        filtro = '';
+        searchbar.target.select();
     };
     SelectorBase.prototype.aplicarFiltro = function (datos, filtro) {
-        return datos.filter(function (f) { return Object.keys(f).some(function (key) { return (f[key] && (typeof f[key] === "string" || f[key] instanceof String)) ? f[key].toUpperCase().indexOf(filtro) > -1 : false; }); });
+        return datos.filter(function (f) { return Object.keys(f).some(function (key) { return (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
+            f[key].toUpperCase().indexOf(filtro) > -1 : false; }); });
     };
     SelectorBase.prototype.inicializarDatos = function (datos) {
         this.datos = datos;

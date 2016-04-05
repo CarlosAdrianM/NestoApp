@@ -9,26 +9,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var ionic_angular_1 = require('ionic-angular');
 var SelectorClientes_1 = require('../../componentes/SelectorClientes/SelectorClientes');
-var PlantillaVenta_service_1 = require('./PlantillaVenta.service');
+var SelectorPlantillaVenta_1 = require('../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta');
 var PlantillaVentaDetalle_1 = require('./PlantillaVentaDetalle');
 var PlantillaVenta = (function () {
-    function PlantillaVenta(servicio, nav) {
+    function PlantillaVenta(nav) {
         var _this = this;
         this.opcionesSlides = {
             allowSwipeToNext: false,
             onInit: function (slides) { return _this.slider = slides; },
         };
-        this.servicio = servicio;
         this.nav = nav;
     }
     PlantillaVenta.prototype.cargarProductos = function (cliente) {
-        var _this = this;
-        this.servicio.getProductos(cliente).subscribe(function (data) {
-            _this.productos = data;
-            _this.productoInicial = data;
-            console.log(_this.productos);
-        }, function (error) { return _this.errorMessage = error; });
-        this.cliente = cliente;
+        this.clienteSeleccionado = cliente;
         this.slider.unlockSwipeToNext();
         this.slider.slideNext();
     };
@@ -39,10 +32,9 @@ var PlantillaVenta = (function () {
     PlantillaVenta = __decorate([
         ionic_angular_1.Page({
             templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
-            directives: [SelectorClientes_1.SelectorClientes],
-            providers: [PlantillaVenta_service_1.PlantillaVentaService],
+            directives: [SelectorClientes_1.SelectorClientes, SelectorPlantillaVenta_1.SelectorPlantillaVenta],
         }), 
-        __metadata('design:paramtypes', [PlantillaVenta_service_1.PlantillaVentaService, ionic_angular_1.NavController])
+        __metadata('design:paramtypes', [ionic_angular_1.NavController])
     ], PlantillaVenta);
     return PlantillaVenta;
 })();

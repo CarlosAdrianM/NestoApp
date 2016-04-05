@@ -15,7 +15,7 @@ export abstract class SelectorBase {
     public filtrarBusqueda(searchbar: any): void {
         let filtro: string = searchbar.value.toUpperCase();
 
-        if (this.datos && filtro.length >= 3) {
+        if (this.datos) {
             this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
         }
     }
@@ -31,7 +31,7 @@ export abstract class SelectorBase {
             this.datos = this.aplicarFiltro(this.datos, filtro);
             this.datosFiltrados = this.datos;
         }
-        filtro = '';
+        searchbar.target.select();
     }
 
     private aplicarFiltro(datos: any[], filtro: string): any[] {
