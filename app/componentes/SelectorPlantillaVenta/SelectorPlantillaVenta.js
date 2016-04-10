@@ -39,21 +39,39 @@ var SelectorPlantillaVenta = (function (_super) {
                 _this.inicializarDatos(data);
             }
         }, function (error) { return _this.errorMessage = error; });
-        /*
-        this.cliente = cliente;
-        this.slider.unlockSwipeToNext();
-        this.slider.slideNext();
-        */
     };
     SelectorPlantillaVenta.prototype.abrirDetalle = function (producto) {
-        console.log(producto);
+        this.agregarDato(producto);
         this.nav.push(SelectorPlantillaVentaDetalle_1.SelectorPlantillaVentaDetalle, { producto: producto });
     };
-    SelectorPlantillaVenta.prototype.seleccionarProducto = function (producto) {
-        this.seleccionar.emit(producto);
+    SelectorPlantillaVenta.prototype.cargarResumen = function () {
+        var productosResumen = [];
+        for (var _i = 0, _a = this.datosIniciales(); _i < _a.length; _i++) {
+            var value = _a[_i];
+            if (value.cantidad !== 0 || value.cantidadOferta !== 0) {
+                productosResumen.push(value);
+            }
+        }
+        return productosResumen;
     };
     SelectorPlantillaVenta.prototype.ngOnChanges = function () {
         this.cargarDatos(this.cliente);
+    };
+    SelectorPlantillaVenta.prototype.buscarEnTodosLosProductos = function (filtro) {
+        var _this = this;
+        this.servicio.buscarProductos(filtro).subscribe(function (data) {
+            if (data.length === 0) {
+                var alert_2 = ionic_angular_1.Alert.create({
+                    title: 'Error',
+                    subTitle: 'No hay productos que coincidan con ' + filtro,
+                    buttons: ['Ok'],
+                });
+                _this.nav.present(alert_2);
+            }
+            else {
+                _this.inicializarDatosFiltrados(data);
+            }
+        }, function (error) { return _this.errorMessage = error; });
     };
     __decorate([
         core_1.Input(), 

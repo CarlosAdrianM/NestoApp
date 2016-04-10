@@ -2,7 +2,7 @@
 import {Searchbar, List, Item, Alert, NavController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
-import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle'
+import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
 
 @Component({
     selector: 'selector-plantilla-venta',
@@ -18,8 +18,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
     private servicio: SelectorPlantillaVentaService;
     private nav: NavController;
 
-    @Input()
-    cliente: any;
+    @Input() private cliente: any;
 
     constructor(servicio: SelectorPlantillaVentaService, nav: NavController) {
         super();
@@ -43,23 +42,42 @@ export class SelectorPlantillaVenta extends SelectorBase {
             },
             error => this.errorMessage = <any>error
         );
-        /*
-        this.cliente = cliente;
-        this.slider.unlockSwipeToNext();
-        this.slider.slideNext();
-        */
     }
-    
+
     public abrirDetalle(producto: any): void {
-        console.log(producto);
+        this.agregarDato(producto);
         this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto });
     }
 
-    public seleccionarProducto(producto: any): void {
-        this.seleccionar.emit(producto);
+    public cargarResumen(): any[] {
+        let productosResumen: any[] = [];
+        for (let value of this.datosIniciales()) {
+            if (value.cantidad !== 0 || value.cantidadOferta !== 0) {
+                productosResumen.push(value);
+            }
+        }
+        return productosResumen;
     }
 
-    ngOnChanges() {
+    public ngOnChanges(): void {
         this.cargarDatos(this.cliente);
+    }
+
+    public buscarEnTodosLosProductos(filtro: any): void {
+        this.servicio.buscarProductos(filtro).subscribe(
+            data => {
+                if (data.length === 0) {
+                    let alert: Alert = Alert.create({
+                        title: 'Error',
+                        subTitle: 'No hay productos que coincidan con ' + filtro,
+                        buttons: ['Ok'],
+                    });
+                    this.nav.present(alert);
+                } else {
+                    this.inicializarDatosFiltrados(data);
+                }
+            },
+            error => this.errorMessage = <any>error
+        );
     }
 }

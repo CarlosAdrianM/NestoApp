@@ -30,15 +30,19 @@ export class SelectorPlantillaVentaDetalle {
                 producto.stock = data.stock;
                 producto.cantidadDisponible = data.cantidadDisponible;
                 producto.urlImagen = data.urlImagen;
-                if (producto.cantidadDisponible >= producto.cantidad + producto.cantidadOferta) {
-                    producto.colorStock = 'Verde';
-                } else if (producto.stock >= producto.cantidad + producto.cantidadOferta) {
-                    producto.colorStock = 'Naranja';
-                } else {
-                    producto.colorStock = 'Rojo';
-                }
+                this.seleccionarColorStock(producto);
             },
             error => this.errorMessage = <any>error
         );
+    }
+
+    private seleccionarColorStock(producto: any): void {
+        if (producto.cantidadDisponible >= producto.cantidad + producto.cantidadOferta) {
+            producto.colorStock = 'secondary';
+        } else if (producto.stock >= producto.cantidad + producto.cantidadOferta) {
+            producto.colorStock = 'primary';
+        } else {
+            producto.colorStock = 'danger';
+        }
     }
 }

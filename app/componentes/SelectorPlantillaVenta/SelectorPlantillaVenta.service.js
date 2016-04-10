@@ -34,6 +34,15 @@ var SelectorPlantillaVentaService = (function () {
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
+    SelectorPlantillaVentaService.prototype.buscarProductos = function (filtro) {
+        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
+        var params = new http_1.URLSearchParams();
+        params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('filtroProducto', filtro);
+        return this.http.get(_baseUrl, { search: params })
+            .map(function (res) { return res.json(); })
+            .catch(this.handleError);
+    };
     SelectorPlantillaVentaService.prototype.handleError = function (error) {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console

@@ -5,7 +5,7 @@
     <ion-title>Plantilla Venta</ion-title>
 </ion-navbar>
 
-<ion-slides pager [options]="opcionesSlides">
+<ion-slides pager [options]="opcionesSlides" (SlideChangeStart)="avanzar($event)">
     <ion-slide>
         <ion-scroll scrollY="true">
             <selector-clientes (seleccionar)="cargarProductos($event)"></selector-clientes>
@@ -14,7 +14,23 @@
     <ion-slide>
         <h3>Selección Productos</h3>
         <ion-scroll *ngIf="clienteSeleccionado" scrollY="true">
-            <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}"></selector-plantilla-venta>
+            <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cargarResumen($event)"></selector-plantilla-venta>
         </ion-scroll>
+    </ion-slide>
+    <ion-slide>
+        <h3>Resumen</h3>
+        <ion-list *ngIf="productosResumen">
+            <ion-item *ngFor="#producto of productosResumen">
+                <ion-avatar item-left>
+                    <img src="{{producto.urlImagen}}">
+                </ion-avatar>
+                <h2>{{producto.texto}}</h2>
+                <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+                <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
+            </ion-item>
+        </ion-list>
+    </ion-slide>
+    <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
+        <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}"></selector-direcciones-entrega>
     </ion-slide>
 </ion-slides>

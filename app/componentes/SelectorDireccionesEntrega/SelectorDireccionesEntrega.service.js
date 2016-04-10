@@ -10,40 +10,30 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var core_1 = require('angular2/core');
 var http_1 = require('angular2/http');
 var Rx_1 = require('rxjs/Rx');
-var configuracion_1 = require('../../componentes/configuracion/configuracion');
-var PlantillaVentaService = (function () {
-    function PlantillaVentaService(http) {
+var configuracion_1 = require('../configuracion/configuracion');
+var SelectorDireccionesEntregaService = (function () {
+    function SelectorDireccionesEntregaService(http) {
         this.http = http;
     }
-    PlantillaVentaService.prototype.getProductos = function (cliente) {
-        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas';
-        var params = new http_1.URLSearchParams();
-        params.set('empresa', cliente.empresa);
-        params.set('cliente', cliente.cliente);
-        return this.http.get(_baseUrl, { search: params })
-            .map(function (res) { return res.json(); })
-            .catch(this.handleError);
-    };
-    PlantillaVentaService.prototype.cargarStockProducto = function (producto) {
-        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas/CargarStocks';
+    SelectorDireccionesEntregaService.prototype.direccionesEntrega = function (cliente) {
+        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas/DireccionesEntrega';
         var params = new http_1.URLSearchParams();
         params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
-        params.set('almacen', configuracion_1.Configuracion.ALMACEN_POR_DEFECTO);
-        params.set('productoStock', producto.producto);
+        params.set('clienteDirecciones', cliente);
         return this.http.get(_baseUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
-    PlantillaVentaService.prototype.handleError = function (error) {
+    SelectorDireccionesEntregaService.prototype.handleError = function (error) {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
         return Rx_1.Observable.throw(error.json().error || 'Server error');
     };
-    PlantillaVentaService = __decorate([
+    SelectorDireccionesEntregaService = __decorate([
         core_1.Injectable(), 
         __metadata('design:paramtypes', [http_1.Http])
-    ], PlantillaVentaService);
-    return PlantillaVentaService;
+    ], SelectorDireccionesEntregaService);
+    return SelectorDireccionesEntregaService;
 })();
-exports.PlantillaVentaService = PlantillaVentaService;
+exports.SelectorDireccionesEntregaService = SelectorDireccionesEntregaService;

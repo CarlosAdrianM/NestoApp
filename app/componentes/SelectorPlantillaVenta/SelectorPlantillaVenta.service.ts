@@ -33,6 +33,17 @@ export class SelectorPlantillaVentaService {
             .catch(this.handleError);
     }
 
+    public buscarProductos(filtro: any): Observable<any> {
+        let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
+        let params: URLSearchParams = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('filtroProducto', filtro);
+
+        return this.http.get(_baseUrl, { search: params })
+            .map(res => <any[]>res.json())
+            .catch(this.handleError);
+    }
+
     private handleError(error: Response): Observable<any> {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console

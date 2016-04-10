@@ -41,12 +41,34 @@ var SelectorBase = (function () {
             f[key].toUpperCase().indexOf(filtro) > -1 : false; }); });
     };
     SelectorBase.prototype.inicializarDatos = function (datos) {
-        this.datos = datos;
+        this.datos = datos; // ¿vale para algo?
         this.datosInicial = datos;
         this.datosFiltrados = datos;
     };
+    SelectorBase.prototype.inicializarDatosFiltrados = function (datos) {
+        this.datosFiltrados = datos;
+        var i;
+        var posicion;
+        for (i = 0; i < this.datosFiltrados.length; i++) {
+            posicion = this.datosInicial.map(function (e) { return e.producto; }).indexOf(this.datosFiltrados[i].producto);
+            if (posicion !== -1) {
+                this.datosFiltrados[i] = this.datosInicial[posicion];
+            }
+        }
+    };
+    SelectorBase.prototype.datosIniciales = function () {
+        return this.datosInicial;
+    };
     SelectorBase.prototype.resetearFiltros = function () {
         this.inicializarDatos([]);
+    };
+    SelectorBase.prototype.agregarDato = function (dato) {
+        if (this.datosInicial.indexOf(dato) === -1) {
+            this.datosInicial.push(dato);
+        }
+    };
+    SelectorBase.prototype.numeroDeDatos = function () {
+        return this.datosFiltrados ? this.datosFiltrados.length : 0;
     };
     __decorate([
         core_1.Output(), 

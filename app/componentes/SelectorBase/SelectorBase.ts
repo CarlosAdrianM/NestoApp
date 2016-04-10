@@ -46,13 +46,39 @@ export abstract class SelectorBase {
     public abstract cargarDatos(filtro: any): void;
 
     public inicializarDatos(datos: any[]): void {
-        this.datos = datos;
+        this.datos = datos; // ¿vale para algo?
         this.datosInicial = datos;
         this.datosFiltrados = datos;
+    }
+
+    public inicializarDatosFiltrados(datos: any[]): void {
+        this.datosFiltrados = datos;
+        let i: number;
+        let posicion: number;
+
+        for (i = 0; i < this.datosFiltrados.length; i++) {
+            posicion = this.datosInicial.map(function (e: any): any { return e.producto; }).indexOf(this.datosFiltrados[i].producto);
+            if (posicion !== -1) { // el dato ya está en datosInicial
+                this.datosFiltrados[i] = this.datosInicial[posicion];
+            }
+        }
+    }
+
+    public datosIniciales(): any[] {
+        return this.datosInicial;
     }
 
     public resetearFiltros(): void {
         this.inicializarDatos([]);
     }
 
+    public agregarDato(dato: any): void {
+        if (this.datosInicial.indexOf(dato) === -1) {
+            this.datosInicial.push(dato);
+        }
+    }
+
+    public numeroDeDatos(): number {
+        return this.datosFiltrados ? this.datosFiltrados.length : 0;
+    }
 }

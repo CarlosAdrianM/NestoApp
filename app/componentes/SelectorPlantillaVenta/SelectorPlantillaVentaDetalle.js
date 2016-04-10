@@ -26,16 +26,19 @@ var SelectorPlantillaVentaDetalle = (function () {
             producto.stock = data.stock;
             producto.cantidadDisponible = data.cantidadDisponible;
             producto.urlImagen = data.urlImagen;
-            if (producto.cantidadDisponible >= producto.cantidad + producto.cantidadOferta) {
-                producto.colorStock = 'Verde';
-            }
-            else if (producto.stock >= producto.cantidad + producto.cantidadOferta) {
-                producto.colorStock = 'Naranja';
-            }
-            else {
-                producto.colorStock = 'Rojo';
-            }
+            _this.seleccionarColorStock(producto);
         }, function (error) { return _this.errorMessage = error; });
+    };
+    SelectorPlantillaVentaDetalle.prototype.seleccionarColorStock = function (producto) {
+        if (producto.cantidadDisponible >= producto.cantidad + producto.cantidadOferta) {
+            producto.colorStock = 'secondary';
+        }
+        else if (producto.stock >= producto.cantidad + producto.cantidadOferta) {
+            producto.colorStock = 'primary';
+        }
+        else {
+            producto.colorStock = 'danger';
+        }
     };
     SelectorPlantillaVentaDetalle = __decorate([
         ionic_angular_1.Page({
