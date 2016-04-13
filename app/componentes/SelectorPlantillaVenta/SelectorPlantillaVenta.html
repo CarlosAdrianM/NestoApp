@@ -6,4 +6,4 @@
         <ion-badge secondary item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
     </ion-item>
 </ion-list>
-<ion-button secondary block *ngIf="numeroDeDatos() === 0" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
+<ion-button block *ngIf="numeroDeDatos() === 0" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>

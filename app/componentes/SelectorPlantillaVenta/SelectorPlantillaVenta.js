@@ -81,7 +81,7 @@ var SelectorPlantillaVenta = (function (_super) {
         core_1.Component({
             selector: 'selector-plantilla-venta',
             templateUrl: 'build/componentes/SelectorPlantillaVenta/SelectorPlantillaVenta.html',
-            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item],
+            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Button],
             providers: [SelectorPlantillaVenta_service_1.SelectorPlantillaVentaService],
             inputs: ['cliente'],
         }),

@@ -1,12 +1,12 @@
 ﻿import {Component, Injectable} from 'angular2/core';
-import {Searchbar, List, Item, Alert, NavController} from 'ionic-angular';
+import {Searchbar, List, Item, Alert, NavController, Loading, Icon} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
 
 @Component({
     selector: 'selector-clientes',
     templateUrl: 'build/componentes/SelectorClientes/SelectorClientes.html',
-    directives: [Searchbar, List, Item],
+    directives: [Searchbar, List, Item, Icon],
     providers: [SelectorClientesService],
 })
 
@@ -23,6 +23,12 @@ export class SelectorClientes extends SelectorBase {
     }
 
     public cargarDatos(filtro: string): void {
+        let loading: any = Loading.create({
+            content: 'Cargando Clientes...',
+        });
+
+        this.nav.present(loading);
+
         this.servicio.getClientes(filtro).subscribe(
             data => {
                 if (data.length === 0) {
@@ -36,7 +42,13 @@ export class SelectorClientes extends SelectorBase {
                     this.inicializarDatos(data);
                 }
             },
-            error => this.errorMessage = <any>error
+            error => {
+                loading.dismiss();
+                this.errorMessage = <any>error;
+            },
+            () => {
+                loading.dismiss();
+            }
         );
     }
 

@@ -45,4 +45,8 @@ export class SelectorPlantillaVentaDetalle {
             producto.colorStock = 'danger';
         }
     }
+
+    public seleccionarTexto(evento: any): void {
+        evento.target.select();
+    }
 }

@@ -17,13 +17,13 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label>Cantidad</ion-label>
-                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidad"></ion-input>
+                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidad" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
                         <ion-item>
                             <ion-label>Oferta</ion-label>
-                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidadOferta"></ion-input>
+                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidadOferta" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>
@@ -31,13 +31,13 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label>Precio</ion-label>
-                            <ion-input type="number" [(ngModel)]="producto.precio"></ion-input>
+                            <ion-input type="number" [(ngModel)]="producto.precio" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
                         <ion-item>
                             <ion-label>Descuento</ion-label>
-                            <ion-input type="number" [(ngModel)]="producto.descuento"></ion-input>
+                            <ion-input type="number" [(ngModel)]="producto.descuento" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>

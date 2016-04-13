@@ -1,5 +1,5 @@
 ﻿import {Component, Injectable, Input} from 'angular2/core';
-import {Searchbar, List, Item, Alert, NavController} from 'ionic-angular';
+import {Searchbar, List, Item, Button, Alert, NavController, Loading, Toggle} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
 import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
@@ -7,7 +7,7 @@ import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
 @Component({
     selector: 'selector-plantilla-venta',
     templateUrl: 'build/componentes/SelectorPlantillaVenta/SelectorPlantillaVenta.html',
-    directives: [Searchbar, List, Item],
+    directives: [Searchbar, List, Item, Button, Toggle],
     providers: [SelectorPlantillaVentaService],
     inputs: ['cliente'],
 })
@@ -27,6 +27,12 @@ export class SelectorPlantillaVenta extends SelectorBase {
     }
 
     public cargarDatos(cliente: any): void {
+        let loading: any = Loading.create({
+            content: 'Cargando Productos...',
+        });
+
+        this.nav.present(loading);
+
         this.servicio.getProductos(cliente).subscribe(
             data => {
                 if (data.length === 0) {
@@ -40,7 +46,13 @@ export class SelectorPlantillaVenta extends SelectorBase {
                     this.inicializarDatos(data);
                 }
             },
-            error => this.errorMessage = <any>error
+            error => {
+                loading.dismiss();
+                this.errorMessage = <any>error;
+            },
+            () => {
+                loading.dismiss();
+            }
         );
     }
 

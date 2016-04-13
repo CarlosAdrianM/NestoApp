@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+require('es6-shim');
 var ionic_angular_1 = require('ionic-angular');
 var page2_1 = require('./pages/page2/page2');
 var ExtractoCliente_1 = require('./pages/ExtractoCliente/ExtractoCliente');

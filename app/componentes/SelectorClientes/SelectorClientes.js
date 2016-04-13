@@ -25,6 +25,10 @@ var SelectorClientes = (function (_super) {
     }
     SelectorClientes.prototype.cargarDatos = function (filtro) {
         var _this = this;
+        var loading = ionic_angular_1.Loading.create({
+            content: 'Cargando Clientes...',
+        });
+        this.nav.present(loading);
         this.servicio.getClientes(filtro).subscribe(function (data) {
             if (data.length === 0) {
                 var alert_1 = ionic_angular_1.Alert.create({
@@ -37,7 +41,12 @@ var SelectorClientes = (function (_super) {
             else {
                 _this.inicializarDatos(data);
             }
-        }, function (error) { return _this.errorMessage = error; });
+        }, function (error) {
+            loading.dismiss();
+            _this.errorMessage = error;
+        }, function () {
+            loading.dismiss();
+        });
     };
     SelectorClientes.prototype.seleccionarCliente = function (cliente) {
         this.seleccionar.emit(cliente);

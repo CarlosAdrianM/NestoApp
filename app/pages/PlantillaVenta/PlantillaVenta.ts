@@ -44,4 +44,8 @@ export class PlantillaVenta {
             this.direcc*/
     }
 
+    public seleccionarCliente(cliente: any): void {
+        this.clienteSeleccionado = cliente;
+    }
+
 }

@@ -31,6 +31,16 @@
         </ion-list>
     </ion-slide>
     <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
-        <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}"></selector-direcciones-entrega>
+        <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
+        <ion-list>
+            <ion-item>
+                <ion-label>Servir Junto</ion-label>
+                <ion-toggle checked="clienteSeleccionado.servirJunto"></ion-toggle>
+            </ion-item>
+            <ion-item>
+                <ion-label>Mantener Junto</ion-label>
+                <ion-toggle checked="clienteSeleccionado.mantenerJunto"></ion-toggle>
+            </ion-item>
+        </ion-list>
     </ion-slide>
 </ion-slides>

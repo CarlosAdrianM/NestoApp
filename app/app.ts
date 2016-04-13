@@ -1,4 +1,5 @@
 'use strict';
+import 'es6-shim';
 
 import { Type }                    from 'angular2/core';
 import { App, IonicApp, Platform } from 'ionic-angular';

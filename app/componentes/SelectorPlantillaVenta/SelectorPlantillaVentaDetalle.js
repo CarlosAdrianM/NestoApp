@@ -40,6 +40,9 @@ var SelectorPlantillaVentaDetalle = (function () {
             producto.colorStock = 'danger';
         }
     };
+    SelectorPlantillaVentaDetalle.prototype.seleccionarTexto = function (evento) {
+        evento.target.select();
+    };
     SelectorPlantillaVentaDetalle = __decorate([
         ionic_angular_1.Page({
             templateUrl: 'build/componentes/SelectorPlantillaVenta/SelectorPlantillaVentaDetalle.html',

@@ -64,7 +64,7 @@ var SelectorDireccionesEntrega = (function (_super) {
         core_1.Component({
             selector: 'selector-direcciones-entrega',
             templateUrl: 'build/componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega.html',
-            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item],
+            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Icon],
             providers: [SelectorDireccionesEntrega_service_1.SelectorDireccionesEntregaService],
         }),
         core_1.Injectable(), 
