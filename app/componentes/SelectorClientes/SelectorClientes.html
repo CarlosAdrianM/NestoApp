@@ -1,7 +1,7 @@
 ﻿<ion-searchbar placeholder="Introduzca algún dato del cliente" (input)="filtrarBusqueda($event)" (cancel)="resetearFiltros()" (keyup.enter)="fijarFiltro($event)"></ion-searchbar>
 <ion-list>
-    <ion-item *ngFor="#cliente of datosFiltrados" (click)="seleccionarCliente(cliente)">
-        <ion-icon name="person" item-left></ion-icon>
+    <ion-item *ngFor="#cliente of datosFiltrados" (click)="seleccionarDato(cliente)">
+        <ion-icon name="contact" item-left></ion-icon>
         <h2 text-wrap>{{ cliente.nombre }}</h2>
         <h3 text-wrap>{{ cliente.direccion }}</h3>
         <p text-wrap>{{ cliente.cliente }} - {{ cliente.telefono }}</p>

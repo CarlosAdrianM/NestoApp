@@ -1,6 +1,6 @@
 ﻿<h3>Dirección de Entrega</h3>
 <ion-list>
-    <ion-item *ngFor="#direccion of direccionesEntrega" (click)="seleccionarDato(direccion)">
+    <ion-item *ngFor="#direccion of direccionesEntrega" (click)="seleccionarDireccion(direccion)">
         <ion-icon name="map" item-left></ion-icon>
         <h4 class="media-heading">{{direccion.direccion}}</h4>
         <p>{{direccion.codigoPostal}} {{direccion.poblacion}} ({{direccion.provincia}})</p>

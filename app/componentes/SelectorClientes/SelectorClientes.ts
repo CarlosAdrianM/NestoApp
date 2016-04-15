@@ -51,8 +51,9 @@ export class SelectorClientes extends SelectorBase {
             }
         );
     }
-
+    /*
     public seleccionarCliente(cliente: any): void {
         this.seleccionar.emit(cliente);
     }
+    */
 }
