@@ -81,4 +81,8 @@ export abstract class SelectorBase {
     public numeroDeDatos(): number {
         return this.datosFiltrados ? this.datosFiltrados.length : 0;
     }
+
+    public seleccionarTexto($event: any): void {
+        $event.target.select();
+    }
 }

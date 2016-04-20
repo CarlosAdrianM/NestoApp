@@ -1,5 +1,5 @@
-﻿<ion-searchbar #filtro placeholder="Introduzca algún dato del producto" (input)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)"></ion-searchbar>
-<ion-scroll scrollY="true">
+﻿<ion-searchbar #filtro placeholder="Introduzca algún dato del producto" (input)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (focus)="seleccionarTexto($event)"></ion-searchbar>
+<ion-content>
     <ion-list>
         <ion-item *ngFor="#producto of datosFiltrados" (click)="abrirDetalle(producto)">
             <h2>{{producto.texto}}</h2>
@@ -8,4 +8,4 @@
         </ion-item>
     </ion-list>
     <button block *ngIf="numeroDeDatos() === 0" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</button>
-</ion-scroll>
+</ion-content>

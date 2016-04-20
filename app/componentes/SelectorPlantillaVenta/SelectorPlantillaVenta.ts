@@ -1,5 +1,5 @@
 ﻿import {Component, Injectable, Input} from 'angular2/core';
-import {Searchbar, List, Item, Button, Alert, NavController, Loading, Toggle} from 'ionic-angular';
+import {Searchbar, List, Item, Button, Alert, NavController, Loading, Toggle, Content} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
 import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
@@ -7,7 +7,7 @@ import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
 @Component({
     selector: 'selector-plantilla-venta',
     templateUrl: 'build/componentes/SelectorPlantillaVenta/SelectorPlantillaVenta.html',
-    directives: [Searchbar, List, Item, Button, Toggle],
+    directives: [Searchbar, List, Item, Button, Toggle, Content],
     providers: [SelectorPlantillaVentaService],
     inputs: ['cliente'],
 })
