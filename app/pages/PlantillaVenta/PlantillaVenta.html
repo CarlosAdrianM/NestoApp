@@ -36,25 +36,27 @@
         </ion-list>
     </ion-slide>
     <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
-        <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
-        <ion-list *ngIf="direccionSeleccionada">
-            <ion-item>
-                <ion-label>Fecha de Entrega</ion-label>
-                <ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>
-            </ion-item>
-            <ion-item>
-                <ion-label>Servir Junto</ion-label>
-                <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto"></ion-toggle>
-            </ion-item>
-            <ion-item>
-                <ion-label>Mantener Junto</ion-label>
-                <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
-            </ion-item>
-            <ion-item>
-                <ion-label floating>Comentarios Ruta (los ve el cliente y la agencia)</ion-label>
-                <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
-            </ion-item>
-        </ion-list>
-        <button block (click)="crearPedido()">Crear Pedido</button>
+        <ion-content>
+            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
+            <ion-list *ngIf="direccionSeleccionada">
+                <ion-item>
+                    <ion-label>Fecha de Entrega</ion-label>
+                    <ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Servir Junto</ion-label>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Mantener Junto</ion-label>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label floating>Comentarios Ruta (los ve el cliente y la agencia)</ion-label>
+                    <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
+                </ion-item>
+            </ion-list>
+            <button block (click)="crearPedido()">Crear Pedido</button>
+        </ion-content>
     </ion-slide>
 </ion-slides>

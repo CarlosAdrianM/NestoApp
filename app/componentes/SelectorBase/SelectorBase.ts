@@ -82,7 +82,7 @@ export abstract class SelectorBase {
         return this.datosFiltrados ? this.datosFiltrados.length : 0;
     }
 
-    public seleccionarTexto($event: any): void {
-        $event.target.select();
+    public seleccionarTexto(evento: any): void {
+        evento.inputElement.select();
     }
 }

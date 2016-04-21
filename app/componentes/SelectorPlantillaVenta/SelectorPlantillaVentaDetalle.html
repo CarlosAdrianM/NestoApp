@@ -7,7 +7,6 @@
 
 <ion-content>
     <ion-card>
-        <img *ngIf="producto.urlImagen" src="{{producto.urlImagen}}" />
         <ion-card-content>
             <ion-card-title>
                 {{ producto.texto }}
@@ -43,5 +42,6 @@
                 </ion-row>
             </ion-list>
         </ion-card-content>
+        <img *ngIf="producto.urlImagen" src="{{producto.urlImagen}}" />
     </ion-card>
 </ion-content>

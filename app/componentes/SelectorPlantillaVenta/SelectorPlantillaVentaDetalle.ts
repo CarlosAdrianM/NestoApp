@@ -49,4 +49,5 @@ export class SelectorPlantillaVentaDetalle {
     public seleccionarTexto(evento: any): void {
         evento.target.select();
     }
+
 }
