@@ -2,6 +2,7 @@ import { TEST_BROWSER_PLATFORM_PROVIDERS, TEST_BROWSER_APPLICATION_PROVIDERS} fr
 import { setBaseTestProviders } from 'angular2/testing';
 import { IonicApp, Platform }   from 'ionic-angular';
 import { NestoApp }           from './app';
+import {Usuario}                   from './models/Usuario';
 
 // this needs doing _once_ for the entire test suite, hence it's here
 setBaseTestProviders(TEST_BROWSER_PLATFORM_PROVIDERS, TEST_BROWSER_APPLICATION_PROVIDERS);
@@ -26,7 +27,8 @@ export function main(): void {
     beforeEach(() => {
       let ionicApp: IonicApp = new IonicApp(null, null, null);
       let platform: Platform = new Platform();
-      nestoApp = new NestoApp(ionicApp, platform);
+      let usuario: Usuario = new Usuario();
+      nestoApp = new NestoApp(ionicApp, platform, usuario);
     });
 
     it('initialises with three possible pages', () => {

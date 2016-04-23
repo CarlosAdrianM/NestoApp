@@ -1,15 +1,26 @@
 'use strict';
-import 'es6-shim';
 
-import { Type }                    from 'angular2/core';
+import { Type, provide }           from 'angular2/core';
 import { App, IonicApp, Platform } from 'ionic-angular';
-import { Page2 }                   from './pages/page2/page2';
+import {Http}                      from 'angular2/http';
+import {AuthHttp, AuthConfig}      from 'angular2-jwt';
+import {Usuario}                   from './models/Usuario';
+import { ProfilePage }             from './pages/profile/profile';
 import { ExtractoCliente }         from './pages/ExtractoCliente/ExtractoCliente';
 import { PlantillaVenta }          from './pages/PlantillaVenta/PlantillaVenta';
 
 @App({
   templateUrl: 'build/app.html',
   config: {}, // http://ionicframework.com/docs/v2/api/config/Config/
+  providers: [
+      provide(AuthHttp, {
+          useFactory: (http: Http): AuthHttp => {
+              return new AuthHttp(new AuthConfig, http);
+          },
+          deps: [Http],
+      }),
+      Usuario,
+  ],
 })
 export class NestoApp {
 
@@ -17,20 +28,21 @@ export class NestoApp {
   private pages: Array<{title: string, component: Type}>;
   private app: IonicApp;
   private platform: Platform;
+  private usuario: Usuario;
 
-  constructor(app: IonicApp, platform: Platform) {
-
+  constructor(app: IonicApp, platform: Platform, usuario: Usuario) {
     this.app = app;
     this.platform = platform;
+    this.usuario = usuario;
 
-    this.rootPage = PlantillaVenta;
+    this.rootPage = ProfilePage;
     this.initializeApp();
 
     // set our app's pages
     this.pages = [
         { title: 'Plantilla Venta', component: PlantillaVenta },
         { title: 'Extracto Cliente', component: ExtractoCliente },
-        { title: 'Goodbye Ionic', component: Page2 },
+        { title: 'Usuario', component: ProfilePage },
     ];
   }
 

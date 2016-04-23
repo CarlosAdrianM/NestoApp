@@ -5,6 +5,7 @@ import {SelectorPlantillaVenta} from '../../componentes/SelectorPlantillaVenta/S
 import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {PlantillaVentaService} from './PlantillaVenta.service';
+import {Usuario} from '../../models/Usuario';
 
 @Page({
     templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
@@ -13,8 +14,9 @@ import {PlantillaVentaService} from './PlantillaVenta.service';
 })
 export class PlantillaVenta {
     private servicio: PlantillaVentaService;
+    private usuario: Usuario;
 
-    constructor(nav: NavController, servicio: PlantillaVentaService) {
+    constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario) {
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
@@ -23,6 +25,7 @@ export class PlantillaVenta {
         };
         this.nav = nav;
         this.servicio = servicio;
+        this.usuario = usuario;
     }
 
     private nav: NavController;
@@ -101,7 +104,6 @@ export class PlantillaVenta {
     }
 
     private prepararPedido(): any {
-        let usuario: any = Configuracion.usuarioPruebas; // ESTO HAY QUE BORRARLO!!!!!!!
         let pedido: any;
 
         pedido = {
@@ -125,7 +127,7 @@ export class PlantillaVenta {
             'noComisiona': this.direccionSeleccionada.noComisiona,
             'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
             'servirJunto': this.direccionSeleccionada.servirJunto,
-            'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + usuario.nombre,
+            'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
             'LineasPedido': [],
         };
 
@@ -147,11 +149,11 @@ export class PlantillaVenta {
                 'descuento': linea.descuento,
                 'aplicarDescuento': linea.aplicarDescuento,
                 'vistoBueno': 0, // calcular
-                'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + usuario.nombre,
-                'almacen': usuario.almacen,
+                'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+                'almacen': this.usuario.almacen,
                 'iva': linea.iva,
-                'delegacion': usuario.delegacion,
-                'formaVenta': usuario.formaVenta,
+                'delegacion': this.usuario.delegacion,
+                'formaVenta': this.usuario.formaVenta,
                 'oferta': ofertaLinea === 0 ? null : ofertaLinea,
             };
             pedido.LineasPedido.push(nuevaLinea);

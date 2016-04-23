@@ -35,6 +35,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
         this.servicio.getProductos(cliente).subscribe(
             data => {
+                this.inicializarDatos(data);
                 if (data.length === 0) {
                     let alert: Alert = Alert.create({
                         title: 'Error',
@@ -42,8 +43,6 @@ export class SelectorPlantillaVenta extends SelectorBase {
                         buttons: ['Ok'],
                     });
                     this.nav.present(alert);
-                } else {
-                    this.inicializarDatos(data);
                 }
             },
             error => {

@@ -16,8 +16,9 @@
 
   <script src="cordova.js"></script>
   <!-- Zone.js and Reflect-metadata  -->
+  <!-- Polyfill needed for platforms without Promise and Collection support -->
+  <script src="build/js/es6-shim.min.js"></script>
   <script src="build/js/angular2-polyfills.js"></script>
-  <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en"></script>
   <script src="build/js/app.bundle.js"></script>
 </body>
 </html>
