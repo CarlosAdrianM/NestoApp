@@ -1,4 +1,4 @@
-﻿import {Page, Storage, LocalStorage} from 'ionic-angular';
+﻿import {Page, Storage, LocalStorage, Loading, NavController} from 'ionic-angular';
 import {Http, Headers} from 'angular2/http';
 import {FORM_DIRECTIVES} from 'angular2/common';
 import {JwtHelper} from 'angular2-jwt';
@@ -27,20 +27,30 @@ export class ProfilePage {
     private local: Storage = new Storage(LocalStorage);
     private http: Http;
     private usuario: Usuario;
+    private nav: NavController;
 
-    constructor(http: Http, usuario: Usuario) {
-        let self: any = this;
+    constructor(http: Http, usuario: Usuario, nav: NavController) {
+        // let self: any = this;
         this.http = http;
         this.auth = AuthService;
-        self.usuario = usuario;
+        this.nav = nav;
+        this.usuario = usuario;
+        /*
         this.local.get('profile').then(profile => {
             self.usuario.nombre = JSON.parse(profile);
         }).catch(error => {
             console.log(error);
         });
+        */
     }
 
     public login(credentials: any): void {
+        let loading: any = Loading.create({
+            content: 'Iniciando sesión...',
+        });
+
+        this.nav.present(loading);
+
         // credentials.grant_type = 'password';
         this.http.post(
             this.LOGIN_URL,
@@ -53,8 +63,14 @@ export class ProfilePage {
             .map(res => res.json())
             .subscribe(
             data => this.authSuccess(data.access_token),
-            err => this.error = err
-            );
+            err => {
+                this.error = err,
+                loading.dismiss();
+            },
+            () => {
+                loading.dismiss();
+            }
+        );
     }
 
     public signup(credentials: any): void {
@@ -63,11 +79,12 @@ export class ProfilePage {
             .subscribe(
             data => this.authSuccess(data.id_token),
             err => this.error = err
-            );
+        );
     }
 
     public logout(): void {
         this.local.remove('id_token');
+        this.local.remove('profile');
         this.usuario.nombre = null;
     }
 

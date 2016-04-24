@@ -6,6 +6,7 @@ import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesE
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {PlantillaVentaService} from './PlantillaVenta.service';
 import {Usuario} from '../../models/Usuario';
+import { ProfilePage } from '../../pages/profile/profile';
 
 @Page({
     templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
@@ -17,6 +18,11 @@ export class PlantillaVenta {
     private usuario: Usuario;
 
     constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario) {
+        // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
+        if (!usuario.nombre) {
+            nav.push(ProfilePage);
+        }
+
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
@@ -186,7 +192,7 @@ export class PlantillaVenta {
                     buttons: ['Ok'],
                 });
                 this.nav.present(alert);
-                this.nav.pop();
+                this.reinicializar();
             },
             error => {
                 let alert: Alert = Alert.create({
@@ -205,5 +211,13 @@ export class PlantillaVenta {
 
     public hayAlgunProducto(): boolean {
         return false;
+    }
+
+    public reinicializar(): void {
+        this.clienteSeleccionado = null;
+        this.productosResumen = null;
+        this.direccionSeleccionada = null;
+        this.slider.slideTo(0);
+        this.slider.LockSwipeToNext();
     }
 }

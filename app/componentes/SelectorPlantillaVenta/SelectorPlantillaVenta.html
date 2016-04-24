@@ -4,7 +4,8 @@
         <ion-item *ngFor="#producto of datosFiltrados" (click)="abrirDetalle(producto)">
             <h2>{{producto.texto}}</h2>
             <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
-            <ion-badge secondary item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
+            <!--<p>Fecha {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>-->
+            <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
         </ion-item>
     </ion-list>
     <button block *ngIf="numeroDeDatos() === 0" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</button>

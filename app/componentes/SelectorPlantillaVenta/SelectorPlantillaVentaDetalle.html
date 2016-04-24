@@ -3,6 +3,11 @@
         <ion-icon name="menu"></ion-icon>
     </button>
     <ion-title>Detalle Plantilla Venta</ion-title>
+    <ion-buttons end>
+        <button (click)="abrirUltimasVentas()">
+            <ion-icon name="information-circle"></ion-icon>
+        </button>
+    </ion-buttons>
 </ion-navbar>
 
 <ion-content>
@@ -15,14 +20,22 @@
                 <ion-row>
                     <ion-col width-50>
                         <ion-item>
-                            <ion-label>Cantidad</ion-label>
-                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidad" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-label
+                                [attr.default]="producto.colorStock == 'default' ? '' : null" 
+                                [attr.secondary]="producto.colorStock == 'secondary' ? '' : null" 
+                                [attr.dark]="producto.colorStock == 'dark' ? '' : null" 
+                                [attr.danger]="producto.colorStock == 'danger' ? '' : null">Cantidad</ion-label>
+                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (change)="seleccionarColorStock(producto)" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
                         <ion-item>
-                            <ion-label>Oferta</ion-label>
-                            <ion-input type="number" min="0" (input)="seleccionarColorStock(producto)" [(ngModel)]="producto.cantidadOferta" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-label
+                                [attr.default]="producto.colorStock == 'default' ? '' : null" 
+                                [attr.secondary]="producto.colorStock == 'secondary' ? '' : null" 
+                                [attr.dark]="producto.colorStock == 'dark' ? '' : null" 
+                                [attr.danger]="producto.colorStock == 'danger' ? '' : null">Oferta</ion-label>
+                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidadOferta" (change)="seleccionarColorStock(producto)" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>
@@ -36,7 +49,7 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label>Descuento</ion-label>
-                            <ion-input type="number" [(ngModel)]="producto.descuento" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>

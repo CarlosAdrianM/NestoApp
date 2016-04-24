@@ -57,7 +57,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     public abrirDetalle(producto: any): void {
         this.agregarDato(producto);
-        this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto });
+        this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente });
     }
 
     public cargarResumen(): any[] {

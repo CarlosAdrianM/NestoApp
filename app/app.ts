@@ -35,7 +35,7 @@ export class NestoApp {
     this.platform = platform;
     this.usuario = usuario;
 
-    this.rootPage = ProfilePage;
+    this.rootPage = PlantillaVenta;
     this.initializeApp();
 
     // set our app's pages
