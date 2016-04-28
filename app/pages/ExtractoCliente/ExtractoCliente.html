@@ -10,7 +10,7 @@
 
     <ion-list>
         <ion-item *ngFor="#mov of movimientosDeuda">
-            <h3>{{mov.vencimiento}}</h3>
+            <h3>{{mov.vencimientoMostrar | date: 'dd/MM/yy'}}</h3>
             <p>{{mov.concepto}}</p>
             <p>{{mov.importePendiente | currency:'EUR':true }}</p>
         </ion-item>

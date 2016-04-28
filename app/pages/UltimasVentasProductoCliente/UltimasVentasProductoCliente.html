@@ -9,39 +9,39 @@
     <ion-list>
         <ion-item>
             <ion-row>
-                <ion-col width-20>
+                <ion-col style="text-align:center" width-20>
                     Fecha
                 </ion-col>
-                <ion-col width-20>
+                <ion-col style="text-align:center" width-20>
                     Cantidad
                 </ion-col>
-                <ion-col width-20>
-                    Bruto Und.
+                <ion-col style="text-align:center" width-20>
+                    Bruto
                 </ion-col>
-                <ion-col width-20>
-                    Descuentos
+                <ion-col style="text-align:center" width-20>
+                    Dtos.
                 </ion-col>
-                <ion-col width-20>
-                    Neto Und.
+                <ion-col style="text-align:center" width-20>
+                    Neto
                 </ion-col>
             </ion-row>
         </ion-item>
         <ion-item *ngFor="#movimiento of movimientos">
             <ion-row>
-                <ion-col width-20>
+                <ion-col style="text-align:center" width-20>
                     {{movimiento.fechaMostrar | date: 'dd/MM/yy' }}
                 </ion-col>
-                <ion-col width-20>
+                <ion-col style="text-align:center" width-20>
                     {{movimiento.cantidad}}
                 </ion-col>
-                <ion-col width-20>
-                    {{movimiento.precioBruto | currency:'EUR'}}
+                <ion-col style="text-align:right" width-20>
+                    {{movimiento.precioBruto | currency:'EUR':true}}
                 </ion-col>
-                <ion-col width-20>
+                <ion-col style="text-align:center" width-20>
                     {{movimiento.descuentos | percent }}
                 </ion-col>
-                <ion-col width-20>
-                    {{movimiento.precioNeto | currency:'EUR'}}
+                <ion-col style="text-align:right" width-20>
+                    {{movimiento.precioNeto | currency:'EUR':true}}
                 </ion-col>
             </ion-row>
         </ion-item>

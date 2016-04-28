@@ -25,7 +25,7 @@
                                 [attr.secondary]="producto.colorStock == 'secondary' ? '' : null" 
                                 [attr.dark]="producto.colorStock == 'dark' ? '' : null" 
                                 [attr.danger]="producto.colorStock == 'danger' ? '' : null">Cantidad</ion-label>
-                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (change)="seleccionarColorStock(producto)" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (blur)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
@@ -35,7 +35,7 @@
                                 [attr.secondary]="producto.colorStock == 'secondary' ? '' : null" 
                                 [attr.dark]="producto.colorStock == 'dark' ? '' : null" 
                                 [attr.danger]="producto.colorStock == 'danger' ? '' : null">Oferta</ion-label>
-                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidadOferta" (change)="seleccionarColorStock(producto)" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidadOferta" (blur)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>

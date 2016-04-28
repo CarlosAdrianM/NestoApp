@@ -41,11 +41,24 @@ export class SelectorPlantillaVentaDetalle {
         );
     }
 
+    private actualizarCantidad(producto: any): void {
+        this.servicio.actualizarPrecioProducto(producto, this.cliente).subscribe(
+            data => {
+                producto.precio = data.precio;
+                this.actualizarDescuento(data.descuento*100);
+            },
+            error => this.errorMessage = <any>error
+        );
+
+        this.seleccionarColorStock(producto);
+    }
+
     private seleccionarColorStock(producto: any): void {
         let cantidad: number = producto.cantidad;
         let cantidadOferta: number = producto.cantidadOferta;
         cantidad = +cantidad;
         cantidadOferta = +cantidadOferta;
+        
         if (cantidad === 0 && cantidadOferta === 0) {
             producto.colorStock = 'default';
         } else if (producto.cantidadDisponible >= cantidad + producto.cantidadOferta) {

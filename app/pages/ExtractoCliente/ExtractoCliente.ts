@@ -46,6 +46,7 @@ export class ExtractoCliente {
                         this.resumenDeuda.vencida += mov.importePendiente;
                     }
                     this.resumenDeuda.total += mov.importePendiente;
+                    mov.vencimientoMostrar = new Date(mov.vencimiento);
                 }
 
                 console.log(this.resumenDeuda);

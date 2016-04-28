@@ -43,7 +43,7 @@ export class SelectorClientes extends SelectorBase {
                 }
             },
             error => {
-                loading.dismiss();
+                // loading.dismiss();
                 this.errorMessage = <any>error;
             },
             () => {

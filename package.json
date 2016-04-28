@@ -32,6 +32,7 @@
     "ionic-gulp-html-copy": "^1.0.0",
     "ionic-gulp-sass-build": "^1.0.0",
     "ionic-gulp-scripts-copy": "^1.0.1",
+    "ionic-native": "^1.1.1",
     "jasmine-core": "2.4.1",
     "jasmine-spec-reporter": "^2.4.0",
     "karma": "0.13.21",
@@ -54,13 +55,14 @@
     "webpack": "^1.12.14"
   },
   "name": "nestoapp",
-  "description": "NestoApp: Grupo Nueva Visión",
+  "description": "NestoApp: Grupo Nueva Visiï¿½n",
   "cordovaPlugins": [
     "cordova-plugin-whitelist",
     {
       "locator": "https://github.com/VersoSolutions/CordovaClipboard",
       "id": "com.verso.cordova.clipboard"
-    }
+    },
+    "cordova-plugin-datepicker"
   ],
   "cordovaPlatforms": [
     "android"

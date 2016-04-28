@@ -1,19 +1,29 @@
 ﻿import {Injectable} from 'angular2/core';
-import {Http, Response} from 'angular2/http';
+import {Http, Response, URLSearchParams} from 'angular2/http';
 import {Observable} from 'rxjs/Rx';
 import {Configuracion} from '../../componentes/configuracion/configuracion';
+import {Usuario} from '../../models/Usuario';
 
 @Injectable()
 export class SelectorClientesService {
     private http: Http;
-    constructor(http: Http) {
+    private usuario: Usuario;
+
+    constructor(http: Http, usuario: Usuario) {
         this.http = http;
+        this.usuario = usuario;
     }
 
-    private _clientesUrl: string = Configuracion.API_URL + '/Clientes?empresa=' + Configuracion.EMPRESA_POR_DEFECTO + '&filtro='; // URL to web api
-
+    private _clientesUrl: string = Configuracion.API_URL + '/Clientes'
+    
     public getClientes(filtro: string): Observable<any[]> {
-        return this.http.get(this._clientesUrl + filtro)
+        let params: URLSearchParams = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('filtro', filtro);
+        if (this.usuario.vendedor) {
+            params.set('vendedor', this.usuario.vendedor);
+        }
+        return this.http.get(this._clientesUrl, { search: params })
             .map(res => <any[]>res.json())
             .catch(this.handleError);
     }

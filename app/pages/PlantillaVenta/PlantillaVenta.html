@@ -40,8 +40,9 @@
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
-                    <ion-label>Fecha de Entrega</ion-label>
-                    <ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>
+                    <!--<ion-label>Fecha de Entrega</ion-label>-->
+                    <!--<ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>-->
+                    <button light (click)="seleccionarFechaEntrega()">Seleccionar Fecha Entrega</button>
                 </ion-item>
                 <ion-item>
                     <ion-label>Servir Junto</ion-label>

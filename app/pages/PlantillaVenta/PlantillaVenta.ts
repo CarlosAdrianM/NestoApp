@@ -6,18 +6,21 @@ import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesE
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {PlantillaVentaService} from './PlantillaVenta.service';
 import {Usuario} from '../../models/Usuario';
+import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
+import {DatePicker} from 'ionic-native';
 
 @Page({
     templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
     directives: [SelectorClientes, SelectorPlantillaVenta, SelectorDireccionesEntrega],
-    providers: [PlantillaVentaService],
+    providers: [PlantillaVentaService, Parametros],
 })
 export class PlantillaVenta {
     private servicio: PlantillaVentaService;
     private usuario: Usuario;
+    private parametros: Parametros;
 
-    constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario) {
+    constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario, parametros: Parametros) {
         // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
         if (!usuario.nombre) {
             nav.push(ProfilePage);
@@ -32,6 +35,10 @@ export class PlantillaVenta {
         this.nav = nav;
         this.servicio = servicio;
         this.usuario = usuario;
+        this.parametros = parametros;
+
+        this.cargarParametros();
+        
     }
 
     private nav: NavController;
@@ -42,9 +49,16 @@ export class PlantillaVenta {
     public direccionSeleccionada: any;
     public fechaEntrega: Date = new Date();
     private hoy: Date = new Date();
+    private opcionesDatepicker: any = {
+        date: this.fechaEntrega,
+        mode: 'date',
+    };
 
     @ViewChild(SelectorPlantillaVenta)
     private _selectorPlantillaVenta: SelectorPlantillaVenta;
+
+    @ViewChild(SelectorClientes)
+    private _selectorClientes: SelectorClientes;
 
     public cargarProductos(cliente: any): void {
         if (!this.clienteSeleccionado) {
@@ -215,9 +229,54 @@ export class PlantillaVenta {
 
     public reinicializar(): void {
         this.clienteSeleccionado = null;
+        this._selectorClientes.resetearFiltros();
         this.productosResumen = null;
         this.direccionSeleccionada = null;
         this.slider.slideTo(0);
-        this.slider.LockSwipeToNext();
+        this.slider.lockSwipeToNext();
     }
+    
+    private cargarParametros(): void {
+        let self: any = this;
+
+        this.parametros.leer('Vendedor').subscribe(
+            data => {
+                self.usuario.vendedor = data;
+            },
+            error => {
+                console.log('No se ha podido cargar el almacén por defecto');
+            }
+        );
+
+        this.parametros.leer('DelegaciónDefecto').subscribe(
+            data => {
+                self.usuario.delegacion = data;
+            },
+            error => {
+                console.log('No se ha podido cargar la delegación por defecto');
+            }
+        );
+
+        this.parametros.leer('AlmacénRuta').subscribe(
+            data => {
+                self.usuario.almacen = data;
+            },
+            error => {
+                console.log('No se ha podido cargar el almacén por defecto');
+            }
+        );
+
+    }
+
+    private seleccionarFechaEntrega() {
+        DatePicker.show({
+            date: this.fechaEntrega,
+            mode: 'date',
+            minDate: new Date()
+        }).then(
+            date => this.fechaEntrega = date,
+            err => console.log('Error al seleccionar la fecha de entrega')
+        );
+    }
+    
 }
