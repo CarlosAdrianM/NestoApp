@@ -9,10 +9,12 @@ import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
 import {DatePicker} from 'ionic-native';
+import { SelectorFormasPago } from '../../componentes/SelectorFormasPago/SelectorFormasPago';
+import { SelectorPlazosPago } from '../../componentes/SelectorPlazosPago/SelectorPlazosPago';
 
 @Page({
     templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
-    directives: [SelectorClientes, SelectorPlantillaVenta, SelectorDireccionesEntrega],
+    directives: [SelectorClientes, SelectorPlantillaVenta, SelectorDireccionesEntrega, SelectorFormasPago, SelectorPlazosPago],
     providers: [PlantillaVentaService, Parametros],
 })
 export class PlantillaVenta {
@@ -278,5 +280,8 @@ export class PlantillaVenta {
             err => console.log('Error al seleccionar la fecha de entrega')
         );
     }
-    
+
+    private totalPedido(): number {
+        return this._selectorPlantillaVenta.totalPedido;
+    }
 }

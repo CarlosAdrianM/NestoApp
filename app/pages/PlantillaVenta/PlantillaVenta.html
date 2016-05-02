@@ -57,7 +57,18 @@
                     <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
                 </ion-item>
             </ion-list>
-            <button block (click)="crearPedido()">Crear Pedido</button>
         </ion-content>
+    </ion-slide>
+    <ion-slide  *ngIf="productosResumen" scrollY="true">
+        <h3>Condiciones de Pago</h3>
+        <ion-item>
+            <ion-row>
+                <ion-col>Total pedido:</ion-col>
+                <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true}}</ion-col>
+            </ion-row>
+        </ion-item>
+        <selector-formas-pago seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="direccionSeleccionada.formaPago = $event"></selector-formas-pago>
+        <selector-plazos-pago seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="direccionSeleccionada.plazosPago = $event"></selector-plazos-pago>
+        <button block (click)="crearPedido()">Crear Pedido</button>
     </ion-slide>
 </ion-slides>

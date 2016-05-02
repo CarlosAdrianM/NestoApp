@@ -13,7 +13,6 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 
 @Injectable()
 export class SelectorDireccionesEntrega extends SelectorBase {
-    private errorMessage: string;
     private servicio: SelectorDireccionesEntregaService;
     private nav: NavController;
     private direccionesEntrega: any[];

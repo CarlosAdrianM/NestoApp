@@ -82,4 +82,9 @@ export class SelectorPlantillaVentaDetalle {
     private abrirUltimasVentas(): void {
         this.nav.push(UltimasVentasProductoCliente, { producto: this.producto.producto, cliente: this.cliente });
     }
+
+    private sePuedeHacerDescuento(producto: any): boolean {
+        return producto.aplicarDescuento && producto.subGrupo !== 'Otros aparatos';
+    }
+
 }

@@ -5,14 +5,15 @@ export abstract class SelectorBase {
     private datos: any[];
     private datosFiltrados: any[];
     private datosInicial: any[];
+    protected errorMessage: string;
 
-    @Output() public seleccionar: EventEmitter<any> = new EventEmitter();
+    @Output() private seleccionar: EventEmitter<any> = new EventEmitter();
 
-    public seleccionarDato(dato: any): void {
+    protected seleccionarDato(dato: any): void {
         this.seleccionar.emit(dato);
     }
 
-    public filtrarBusqueda(searchbar: any): void {
+    private filtrarBusqueda(searchbar: any): void {
         let filtro: string = searchbar.value.toUpperCase();
 
         if (this.datos) {
@@ -20,7 +21,7 @@ export abstract class SelectorBase {
         }
     }
 
-    public fijarFiltro(searchbar: any): void {
+    private fijarFiltro(searchbar: any): void {
         let filtro: string = searchbar.target.value.toUpperCase();
         if (!this.datosInicial || this.datosInicial.length === 0) {
             this.cargarDatos(filtro);
@@ -43,15 +44,15 @@ export abstract class SelectorBase {
         );
     }
 
-    public abstract cargarDatos(filtro: any): void;
+    protected abstract cargarDatos(filtro: any): void;
 
-    public inicializarDatos(datos: any[]): void {
+    protected inicializarDatos(datos: any[]): void {
         this.datos = datos; // ¿vale para algo?
         this.datosInicial = datos;
         this.datosFiltrados = datos;
     }
 
-    public inicializarDatosFiltrados(datos: any[]): void {
+    protected inicializarDatosFiltrados(datos: any[]): void {
         this.datosFiltrados = datos;
         let i: number;
         let posicion: number;
@@ -64,7 +65,7 @@ export abstract class SelectorBase {
         }
     }
 
-    public datosIniciales(): any[] {
+    protected datosIniciales(): any[] {
         return this.datosInicial;
     }
 
@@ -72,7 +73,7 @@ export abstract class SelectorBase {
         this.inicializarDatos([]);
     }
 
-    public agregarDato(dato: any): void {
+    protected agregarDato(dato: any): void {
         if (this.datosInicial.indexOf(dato) === -1) {
             this.datosInicial.push(dato);
         }
@@ -83,6 +84,6 @@ export abstract class SelectorBase {
     }
 
     public seleccionarTexto(evento: any): void {
-        evento.inputElement.select();
+        evento.inputElement ? evento.inputElement.select() : evento.target.select();
     }
 }

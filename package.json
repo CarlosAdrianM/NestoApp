@@ -62,7 +62,8 @@
       "locator": "https://github.com/VersoSolutions/CordovaClipboard",
       "id": "com.verso.cordova.clipboard"
     },
-    "cordova-plugin-datepicker"
+    "cordova-plugin-datepicker",
+    "ionic-plugin-deploy"
   ],
   "cordovaPlatforms": [
     "android"

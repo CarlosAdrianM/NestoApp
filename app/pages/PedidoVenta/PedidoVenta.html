@@ -1,0 +1,80 @@
+﻿<ion-navbar *navbar>
+    <button menuToggle>
+        <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Pedido Venta</ion-title>
+</ion-navbar>
+
+<ion-content *ngIf="pedido">
+    <ion-segment [(ngModel)]="segmentoPedido">
+        <ion-segment-button value="cabecera">
+            Cabecera
+        </ion-segment-button>
+        <ion-segment-button value="lineas">
+            Líneas
+        </ion-segment-button>
+        <ion-segment-button value="comentarios">
+            Comentarios
+        </ion-segment-button>
+    </ion-segment>
+
+    <div [ngSwitch]="segmentoPedido">
+        <div *ngSwitchWhen="'cabecera'">
+            <h1>Pedido {{pedido.numero}}</h1>
+            <h2>Creado por {{pedido.usuario}}</h2>
+            <ion-list>
+                <ion-item>
+                    <ion-row>
+                        <ion-col width-50>{{pedido.cliente}} ({{pedido.contacto}})</ion-col>
+                        <ion-col width-50>{{pedido.fecha}} </ion-col>
+                    </ion-row>
+                </ion-item>
+            </ion-list>
+            <!-- selector-contacto-cliente-->
+            <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="pedido.formaPago = $event"></selector-formas-pago>
+            <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
+            <ion-item>
+                <ion-row>
+                    <ion-col width-25>{{pedido.ccc}}</ion-col>
+                    <ion-col width-25>{{pedido.primerVencimiento}} </ion-col>
+                </ion-row>
+            </ion-item>
+            <ion-item>
+                <ion-row>
+                    <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
+                    <ion-col width-50>{{pedido.iva}}</ion-col>
+                </ion-row>
+            </ion-item>
+            <ion-item>
+                <ion-label>Servir Junto</ion-label>
+                <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
+            </ion-item>
+            <ion-item>
+                <ion-label>Mantener Junto</ion-label>
+                <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
+            </ion-item>
+        </div>
+        <ion-list *ngSwitchWhen="'lineas'">
+            <ion-item *ngFor="#linea of pedido.LineasPedido">
+                <h2>{{linea.texto}}</h2>
+                <ion-row>
+                    <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
+                    <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
+                    <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true}}</p></ion-col>
+                    <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
+                    <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true}}</p></ion-col>
+                </ion-row>
+            </ion-item>
+        </ion-list>
+        <ion-list *ngSwitchWhen="'comentarios'">
+            <ion-item>
+                <ion-label floating>Comentarios Ruta</ion-label>
+                <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
+            </ion-item>
+            <ion-item>
+                <ion-label floating>Comentarios Picking</ion-label>
+                <ion-input [(ngModel)]="pedido.comentarioPicking"></ion-input>
+            </ion-item>
+        </ion-list>
+    </div>
+</ion-content>

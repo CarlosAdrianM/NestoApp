@@ -8,6 +8,7 @@ import {Usuario}                   from './models/Usuario';
 import { ProfilePage }             from './pages/profile/profile';
 import { ExtractoCliente }         from './pages/ExtractoCliente/ExtractoCliente';
 import { PlantillaVenta }          from './pages/PlantillaVenta/PlantillaVenta';
+import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosVenta';
 
 @App({
   templateUrl: 'build/app.html',
@@ -41,6 +42,7 @@ export class NestoApp {
     // set our app's pages
     this.pages = [
         { title: 'Plantilla Venta', component: PlantillaVenta },
+        { title: 'Pedidos Venta', component: ListaPedidosVenta},
         { title: 'Extracto Cliente', component: ExtractoCliente },
         { title: 'Usuario', component: ProfilePage },
     ];

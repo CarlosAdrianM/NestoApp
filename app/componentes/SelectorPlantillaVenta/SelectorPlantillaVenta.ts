@@ -14,9 +14,9 @@ import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
 
 @Injectable()
 export class SelectorPlantillaVenta extends SelectorBase {
-    private errorMessage: string;
-    private servicio: SelectorPlantillaVentaService;
+
     private nav: NavController;
+    private servicio: SelectorPlantillaVentaService;
 
     @Input() private cliente: any;
 
@@ -62,9 +62,11 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     public cargarResumen(): any[] {
         let productosResumen: any[] = [];
+        this.baseImponiblePedido = 0;
         for (let value of this.datosIniciales()) {
             if (value.cantidad !== 0 || value.cantidadOferta !== 0) {
                 productosResumen.push(value);
+                this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
             }
         }
         return productosResumen;
@@ -91,4 +93,17 @@ export class SelectorPlantillaVenta extends SelectorBase {
             error => this.errorMessage = <any>error
         );
     }
+
+    get totalPedido(): number {
+        return this._baseImponiblePedido * 1.21;
+    }
+
+    private _baseImponiblePedido: number = 0;
+    get baseImponiblePedido(): number {
+        return this._baseImponiblePedido;
+    }
+    set baseImponiblePedido(value: number) {
+        this._baseImponiblePedido = value;
+    }
+
 }

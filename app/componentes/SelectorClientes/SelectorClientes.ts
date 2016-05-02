@@ -12,7 +12,6 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 
 @Injectable()
 export class SelectorClientes extends SelectorBase {
-    private errorMessage: string;
     private servicio: SelectorClientesService;
     private nav: NavController;
 
