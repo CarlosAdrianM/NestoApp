@@ -42,7 +42,7 @@ export class NestoApp {
     // set our app's pages
     this.pages = [
         { title: 'Plantilla Venta', component: PlantillaVenta },
-        { title: 'Pedidos Venta', component: ListaPedidosVenta},
+        // { title: 'Pedidos Venta', component: ListaPedidosVenta},
         { title: 'Extracto Cliente', component: ExtractoCliente },
         { title: 'Usuario', component: ProfilePage },
     ];

@@ -23,23 +23,20 @@
             <h1>Pedido {{pedido.numero}}</h1>
             <h2>Creado por {{pedido.usuario}}</h2>
             <ion-list>
+                <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto"></selector-direcciones-entrega>
                 <ion-item>
-                    <ion-row>
-                        <ion-col width-50>{{pedido.cliente}} ({{pedido.contacto}})</ion-col>
-                        <ion-col width-50>{{pedido.fecha}} </ion-col>
-                    </ion-row>
+                    <ion-label>Fecha Pedido</ion-label>
+                    <ion-input type="date">{{pedido.fechaMostrar | date:'dd/MM/yy'}} </ion-input>
                 </ion-item>
             </ion-list>
-            <!-- selector-contacto-cliente-->
             <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="pedido.formaPago = $event"></selector-formas-pago>
             <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
             <ion-item>
-                <ion-row>
-                    <ion-col width-25>{{pedido.ccc}}</ion-col>
-                    <ion-col width-25>{{pedido.primerVencimiento}} </ion-col>
-                </ion-row>
+                <ion-label>Fecha Vencimiento</ion-label>
+                <ion-input type="date">{{pedido.fechaMostrar | date:'dd/MM/yy'}} </ion-input>
             </ion-item>
-            <ion-item>
+
+            <ion-item (doubletap)="cambiarIVA()">
                 <ion-row>
                     <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
                     <ion-col width-50>{{pedido.iva}}</ion-col>

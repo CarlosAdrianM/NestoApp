@@ -37,6 +37,7 @@
     </ion-slide>
     <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
         <ion-content>
+            <h3>Dirección de Entrega</h3>
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
@@ -67,8 +68,11 @@
                 <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true}}</ion-col>
             </ion-row>
         </ion-item>
-        <selector-formas-pago seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="direccionSeleccionada.formaPago = $event"></selector-formas-pago>
-        <selector-plazos-pago seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="direccionSeleccionada.plazosPago = $event"></selector-plazos-pago>
+        <ion-item style="text-align:center" (doubletap)="cambiarIVA()">
+            {{direccionSeleccionada.iva}}
+        </ion-item>
+        <selector-formas-pago *ngIf="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="direccionSeleccionada.formaPago = $event"></selector-formas-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="direccionSeleccionada.plazosPago = $event"></selector-plazos-pago>
         <button block (click)="crearPedido()">Crear Pedido</button>
     </ion-slide>
 </ion-slides>

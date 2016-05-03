@@ -55,6 +55,7 @@ export class PlantillaVenta {
         date: this.fechaEntrega,
         mode: 'date',
     };
+    private iva: string;
 
     @ViewChild(SelectorPlantillaVenta)
     private _selectorPlantillaVenta: SelectorPlantillaVenta;
@@ -114,7 +115,8 @@ export class PlantillaVenta {
         return this.slider && (
             this.slider.activeIndex === 0 && this.clienteSeleccionado ||
             this.slider.activeIndex === 1 ||
-            this.slider.activeIndex === 2 && this.productosResumen && this.productosResumen.length > 0);
+            this.slider.activeIndex === 2 && this.productosResumen && this.productosResumen.length > 0 ||
+            this.slider.activeIndex === 3);
     }
 
     public siguientePantalla(): void {
@@ -123,6 +125,7 @@ export class PlantillaVenta {
 
     public seleccionarCliente(cliente: any): void {
         this.direccionSeleccionada = cliente;
+        this.iva = cliente.iva;
     }
 
     private prepararPedido(): any {
@@ -136,7 +139,7 @@ export class PlantillaVenta {
             'formaPago': this.direccionSeleccionada.formaPago,
             'plazosPago': this.direccionSeleccionada.plazosPago.trim(),
             'primerVencimiento': this.hoy, // se calcula en la API
-            'iva': this.clienteSeleccionado.iva,
+            'iva': this.direccionSeleccionada.iva,
             'vendedor': this.direccionSeleccionada.vendedor,
             'comentarios': this.direccionSeleccionada.comentarioRuta,
             'comentarioPicking': this.clienteSeleccionado.comentarioPicking ? this.clienteSeleccionado.comentarioPicking.trim() : null,
@@ -282,6 +285,11 @@ export class PlantillaVenta {
     }
 
     private totalPedido(): number {
-        return this._selectorPlantillaVenta.totalPedido;
+        return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     }
+
+    private cambiarIVA(): void {
+        this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
+    }
+
 }

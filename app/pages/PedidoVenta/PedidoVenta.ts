@@ -3,20 +3,21 @@ import { Parametros } from '../../services/Parametros.service';
 import {PedidoVentaService} from './PedidoVenta.service';
 import { SelectorFormasPago } from '../../componentes/SelectorFormasPago/SelectorFormasPago';
 import { SelectorPlazosPago } from '../../componentes/SelectorPlazosPago/SelectorPlazosPago';
+import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 
 @Page({
     templateUrl: 'build/pages/PedidoVenta/PedidoVenta.html',
     providers: [PedidoVentaService, Parametros],
-    directives: [SelectorFormasPago, SelectorPlazosPago], 
+    directives: [SelectorFormasPago, SelectorPlazosPago, SelectorDireccionesEntrega], 
 })
 export class PedidoVenta {
 
+    private iva: string;
     private nav: NavController;
     private pedido: any;
     private segmentoPedido: string = 'cabecera';
     private servicio: PedidoVentaService;
-
-
+    
     constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams) {
         this.nav = nav;
         this.servicio = servicio;
@@ -33,6 +34,9 @@ export class PedidoVenta {
         this.servicio.cargarPedido(empresa, numero).subscribe(
             data => {
                 this.pedido = data;
+                this.pedido.fechaMostrar = new Date(this.pedido.fecha);
+                this.pedido.primerVencimientoMostrar = new Date(this.pedido.primerVencimiento);
+                this.iva = this.pedido.iva;
             },
             error => {
                 let alert: Alert = Alert.create({
@@ -51,6 +55,10 @@ export class PedidoVenta {
     
     public seleccionarFormaPago(evento: any): void {
         this.pedido.formaPago = evento;
+    }
+
+    private cambiarIVA(): void {
+        this.pedido.iva = this.pedido.iva ? undefined : this.iva;
     }
 
 }
