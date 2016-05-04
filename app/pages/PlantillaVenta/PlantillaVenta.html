@@ -27,6 +27,7 @@
                 </ion-avatar>
                 <h2>{{producto.texto}}</h2>
                 <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+                <p>{{producto.precio | currency:'EUR':true}} (Dto: {{producto.descuento | percent}})</p>
                 <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
             </ion-item>
             <ion-item>
