@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -70,10 +71,13 @@ var SelectorBase = (function () {
     SelectorBase.prototype.numeroDeDatos = function () {
         return this.datosFiltrados ? this.datosFiltrados.length : 0;
     };
+    SelectorBase.prototype.seleccionarTexto = function (evento) {
+        evento.inputElement ? evento.inputElement.select() : evento.target.select();
+    };
     __decorate([
         core_1.Output(), 
         __metadata('design:type', core_1.EventEmitter)
     ], SelectorBase.prototype, "seleccionar", void 0);
     return SelectorBase;
-})();
+}());
 exports.SelectorBase = SelectorBase;

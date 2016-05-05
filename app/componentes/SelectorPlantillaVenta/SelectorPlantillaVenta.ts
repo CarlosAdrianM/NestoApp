@@ -35,6 +35,11 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
         this.servicio.getProductos(cliente).subscribe(
             data => {
+                data = data.map(function (item) {
+                    var clone = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                    clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                    return clone;
+                });
                 this.inicializarDatos(data);
                 if (data.length === 0) {
                     let alert: Alert = Alert.create({

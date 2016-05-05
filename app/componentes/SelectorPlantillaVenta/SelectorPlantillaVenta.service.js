@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -43,6 +44,20 @@ var SelectorPlantillaVentaService = (function () {
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
+    SelectorPlantillaVentaService.prototype.actualizarPrecioProducto = function (producto, cliente) {
+        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas/CargarPrecio';
+        var params = new http_1.URLSearchParams();
+        params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('cliente', cliente);
+        params.set('contacto', '0'); // porque aún no sabemos la dirección de entrega
+        params.set('productoPrecio', producto.producto);
+        params.set('cantidad', producto.cantidad);
+        params.set('aplicarDescuento', producto.aplicarDescuento);
+        // params.set('aplicarDescuento', producto.cantidadOferta === 0  ? producto.aplicarDescuento : false);
+        return this.http.get(_baseUrl, { search: params })
+            .map(function (res) { return res.json(); })
+            .catch(this.handleError);
+    };
     SelectorPlantillaVentaService.prototype.handleError = function (error) {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
@@ -54,5 +69,5 @@ var SelectorPlantillaVentaService = (function () {
         __metadata('design:paramtypes', [http_1.Http])
     ], SelectorPlantillaVentaService);
     return SelectorPlantillaVentaService;
-})();
+}());
 exports.SelectorPlantillaVentaService = SelectorPlantillaVentaService;

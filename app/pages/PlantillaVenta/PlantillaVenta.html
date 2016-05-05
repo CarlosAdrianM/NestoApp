@@ -19,22 +19,24 @@
         <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}"></selector-plantilla-venta>
     </ion-slide>
     <ion-slide>
-        <h3>Resumen</h3>
-        <ion-list *ngIf="productosResumen">
-            <ion-item *ngFor="#producto of productosResumen">
-                <ion-avatar item-left>
-                    <img src="{{producto.urlImagen}}">
-                </ion-avatar>
-                <h2>{{producto.texto}}</h2>
-                <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
-                <p>{{producto.precio | currency:'EUR':true}} (Dto: {{producto.descuento | percent}})</p>
-                <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
-            </ion-item>
-            <ion-item>
-                <ion-label floating>Comentarios Picking (los ven en almacén)</ion-label>
-                <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
-            </ion-item>
-        </ion-list>
+        <ion-content>
+            <h3>Resumen</h3>
+            <ion-list *ngIf="productosResumen">
+                <ion-item *ngFor="#producto of productosResumen">
+                    <ion-avatar item-left>
+                        <img src="{{producto.urlImagen}}">
+                    </ion-avatar>
+                    <h2>{{producto.texto}}</h2>
+                    <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+                    <p>{{producto.precio | currency:'EUR':true}} (Dto: {{producto.descuento | percent}})</p>
+                    <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
+                </ion-item>
+                <ion-item>
+                    <ion-label floating>Comentarios Picking (los ven en almacén)</ion-label>
+                    <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
+                </ion-item>
+            </ion-list>
+        </ion-content>
     </ion-slide>
     <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
         <ion-content>
@@ -69,7 +71,7 @@
                 <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true}}</ion-col>
             </ion-row>
         </ion-item>
-        <ion-item style="text-align:center" (doubletap)="cambiarIVA()">
+        <ion-item style="text-align:center" (press)="cambiarIVA()">
             {{direccionSeleccionada.iva}}
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="direccionSeleccionada.formaPago = $event"></selector-formas-pago>

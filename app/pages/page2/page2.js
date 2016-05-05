@@ -20,5 +20,5 @@ var Page2 = (function () {
         __metadata('design:paramtypes', [])
     ], Page2);
     return Page2;
-})();
+}());
 exports.Page2 = Page2;

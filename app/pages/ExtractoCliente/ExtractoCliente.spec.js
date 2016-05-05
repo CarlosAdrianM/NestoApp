@@ -1,3 +1,4 @@
+"use strict";
 function main() {
     'use strict';
     describe('1st tests', function () {

@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,13 +12,21 @@ var core_1 = require('angular2/core');
 var http_1 = require('angular2/http');
 var Rx_1 = require('rxjs/Rx');
 var configuracion_1 = require('../../componentes/configuracion/configuracion');
+var Usuario_1 = require('../../models/Usuario');
 var SelectorClientesService = (function () {
-    function SelectorClientesService(http) {
-        this._clientesUrl = configuracion_1.Configuracion.API_URL + '/Clientes?empresa=' + configuracion_1.Configuracion.EMPRESA_POR_DEFECTO + '&filtro='; // URL to web api
+    function SelectorClientesService(http, usuario) {
+        this._clientesUrl = configuracion_1.Configuracion.API_URL + '/Clientes';
         this.http = http;
+        this.usuario = usuario;
     }
     SelectorClientesService.prototype.getClientes = function (filtro) {
-        return this.http.get(this._clientesUrl + filtro)
+        var params = new http_1.URLSearchParams();
+        params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('filtro', filtro);
+        if (this.usuario.vendedor) {
+            params.set('vendedor', this.usuario.vendedor);
+        }
+        return this.http.get(this._clientesUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
@@ -29,8 +38,8 @@ var SelectorClientesService = (function () {
     };
     SelectorClientesService = __decorate([
         core_1.Injectable(), 
-        __metadata('design:paramtypes', [http_1.Http])
+        __metadata('design:paramtypes', [http_1.Http, Usuario_1.Usuario])
     ], SelectorClientesService);
     return SelectorClientesService;
-})();
+}());
 exports.SelectorClientesService = SelectorClientesService;

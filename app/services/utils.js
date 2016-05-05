@@ -20,5 +20,5 @@ var Utils = (function () {
         return control;
     };
     return Utils;
-})();
+}());
 exports.Utils = Utils;

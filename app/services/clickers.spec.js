@@ -1,3 +1,4 @@
+"use strict";
 var clickers_1 = require('./clickers');
 var CLICKER_IDS = ['yy5d8klsj0', 'q20iexxg4a', 'wao2xajl8a'];
 var clickers = null;

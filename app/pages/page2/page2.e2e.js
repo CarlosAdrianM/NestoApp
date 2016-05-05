@@ -1,3 +1,4 @@
+"use strict";
 var message = element(by.className('message'));
 describe('Page2', function () {
     beforeEach(function () {

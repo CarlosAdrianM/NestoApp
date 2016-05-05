@@ -1,3 +1,4 @@
+"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -44,6 +45,7 @@ var ExtractoCliente = (function () {
                     _this.resumenDeuda.vencida += mov.importePendiente;
                 }
                 _this.resumenDeuda.total += mov.importePendiente;
+                mov.vencimientoMostrar = new Date(mov.vencimiento);
             }
             console.log(_this.resumenDeuda);
         }, function (error) { return _this.errorMessage = error; });
@@ -57,5 +59,5 @@ var ExtractoCliente = (function () {
         __metadata('design:paramtypes', [ExtractoCliente_service_1.ExtractoClienteService])
     ], ExtractoCliente);
     return ExtractoCliente;
-})();
+}());
 exports.ExtractoCliente = ExtractoCliente;

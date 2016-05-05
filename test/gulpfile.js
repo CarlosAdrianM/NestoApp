@@ -1,3 +1,4 @@
+"use strict";
 var config_1 = require('./config');
 var path_1 = require('path');
 var chalk = require('chalk');

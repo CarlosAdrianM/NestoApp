@@ -1,3 +1,4 @@
+"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -42,25 +43,22 @@ var SelectorClientes = (function (_super) {
                 _this.inicializarDatos(data);
             }
         }, function (error) {
-            loading.dismiss();
+            // loading.dismiss();
             _this.errorMessage = error;
         }, function () {
             loading.dismiss();
         });
     };
-    SelectorClientes.prototype.seleccionarCliente = function (cliente) {
-        this.seleccionar.emit(cliente);
-    };
     SelectorClientes = __decorate([
         core_1.Component({
             selector: 'selector-clientes',
             templateUrl: 'build/componentes/SelectorClientes/SelectorClientes.html',
-            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item],
+            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Icon, ionic_angular_1.Content],
             providers: [SelectorClientes_service_1.SelectorClientesService],
         }),
         core_1.Injectable(), 
         __metadata('design:paramtypes', [SelectorClientes_service_1.SelectorClientesService, ionic_angular_1.NavController])
     ], SelectorClientes);
     return SelectorClientes;
-})(SelectorBase_1.SelectorBase);
+}(SelectorBase_1.SelectorBase));
 exports.SelectorClientes = SelectorClientes;

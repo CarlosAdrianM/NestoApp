@@ -17,7 +17,8 @@ export class SelectorPlantillaVentaDetalle {
         if (!this.producto.stockActualizado) {
             this.comprobarSiExisteElProducto(this.producto);
         }
-        this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
+        // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
+        this.actualizarCantidad(this.producto);
     }
 
     private errorMessage: string;
@@ -42,10 +43,21 @@ export class SelectorPlantillaVentaDetalle {
     }
 
     private actualizarCantidad(producto: any): void {
+        if (producto.cantidadOferta > 0) {
+            producto.aplicarDescuento = false;
+        } else {
+            producto.aplicarDescuento = producto.aplicarDescuentoFicha;
+        }
+
         this.servicio.actualizarPrecioProducto(producto, this.cliente).subscribe(
             data => {
                 producto.precio = data.precio;
-                this.actualizarDescuento(data.descuento*100);
+                producto.descuentoProducto = data.descuento;
+                
+                producto.aplicarDescuento = data.aplicarDescuento;
+                if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
+                    this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
+                }
             },
             error => this.errorMessage = <any>error
         );
@@ -61,7 +73,7 @@ export class SelectorPlantillaVentaDetalle {
         
         if (cantidad === 0 && cantidadOferta === 0) {
             producto.colorStock = 'default';
-        } else if (producto.cantidadDisponible >= cantidad + producto.cantidadOferta) {
+        } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
             producto.colorStock = 'secondary';
         } else if (producto.stock >= cantidad + cantidadOferta) {
             producto.colorStock = 'dark';

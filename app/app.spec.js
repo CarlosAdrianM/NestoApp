@@ -1,7 +1,9 @@
+"use strict";
 var browser_1 = require('angular2/platform/testing/browser');
 var testing_1 = require('angular2/testing');
 var ionic_angular_1 = require('ionic-angular');
 var app_1 = require('./app');
+var Usuario_1 = require('./models/Usuario');
 // this needs doing _once_ for the entire test suite, hence it's here
 testing_1.setBaseTestProviders(browser_1.TEST_BROWSER_PLATFORM_PROVIDERS, browser_1.TEST_BROWSER_APPLICATION_PROVIDERS);
 var nestoApp = null;
@@ -19,7 +21,8 @@ function main() {
         beforeEach(function () {
             var ionicApp = new ionic_angular_1.IonicApp(null, null, null);
             var platform = new ionic_angular_1.Platform();
-            nestoApp = new app_1.NestoApp(ionicApp, platform);
+            var usuario = new Usuario_1.Usuario();
+            nestoApp = new app_1.NestoApp(ionicApp, platform, usuario);
         });
         it('initialises with three possible pages', function () {
             expect(nestoApp['pages'].length).toEqual(3);

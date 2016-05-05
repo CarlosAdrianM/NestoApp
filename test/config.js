@@ -1,3 +1,4 @@
+"use strict";
 exports.APP_DIR = 'app';
 exports.TEST_DIR = 'test';
 exports.TYPINGS_DIR = 'typings';

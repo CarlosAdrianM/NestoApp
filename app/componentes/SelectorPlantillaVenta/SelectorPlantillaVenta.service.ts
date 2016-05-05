@@ -52,7 +52,8 @@ export class SelectorPlantillaVentaService {
         params.set('contacto', '0'); // porque aún no sabemos la dirección de entrega
         params.set('productoPrecio', producto.producto);
         params.set('cantidad', producto.cantidad);
-        params.set('aplicarDescuento', producto.cantidadOferta === 0  ? producto.aplicarDescuento : false);
+        params.set('aplicarDescuento', producto.aplicarDescuento);
+        // params.set('aplicarDescuento', producto.cantidadOferta === 0  ? producto.aplicarDescuento : false);
 
         return this.http.get(_baseUrl, { search: params })
             .map(res => <any[]>res.json())

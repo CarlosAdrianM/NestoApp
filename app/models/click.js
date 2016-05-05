@@ -11,5 +11,5 @@ var Click = (function () {
         return this.location;
     };
     return Click;
-})();
+}());
 exports.Click = Click;

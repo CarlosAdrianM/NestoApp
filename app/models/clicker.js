@@ -23,5 +23,5 @@ var Clicker = (function () {
         return this.name;
     };
     return Clicker;
-})();
+}());
 exports.Clicker = Clicker;

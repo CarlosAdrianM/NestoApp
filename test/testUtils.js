@@ -14,5 +14,5 @@ var TestUtils = (function () {
         }
     };
     return TestUtils;
-})();
+}());
 exports.TestUtils = TestUtils;

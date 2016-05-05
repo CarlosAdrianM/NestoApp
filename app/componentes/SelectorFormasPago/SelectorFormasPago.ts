@@ -44,10 +44,6 @@ export class SelectorFormasPago extends SelectorBase {
                     });
                     this.nav.present(alert);
                 } else {
-                    for (let forma of data) {
-                        forma.numero = forma.Número;
-                        forma.descripcion = forma.Descripción;
-                    }
                     this.inicializarDatos(data);
                 }
             },

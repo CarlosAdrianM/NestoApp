@@ -1,3 +1,4 @@
+"use strict";
 var ExtractoCliente_service_1 = require('./ExtractoCliente.service');
 var core_1 = require('angular2/core');
 var testing_1 = require('angular2/testing');

@@ -42,8 +42,8 @@ var Clickers = (function () {
         // get all existing ids
         return new Promise(function (resolve) {
             var clickers = [];
-            for (var _i = 0; _i < ids.length; _i++) {
-                var id = ids[_i];
+            for (var _i = 0, ids_1 = ids; _i < ids_1.length; _i++) {
+                var id = ids_1[_i];
                 _this.storage.get(id)
                     .then(function (clicker) {
                     clickers.push(_this.initClicker(clicker));
@@ -109,5 +109,5 @@ var Clickers = (function () {
         __metadata('design:paramtypes', [])
     ], Clickers);
     return Clickers;
-})();
+}());
 exports.Clickers = Clickers;

@@ -1,3 +1,4 @@
+"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -44,32 +45,31 @@ var SelectorDireccionesEntrega = (function (_super) {
                     }
                     if (_this.direccionesEntrega[i].esDireccionPorDefecto) {
                         _this.direccionSeleccionada = _this.direccionesEntrega[i];
+                        _this.seleccionarDato(_this.direccionSeleccionada);
                     }
                     i++;
                 }
             }
         }, function (error) { return _this.errorMessage = error; });
     };
-    SelectorDireccionesEntrega.prototype.seleccionarDireccion = function (cliente) {
-        this.seleccionar.emit(cliente);
+    SelectorDireccionesEntrega.prototype.seleccionarDireccion = function (direccion) {
+        this.direccionSeleccionada = direccion;
+        this.seleccionarDato(direccion);
     };
     SelectorDireccionesEntrega.prototype.ngOnChanges = function () {
         this.cargarDatos(this.cliente);
     };
-    __decorate([
-        core_1.Input(), 
-        __metadata('design:type', Object)
-    ], SelectorDireccionesEntrega.prototype, "cliente", void 0);
     SelectorDireccionesEntrega = __decorate([
         core_1.Component({
             selector: 'selector-direcciones-entrega',
             templateUrl: 'build/componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega.html',
             directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Icon],
             providers: [SelectorDireccionesEntrega_service_1.SelectorDireccionesEntregaService],
+            inputs: ['cliente'],
         }),
         core_1.Injectable(), 
         __metadata('design:paramtypes', [SelectorDireccionesEntrega_service_1.SelectorDireccionesEntregaService, ionic_angular_1.NavController])
     ], SelectorDireccionesEntrega);
     return SelectorDireccionesEntrega;
-})(SelectorBase_1.SelectorBase);
+}(SelectorBase_1.SelectorBase));
 exports.SelectorDireccionesEntrega = SelectorDireccionesEntrega;

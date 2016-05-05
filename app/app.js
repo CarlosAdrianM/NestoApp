@@ -8,22 +8,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-require('es6-shim');
+var core_1 = require('angular2/core');
 var ionic_angular_1 = require('ionic-angular');
-var page2_1 = require('./pages/page2/page2');
+var http_1 = require('angular2/http');
+var angular2_jwt_1 = require('angular2-jwt');
+var Usuario_1 = require('./models/Usuario');
+var profile_1 = require('./pages/profile/profile');
 var ExtractoCliente_1 = require('./pages/ExtractoCliente/ExtractoCliente');
 var PlantillaVenta_1 = require('./pages/PlantillaVenta/PlantillaVenta');
 var NestoApp = (function () {
-    function NestoApp(app, platform) {
+    function NestoApp(app, platform, usuario) {
         this.app = app;
         this.platform = platform;
+        this.usuario = usuario;
         this.rootPage = PlantillaVenta_1.PlantillaVenta;
         this.initializeApp();
         // set our app's pages
         this.pages = [
             { title: 'Plantilla Venta', component: PlantillaVenta_1.PlantillaVenta },
+            // { title: 'Pedidos Venta', component: ListaPedidosVenta},
             { title: 'Extracto Cliente', component: ExtractoCliente_1.ExtractoCliente },
-            { title: 'Goodbye Ionic', component: page2_1.Page2 },
+            { title: 'Usuario', component: profile_1.ProfilePage },
         ];
     }
     NestoApp.prototype.initializeApp = function () {
@@ -55,9 +60,18 @@ var NestoApp = (function () {
         ionic_angular_1.App({
             templateUrl: 'build/app.html',
             config: {},
+            providers: [
+                core_1.provide(angular2_jwt_1.AuthHttp, {
+                    useFactory: function (http) {
+                        return new angular2_jwt_1.AuthHttp(new angular2_jwt_1.AuthConfig, http);
+                    },
+                    deps: [http_1.Http],
+                }),
+                Usuario_1.Usuario,
+            ],
         }), 
-        __metadata('design:paramtypes', [ionic_angular_1.IonicApp, ionic_angular_1.Platform])
+        __metadata('design:paramtypes', [ionic_angular_1.IonicApp, ionic_angular_1.Platform, Usuario_1.Usuario])
     ], NestoApp);
     return NestoApp;
-})();
+}());
 exports.NestoApp = NestoApp;
