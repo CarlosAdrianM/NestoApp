@@ -18,7 +18,11 @@ export class SelectorPlantillaVentaDetalle {
             this.comprobarSiExisteElProducto(this.producto);
         }
         // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
-        this.actualizarCantidad(this.producto);
+        if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            this.actualizarCantidad(this.producto);
+        } else {
+            this.actualizarDescuento(this.producto.descuento * 100);
+        }
     }
 
     private errorMessage: string;
@@ -63,6 +67,11 @@ export class SelectorPlantillaVentaDetalle {
         );
 
         this.seleccionarColorStock(producto);
+    }
+
+    private actualizarPrecio(): void {
+        // Esto lo hacemos porque guarda el precio como string y da error
+        this.producto.precio = +this.producto.precio;
     }
 
     private seleccionarColorStock(producto: any): void {

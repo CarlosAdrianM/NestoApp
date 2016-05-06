@@ -44,10 +44,6 @@ export class SelectorPlazosPago extends SelectorBase {
                     });
                     this.nav.present(alert);
                 } else {
-                    for (let plazo of data) {
-                        plazo.numero = plazo.Número;
-                        plazo.descripcion = plazo.Descripción;
-                    }
                     this.inicializarDatos(data);
                 }
             },

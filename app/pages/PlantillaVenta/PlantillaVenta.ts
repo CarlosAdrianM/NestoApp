@@ -146,7 +146,7 @@ export class PlantillaVenta {
             'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
             'ruta': this.direccionSeleccionada.ruta,
             'serie': 'NV', // calcular
-            'ccc': this.direccionSeleccionada.ccc,
+            'ccc': this.direccionSeleccionada.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
             'origen': this.clienteSeleccionado.empresa.trim(),
             'contactoCobro': this.clienteSeleccionado.contacto.trim(), // calcular
             'noComisiona': this.direccionSeleccionada.noComisiona,

@@ -47,7 +47,7 @@
                                 [attr.secondary]="producto.colorStock == 'secondary' ? '' : null" 
                                 [attr.dark]="producto.colorStock == 'dark' ? '' : null" 
                                 [attr.danger]="producto.colorStock == 'danger' ? '' : null">Precio</ion-label>
-                            <ion-input type="number"  disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input type="number"  disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (change)="actualizarPrecio()" (focus)="seleccionarTexto($event)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
