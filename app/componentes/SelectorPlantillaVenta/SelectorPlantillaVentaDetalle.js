@@ -22,7 +22,10 @@ var SelectorPlantillaVentaDetalle = (function () {
             this.comprobarSiExisteElProducto(this.producto);
         }
         // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
-        this.actualizarCantidad(this.producto);
+        if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            this.actualizarCantidad(this.producto);
+        }
+        this.actualizarDescuento(this.producto.descuento * 100);
     }
     SelectorPlantillaVentaDetalle.prototype.comprobarSiExisteElProducto = function (producto) {
         var _this = this;
@@ -51,6 +54,10 @@ var SelectorPlantillaVentaDetalle = (function () {
             }
         }, function (error) { return _this.errorMessage = error; });
         this.seleccionarColorStock(producto);
+    };
+    SelectorPlantillaVentaDetalle.prototype.actualizarPrecio = function () {
+        // Esto lo hacemos porque guarda el precio como string y da error
+        this.producto.precio = +this.producto.precio;
     };
     SelectorPlantillaVentaDetalle.prototype.seleccionarColorStock = function (producto) {
         var cantidad = producto.cantidad;

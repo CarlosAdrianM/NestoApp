@@ -1,7 +1,7 @@
 'use strict';
 
 import { Type, provide }           from 'angular2/core';
-import { App, IonicApp, Platform } from 'ionic-angular';
+import { App, IonicApp, Platform, Alert } from 'ionic-angular';
 import {Http}                      from 'angular2/http';
 import {AuthHttp, AuthConfig}      from 'angular2-jwt';
 import {Usuario}                   from './models/Usuario';
@@ -64,7 +64,8 @@ export class NestoApp {
       // For example, we might change the StatusBar color. This one below is
       // good for dark backgrounds and light text:
       // StatusBar.setStyle(StatusBar.LIGHT_CONTENT)
-    });
+        
+      });
   }
 
   public openPage(page: any): void {

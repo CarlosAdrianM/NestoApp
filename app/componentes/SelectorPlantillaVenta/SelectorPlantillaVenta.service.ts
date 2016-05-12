@@ -60,6 +60,22 @@ export class SelectorPlantillaVentaService {
             .catch(this.handleError);
     }
 
+    public comprobarCondicionesPrecio(linea: any): Observable<any> {
+        let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/ComprobarCondiciones';
+        let params: URLSearchParams = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('producto', linea.producto);
+        params.set('aplicarDescuento', linea.aplicarDescuento); 
+        params.set('precio', linea.precio);
+        params.set('descuento', linea.descuento);
+        params.set('cantidad', linea.cantidad);
+        params.set('cantidadOferta', linea.cantidadOferta);
+
+        return this.http.get(_baseUrl, { search: params })
+            .map(res => <any[]>res.json())
+            .catch(this.handleError);
+    }
+
     private handleError(error: Response): Observable<any> {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console

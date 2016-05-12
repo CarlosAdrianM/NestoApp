@@ -44,11 +44,6 @@ var SelectorPlazosPago = (function (_super) {
                 _this.nav.present(alert_1);
             }
             else {
-                for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-                    var plazo = data_1[_i];
-                    plazo.numero = plazo.Número;
-                    plazo.descripcion = plazo.Descripción;
-                }
                 _this.inicializarDatos(data);
             }
         }, function (error) {

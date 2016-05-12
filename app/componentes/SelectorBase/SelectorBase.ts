@@ -73,9 +73,12 @@ export abstract class SelectorBase {
         this.inicializarDatos([]);
     }
 
-    protected agregarDato(dato: any): void {
+    protected agregarDato(dato: any): boolean {
         if (this.datosInicial.indexOf(dato) === -1) {
             this.datosInicial.push(dato);
+            return true;
+        } else {
+            return false;
         }
     }
 

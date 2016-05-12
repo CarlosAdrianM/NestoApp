@@ -16,6 +16,7 @@ var Usuario_1 = require('./models/Usuario');
 var profile_1 = require('./pages/profile/profile');
 var ExtractoCliente_1 = require('./pages/ExtractoCliente/ExtractoCliente');
 var PlantillaVenta_1 = require('./pages/PlantillaVenta/PlantillaVenta');
+var ListaPedidosVenta_1 = require('./pages/ListaPedidosVenta/ListaPedidosVenta');
 var NestoApp = (function () {
     function NestoApp(app, platform, usuario) {
         this.app = app;
@@ -26,7 +27,7 @@ var NestoApp = (function () {
         // set our app's pages
         this.pages = [
             { title: 'Plantilla Venta', component: PlantillaVenta_1.PlantillaVenta },
-            // { title: 'Pedidos Venta', component: ListaPedidosVenta},
+            { title: 'Pedidos Venta', component: ListaPedidosVenta_1.ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente_1.ExtractoCliente },
             { title: 'Usuario', component: profile_1.ProfilePage },
         ];

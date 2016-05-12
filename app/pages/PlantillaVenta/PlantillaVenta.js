@@ -22,7 +22,7 @@ var ionic_native_1 = require('ionic-native');
 var SelectorFormasPago_1 = require('../../componentes/SelectorFormasPago/SelectorFormasPago');
 var SelectorPlazosPago_1 = require('../../componentes/SelectorPlazosPago/SelectorPlazosPago');
 var PlantillaVenta = (function () {
-    function PlantillaVenta(nav, servicio, usuario, parametros) {
+    function PlantillaVenta(nav, servicio, usuario, parametros, platform, events) {
         var _this = this;
         this.fechaEntrega = new Date();
         this.hoy = new Date();
@@ -37,13 +37,19 @@ var PlantillaVenta = (function () {
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
-            onInit: function (slides) { return _this.slider = slides; },
+            onInit: function (slides) {
+                _this.slider = slides;
+                platform.backButton.subscribe(function () {
+                    _this.slider.slidePrev();
+                });
+            },
             onSlideChangeStart: function (slides) { return _this.avanzar(slides); },
         };
         this.nav = nav;
         this.servicio = servicio;
         this.usuario = usuario;
         this.parametros = parametros;
+        this.platform = platform;
         this.cargarParametros();
     }
     PlantillaVenta.prototype.cargarProductos = function (cliente) {
@@ -124,7 +130,7 @@ var PlantillaVenta = (function () {
             'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
             'ruta': this.direccionSeleccionada.ruta,
             'serie': 'NV',
-            'ccc': this.direccionSeleccionada.ccc,
+            'ccc': this.direccionSeleccionada.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
             'origen': this.clienteSeleccionado.empresa.trim(),
             'contactoCobro': this.clienteSeleccionado.contacto.trim(),
             'noComisiona': this.direccionSeleccionada.noComisiona,
@@ -232,6 +238,19 @@ var PlantillaVenta = (function () {
             mode: 'date',
             minDate: new Date()
         }).then(function (date) { return _this.fechaEntrega = date; }, function (err) { return console.log('Error al seleccionar la fecha de entrega'); });
+        /*
+        let options = {
+            date: new Date(),
+            mode: 'date'
+        }
+
+        
+        DatePicker.show(options, (date) => {
+            this.fechaEntrega = date;
+        }, (error) => {
+            console.log('Error al seleccionar la fecha de entrega';
+        });
+        */
     };
     PlantillaVenta.prototype.totalPedido = function () {
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
@@ -253,7 +272,7 @@ var PlantillaVenta = (function () {
             directives: [SelectorClientes_1.SelectorClientes, SelectorPlantillaVenta_1.SelectorPlantillaVenta, SelectorDireccionesEntrega_1.SelectorDireccionesEntrega, SelectorFormasPago_1.SelectorFormasPago, SelectorPlazosPago_1.SelectorPlazosPago],
             providers: [PlantillaVenta_service_1.PlantillaVentaService, Parametros_service_1.Parametros],
         }), 
-        __metadata('design:paramtypes', [ionic_angular_1.NavController, PlantillaVenta_service_1.PlantillaVentaService, Usuario_1.Usuario, Parametros_service_1.Parametros])
+        __metadata('design:paramtypes', [ionic_angular_1.NavController, PlantillaVenta_service_1.PlantillaVentaService, Usuario_1.Usuario, Parametros_service_1.Parametros, ionic_angular_1.Platform, ionic_angular_1.Events])
     ], PlantillaVenta);
     return PlantillaVenta;
 }());

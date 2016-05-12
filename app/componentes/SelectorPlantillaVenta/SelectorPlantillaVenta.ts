@@ -61,7 +61,9 @@ export class SelectorPlantillaVenta extends SelectorBase {
     }
 
     public abrirDetalle(producto: any): void {
-        this.agregarDato(producto);
+        if (this.agregarDato(producto)) {
+            producto.aplicarDescuentoFicha = producto.aplicarDescuento;
+        }
         this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente });
     }
 
@@ -100,6 +102,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
     }
 
     get totalPedido(): number {
+        // Hay que calcularlo bien
         return this._baseImponiblePedido * 1.21;
     }
 

@@ -1,4 +1,4 @@
-﻿import {Page, NavController, Alert, Loading} from 'ionic-angular';
+﻿import {Page, NavController, Alert, Loading, Platform, Events} from 'ionic-angular';
 import {ViewChild} from 'angular2/core';
 import {SelectorClientes} from '../../componentes/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta';
@@ -21,8 +21,9 @@ export class PlantillaVenta {
     private servicio: PlantillaVentaService;
     private usuario: Usuario;
     private parametros: Parametros;
+    private platform: Platform;
 
-    constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario, parametros: Parametros) {
+    constructor(nav: NavController, servicio: PlantillaVentaService, usuario: Usuario, parametros: Parametros, platform: Platform, events: Events) {
         // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
         if (!usuario.nombre) {
             nav.push(ProfilePage);
@@ -31,13 +32,19 @@ export class PlantillaVenta {
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
-            onInit: (slides: any): any => this.slider = slides,
+            onInit: (slides: any): any => {
+                this.slider = slides;
+                platform.backButton.subscribe(() => {
+                    this.slider.slidePrev();
+                });
+            },
             onSlideChangeStart: (slides: any): void => this.avanzar(slides),
         };
         this.nav = nav;
         this.servicio = servicio;
         this.usuario = usuario;
         this.parametros = parametros;
+        this.platform = platform;
 
         this.cargarParametros();
         
@@ -274,6 +281,7 @@ export class PlantillaVenta {
     }
 
     private seleccionarFechaEntrega() {
+        
         DatePicker.show({
             date: this.fechaEntrega,
             mode: 'date',
@@ -282,6 +290,20 @@ export class PlantillaVenta {
             date => this.fechaEntrega = date,
             err => console.log('Error al seleccionar la fecha de entrega')
         );
+        
+        /*
+        let options = {
+            date: new Date(),
+            mode: 'date'
+        }
+
+        
+        DatePicker.show(options, (date) => {
+            this.fechaEntrega = date;
+        }, (error) => {
+            console.log('Error al seleccionar la fecha de entrega';
+        });
+        */
     }
 
     private totalPedido(): number {

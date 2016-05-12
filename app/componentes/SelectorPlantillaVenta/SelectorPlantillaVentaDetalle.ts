@@ -1,4 +1,4 @@
-﻿import {Page, NavController, NavParams} from 'ionic-angular';
+﻿import {Page, NavController, NavParams, Alert} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
 
@@ -20,9 +20,9 @@ export class SelectorPlantillaVentaDetalle {
         // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
         if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
             this.actualizarCantidad(this.producto);
-        } else {
-            this.actualizarDescuento(this.producto.descuento * 100);
-        }
+        } 
+        this.actualizarDescuento(this.producto.descuento * 100);
+
     }
 
     private errorMessage: string;
@@ -66,12 +66,50 @@ export class SelectorPlantillaVentaDetalle {
             error => this.errorMessage = <any>error
         );
 
+        this.comprobarCondicionesPrecio();
+
         this.seleccionarColorStock(producto);
     }
 
     private actualizarPrecio(): void {
         // Esto lo hacemos porque guarda el precio como string y da error
         this.producto.precio = +this.producto.precio;
+        this.comprobarCondicionesPrecio();
+    }
+
+    private comprobarCondicionesPrecio(): void {
+        if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            return;
+        }
+        this.servicio.comprobarCondicionesPrecio(this.producto).subscribe(
+            data => {
+                if (data.motivo && data.motivo !== '') {
+                    let alert: Alert = Alert.create({
+                        title: 'Gestor de Precios',
+                        subTitle: data.motivo,
+                        buttons: ['Ok'],
+                    });
+                    this.nav.present(alert);
+                    if (this.producto.precio !== data.precio) {
+                        this.producto.precio = data.precio;
+                    }
+                    if (this.producto.descuento !== data.descuento) {
+                        this.producto.descuento = data.descuento;
+                        this.actualizarDescuento(this.producto.descuento * 100);
+                    }
+                    if (this.producto.aplicarDescuento !== data.aplicarDescuento) {
+                        this.producto.aplicarDescuento = data.aplicarDescuento;
+                    }
+                    if (this.producto.cantidadOferta !== 0) {
+                        this.producto.cantidadOferta = 0;
+                    }
+                    
+                }
+            },
+            error => {
+                this.errorMessage = <any>error;
+            }
+        )
     }
 
     private seleccionarColorStock(producto: any): void {
@@ -94,6 +132,7 @@ export class SelectorPlantillaVentaDetalle {
     private actualizarDescuento(descuento: number): void {
         this.producto.descuento = descuento / 100;
         this.descuentoMostrar = descuento + '%';
+        this.comprobarCondicionesPrecio();
     }
     
     public seleccionarTexto(evento: any): void {
@@ -105,7 +144,7 @@ export class SelectorPlantillaVentaDetalle {
     }
 
     private sePuedeHacerDescuento(producto: any): boolean {
-        return producto.aplicarDescuento && producto.subGrupo !== 'Otros aparatos';
+        return producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
     }
 
 }
