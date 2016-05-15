@@ -1,4 +1,4 @@
-﻿import {Page, NavController, NavParams, Alert} from 'ionic-angular';
+﻿import {Page, NavController, NavParams, Alert, Toast} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
 
@@ -55,13 +55,23 @@ export class SelectorPlantillaVentaDetalle {
 
         this.servicio.actualizarPrecioProducto(producto, this.cliente).subscribe(
             data => {
-                producto.precio = data.precio;
-                producto.descuentoProducto = data.descuento;
-                
-                producto.aplicarDescuento = data.aplicarDescuento;
-                if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
-                    this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
+                if (producto.precio !== data.precio) {
+                    producto.precio = data.precio;
                 }
+                if (producto.aplicarDescuento !== data.aplicarDescuento) {
+                    producto.aplicarDescuento = data.aplicarDescuento;
+                    if (!producto.aplicarDescuento) {
+                        producto.descuento = 0;
+                        this.actualizarDescuento(0);
+                    }
+                }
+                if (producto.aplicarDescuento && producto.descuento !== data.descuento) {
+                    producto.descuento = data.descuento;
+                    this.actualizarDescuento(producto.descuento);
+                }
+                // if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
+                //this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
+                // }
             },
             error => this.errorMessage = <any>error
         );
@@ -84,18 +94,16 @@ export class SelectorPlantillaVentaDetalle {
         this.servicio.comprobarCondicionesPrecio(this.producto).subscribe(
             data => {
                 if (data.motivo && data.motivo !== '') {
+                    /*
                     let alert: Alert = Alert.create({
                         title: 'Gestor de Precios',
                         subTitle: data.motivo,
                         buttons: ['Ok'],
                     });
                     this.nav.present(alert);
-                    if (this.producto.precio !== data.precio) {
+                    */
+                    if(this.producto.precio !== data.precio) {
                         this.producto.precio = data.precio;
-                    }
-                    if (this.producto.descuento !== data.descuento) {
-                        this.producto.descuento = data.descuento;
-                        this.actualizarDescuento(this.producto.descuento * 100);
                     }
                     if (this.producto.aplicarDescuento !== data.aplicarDescuento) {
                         this.producto.aplicarDescuento = data.aplicarDescuento;
@@ -103,7 +111,15 @@ export class SelectorPlantillaVentaDetalle {
                     if (this.producto.cantidadOferta !== 0) {
                         this.producto.cantidadOferta = 0;
                     }
-                    
+                    if (this.producto.descuento !== data.descuento) {
+                        this.producto.descuento = data.descuento;
+                        this.actualizarDescuento(this.producto.descuento * 100);
+                    }
+                    let toast = Toast.create({
+                        message: data.motivo,
+                        duration: 3000
+                    });
+                    this.nav.present(toast);
                 }
             },
             error => {
@@ -144,7 +160,7 @@ export class SelectorPlantillaVentaDetalle {
     }
 
     private sePuedeHacerDescuento(producto: any): boolean {
-        return producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
+        return (producto.cantidadOferta === 0 || producto.cantidadOferta === "0") && producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
     }
 
 }

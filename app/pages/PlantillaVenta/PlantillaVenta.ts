@@ -70,6 +70,10 @@ export class PlantillaVenta {
     @ViewChild(SelectorClientes)
     private _selectorClientes: SelectorClientes;
 
+    onPageWillLeave() {
+        console.log("Looks like I'm about to leave :(");
+    }
+
     public cargarProductos(cliente: any): void {
         if (!this.clienteSeleccionado) {
             this.cargarProductosPlantilla(cliente);
