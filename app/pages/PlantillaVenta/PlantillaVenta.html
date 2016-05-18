@@ -28,7 +28,7 @@
                     </ion-avatar>
                     <h2>{{producto.texto}}</h2>
                     <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
-                    <p>{{+producto.precio | currency:'EUR':true}} (Dto: {{producto.descuento | percent}})</p>
+                    <p>{{+producto.precio | currency:'EUR':true:'1.0-2'}} (Dto: {{producto.descuento | percent}})</p>
                     <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
                 </ion-item>
                 <ion-item>
@@ -68,14 +68,14 @@
         <ion-item>
             <ion-row>
                 <ion-col>Total pedido:</ion-col>
-                <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true}}</ion-col>
+                <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true:'1.0-2'}}</ion-col>
             </ion-row>
         </ion-item>
         <ion-item style="text-align:center" (press)="cambiarIVA()">
             {{direccionSeleccionada.iva}}
         </ion-item>
-        <selector-formas-pago *ngIf="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="direccionSeleccionada.formaPago = $event"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="direccionSeleccionada.plazosPago = $event"></selector-plazos-pago>
+        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
         <button block (click)="crearPedido()">Crear Pedido</button>
     </ion-slide>
 </ion-slides>

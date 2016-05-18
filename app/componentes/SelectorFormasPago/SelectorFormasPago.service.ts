@@ -16,9 +16,12 @@ export class SelectorFormasPagoService {
 
     private _baseUrl: string = Configuracion.API_URL + '/FormasPago'
 
-    public getFormasPago(): Observable<any[]> {
+    public getFormasPago(cliente: any): Observable<any[]> {
         let params: URLSearchParams = new URLSearchParams();
         params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        if (cliente) {
+            params.set('cliente', cliente);
+        }
         return this.http.get(this._baseUrl, { search: params })
             .map(res => <any[]>res.json())
             .catch(this.handleError);

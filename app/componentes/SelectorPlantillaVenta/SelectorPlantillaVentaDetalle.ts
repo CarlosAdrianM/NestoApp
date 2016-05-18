@@ -60,14 +60,14 @@ export class SelectorPlantillaVentaDetalle {
                 }
                 if (producto.aplicarDescuento !== data.aplicarDescuento) {
                     producto.aplicarDescuento = data.aplicarDescuento;
-                    if (!producto.aplicarDescuento) {
+                    if (!producto.aplicarDescuento && producto.descuento !== 0) {
                         producto.descuento = 0;
                         this.actualizarDescuento(0);
                     }
                 }
                 if (producto.aplicarDescuento && producto.descuento !== data.descuento) {
                     producto.descuento = data.descuento;
-                    this.actualizarDescuento(producto.descuento);
+                    this.actualizarDescuento(producto.descuento * 100);
                 }
                 // if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
                 //this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
@@ -110,6 +110,7 @@ export class SelectorPlantillaVentaDetalle {
                     }
                     if (this.producto.cantidadOferta !== 0) {
                         this.producto.cantidadOferta = 0;
+                        this.producto.aplicarDescuento = this.producto.aplicarDescuentoFicha;
                     }
                     if (this.producto.descuento !== data.descuento) {
                         this.producto.descuento = data.descuento;

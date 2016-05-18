@@ -63,6 +63,8 @@ export class PlantillaVenta {
         mode: 'date',
     };
     private iva: string;
+    private formaPago: any;
+    private plazosPago: any;
 
     @ViewChild(SelectorPlantillaVenta)
     private _selectorPlantillaVenta: SelectorPlantillaVenta;
@@ -70,10 +72,10 @@ export class PlantillaVenta {
     @ViewChild(SelectorClientes)
     private _selectorClientes: SelectorClientes;
 
-    onPageWillLeave() {
-        console.log("Looks like I'm about to leave :(");
+    onPageWillUnload() {
+        console.log("Guardamos el pedido");
     }
-
+    
     public cargarProductos(cliente: any): void {
         if (!this.clienteSeleccionado) {
             this.cargarProductosPlantilla(cliente);
@@ -147,8 +149,8 @@ export class PlantillaVenta {
             'cliente': this.clienteSeleccionado.cliente.trim(),
             'contacto': this.direccionSeleccionada.contacto,
             'fecha': this.hoy,
-            'formaPago': this.direccionSeleccionada.formaPago,
-            'plazosPago': this.direccionSeleccionada.plazosPago.trim(),
+            'formaPago': this.formaPago,
+            'plazosPago': this.plazosPago.trim(),
             'primerVencimiento': this.hoy, // se calcula en la API
             'iva': this.direccionSeleccionada.iva,
             'vendedor': this.direccionSeleccionada.vendedor,
@@ -157,7 +159,7 @@ export class PlantillaVenta {
             'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
             'ruta': this.direccionSeleccionada.ruta,
             'serie': 'NV', // calcular
-            'ccc': this.direccionSeleccionada.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
+            'ccc': this.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
             'origen': this.clienteSeleccionado.empresa.trim(),
             'contactoCobro': this.clienteSeleccionado.contacto.trim(), // calcular
             'noComisiona': this.direccionSeleccionada.noComisiona,

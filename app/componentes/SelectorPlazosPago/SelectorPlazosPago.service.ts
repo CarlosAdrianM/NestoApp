@@ -16,9 +16,12 @@ export class SelectorPlazosPagoService {
 
     private _baseUrl: string = Configuracion.API_URL + '/PlazosPago'
 
-    public getPlazosPago(): Observable<any[]> {
+    public getPlazosPago(cliente: any): Observable<any[]> {
         let params: URLSearchParams = new URLSearchParams();
         params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        if (cliente) {
+            params.set('cliente', cliente);
+        }
         return this.http.get(this._baseUrl, { search: params })
             .map(res => <any[]>res.json())
             .catch(this.handleError);

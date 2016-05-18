@@ -8,13 +8,14 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
     templateUrl: 'build/componentes/SelectorFormasPago/SelectorFormasPago.html',
     directives: [Select, Item, Icon, Content, Option],
     providers: [SelectorFormasPagoService],
-    inputs: ['seleccionado'],
+    inputs: ['cliente', 'seleccionado'],
     outputs: ['seleccionar'],
 })
 
 @Injectable()
 export class SelectorFormasPago extends SelectorBase {
 
+    @Input() private cliente: any;
     @Input() private seleccionado: any;
     private nav: NavController;
     private servicio: SelectorFormasPagoService;
@@ -23,18 +24,14 @@ export class SelectorFormasPago extends SelectorBase {
         super();
         this.nav = nav;
         this.servicio = servicio;
+    }
+
+    ngOnInit() {
         this.cargarDatos();
     }
 
     public cargarDatos(): void {
-        /*
-        let loading: any = Loading.create({
-            content: 'Cargando Formas de Pago...',
-        });
-
-        this.nav.present(loading);
-        */
-        this.servicio.getFormasPago().subscribe(
+        this.servicio.getFormasPago(this.cliente).subscribe(
             data => {
                 if (data.length === 0) {
                     let alert: Alert = Alert.create({

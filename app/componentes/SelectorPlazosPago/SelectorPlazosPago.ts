@@ -8,7 +8,7 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
     templateUrl: 'build/componentes/SelectorPlazosPago/SelectorPlazosPago.html',
     directives: [Select, Item, Icon, Content, Option],
     providers: [SelectorPlazosPagoService],
-    inputs: ['seleccionado'],
+    inputs: ['seleccionado', 'cliente'],
     outputs: ['seleccionar'],
 })
 
@@ -16,6 +16,7 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 export class SelectorPlazosPago extends SelectorBase {
 
     @Input() private seleccionado: any;
+    @Input() private cliente: any;
     private nav: NavController;
     private servicio: SelectorPlazosPagoService;
 
@@ -23,6 +24,9 @@ export class SelectorPlazosPago extends SelectorBase {
         super();
         this.nav = nav;
         this.servicio = servicio;
+    }
+
+    ngOnInit() {
         this.cargarDatos();
     }
 
@@ -34,7 +38,7 @@ export class SelectorPlazosPago extends SelectorBase {
 
         this.nav.present(loading);
         */
-        this.servicio.getPlazosPago().subscribe(
+        this.servicio.getPlazosPago(this.cliente).subscribe(
             data => {
                 if (data.length === 0) {
                     let alert: Alert = Alert.create({
