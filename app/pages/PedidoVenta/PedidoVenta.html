@@ -36,7 +36,7 @@
                 <ion-input type="date">{{pedido.fechaMostrar | date:'dd/MM/yy'}} </ion-input>
             </ion-item>
 
-            <ion-item (doubletap)="cambiarIVA()">
+            <ion-item (press)="cambiarIVA()">
                 <ion-row>
                     <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
                     <ion-col width-50>{{pedido.iva}}</ion-col>
@@ -52,21 +52,19 @@
             </ion-item>
         </div>
         <div *ngSwitchWhen="'lineas'">
-            <ion-content>
-                <ion-list>
-                    <ion-item *ngFor="#linea of pedido.LineasPedido">
-                        <h2>{{linea.texto}}</h2>
-                        <ion-row>
-                            <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
-                            <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
-                            <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'1.0-2'}}</p></ion-col>
-                            <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
-                            <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.0-2'}}</p></ion-col>
-                        </ion-row>
-                    </ion-item>
-                </ion-list>
-            </ion-content>            
-            <button fab fab-bottom fab-center>
+            <ion-list>
+                <ion-item *ngFor="#linea of pedido.LineasPedido">
+                    <h2>{{linea.texto}}</h2>
+                    <ion-row>
+                        <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
+                        <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
+                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'1.0-2'}}</p></ion-col>
+                        <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
+                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.0-2'}}</p></ion-col>
+                    </ion-row>
+                </ion-item>
+            </ion-list>
+            <button fab fab-bottom fab-center fab-fixed>
                 <ion-icon name="add"></ion-icon>
             </button>
         </div>
