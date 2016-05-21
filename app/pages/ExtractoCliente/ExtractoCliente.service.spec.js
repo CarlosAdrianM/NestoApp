@@ -1,9 +1,9 @@
 "use strict";
 var ExtractoCliente_service_1 = require('./ExtractoCliente.service');
-var core_1 = require('angular2/core');
-var testing_1 = require('angular2/testing');
-var testing_2 = require('angular2/http/testing');
-var http_1 = require('angular2/http');
+var core_1 = require('@angular/core');
+var testing_1 = require('@angular/core/testing');
+var testing_2 = require('@angular/http/testing');
+var http_1 = require('@angular/http');
 function main() {
     'use strict';
     testing_1.describe('Extracto Cliente', function () {

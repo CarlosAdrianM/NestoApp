@@ -8,9 +8,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
-var http_1 = require('angular2/http');
-var Rx_1 = require('rxjs/Rx');
+var core_1 = require('@angular/core');
+var http_1 = require('@angular/http');
+var Observable_1 = require('rxjs/Observable');
+require('rxjs/add/operator/map');
 var configuracion_1 = require('../configuracion/configuracion');
 var SelectorDireccionesEntregaService = (function () {
     function SelectorDireccionesEntregaService(http) {
@@ -29,7 +30,7 @@ var SelectorDireccionesEntregaService = (function () {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Rx_1.Observable.throw(error.json().error || 'Server error');
+        return Observable_1.Observable.throw(error.json().error || 'Server error');
     };
     SelectorDireccionesEntregaService = __decorate([
         core_1.Injectable(), 

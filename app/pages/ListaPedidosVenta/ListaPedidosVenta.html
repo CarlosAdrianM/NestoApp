@@ -7,7 +7,7 @@
 
 <ion-content>
     <ion-list>
-        <ion-item *ngFor="#pedido of listaPedidos">
+        <ion-item *ngFor="let pedido of listaPedidos">
             <h2>{{pedido.nombreCliente}}</h2>
             <h3>{{pedido.direccionCliente}}</h3>
             <p>{{pedido.cliente}} - {{pedido.fecha}} ({{pedido.baseImponible | currency}})</p>            

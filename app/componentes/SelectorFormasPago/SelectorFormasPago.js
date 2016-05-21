@@ -13,7 +13,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var ionic_angular_1 = require('ionic-angular');
 var SelectorFormasPago_service_1 = require('./SelectorFormasPago.service');
 var SelectorBase_1 = require('../SelectorBase/SelectorBase');
@@ -23,18 +23,13 @@ var SelectorFormasPago = (function (_super) {
         _super.call(this);
         this.nav = nav;
         this.servicio = servicio;
-        this.cargarDatos();
     }
+    SelectorFormasPago.prototype.ngOnInit = function () {
+        this.cargarDatos();
+    };
     SelectorFormasPago.prototype.cargarDatos = function () {
         var _this = this;
-        /*
-        let loading: any = Loading.create({
-            content: 'Cargando Formas de Pago...',
-        });
-
-        this.nav.present(loading);
-        */
-        this.servicio.getFormasPago().subscribe(function (data) {
+        this.servicio.getFormasPago(this.cliente).subscribe(function (data) {
             if (data.length === 0) {
                 var alert_1 = ionic_angular_1.Alert.create({
                     title: 'Error',
@@ -56,6 +51,10 @@ var SelectorFormasPago = (function (_super) {
     __decorate([
         core_1.Input(), 
         __metadata('design:type', Object)
+    ], SelectorFormasPago.prototype, "cliente", void 0);
+    __decorate([
+        core_1.Input(), 
+        __metadata('design:type', Object)
     ], SelectorFormasPago.prototype, "seleccionado", void 0);
     SelectorFormasPago = __decorate([
         core_1.Component({
@@ -63,7 +62,7 @@ var SelectorFormasPago = (function (_super) {
             templateUrl: 'build/componentes/SelectorFormasPago/SelectorFormasPago.html',
             directives: [ionic_angular_1.Select, ionic_angular_1.Item, ionic_angular_1.Icon, ionic_angular_1.Content, ionic_angular_1.Option],
             providers: [SelectorFormasPago_service_1.SelectorFormasPagoService],
-            inputs: ['seleccionado'],
+            inputs: ['cliente', 'seleccionado'],
             outputs: ['seleccionar'],
         }),
         core_1.Injectable(), 

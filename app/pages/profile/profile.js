@@ -9,8 +9,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var ionic_angular_1 = require('ionic-angular');
-var http_1 = require('angular2/http');
-var common_1 = require('angular2/common');
+var http_1 = require('@angular/http');
+var common_1 = require('@angular/common');
 var angular2_jwt_1 = require('angular2-jwt');
 var auth_1 = require('../../services/auth/auth');
 require('rxjs/add/operator/map');

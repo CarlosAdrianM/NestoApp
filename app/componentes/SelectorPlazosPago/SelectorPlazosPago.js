@@ -13,7 +13,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var ionic_angular_1 = require('ionic-angular');
 var SelectorPlazosPago_service_1 = require('./SelectorPlazosPago.service');
 var SelectorBase_1 = require('../SelectorBase/SelectorBase');
@@ -23,8 +23,10 @@ var SelectorPlazosPago = (function (_super) {
         _super.call(this);
         this.nav = nav;
         this.servicio = servicio;
-        this.cargarDatos();
     }
+    SelectorPlazosPago.prototype.ngOnInit = function () {
+        this.cargarDatos();
+    };
     SelectorPlazosPago.prototype.cargarDatos = function () {
         var _this = this;
         /*
@@ -34,7 +36,7 @@ var SelectorPlazosPago = (function (_super) {
 
         this.nav.present(loading);
         */
-        this.servicio.getPlazosPago().subscribe(function (data) {
+        this.servicio.getPlazosPago(this.cliente).subscribe(function (data) {
             if (data.length === 0) {
                 var alert_1 = ionic_angular_1.Alert.create({
                     title: 'Error',
@@ -57,13 +59,17 @@ var SelectorPlazosPago = (function (_super) {
         core_1.Input(), 
         __metadata('design:type', Object)
     ], SelectorPlazosPago.prototype, "seleccionado", void 0);
+    __decorate([
+        core_1.Input(), 
+        __metadata('design:type', Object)
+    ], SelectorPlazosPago.prototype, "cliente", void 0);
     SelectorPlazosPago = __decorate([
         core_1.Component({
             selector: 'selector-plazos-pago',
             templateUrl: 'build/componentes/SelectorPlazosPago/SelectorPlazosPago.html',
             directives: [ionic_angular_1.Select, ionic_angular_1.Item, ionic_angular_1.Icon, ionic_angular_1.Content, ionic_angular_1.Option],
             providers: [SelectorPlazosPago_service_1.SelectorPlazosPagoService],
-            inputs: ['seleccionado'],
+            inputs: ['seleccionado', 'cliente'],
             outputs: ['seleccionar'],
         }),
         core_1.Injectable(), 

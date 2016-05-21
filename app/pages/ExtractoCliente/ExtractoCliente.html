@@ -9,7 +9,7 @@
     <selector-clientes *ngIf="mostrarClientes" (seleccionar)="cargarDeuda($event)"></selector-clientes>
 
     <ion-list>
-        <ion-item *ngFor="#mov of movimientosDeuda">
+        <ion-item *ngFor="let mov of movimientosDeuda">
             <h3>{{mov.vencimientoMostrar | date: 'dd/MM/yy'}}</h3>
             <p>{{mov.concepto}}</p>
             <p>{{mov.importePendiente | currency:'EUR':true }}</p>

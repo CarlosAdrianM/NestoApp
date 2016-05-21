@@ -1,8 +1,9 @@
-﻿import {Injectable} from 'angular2/core';
+﻿import {Injectable} from '@angular/core';
 import {Configuracion} from '../componentes/configuracion/configuracion';
 import {Usuario} from '../models/Usuario';
-import {Http, Response, URLSearchParams} from 'angular2/http';
-import {Observable} from 'rxjs/Rx';
+import {Http, Response, URLSearchParams} from '@angular/http';
+import {Observable} from 'rxjs/Observable';
+import 'rxjs/add/operator/map';
 
 @Injectable()
 export class Parametros {

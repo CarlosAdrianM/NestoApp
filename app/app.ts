@@ -1,8 +1,8 @@
 'use strict';
 
-import { Type, provide }           from 'angular2/core';
-import { App, IonicApp, Platform, Alert } from 'ionic-angular';
-import {Http}                      from 'angular2/http';
+import { Type, provide, ViewChild }           from '@angular/core';
+import { App, Platform, Nav, MenuController } from 'ionic-angular';
+import {Http, HTTP_PROVIDERS}      from '@angular/http';
 import {AuthHttp, AuthConfig}      from 'angular2-jwt';
 import {Usuario}                   from './models/Usuario';
 import { ProfilePage }             from './pages/profile/profile';
@@ -13,9 +13,9 @@ import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosV
 @App({
   templateUrl: 'build/app.html',
   config: {}, // http://ionicframework.com/docs/v2/api/config/Config/
-  providers: [
+  providers: [HTTP_PROVIDERS,
       provide(AuthHttp, {
-          useFactory: (http: Http): AuthHttp => {
+          useFactory: (http: any): AuthHttp => {
               return new AuthHttp(new AuthConfig, http);
           },
           deps: [Http],
@@ -24,21 +24,23 @@ import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosV
   ],
 })
 export class NestoApp {
-
+    @ViewChild(Nav) nav: Nav;
   private rootPage: Type;
   private pages: Array<{title: string, component: Type}>;
-  private app: IonicApp;
+  // private app: IonicApp;
   private platform: Platform;
   private usuario: Usuario;
+  private menu: MenuController;
 
-  constructor(app: IonicApp, platform: Platform, usuario: Usuario) {
-    this.app = app;
+  constructor(platform: Platform, usuario: Usuario, menu: MenuController) {
+    // this.app = app;
     this.platform = platform;
     this.usuario = usuario;
+    this.menu = menu;
 
-    this.rootPage = PlantillaVenta;
     this.initializeApp();
 
+    
     // set our app's pages
     this.pages = [
         { title: 'Plantilla Venta', component: PlantillaVenta },
@@ -46,6 +48,9 @@ export class NestoApp {
         { title: 'Extracto Cliente', component: ExtractoCliente },
         { title: 'Usuario', component: ProfilePage },
     ];
+
+    this.rootPage = PlantillaVenta;
+
   }
 
   private initializeApp(): void {
@@ -64,14 +69,18 @@ export class NestoApp {
       // For example, we might change the StatusBar color. This one below is
       // good for dark backgrounds and light text:
       // StatusBar.setStyle(StatusBar.LIGHT_CONTENT)
-        
+
       });
   }
 
   public openPage(page: any): void {
+    /*
     // close the menu when clicking a link from the menu
     this.app.getComponent('leftMenu').close();
     // navigate to the new page if it is not the current page
     this.app.getComponent('nav').setRoot(page.component);
+      */
+    this.menu.close();
+    this.nav.setRoot(page.component);
   };
 }

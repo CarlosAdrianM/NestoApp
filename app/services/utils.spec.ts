@@ -1,5 +1,5 @@
 import { Utils } from './utils';
-import { AbstractControl, Control } from 'angular2/common';
+import { AbstractControl, Control } from '@angular/common';
 
 export function main(): void {
   'use strict';

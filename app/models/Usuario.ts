@@ -1,5 +1,5 @@
 ﻿'use strict';
-import {Injectable} from 'angular2/core';
+import {Injectable} from '@angular/core';
 import {Storage, LocalStorage} from 'ionic-angular';
 //import { ProfilePage } from '../pages/profile/profile';
 

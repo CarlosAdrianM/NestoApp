@@ -1,5 +1,5 @@
 ﻿import {Page, NavController, Alert, Loading, Platform, Events} from 'ionic-angular';
-import {ViewChild} from 'angular2/core';
+import {ViewChild} from '@angular/core';
 import {SelectorClientes} from '../../componentes/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta';
 import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega';

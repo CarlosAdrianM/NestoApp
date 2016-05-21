@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var ionic_angular_1 = require('ionic-angular');
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var SelectorClientes_1 = require('../../componentes/SelectorClientes/SelectorClientes');
 var SelectorPlantillaVenta_1 = require('../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta');
 var SelectorDireccionesEntrega_1 = require('../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega');
@@ -52,6 +52,9 @@ var PlantillaVenta = (function () {
         this.platform = platform;
         this.cargarParametros();
     }
+    PlantillaVenta.prototype.onPageWillUnload = function () {
+        console.log("Guardamos el pedido");
+    };
     PlantillaVenta.prototype.cargarProductos = function (cliente) {
         var _this = this;
         if (!this.clienteSeleccionado) {
@@ -120,8 +123,8 @@ var PlantillaVenta = (function () {
             'cliente': this.clienteSeleccionado.cliente.trim(),
             'contacto': this.direccionSeleccionada.contacto,
             'fecha': this.hoy,
-            'formaPago': this.direccionSeleccionada.formaPago,
-            'plazosPago': this.direccionSeleccionada.plazosPago.trim(),
+            'formaPago': this.formaPago,
+            'plazosPago': this.plazosPago.trim(),
             'primerVencimiento': this.hoy,
             'iva': this.direccionSeleccionada.iva,
             'vendedor': this.direccionSeleccionada.vendedor,
@@ -130,7 +133,7 @@ var PlantillaVenta = (function () {
             'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
             'ruta': this.direccionSeleccionada.ruta,
             'serie': 'NV',
-            'ccc': this.direccionSeleccionada.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
+            'ccc': this.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
             'origen': this.clienteSeleccionado.empresa.trim(),
             'contactoCobro': this.clienteSeleccionado.contacto.trim(),
             'noComisiona': this.direccionSeleccionada.noComisiona,

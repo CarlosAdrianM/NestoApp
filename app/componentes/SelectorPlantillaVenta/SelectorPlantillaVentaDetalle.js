@@ -46,18 +46,70 @@ var SelectorPlantillaVentaDetalle = (function () {
             producto.aplicarDescuento = producto.aplicarDescuentoFicha;
         }
         this.servicio.actualizarPrecioProducto(producto, this.cliente).subscribe(function (data) {
-            producto.precio = data.precio;
-            producto.descuentoProducto = data.descuento;
-            producto.aplicarDescuento = data.aplicarDescuento;
-            if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
-                _this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
+            if (producto.precio !== data.precio) {
+                producto.precio = data.precio;
             }
+            if (producto.aplicarDescuento !== data.aplicarDescuento) {
+                producto.aplicarDescuento = data.aplicarDescuento;
+                if (!producto.aplicarDescuento && producto.descuento !== 0) {
+                    producto.descuento = 0;
+                    _this.actualizarDescuento(0);
+                }
+            }
+            if (producto.aplicarDescuento && producto.descuento !== data.descuento) {
+                producto.descuento = data.descuento;
+                _this.actualizarDescuento(producto.descuento * 100);
+            }
+            // if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
+            //this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
+            // }
         }, function (error) { return _this.errorMessage = error; });
+        this.comprobarCondicionesPrecio();
         this.seleccionarColorStock(producto);
     };
     SelectorPlantillaVentaDetalle.prototype.actualizarPrecio = function () {
         // Esto lo hacemos porque guarda el precio como string y da error
         this.producto.precio = +this.producto.precio;
+        this.comprobarCondicionesPrecio();
+    };
+    SelectorPlantillaVentaDetalle.prototype.comprobarCondicionesPrecio = function () {
+        var _this = this;
+        if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            return;
+        }
+        this.servicio.comprobarCondicionesPrecio(this.producto).subscribe(function (data) {
+            if (data.motivo && data.motivo !== '') {
+                /*
+                let alert: Alert = Alert.create({
+                    title: 'Gestor de Precios',
+                    subTitle: data.motivo,
+                    buttons: ['Ok'],
+                });
+                this.nav.present(alert);
+                */
+                if (_this.producto.precio !== data.precio) {
+                    _this.producto.precio = data.precio;
+                }
+                if (_this.producto.aplicarDescuento !== data.aplicarDescuento) {
+                    _this.producto.aplicarDescuento = data.aplicarDescuento;
+                }
+                if (_this.producto.cantidadOferta !== 0) {
+                    _this.producto.cantidadOferta = 0;
+                    _this.producto.aplicarDescuento = _this.producto.aplicarDescuentoFicha;
+                }
+                if (_this.producto.descuento !== data.descuento) {
+                    _this.producto.descuento = data.descuento;
+                    _this.actualizarDescuento(_this.producto.descuento * 100);
+                }
+                var toast = ionic_angular_1.Toast.create({
+                    message: data.motivo,
+                    duration: 3000
+                });
+                _this.nav.present(toast);
+            }
+        }, function (error) {
+            _this.errorMessage = error;
+        });
     };
     SelectorPlantillaVentaDetalle.prototype.seleccionarColorStock = function (producto) {
         var cantidad = producto.cantidad;
@@ -80,6 +132,7 @@ var SelectorPlantillaVentaDetalle = (function () {
     SelectorPlantillaVentaDetalle.prototype.actualizarDescuento = function (descuento) {
         this.producto.descuento = descuento / 100;
         this.descuentoMostrar = descuento + '%';
+        this.comprobarCondicionesPrecio();
     };
     SelectorPlantillaVentaDetalle.prototype.seleccionarTexto = function (evento) {
         evento.target.select();
@@ -88,7 +141,7 @@ var SelectorPlantillaVentaDetalle = (function () {
         this.nav.push(UltimasVentasProductoCliente_1.UltimasVentasProductoCliente, { producto: this.producto.producto, cliente: this.cliente });
     };
     SelectorPlantillaVentaDetalle.prototype.sePuedeHacerDescuento = function (producto) {
-        return producto.aplicarDescuento && producto.subGrupo !== 'Otros aparatos';
+        return (producto.cantidadOferta === 0 || producto.cantidadOferta === "0") && producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
     };
     SelectorPlantillaVentaDetalle = __decorate([
         ionic_angular_1.Page({

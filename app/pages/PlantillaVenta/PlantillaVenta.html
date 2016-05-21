@@ -22,7 +22,7 @@
         <ion-content>
             <h3>Resumen</h3>
             <ion-list *ngIf="productosResumen">
-                <ion-item *ngFor="#producto of productosResumen">
+                <ion-item *ngFor="let producto of productosResumen">
                     <ion-avatar item-left>
                         <img src="{{producto.urlImagen}}">
                     </ion-avatar>

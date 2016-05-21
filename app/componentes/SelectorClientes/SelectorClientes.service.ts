@@ -1,6 +1,7 @@
-﻿import {Injectable} from 'angular2/core';
-import {Http, Response, URLSearchParams} from 'angular2/http';
-import {Observable} from 'rxjs/Rx';
+﻿import {Injectable} from '@angular/core';
+import {Http, Response, URLSearchParams} from '@angular/http';
+import {Observable} from 'rxjs/Observable';
+import 'rxjs/add/operator/map';
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
 
@@ -14,8 +15,8 @@ export class SelectorClientesService {
         this.usuario = usuario;
     }
 
-    private _clientesUrl: string = Configuracion.API_URL + '/Clientes'
-    
+    private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
+
     public getClientes(filtro: string): Observable<any[]> {
         let params: URLSearchParams = new URLSearchParams();
         params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);

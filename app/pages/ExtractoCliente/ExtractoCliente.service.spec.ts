@@ -1,14 +1,14 @@
 ﻿import { ExtractoClienteService } from './ExtractoCliente.service';
-import { provide } from 'angular2/core';
+import { provide } from '@angular/core';
 import {
     describe,
     expect,
     it,
     inject,
     beforeEachProviders,
-} from 'angular2/testing';
-import {MockBackend, MockConnection} from 'angular2/http/testing';
-import {HTTP_PROVIDERS, XHRBackend, Response, ResponseOptions} from 'angular2/http';
+} from '@angular/core/testing';
+import {MockBackend, MockConnection} from '@angular/http/testing';
+import {HTTP_PROVIDERS, XHRBackend, Response, ResponseOptions} from '@angular/http';
 
 export function main(): void {
     'use strict';

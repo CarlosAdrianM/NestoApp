@@ -1,4 +1,4 @@
-﻿import {Component, Injectable} from 'angular2/core';
+﻿import {Component, Injectable} from '@angular/core';
 import {Searchbar, List, Item, Alert, NavController, Loading, Icon, Content} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';

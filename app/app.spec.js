@@ -1,11 +1,11 @@
 "use strict";
-var browser_1 = require('angular2/platform/testing/browser');
-var testing_1 = require('angular2/testing');
+var testing_1 = require('@angular/platform-browser-dynamic/testing');
+var testing_2 = require('@angular/core/testing');
 var ionic_angular_1 = require('ionic-angular');
 var app_1 = require('./app');
 var Usuario_1 = require('./models/Usuario');
 // this needs doing _once_ for the entire test suite, hence it's here
-testing_1.setBaseTestProviders(browser_1.TEST_BROWSER_PLATFORM_PROVIDERS, browser_1.TEST_BROWSER_APPLICATION_PROVIDERS);
+testing_2.setBaseTestProviders(testing_1.TEST_BROWSER_DYNAMIC_PLATFORM_PROVIDERS, testing_1.TEST_BROWSER_DYNAMIC_APPLICATION_PROVIDERS);
 var nestoApp = null;
 function getComponentStub(name) {
     'use strict';

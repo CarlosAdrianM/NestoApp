@@ -8,8 +8,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
-var http_1 = require('angular2/http');
+var core_1 = require('@angular/core');
+var http_1 = require('@angular/http');
 var Rx_1 = require('rxjs/Rx');
 var configuracion_1 = require('../../componentes/configuracion/configuracion');
 var Usuario_1 = require('../../models/Usuario');
@@ -19,9 +19,12 @@ var SelectorFormasPagoService = (function () {
         this.http = http;
         this.usuario = usuario;
     }
-    SelectorFormasPagoService.prototype.getFormasPago = function () {
+    SelectorFormasPagoService.prototype.getFormasPago = function (cliente) {
         var params = new http_1.URLSearchParams();
         params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        if (cliente) {
+            params.set('cliente', cliente);
+        }
         return this.http.get(this._baseUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);

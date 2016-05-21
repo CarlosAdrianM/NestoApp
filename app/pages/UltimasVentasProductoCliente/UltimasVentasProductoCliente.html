@@ -26,7 +26,7 @@
                 </ion-col>
             </ion-row>
         </ion-item>
-        <ion-item *ngFor="#movimiento of movimientos">
+        <ion-item *ngFor="let movimiento of movimientos">
             <ion-row>
                 <ion-col style="text-align:center" width-20>
                     {{movimiento.fechaMostrar | date: 'dd/MM/yy' }}

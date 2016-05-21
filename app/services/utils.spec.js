@@ -1,6 +1,6 @@
 "use strict";
 var utils_1 = require('./utils');
-var common_1 = require('angular2/common');
+var common_1 = require('@angular/common');
 function main() {
     'use strict';
     describe('Utils', function () {

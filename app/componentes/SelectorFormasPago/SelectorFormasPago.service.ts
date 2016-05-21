@@ -1,5 +1,5 @@
-﻿import {Injectable} from 'angular2/core';
-import {Http, Response, URLSearchParams} from 'angular2/http';
+﻿import {Injectable} from '@angular/core';
+import {Http, Response, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
@@ -14,7 +14,7 @@ export class SelectorFormasPagoService {
         this.usuario = usuario;
     }
 
-    private _baseUrl: string = Configuracion.API_URL + '/FormasPago'
+    private _baseUrl: string = Configuracion.API_URL + '/FormasPago';
 
     public getFormasPago(cliente: any): Observable<any[]> {
         let params: URLSearchParams = new URLSearchParams();

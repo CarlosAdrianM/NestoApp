@@ -13,7 +13,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var ionic_angular_1 = require('ionic-angular');
 var SelectorPlantillaVenta_service_1 = require('./SelectorPlantillaVenta.service');
 var SelectorBase_1 = require('../SelectorBase/SelectorBase');
@@ -55,7 +55,9 @@ var SelectorPlantillaVenta = (function (_super) {
         });
     };
     SelectorPlantillaVenta.prototype.abrirDetalle = function (producto) {
-        this.agregarDato(producto);
+        if (this.agregarDato(producto)) {
+            producto.aplicarDescuentoFicha = producto.aplicarDescuento;
+        }
         this.nav.push(SelectorPlantillaVentaDetalle_1.SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente });
     };
     SelectorPlantillaVenta.prototype.cargarResumen = function () {
@@ -91,6 +93,7 @@ var SelectorPlantillaVenta = (function (_super) {
     };
     Object.defineProperty(SelectorPlantillaVenta.prototype, "totalPedido", {
         get: function () {
+            // Hay que calcularlo bien
             return this._baseImponiblePedido * 1.21;
         },
         enumerable: true,

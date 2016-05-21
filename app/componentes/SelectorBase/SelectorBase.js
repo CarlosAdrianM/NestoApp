@@ -8,7 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var SelectorBase = (function () {
     function SelectorBase() {
         this.seleccionar = new core_1.EventEmitter();
@@ -66,6 +66,10 @@ var SelectorBase = (function () {
     SelectorBase.prototype.agregarDato = function (dato) {
         if (this.datosInicial.indexOf(dato) === -1) {
             this.datosInicial.push(dato);
+            return true;
+        }
+        else {
+            return false;
         }
     };
     SelectorBase.prototype.numeroDeDatos = function () {

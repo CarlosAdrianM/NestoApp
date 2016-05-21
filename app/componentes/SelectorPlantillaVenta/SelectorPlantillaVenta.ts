@@ -1,4 +1,4 @@
-﻿import {Component, Injectable, Input} from 'angular2/core';
+﻿import {Component, Injectable, Input} from '@angular/core';
 import {Searchbar, List, Item, Button, Alert, NavController, Loading, Toggle, Content} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
@@ -35,8 +35,8 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
         this.servicio.getProductos(cliente).subscribe(
             data => {
-                data = data.map(function (item) {
-                    var clone = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                data = data.map(function (item): any {
+                    let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                     clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                     return clone;
                 });

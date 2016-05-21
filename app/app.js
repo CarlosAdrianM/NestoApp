@@ -8,9 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
+var core_1 = require('@angular/core');
 var ionic_angular_1 = require('ionic-angular');
-var http_1 = require('angular2/http');
+var http_1 = require('@angular/http');
 var angular2_jwt_1 = require('angular2-jwt');
 var Usuario_1 = require('./models/Usuario');
 var profile_1 = require('./pages/profile/profile');
@@ -61,7 +61,7 @@ var NestoApp = (function () {
         ionic_angular_1.App({
             templateUrl: 'build/app.html',
             config: {},
-            providers: [
+            providers: [http_1.HTTP_PROVIDERS,
                 core_1.provide(angular2_jwt_1.AuthHttp, {
                     useFactory: function (http) {
                         return new angular2_jwt_1.AuthHttp(new angular2_jwt_1.AuthConfig, http);

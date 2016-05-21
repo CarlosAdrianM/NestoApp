@@ -8,9 +8,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('angular2/core');
-var http_1 = require('angular2/http');
-var Rx_1 = require('rxjs/Rx');
+var core_1 = require('@angular/core');
+var http_1 = require('@angular/http');
+var Observable_1 = require('rxjs/Observable');
+require('rxjs/add/operator/map');
 var configuracion_1 = require('../../componentes/configuracion/configuracion');
 var Usuario_1 = require('../../models/Usuario');
 var SelectorPlazosPagoService = (function () {
@@ -19,9 +20,12 @@ var SelectorPlazosPagoService = (function () {
         this.http = http;
         this.usuario = usuario;
     }
-    SelectorPlazosPagoService.prototype.getPlazosPago = function () {
+    SelectorPlazosPagoService.prototype.getPlazosPago = function (cliente) {
         var params = new http_1.URLSearchParams();
         params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        if (cliente) {
+            params.set('cliente', cliente);
+        }
         return this.http.get(this._baseUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
@@ -30,7 +34,7 @@ var SelectorPlazosPagoService = (function () {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Rx_1.Observable.throw(error.json().error || 'Server error');
+        return Observable_1.Observable.throw(error.json().error || 'Server error');
     };
     SelectorPlazosPagoService = __decorate([
         core_1.Injectable(), 
