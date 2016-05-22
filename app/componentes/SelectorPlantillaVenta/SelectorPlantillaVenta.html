@@ -8,5 +8,5 @@
             <ion-badge class="badge badge-{{producto.colorStock}}" item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
         </ion-item>
     </ion-list>
-    <button block *ngIf="numeroDeDatos() === 0" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</button>
+    <button block *ngIf="numeroDeDatos() <= 5" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</button>
 </ion-content>

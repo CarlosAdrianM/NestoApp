@@ -34,9 +34,10 @@ export class PedidoVenta {
         this.servicio.cargarPedido(empresa, numero).subscribe(
             data => {
                 this.pedido = data;
-                this.pedido.fechaMostrar = new Date(this.pedido.fecha);
-                this.pedido.primerVencimientoMostrar = new Date(this.pedido.primerVencimiento);
+                //this.pedido.fechaMostrar = new Date(this.pedido.fecha);
+                //this.pedido.primerVencimientoMostrar = new Date(this.pedido.primerVencimiento);
                 this.iva = this.pedido.iva;
+                this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
             },
             error => {
                 let alert: Alert = Alert.create({

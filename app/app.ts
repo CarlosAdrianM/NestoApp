@@ -2,7 +2,7 @@
 
 import { Type, provide, ViewChild }           from '@angular/core';
 import { App, Platform, Nav, MenuController } from 'ionic-angular';
-import {Http, HTTP_PROVIDERS}      from '@angular/http';
+import {Http}      from '@angular/http';
 import {AuthHttp, AuthConfig}      from 'angular2-jwt';
 import {Usuario}                   from './models/Usuario';
 import { ProfilePage }             from './pages/profile/profile';
@@ -13,7 +13,7 @@ import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosV
 @App({
   templateUrl: 'build/app.html',
   config: {}, // http://ionicframework.com/docs/v2/api/config/Config/
-  providers: [HTTP_PROVIDERS,
+  providers: [
       provide(AuthHttp, {
           useFactory: (http: any): AuthHttp => {
               return new AuthHttp(new AuthConfig, http);
@@ -24,7 +24,7 @@ import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosV
   ],
 })
 export class NestoApp {
-    @ViewChild(Nav) nav: Nav;
+  @ViewChild(Nav) private nav: Nav;
   private rootPage: Type;
   private pages: Array<{title: string, component: Type}>;
   // private app: IonicApp;
@@ -40,7 +40,6 @@ export class NestoApp {
 
     this.initializeApp();
 
-    
     // set our app's pages
     this.pages = [
         { title: 'Plantilla Venta', component: PlantillaVenta },

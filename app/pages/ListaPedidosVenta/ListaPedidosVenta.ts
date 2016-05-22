@@ -13,8 +13,9 @@ import {PedidoVenta} from '../PedidoVenta/PedidoVenta';
     providers: [ListaPedidosVentaService, Parametros],
 })
 export class ListaPedidosVenta {
-    private nav: NavController;
+    private errorMessage: string;
     private listaPedidos: any[];
+    private nav: NavController;
     private servicio: ListaPedidosVentaService;
 
     constructor(servicio: ListaPedidosVentaService, nav: NavController) {
@@ -28,6 +29,32 @@ export class ListaPedidosVenta {
     }
 
     private cargarLista(): void {
-        this.listaPedidos = this.servicio.cargarLista();
+        let loading: any = Loading.create({
+            content: 'Cargando Pedidos...',
+        });
+
+        this.nav.present(loading);
+
+        this.servicio.cargarLista().subscribe(
+            data => {
+                if (data.length === 0) {
+                    let alert: Alert = Alert.create({
+                        title: 'Error',
+                        subTitle: 'No hay ningún pedido pendiente de servir',
+                        buttons: ['Ok'],
+                    });
+                    this.nav.present(alert);
+                } else {
+                    this.listaPedidos = data;
+                }
+            },
+            error => {
+                loading.dismiss();
+                this.errorMessage = <any>error;
+            },
+            () => {
+                loading.dismiss();
+            }
+        );
     }
 }

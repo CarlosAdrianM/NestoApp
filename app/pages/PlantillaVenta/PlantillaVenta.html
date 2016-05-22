@@ -46,7 +46,8 @@
                 <ion-item>
                     <!--<ion-label>Fecha de Entrega</ion-label>-->
                     <!--<ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>-->
-                    <button light (click)="seleccionarFechaEntrega()">Seleccionar Fecha Entrega</button>
+                    <ion-label>Fecha de Entrega:</ion-label>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaEntrega" cancelText="Cancelar" doneText="Seleccionar"></ion-datetime>
                 </ion-item>
                 <ion-item>
                     <ion-label>Servir Junto</ion-label>

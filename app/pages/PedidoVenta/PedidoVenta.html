@@ -20,36 +20,39 @@
 
     <div [ngSwitch]="segmentoPedido">
         <div *ngSwitchWhen="'cabecera'">
-            <h1>Pedido {{pedido.numero}}</h1>
-            <h2>Creado por {{pedido.usuario}}</h2>
+
             <ion-list>
+                <ion-item>
+                    <ion-label>Pedido {{pedido.numero}}</ion-label>
+                    <ion-label>Creado por {{pedido.usuario}}</ion-label>
+                </ion-item>
                 <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto"></selector-direcciones-entrega>
                 <ion-item>
                     <ion-label>Fecha Pedido</ion-label>
-                    <ion-input type="date">{{pedido.fechaMostrar | date:'dd/MM/yy'}} </ion-input>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
+                </ion-item>
+                <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="pedido.formaPago = $event"></selector-formas-pago>
+                <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
+                <ion-item>
+                    <ion-label>Fecha Vencimiento</ion-label>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.primerVencimiento"></ion-datetime>
+                </ion-item>
+
+                <ion-item>
+                    <ion-row>
+                        <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
+                        <ion-col (press)="cambiarIVA()" width-50>{{pedido.iva}}</ion-col>
+                    </ion-row>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Servir Junto</ion-label>
+                    <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Mantener Junto</ion-label>
+                    <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
                 </ion-item>
             </ion-list>
-            <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="pedido.formaPago = $event"></selector-formas-pago>
-            <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
-            <ion-item>
-                <ion-label>Fecha Vencimiento</ion-label>
-                <ion-input type="date">{{pedido.fechaMostrar | date:'dd/MM/yy'}} </ion-input>
-            </ion-item>
-
-            <ion-item (press)="cambiarIVA()">
-                <ion-row>
-                    <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
-                    <ion-col width-50>{{pedido.iva}}</ion-col>
-                </ion-row>
-            </ion-item>
-            <ion-item>
-                <ion-label>Servir Junto</ion-label>
-                <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
-            </ion-item>
-            <ion-item>
-                <ion-label>Mantener Junto</ion-label>
-                <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
-            </ion-item>
         </div>
         <div *ngSwitchWhen="'lineas'">
             <ion-list>
@@ -62,6 +65,10 @@
                         <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
                         <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.0-2'}}</p></ion-col>
                     </ion-row>
+                    <ion-badge light *ngIf="linea.estado == -3">Presupuesto</ion-badge>
+                    <ion-badge danger *ngIf="linea.estado == -1">Pendiente</ion-badge>
+                    <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
+                    <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
                 </ion-item>
             </ion-list>
             <button fab fab-bottom fab-center fab-fixed>

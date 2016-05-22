@@ -55,13 +55,19 @@ export class PlantillaVenta {
     public slider: any;
     public clienteSeleccionado: any;
     private productosResumen: any[];
-    public direccionSeleccionada: any;
-    public fechaEntrega: Date = new Date();
+    private _direccionSeleccionada: any;
+    get direccionSeleccionada(): any {
+        return this._direccionSeleccionada;
+    }
+    set direccionSeleccionada(value: any) {
+        this._direccionSeleccionada = value;
+        if (value) {
+            this.formaPago = value.formaPago;
+            this.plazosPago = value.plazosPago;
+        }
+    }
     private hoy: Date = new Date();
-    private opcionesDatepicker: any = {
-        date: this.fechaEntrega,
-        mode: 'date',
-    };
+    public fechaEntrega: string = this.hoy.toISOString();
     private iva: string;
     private formaPago: any;
     private plazosPago: any;
@@ -284,32 +290,6 @@ export class PlantillaVenta {
             }
         );
 
-    }
-
-    private seleccionarFechaEntrega() {
-        
-        DatePicker.show({
-            date: this.fechaEntrega,
-            mode: 'date',
-            minDate: new Date()
-        }).then(
-            date => this.fechaEntrega = date,
-            err => console.log('Error al seleccionar la fecha de entrega')
-        );
-        
-        /*
-        let options = {
-            date: new Date(),
-            mode: 'date'
-        }
-
-        
-        DatePicker.show(options, (date) => {
-            this.fechaEntrega = date;
-        }, (error) => {
-            console.log('Error al seleccionar la fecha de entrega';
-        });
-        */
     }
 
     private totalPedido(): number {
