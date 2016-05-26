@@ -12,6 +12,7 @@ import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesE
 })
 export class PedidoVenta {
 
+    private hoy: Date = new Date();
     private iva: string;
     private nav: NavController;
     private pedido: any;
@@ -42,7 +43,7 @@ export class PedidoVenta {
             error => {
                 let alert: Alert = Alert.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido cargar el pedido',
+                    subTitle: 'No se ha podido cargar el pedido de la empresa ' + empresa,
                     buttons: ['Ok'],
                 });
                 this.nav.present(alert);
@@ -60,6 +61,19 @@ export class PedidoVenta {
 
     private cambiarIVA(): void {
         this.pedido.iva = this.pedido.iva ? undefined : this.iva;
+    }
+
+    private annadirLinea() {
+        let alert: Alert = Alert.create({
+            title: 'Añadir Líneas',
+            subTitle: 'Parte de la aplicación no implementada aún. En próximas versiones se permitirá ampliar pedidos.',
+            buttons: ['Ok'],
+        });
+        this.nav.present(alert);
+    }
+
+    private cadenaFecha(cadena: string): Date {
+        return new Date(cadena);
     }
 
 }

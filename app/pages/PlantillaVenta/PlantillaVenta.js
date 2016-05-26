@@ -18,18 +18,13 @@ var PlantillaVenta_service_1 = require('./PlantillaVenta.service');
 var Usuario_1 = require('../../models/Usuario');
 var Parametros_service_1 = require('../../services/Parametros.service');
 var profile_1 = require('../../pages/profile/profile');
-var ionic_native_1 = require('ionic-native');
 var SelectorFormasPago_1 = require('../../componentes/SelectorFormasPago/SelectorFormasPago');
 var SelectorPlazosPago_1 = require('../../componentes/SelectorPlazosPago/SelectorPlazosPago');
 var PlantillaVenta = (function () {
     function PlantillaVenta(nav, servicio, usuario, parametros, platform, events) {
         var _this = this;
-        this.fechaEntrega = new Date();
         this.hoy = new Date();
-        this.opcionesDatepicker = {
-            date: this.fechaEntrega,
-            mode: 'date',
-        };
+        this.fechaEntrega = this.hoy.toISOString();
         // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
         if (!usuario.nombre) {
             nav.push(profile_1.ProfilePage);
@@ -52,6 +47,20 @@ var PlantillaVenta = (function () {
         this.platform = platform;
         this.cargarParametros();
     }
+    Object.defineProperty(PlantillaVenta.prototype, "direccionSeleccionada", {
+        get: function () {
+            return this._direccionSeleccionada;
+        },
+        set: function (value) {
+            this._direccionSeleccionada = value;
+            if (value) {
+                this.formaPago = value.formaPago;
+                this.plazosPago = value.plazosPago;
+            }
+        },
+        enumerable: true,
+        configurable: true
+    });
     PlantillaVenta.prototype.onPageWillUnload = function () {
         console.log("Guardamos el pedido");
     };
@@ -233,27 +242,6 @@ var PlantillaVenta = (function () {
         }, function (error) {
             console.log('No se ha podido cargar el almacén por defecto');
         });
-    };
-    PlantillaVenta.prototype.seleccionarFechaEntrega = function () {
-        var _this = this;
-        ionic_native_1.DatePicker.show({
-            date: this.fechaEntrega,
-            mode: 'date',
-            minDate: new Date()
-        }).then(function (date) { return _this.fechaEntrega = date; }, function (err) { return console.log('Error al seleccionar la fecha de entrega'); });
-        /*
-        let options = {
-            date: new Date(),
-            mode: 'date'
-        }
-
-        
-        DatePicker.show(options, (date) => {
-            this.fechaEntrega = date;
-        }, (error) => {
-            console.log('Error al seleccionar la fecha de entrega';
-        });
-        */
     };
     PlantillaVenta.prototype.totalPedido = function () {
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;

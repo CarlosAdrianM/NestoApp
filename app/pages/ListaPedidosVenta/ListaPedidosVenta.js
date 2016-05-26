@@ -26,7 +26,29 @@ var ListaPedidosVenta = (function () {
         this.nav.push(PedidoVenta_1.PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
     };
     ListaPedidosVenta.prototype.cargarLista = function () {
-        this.listaPedidos = this.servicio.cargarLista();
+        var _this = this;
+        var loading = ionic_angular_1.Loading.create({
+            content: 'Cargando Pedidos...',
+        });
+        this.nav.present(loading);
+        this.servicio.cargarLista().subscribe(function (data) {
+            if (data.length === 0) {
+                var alert_1 = ionic_angular_1.Alert.create({
+                    title: 'Error',
+                    subTitle: 'No hay ningún pedido pendiente de servir',
+                    buttons: ['Ok'],
+                });
+                _this.nav.present(alert_1);
+            }
+            else {
+                _this.listaPedidos = data;
+            }
+        }, function (error) {
+            loading.dismiss();
+            _this.errorMessage = error;
+        }, function () {
+            loading.dismiss();
+        });
     };
     ListaPedidosVenta = __decorate([
         ionic_angular_1.Page({

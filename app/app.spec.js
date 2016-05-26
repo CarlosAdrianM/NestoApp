@@ -19,10 +19,11 @@ function main() {
     'use strict';
     describe('ClickerApp', function () {
         beforeEach(function () {
-            var ionicApp = new ionic_angular_1.IonicApp(null, null, null);
+            // let ionicApp: IonicApp = new IonicApp(null, null, null);
             var platform = new ionic_angular_1.Platform();
             var usuario = new Usuario_1.Usuario();
-            nestoApp = new app_1.NestoApp(ionicApp, platform, usuario);
+            var menu = new ionic_angular_1.MenuController();
+            nestoApp = new app_1.NestoApp(platform, usuario, menu);
         });
         it('initialises with three possible pages', function () {
             expect(nestoApp['pages'].length).toEqual(3);

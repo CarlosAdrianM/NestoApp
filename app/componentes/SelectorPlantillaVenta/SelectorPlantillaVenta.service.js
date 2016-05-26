@@ -70,6 +70,7 @@ var SelectorPlantillaVentaService = (function () {
         params.set('cantidad', linea.cantidad);
         params.set('cantidadOferta', linea.cantidadOferta);
         return this.http.get(_baseUrl, { search: params })
+            .cache()
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };

@@ -24,7 +24,7 @@
             <ion-list>
                 <ion-item>
                     <ion-label>Pedido {{pedido.numero}}</ion-label>
-                    <ion-label>Creado por {{pedido.usuario}}</ion-label>
+                    <ion-label>{{pedido.usuario}}</ion-label>
                 </ion-item>
                 <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto"></selector-direcciones-entrega>
                 <ion-item>
@@ -61,17 +61,18 @@
                     <ion-row>
                         <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
                         <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
-                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'1.0-2'}}</p></ion-col>
+                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'1.2-2'}}</p></ion-col>
                         <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
-                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.0-2'}}</p></ion-col>
+                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.2-2'}}</p></ion-col>
                     </ion-row>
                     <ion-badge light *ngIf="linea.estado == -3">Presupuesto</ion-badge>
                     <ion-badge danger *ngIf="linea.estado == -1">Pendiente</ion-badge>
                     <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
                     <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
+                    <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{cadenaFecha(linea.fechaEntrega) | date}}</ion-badge>
                 </ion-item>
             </ion-list>
-            <button fab fab-bottom fab-center fab-fixed>
+            <button fab fab-bottom fab-right fab-fixed (click)="annadirLinea()">
                 <ion-icon name="add"></ion-icon>
             </button>
         </div>

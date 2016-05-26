@@ -10,10 +10,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var core_1 = require('@angular/core');
 var http_1 = require('@angular/http');
+var Observable_1 = require('rxjs/Observable');
 require('rxjs/add/operator/map');
 var configuracion_1 = require('../../componentes/configuracion/configuracion');
+var Usuario_1 = require('../../models/Usuario');
 var ListaPedidosVentaService = (function () {
-    function ListaPedidosVentaService(http) {
+    function ListaPedidosVentaService(http, usuario) {
         this._baseUrl = configuracion_1.Configuracion.API_URL + '/PedidosVenta';
         this.datosPrueba = [
             { "$id": "1", "empresa": "1  ", "numero": 36, "cliente": "1993      ", "contacto": "0  ", "nombreCliente": "JUAN SIN NOMBRE", "direccionCliente": "C/ ALEGRIA, 12", "fecha": "2002-08-27T00:00:00", "formaPago": "EFC", "plazosPago": "EFC", "primerVencimiento": "2011-06-30T00:00:00", "iva": "GN ", "vendedor": "JM ", "comentarios": "", "comentarioPicking": null, "periodoFacturacion": "NRM", "ruta": "REI", "serie": "NV ", "ccc": "3  ", "origen": "1  ", "contactoCobro": "0  ", "noComisiona": 0.0000, "vistoBuenoPlazosPago": false, "mantenerJunto": false, "servirJunto": false, "usuario": null, "baseImponible": 190.25 },
@@ -22,13 +24,24 @@ var ListaPedidosVentaService = (function () {
             { "$id": "4", "empresa": "1  ", "numero": 605919, "cliente": "15191     ", "contacto": "0  ", "nombreCliente": "CENTRO DE ESTETICA EL EDEN, S.L.U.", "direccionCliente": "C/ SEGOVIA, 1 - LOCAL", "fecha": "2015-11-30T00:00:00", "formaPago": "RCB", "plazosPago": "RCB", "primerVencimiento": "2016-03-25T00:00:00", "iva": "G21", "vendedor": "NV ", "comentarios": "\r\n                                                ", "comentarioPicking": "", "periodoFacturacion": "NRM", "ruta": "00 ", "serie": "NV ", "ccc": "4  ", "origen": "1  ", "contactoCobro": "0  ", "noComisiona": 0.0000, "vistoBuenoPlazosPago": false, "mantenerJunto": false, "servirJunto": false, "usuario": null, "baseImponible": 1902.25 }
         ];
         this.http = http;
+        this.usuario = usuario;
     }
     ListaPedidosVentaService.prototype.cargarLista = function () {
-        return this.datosPrueba;
+        var params = new http_1.URLSearchParams();
+        params.set('vendedor', this.usuario.vendedor);
+        return this.http.get(this._baseUrl, { search: params })
+            .map(function (res) { return res.json(); })
+            .catch(this.handleError);
+    };
+    ListaPedidosVentaService.prototype.handleError = function (error) {
+        // in a real world app, we may send the error to some remote logging infrastructure
+        // instead of just logging it to the console
+        console.error(error);
+        return Observable_1.Observable.throw(error.json().error || 'Server error');
     };
     ListaPedidosVentaService = __decorate([
         core_1.Injectable(), 
-        __metadata('design:paramtypes', [http_1.Http])
+        __metadata('design:paramtypes', [http_1.Http, Usuario_1.Usuario])
     ], ListaPedidosVentaService);
     return ListaPedidosVentaService;
 }());

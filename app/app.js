@@ -18,11 +18,11 @@ var ExtractoCliente_1 = require('./pages/ExtractoCliente/ExtractoCliente');
 var PlantillaVenta_1 = require('./pages/PlantillaVenta/PlantillaVenta');
 var ListaPedidosVenta_1 = require('./pages/ListaPedidosVenta/ListaPedidosVenta');
 var NestoApp = (function () {
-    function NestoApp(app, platform, usuario) {
-        this.app = app;
+    function NestoApp(platform, usuario, menu) {
+        // this.app = app;
         this.platform = platform;
         this.usuario = usuario;
-        this.rootPage = PlantillaVenta_1.PlantillaVenta;
+        this.menu = menu;
         this.initializeApp();
         // set our app's pages
         this.pages = [
@@ -31,6 +31,7 @@ var NestoApp = (function () {
             { title: 'Extracto Cliente', component: ExtractoCliente_1.ExtractoCliente },
             { title: 'Usuario', component: profile_1.ProfilePage },
         ];
+        this.rootPage = PlantillaVenta_1.PlantillaVenta;
     }
     NestoApp.prototype.initializeApp = function () {
         this.platform.ready().then(function () {
@@ -51,17 +52,25 @@ var NestoApp = (function () {
         });
     };
     NestoApp.prototype.openPage = function (page) {
+        /*
         // close the menu when clicking a link from the menu
         this.app.getComponent('leftMenu').close();
         // navigate to the new page if it is not the current page
         this.app.getComponent('nav').setRoot(page.component);
+          */
+        this.menu.close();
+        this.nav.setRoot(page.component);
     };
     ;
+    __decorate([
+        core_1.ViewChild(ionic_angular_1.Nav), 
+        __metadata('design:type', ionic_angular_1.Nav)
+    ], NestoApp.prototype, "nav", void 0);
     NestoApp = __decorate([
         ionic_angular_1.App({
             templateUrl: 'build/app.html',
             config: {},
-            providers: [http_1.HTTP_PROVIDERS,
+            providers: [
                 core_1.provide(angular2_jwt_1.AuthHttp, {
                     useFactory: function (http) {
                         return new angular2_jwt_1.AuthHttp(new angular2_jwt_1.AuthConfig, http);
@@ -71,7 +80,7 @@ var NestoApp = (function () {
                 Usuario_1.Usuario,
             ],
         }), 
-        __metadata('design:paramtypes', [ionic_angular_1.IonicApp, ionic_angular_1.Platform, Usuario_1.Usuario])
+        __metadata('design:paramtypes', [ionic_angular_1.Platform, Usuario_1.Usuario, ionic_angular_1.MenuController])
     ], NestoApp);
     return NestoApp;
 }());

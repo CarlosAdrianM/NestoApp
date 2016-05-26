@@ -35,11 +35,13 @@ export abstract class SelectorBase {
         searchbar.target.select();
     }
 
-    private aplicarFiltro(datos: any[], filtro: string): any[] {
+    protected aplicarFiltro(datos: any[], filtro: string): any[] {
         return datos.filter(
             f => Object.keys(f).some(
                 (key) => (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
-                    f[key].toUpperCase().indexOf(filtro) > -1 : false
+                    f[key].toUpperCase().indexOf(filtro) > -1 :
+                    (f[key] && typeof f[key] === 'number' && !isNaN(parseFloat(filtro))) ? f[key] === parseFloat(filtro) :
+                    false
             )
         );
     }

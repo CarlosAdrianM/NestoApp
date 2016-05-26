@@ -15,7 +15,7 @@ export class PedidoVentaService {
 
     public cargarPedido(empresa: string, numero: number): Observable<any> {
         let params: URLSearchParams = new URLSearchParams();
-        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('empresa', empresa);
         params.set('numero', numero.toString());
 
         return this.http.get(this._baseUrl, { search: params })

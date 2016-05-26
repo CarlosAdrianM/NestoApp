@@ -5,12 +5,13 @@
     <ion-title>Pedido Venta</ion-title>
 </ion-navbar>
 
+<ion-searchbar #filtro placeholder="Introduzca algún dato del pedido" (input)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (focus)="seleccionarTexto($event)"></ion-searchbar>
 <ion-content>
     <ion-list>
-        <ion-item *ngFor="let pedido of listaPedidos"  (click)="abrirPedido(pedido)">
+        <ion-item *ngFor="let pedido of datosFiltrados"  (click)="abrirPedido(pedido)">
             <h2>{{pedido.nombre}}</h2>
             <h3>{{pedido.direccion}}</h3>
-            <p>{{pedido.cliente}} - {{pedido.fecha}} ({{pedido.baseImponible | currency:'EUR':true:'1.0-2'}})</p>
+            <p>{{pedido.cliente}} - {{cadenaFecha(pedido.fecha) | date}} ({{pedido.baseImponible | currency:'EUR':true:'1.2-2'}})</p>
             <ion-badge danger *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
             <ion-badge secondary *ngIf="pedido.tienePicking">Picking</ion-badge>
             <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>

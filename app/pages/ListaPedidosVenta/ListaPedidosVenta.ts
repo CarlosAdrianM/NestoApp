@@ -7,28 +7,29 @@ import {Page, NavController, Alert, Loading} from 'ionic-angular';
 import { Parametros } from '../../services/Parametros.service';
 import {ListaPedidosVentaService} from './ListaPedidosVenta.service';
 import {PedidoVenta} from '../PedidoVenta/PedidoVenta';
+import {SelectorBase} from '../../componentes/SelectorBase/SelectorBase';
 
 @Page({
     templateUrl: 'build/pages/ListaPedidosVenta/ListaPedidosVenta.html',
     providers: [ListaPedidosVentaService, Parametros],
 })
-export class ListaPedidosVenta {
-    private errorMessage: string;
-    private listaPedidos: any[];
+export class ListaPedidosVenta extends SelectorBase {
+    // private listaPedidos: any[];
     private nav: NavController;
     private servicio: ListaPedidosVentaService;
 
     constructor(servicio: ListaPedidosVentaService, nav: NavController) {
+        super();
         this.servicio = servicio;
         this.nav = nav;
-        this.cargarLista();
+        this.cargarDatos(''); // El parámetro no se usa para nada
     }
 
     private abrirPedido(pedido: any): void {
         this.nav.push(PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
     }
 
-    private cargarLista(): void {
+    public cargarDatos(nada: string): void {
         let loading: any = Loading.create({
             content: 'Cargando Pedidos...',
         });
@@ -45,7 +46,7 @@ export class ListaPedidosVenta {
                     });
                     this.nav.present(alert);
                 } else {
-                    this.listaPedidos = data;
+                    this.inicializarDatos(data);
                 }
             },
             error => {
@@ -57,4 +58,9 @@ export class ListaPedidosVenta {
             }
         );
     }
+
+    private cadenaFecha(cadena: string): Date {
+        return new Date(cadena);
+    }
+
 }

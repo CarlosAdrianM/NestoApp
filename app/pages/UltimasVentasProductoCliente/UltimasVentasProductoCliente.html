@@ -35,13 +35,13 @@
                     {{movimiento.cantidad}}
                 </ion-col>
                 <ion-col style="text-align:right" width-20>
-                    {{movimiento.precioBruto | currency:'EUR':true}}
+                    {{movimiento.precioBruto | currency:'EUR':true:'1.2-2'}}
                 </ion-col>
                 <ion-col style="text-align:center" width-20>
                     {{movimiento.descuentos | percent }}
                 </ion-col>
                 <ion-col style="text-align:right" width-20>
-                    {{movimiento.precioNeto | currency:'EUR':true}}
+                    {{movimiento.precioNeto | currency:'EUR':true:'1.2-2'}}
                 </ion-col>
             </ion-row>
         </ion-item>

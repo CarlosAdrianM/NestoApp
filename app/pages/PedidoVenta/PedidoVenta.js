@@ -29,9 +29,10 @@ var PedidoVenta = (function () {
         this.nav.present(loading);
         this.servicio.cargarPedido(empresa, numero).subscribe(function (data) {
             _this.pedido = data;
-            _this.pedido.fechaMostrar = new Date(_this.pedido.fecha);
-            _this.pedido.primerVencimientoMostrar = new Date(_this.pedido.primerVencimiento);
+            //this.pedido.fechaMostrar = new Date(this.pedido.fecha);
+            //this.pedido.primerVencimientoMostrar = new Date(this.pedido.primerVencimiento);
             _this.iva = _this.pedido.iva;
+            _this.pedido.plazosPago = _this.pedido.plazosPago.trim(); // Cambiar en la API
         }, function (error) {
             var alert = ionic_angular_1.Alert.create({
                 title: 'Error',
