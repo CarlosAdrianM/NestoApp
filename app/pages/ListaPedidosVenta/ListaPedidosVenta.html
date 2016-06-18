@@ -5,7 +5,7 @@
     <ion-title>Pedido Venta</ion-title>
 </ion-navbar>
 
-<ion-searchbar #filtro placeholder="Introduzca algún dato del pedido" (input)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (focus)="seleccionarTexto($event)"></ion-searchbar>
+<ion-searchbar #filtro placeholder="Introduzca algún dato del pedido" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
 <ion-content>
     <ion-list>
         <ion-item *ngFor="let pedido of datosFiltrados"  (click)="abrirPedido(pedido)">

@@ -1,5 +1,5 @@
-﻿import {Page, NavController, Alert, Loading, Platform, Events} from 'ionic-angular';
-import {ViewChild} from '@angular/core';
+﻿import {NavController, Alert, Loading, Platform, Events} from 'ionic-angular';
+import {Component, ViewChild} from '@angular/core';
 import {SelectorClientes} from '../../componentes/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta';
 import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
@@ -12,7 +12,7 @@ import {DatePicker} from 'ionic-native';
 import { SelectorFormasPago } from '../../componentes/SelectorFormasPago/SelectorFormasPago';
 import { SelectorPlazosPago } from '../../componentes/SelectorPlazosPago/SelectorPlazosPago';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
     directives: [SelectorClientes, SelectorPlantillaVenta, SelectorDireccionesEntrega, SelectorFormasPago, SelectorPlazosPago],
     providers: [PlantillaVentaService, Parametros],
@@ -78,10 +78,6 @@ export class PlantillaVenta {
     @ViewChild(SelectorClientes)
     private _selectorClientes: SelectorClientes;
 
-    onPageWillUnload() {
-        console.log("Guardamos el pedido");
-    }
-    
     public cargarProductos(cliente: any): void {
         if (!this.clienteSeleccionado) {
             this.cargarProductosPlantilla(cliente);

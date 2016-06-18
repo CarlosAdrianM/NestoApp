@@ -1,7 +1,7 @@
 'use strict';
 
-import { Type, provide, ViewChild }           from '@angular/core';
-import { App, Platform, Nav, MenuController } from 'ionic-angular';
+import { Component, Type, provide, ViewChild }           from '@angular/core';
+import { ionicBootstrap, Platform, Nav, MenuController } from 'ionic-angular';
 import {Http}      from '@angular/http';
 import {AuthHttp, AuthConfig}      from 'angular2-jwt';
 import {Usuario}                   from './models/Usuario';
@@ -10,18 +10,8 @@ import { ExtractoCliente }         from './pages/ExtractoCliente/ExtractoCliente
 import { PlantillaVenta }          from './pages/PlantillaVenta/PlantillaVenta';
 import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosVenta';
 
-@App({
+@Component({
   templateUrl: 'build/app.html',
-  config: {}, // http://ionicframework.com/docs/v2/api/config/Config/
-  providers: [
-      provide(AuthHttp, {
-          useFactory: (http: any): AuthHttp => {
-              return new AuthHttp(new AuthConfig, http);
-          },
-          deps: [Http],
-      }),
-      Usuario,
-  ],
 })
 export class NestoApp {
   @ViewChild(Nav) private nav: Nav;
@@ -83,3 +73,18 @@ export class NestoApp {
     this.nav.setRoot(page.component);
   };
 }
+
+// Pass the main app component as the first argument
+// Pass any providers for your app in the second argument
+// Set any config for your app as the third argument:
+// http://ionicframework.com/docs/v2/api/config/Config/
+
+ionicBootstrap(NestoApp, [
+    provide(AuthHttp, {
+        useFactory: (http: any): AuthHttp => {
+            return new AuthHttp(new AuthConfig, http);
+        },
+        deps: [Http],
+    }),
+    Usuario,
+], {});

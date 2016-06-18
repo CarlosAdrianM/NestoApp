@@ -1,4 +1,5 @@
-﻿import {Page, Storage, LocalStorage, Loading, NavController} from 'ionic-angular';
+﻿import {Component} from '@angular/core';
+import {Storage, LocalStorage, Loading, NavController} from 'ionic-angular';
 import {Http, Headers} from '@angular/http';
 import {FORM_DIRECTIVES} from '@angular/common';
 import {JwtHelper} from 'angular2-jwt';
@@ -7,7 +8,7 @@ import 'rxjs/add/operator/map';
 import {Configuracion} from '../../componentes/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/profile/profile.html',
     directives: [FORM_DIRECTIVES],
 })

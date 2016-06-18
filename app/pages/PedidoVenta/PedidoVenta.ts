@@ -1,11 +1,12 @@
-﻿import {Page, NavController, NavParams, Alert, Loading} from 'ionic-angular';
+﻿import {Component} from '@angular/core';
+import {NavController, NavParams, Alert, Loading} from 'ionic-angular';
 import { Parametros } from '../../services/Parametros.service';
 import {PedidoVentaService} from './PedidoVenta.service';
 import { SelectorFormasPago } from '../../componentes/SelectorFormasPago/SelectorFormasPago';
 import { SelectorPlazosPago } from '../../componentes/SelectorPlazosPago/SelectorPlazosPago';
 import {SelectorDireccionesEntrega} from '../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/PedidoVenta/PedidoVenta.html',
     providers: [PedidoVentaService, Parametros],
     directives: [SelectorFormasPago, SelectorPlazosPago, SelectorDireccionesEntrega], 

@@ -3,13 +3,14 @@
 // botón de cargar 20 siguienes
 
 // Al abrir un pedido hacemos un nav.push al pedido en cuestión.
-import {Page, NavController, Alert, Loading} from 'ionic-angular';
+import {Component} from '@angular/core';
+import { NavController, Alert, Loading} from 'ionic-angular';
 import { Parametros } from '../../services/Parametros.service';
 import {ListaPedidosVentaService} from './ListaPedidosVenta.service';
 import {PedidoVenta} from '../PedidoVenta/PedidoVenta';
 import {SelectorBase} from '../../componentes/SelectorBase/SelectorBase';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/ListaPedidosVenta/ListaPedidosVenta.html',
     providers: [ListaPedidosVentaService, Parametros],
 })

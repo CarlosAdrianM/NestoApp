@@ -1,7 +1,8 @@
-﻿import {Page, NavController, NavParams} from 'ionic-angular';
+﻿import {Component} from '@angular/core';
+import {NavController, NavParams} from 'ionic-angular';
 import { UltimasVentasProductoClienteService } from './UltimasVentasProductoCliente.service';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente.html',
     providers: [UltimasVentasProductoClienteService],
 })

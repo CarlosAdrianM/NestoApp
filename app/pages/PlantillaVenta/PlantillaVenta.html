@@ -10,7 +10,7 @@
     </ion-buttons>
 </ion-navbar>
 
-<ion-slides [options]="opcionesSlides" (SlideChangeStart)="avanzar($event)">
+<ion-slides [options]="opcionesSlides" (ionWillChange)="avanzar($event)">
     <ion-slide>
         <selector-clientes (seleccionar)="cargarProductos($event)"></selector-clientes>
     </ion-slide>

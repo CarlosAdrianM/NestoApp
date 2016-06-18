@@ -1,8 +1,9 @@
-﻿import {Page, NavController, NavParams, Alert, Toast} from 'ionic-angular';
+﻿import {Component} from '@angular/core';
+import {NavController, NavParams, Alert, Toast} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
 
-@Page({
+@Component({
     templateUrl: 'build/componentes/SelectorPlantillaVenta/SelectorPlantillaVentaDetalle.html',
     providers: [SelectorPlantillaVentaService],
 })

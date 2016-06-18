@@ -1,8 +1,8 @@
-import {Page} from 'ionic-angular';
+import {Component} from '@angular/core';
 import {SelectorClientes} from '../../componentes/SelectorClientes/SelectorClientes';
 import {ExtractoClienteService} from './ExtractoCliente.service';
 
-@Page({
+@Component({
     templateUrl: 'build/pages/ExtractoCliente/ExtractoCliente.html',
     directives: [SelectorClientes],
     providers: [ExtractoClienteService],
