@@ -11,7 +11,7 @@ import { PlantillaVenta }          from './pages/PlantillaVenta/PlantillaVenta';
 import { ListaPedidosVenta }       from './pages/ListaPedidosVenta/ListaPedidosVenta';
 
 @Component({
-  templateUrl: 'build/app.html',
+  templateUrl: 'build/app.html'
 })
 export class NestoApp {
   @ViewChild(Nav) private nav: Nav;
@@ -79,12 +79,18 @@ export class NestoApp {
 // Set any config for your app as the third argument:
 // http://ionicframework.com/docs/v2/api/config/Config/
 
-ionicBootstrap(NestoApp, [
-    provide(AuthHttp, {
-        useFactory: (http: any): AuthHttp => {
-            return new AuthHttp(new AuthConfig, http);
-        },
-        deps: [Http],
-    }),
-    Usuario,
-], {});
+ionicBootstrap(
+    NestoApp,
+    [
+        provide(
+            AuthHttp, {
+                useFactory: (http: any): AuthHttp => {
+                    return new AuthHttp(new AuthConfig, http);
+                },
+                deps: [Http],
+            }
+        ),
+        Usuario,
+    ],
+    {}
+);

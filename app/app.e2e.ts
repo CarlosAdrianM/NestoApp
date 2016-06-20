@@ -1,3 +1,4 @@
+/*
 describe('NestoApp', () => {
 
   beforeEach(() => {
@@ -31,3 +32,4 @@ describe('NestoApp', () => {
     expect(element.all(by.css('ion-label')).last().getText()).toEqual('Goodbye Ionic');
   });
 });
+*/

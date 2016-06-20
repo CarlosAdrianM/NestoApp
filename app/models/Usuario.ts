@@ -1,13 +1,12 @@
 ﻿'use strict';
 import {Injectable} from '@angular/core';
 import {Storage, LocalStorage} from 'ionic-angular';
-//import { ProfilePage } from '../pages/profile/profile';
 
 @Injectable()
 export class Usuario {
 
     private local: Storage = new Storage(LocalStorage);
-    
+
     constructor() {
         this.local.get('profile').then(profile => {
             this.nombre = JSON.parse(profile);
