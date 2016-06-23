@@ -30,6 +30,10 @@ export class ListaPedidosVenta extends SelectorBase {
         this.nav.push(PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
     }
 
+    private abrirPedidoNumero(numeroPedido: number): void {
+        this.nav.push(PedidoVenta, { empresa: "1", numero: numeroPedido });
+    }
+
     public cargarDatos(nada: string): void {
         let loading: any = Loading.create({
             content: 'Cargando Pedidos...',

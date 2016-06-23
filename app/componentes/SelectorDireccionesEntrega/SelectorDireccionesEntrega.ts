@@ -8,7 +8,7 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
     templateUrl: 'build/componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega.html',
     directives: [Searchbar, List, Item, Icon],
     providers: [SelectorDireccionesEntregaService],
-    inputs: ['cliente'],
+    inputs: ['cliente', 'seleccionado'],
 })
 
 @Injectable()
@@ -20,6 +20,7 @@ export class SelectorDireccionesEntrega extends SelectorBase {
 
     // @Input() 
     private cliente: any;
+    private seleccionado: string = "0";
 
     constructor(servicio: SelectorDireccionesEntregaService, nav: NavController) {
         super();
@@ -45,9 +46,16 @@ export class SelectorDireccionesEntrega extends SelectorBase {
                         if (i + 1 > this.direccionesEntrega.length) {
                             throw 'Error en la API de Nesto: cliente sin dirección por defecto';
                         }
-                        if (this.direccionesEntrega[i].esDireccionPorDefecto) {
-                            this.direccionSeleccionada = this.direccionesEntrega[i];
-                            this.seleccionarDato(this.direccionSeleccionada);
+                        if (this.seleccionado === undefined) {
+                            if (this.direccionesEntrega[i].esDireccionPorDefecto) {
+                                this.direccionSeleccionada = this.direccionesEntrega[i];
+                                this.seleccionarDato(this.direccionSeleccionada);
+                            }
+                        } else {
+                            if (this.seleccionado === this.direccionesEntrega[i].contacto) {
+                                this.direccionSeleccionada = this.direccionesEntrega[i];
+                                this.seleccionarDato(this.direccionSeleccionada);
+                            }
                         }
                         i++;
                     }

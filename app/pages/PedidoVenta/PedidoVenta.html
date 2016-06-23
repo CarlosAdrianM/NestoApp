@@ -26,7 +26,7 @@
                     <ion-label>Pedido {{pedido.numero}}</ion-label>
                     <ion-label>{{pedido.usuario}}</ion-label>
                 </ion-item>
-                <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto"></selector-direcciones-entrega>
+                <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
                 <ion-item>
                     <ion-label>Fecha Pedido</ion-label>
                     <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
