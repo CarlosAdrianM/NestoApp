@@ -1,25 +1,28 @@
-﻿<ion-navbar *navbar>
-    <button menuToggle>
-        <ion-icon name="menu"></ion-icon>
-    </button>
-    <ion-title>Plantilla Venta</ion-title>
-    <ion-buttons end *ngIf="sePuedeAvanzar()" >
-        <button (click)="siguientePantalla()">
-            <ion-icon name="arrow-forward"></ion-icon>
+﻿<ion-header>
+    <ion-navbar>
+        <button menuToggle>
+            <ion-icon name="menu"></ion-icon>
         </button>
-    </ion-buttons>
-</ion-navbar>
+        <ion-title>Plantilla Venta</ion-title>
+        <ion-buttons end *ngIf="sePuedeAvanzar()" >
+            <button (click)="siguientePantalla()">
+                <ion-icon name="arrow-forward"></ion-icon>
+            </button>
+        </ion-buttons>
+    </ion-navbar>   
+</ion-header>
 
-<ion-slides [options]="opcionesSlides" (ionWillChange)="avanzar($event)">
-    <ion-slide>
-        <selector-clientes (seleccionar)="cargarProductos($event)"></selector-clientes>
-    </ion-slide>
-    <ion-slide *ngIf="clienteSeleccionado">
-        <h3>Selección Productos</h3>
-        <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}"></selector-plantilla-venta>
-    </ion-slide>
-    <ion-slide>
-        <ion-content>
+<ion-content>
+    <ion-slides [options]="opcionesSlides" (ionWillChange)="avanzar($event)">
+        <ion-slide>
+            <h3>Selección Clientes</h3>
+            <selector-clientes (seleccionar)="cargarProductos($event)"></selector-clientes>
+        </ion-slide>
+        <ion-slide *ngIf="clienteSeleccionado">
+            <h3>Selección Productos</h3>
+            <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}"></selector-plantilla-venta>
+        </ion-slide>
+        <ion-slide>
             <h3>Resumen</h3>
             <ion-list *ngIf="productosResumen">
                 <ion-item *ngFor="let producto of productosResumen">
@@ -36,10 +39,8 @@
                     <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
                 </ion-item>
             </ion-list>
-        </ion-content>
-    </ion-slide>
-    <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
-        <ion-content>
+        </ion-slide>
+        <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
             <h3>Dirección de Entrega</h3>
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
@@ -62,21 +63,21 @@
                     <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
                 </ion-item>
             </ion-list>
-        </ion-content>
-    </ion-slide>
-    <ion-slide  *ngIf="productosResumen" scrollY="true">
-        <h3>Condiciones de Pago</h3>
-        <ion-item>
-            <ion-row>
-                <ion-col>Total pedido:</ion-col>
-                <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true:'1.2-2'}}</ion-col>
-            </ion-row>
-        </ion-item>
-        <ion-item style="text-align:center" (press)="cambiarIVA()">
-            {{direccionSeleccionada.iva}}
-        </ion-item>
-        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
-        <button block (click)="crearPedido()">Crear Pedido</button>
-    </ion-slide>
-</ion-slides>
+        </ion-slide>
+        <ion-slide *ngIf="productosResumen" scrollY="true">
+            <h3>Condiciones de Pago</h3>
+            <ion-item>
+                <ion-row>
+                    <ion-col>Total pedido:</ion-col>
+                    <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true:'1.2-2'}}</ion-col>
+                </ion-row>
+            </ion-item>
+            <ion-item style="text-align:center" (press)="cambiarIVA()">
+                {{direccionSeleccionada.iva}}
+            </ion-item>
+            <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
+            <selector-plazos-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+            <button block (click)="crearPedido()">Crear Pedido</button>
+        </ion-slide>
+    </ion-slides>
+</ion-content>
