@@ -73,6 +73,64 @@ export class PedidoVenta {
         this.nav.present(alert);
     }
 
+    public modificarPedido(): void {
+
+        let confirm = Alert.create({
+            title: 'Confirmar',
+            message: '¿Está seguro que quiere modificar el pedido?',
+            buttons: [
+                {
+                    text: 'Sí',
+                    handler: () => {
+                        // Hay que guardar el pedido original en alguna parte
+                        let loading: any = Loading.create({
+                            content: 'Modificando Pedido...',
+                        });
+
+                        this.nav.present(loading);
+
+                        this.servicio.modificarPedido(this.pedido).subscribe(
+                            data => {
+                                let numeroPedido: string = data.numero;
+                                let alert: Alert = Alert.create({
+                                    title: 'Modificado',
+                                    subTitle: 'Pedido ' + numeroPedido + ' modificado correctamente',
+                                    buttons: ['Ok'],
+                                });
+                                this.nav.present(alert);
+                                // this.reinicializar();
+                            },
+                            error => {
+                                let alert: Alert = Alert.create({
+                                    title: 'Error',
+                                    subTitle: 'No se ha podido modificar el pedido',
+                                    buttons: ['Ok'],
+                                });
+                                this.nav.present(alert);
+                                loading.dismiss();
+                            },
+                            () => {
+                                loading.dismiss();
+                            }
+                        );
+                    }
+                },
+                {
+                    text: 'No',
+                    handler: () => {
+                        return;
+                    }
+                }
+
+            ]
+        });
+
+        this.nav.present(confirm);
+
+        
+    }
+
+
     private cadenaFecha(cadena: string): Date {
         return new Date(cadena);
     }

@@ -1,4 +1,4 @@
-﻿<ion-navbar *navbar>
+﻿<ion-navbar>
     <button menuToggle>
         <ion-icon name="menu"></ion-icon>
     </button>
@@ -19,7 +19,8 @@
     </div>
 
     <div [ngSwitch]="authType">
-        <form *ngSwitchWhen="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
+        
+        <form *ngSwitchCase="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
             <ion-item>
                 <ion-label>Nombre de usuario</ion-label>
                 <ion-input type="text" ngControl="username"></ion-input>
@@ -35,8 +36,9 @@
             </div>
 
         </form>
+            
 
-        <form *ngSwitchWhen="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
+        <form *ngSwitchCase="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
             <ion-item>
                 <ion-label>Nombre de Usuario</ion-label>
                 <ion-input type="text" ngControl="username"></ion-input>
@@ -52,6 +54,7 @@
             </div>
 
         </form>
+
     </div>
 
     <div padding>
@@ -60,8 +63,8 @@
 
 </ion-content>
 
-<ion-content>
-    <div *ngIf="auth.authenticated()">
+<ion-content *ngIf="auth.authenticated()">
+    <div>
         <div padding>
             <h1>Hola, {{ usuario.nombre }}</h1>
             <button block (click)="logout()">Cerrar Sesión</button>

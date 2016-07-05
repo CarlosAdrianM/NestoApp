@@ -55,6 +55,9 @@
                     <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
                 </ion-item>
             </ion-list>
+            <button fab fab-bottom fab-right fab-fixed (click)="modificarPedido()">
+                <ion-icon name="archive"></ion-icon>
+            </button>
         </div>
         <div *ngSwitchCase="'lineas'">
             <ion-list>
