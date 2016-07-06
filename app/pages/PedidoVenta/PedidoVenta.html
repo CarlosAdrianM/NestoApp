@@ -4,10 +4,12 @@
             <ion-icon name="menu"></ion-icon>
         </button>
         <ion-title>Pedido Venta</ion-title>
+        <ion-buttons end>
+            <button (click)="modificarPedido()">
+                <ion-icon name="archive"></ion-icon>
+            </button>
+        </ion-buttons>
     </ion-navbar>
-</ion-header>
-
-<ion-content *ngIf="pedido">
     <ion-segment [(ngModel)]="segmentoPedido">
         <ion-segment-button value="cabecera">
             Cabecera
@@ -19,13 +21,16 @@
             Comentarios
         </ion-segment-button>
     </ion-segment>
+</ion-header>
 
+<ion-content *ngIf="pedido">
     <div [ngSwitch]="segmentoPedido">
         <div *ngSwitchCase="'cabecera'">
-
             <ion-list>
                 <ion-item>
                     <ion-label>Pedido {{pedido.numero}}</ion-label>
+                </ion-item>
+                <ion-item>
                     <ion-label>{{pedido.usuario}}</ion-label>
                 </ion-item>
                 <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
@@ -55,9 +60,6 @@
                     <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
                 </ion-item>
             </ion-list>
-            <button fab fab-bottom fab-right fab-fixed (click)="modificarPedido()">
-                <ion-icon name="archive"></ion-icon>
-            </button>
         </div>
         <div *ngSwitchCase="'lineas'">
             <ion-list>
