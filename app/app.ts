@@ -1,7 +1,7 @@
 'use strict';
 
 import { Component, Type, provide, ViewChild }           from '@angular/core';
-import { ionicBootstrap, Platform, Nav, MenuController } from 'ionic-angular';
+import { ionicBootstrap, Platform, Nav, MenuController, Alert } from 'ionic-angular';
 import {Http}      from '@angular/http';
 import {Deploy, CloudSettings, provideCloud} from '@ionic/cloud-angular';
 import {AuthHttp, AuthConfig}      from 'angular2-jwt';
@@ -82,9 +82,19 @@ export class NestoApp {
             // response will be true/false
             if (response) {
                 deploy.update().then(function (res) {
-                    console.log('Ionic Deploy: Update Success! ', res);
+                    let alert: Alert = Alert.create({
+                        title: 'Actualización',
+                        subTitle: 'Aplicación actualizada a la última versión',
+                        buttons: ['Ok'],
+                    });
+                    this.nav.present(alert);
                 }, function (err) {
-                    console.log('Ionic Deploy: Update error! ', err);
+                    let alert: Alert = Alert.create({
+                        title: 'Actualización',
+                        subTitle: 'Se ha producido un error al actualizar la aplicación',
+                        buttons: ['Ok'],
+                    });
+                    this.nav.present(alert);
                 }, function (prog) {
                     console.log('Ionic Deploy: Progress... ', prog);
                 });
