@@ -165,4 +165,23 @@ export class SelectorPlantillaVentaDetalle {
         return (producto.cantidadOferta === 0 || producto.cantidadOferta === "0") && producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
     }
 
+    private mostrarStock(producto: any): void {
+        let texto: string;
+
+        if (producto.stock == 0) {
+            texto = 'No hay stock de este producto'
+        } else if (producto.stock == producto.cantidadDisponible) {
+            texto = 'Hay ' + producto.stock + ' unidades en stock y todas están disponibles.'
+        } else {
+            texto = 'Hay ' + producto.stock + ' unidades en stock, pero solo ' + producto.cantidadDisponible + ' están disponibles.'
+        }
+
+        let alert = Alert.create({
+            title: 'Stock',
+            subTitle: texto,
+            buttons: ['OK']
+        });
+        this.nav.present(alert);
+    }
+
 }
