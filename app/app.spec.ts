@@ -29,7 +29,7 @@ describe('NestoApp', () => {
 
     beforeEach(() => {
         let mockClass: any = (<any>new MockClass());
-        nestoApp = new NestoApp(mockClass, mockClass, mockClass);
+        nestoApp = new NestoApp(mockClass, mockClass, mockClass, mockClass);
     });
 
     it('initialises with a root page', () => {

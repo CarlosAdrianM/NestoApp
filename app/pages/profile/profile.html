@@ -1,9 +1,11 @@
-﻿<ion-navbar>
-    <button menuToggle>
-        <ion-icon name="menu"></ion-icon>
-    </button>
-    <ion-title>Usuario</ion-title>
-</ion-navbar>
+﻿<ion-header>
+    <ion-navbar>
+        <button menuToggle>
+            <ion-icon name="menu"></ion-icon>
+        </button>
+        <ion-title>Usuario</ion-title>
+    </ion-navbar>
+</ion-header>
 
 <ion-content class="login" *ngIf="!auth.authenticated()">
 
@@ -68,6 +70,7 @@
         <div padding>
             <h1>Hola, {{ usuario.nombre }}</h1>
             <button block (click)="logout()">Cerrar Sesión</button>
+            <h3>Versión 1.5.3</h3>
         </div>
     </div>
 </ion-content>

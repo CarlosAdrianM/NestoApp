@@ -6,6 +6,7 @@
     "@angular/http": "2.0.0-rc.3",
     "@angular/platform-browser": "2.0.0-rc.3",
     "@angular/platform-browser-dynamic": "2.0.0-rc.3",
+    "@ionic/cloud-angular": "0.0.15",
     "angular2-jwt": "^0.1.15",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "es6-promise": "3.1.2",
@@ -92,5 +93,5 @@
     "url": "https://github.com/CarlosAdrianM/NestoApp.git"
   },
   "license": "MIT",
-  "version": "1.4.0"
+  "version": "1.5.3"
 }
