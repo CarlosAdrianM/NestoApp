@@ -34,3 +34,4 @@ platforms
 plugins
 
 .travis/travis_rsa.pem
+/.vs/NestoApp/v14/.suo
