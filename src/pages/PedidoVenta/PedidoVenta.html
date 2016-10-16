@@ -1,0 +1,96 @@
+﻿<ion-header>
+    <ion-navbar>
+        <ion-title>Pedido Venta</ion-title>
+        <ion-buttons end>
+            <button ion-button (click)="modificarPedido()">
+                <ion-icon name="archive"></ion-icon>
+            </button>
+        </ion-buttons>
+    </ion-navbar>
+    <ion-segment [(ngModel)]="segmentoPedido">
+        <ion-segment-button value="cabecera">
+            Cabecera
+        </ion-segment-button>
+        <ion-segment-button value="lineas">
+            Líneas
+        </ion-segment-button>
+        <ion-segment-button value="comentarios">
+            Comentarios
+        </ion-segment-button>
+    </ion-segment>
+</ion-header>
+
+<ion-content fullscreen="false">
+    <div [ngSwitch]="segmentoPedido" *ngIf="pedido">
+        <div *ngSwitchCase="'cabecera'">
+            <ion-list>
+                <ion-item>
+                    <ion-label>Pedido {{pedido.numero}}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label>{{pedido.usuario}}</ion-label>
+                </ion-item>
+                <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
+                <ion-item>
+                    <ion-label>Fecha Pedido</ion-label>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
+                </ion-item>
+                <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="pedido.formaPago = $event"></selector-formas-pago>
+                <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
+                <ion-item>
+                    <ion-label>Fecha Vencimiento</ion-label>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.primerVencimiento"></ion-datetime>
+                </ion-item>
+
+                <ion-item>
+                    <ion-row>
+                        <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
+                        <ion-col (press)="cambiarIVA()" width-50>{{pedido.iva}}</ion-col>
+                    </ion-row>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Servir Junto</ion-label>
+                    <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Mantener Junto</ion-label>
+                    <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
+                </ion-item>
+            </ion-list>
+        </div>
+        <div *ngSwitchCase="'lineas'">
+            <ion-list>
+                <ion-item *ngFor="let linea of pedido.LineasPedido">
+                    <h2>{{linea.texto}}</h2>
+                    <ion-row>
+                        <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
+                        <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
+                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'.2-2'}}</p></ion-col>
+                        <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
+                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.2-2'}}</p></ion-col>
+                    </ion-row>
+                    <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
+                    <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>
+                    <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
+                    <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
+                    <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>
+                </ion-item>
+            </ion-list>
+            <ion-fab right bottom>
+                <button ion-fab (click)="annadirLinea()">
+                    <ion-icon name="add"></ion-icon>
+                </button>
+            </ion-fab>
+        </div>
+        <ion-list *ngSwitchCase="'comentarios'">
+            <ion-item>
+                <ion-label floating>Comentarios Ruta</ion-label>
+                <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
+            </ion-item>
+            <ion-item>
+                <ion-label floating>Comentarios Picking</ion-label>
+                <ion-input [(ngModel)]="pedido.comentarioPicking"></ion-input>
+            </ion-item>
+        </ion-list>
+    </div>
+</ion-content>

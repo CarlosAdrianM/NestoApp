@@ -1,0 +1,77 @@
+﻿<ion-header>
+    <ion-navbar>
+        <button menuToggle>
+            <ion-icon name="menu"></ion-icon>
+        </button>
+        <ion-title>Usuario</ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content class="login" *ngIf="!((usuario && usuario.nombre) || auth.authenticated())">
+
+    <div padding>
+        <ion-segment [(ngModel)]="authType">
+            <ion-segment-button value="login">
+                Iniciar Sesión
+            </ion-segment-button>
+            <ion-segment-button value="signup">
+                Registrarse
+            </ion-segment-button>
+        </ion-segment>
+    </div>
+
+    <div [ngSwitch]="authType">
+        
+        <form *ngSwitchCase="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
+            <ion-item>
+                <ion-label>Nombre de usuario</ion-label>
+                <ion-input type="text" name="username" ngModel></ion-input>
+            </ion-item>
+
+            <ion-item>
+                <ion-label>Contraseña</ion-label>
+                <ion-input type="password" name="password" ngModel></ion-input>
+            </ion-item>
+
+            <div padding>
+                <button ion-button block type="submit">Iniciar Sesión</button>
+            </div>
+
+        </form>
+            
+
+        <form *ngSwitchCase="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
+            <ion-item>
+                <ion-label>Nombre de Usuario</ion-label>
+                <ion-input type="text" ngControl="username"></ion-input>
+            </ion-item>
+
+            <ion-item>
+                <ion-label>Contraseña</ion-label>
+                <ion-input type="password" ngControl="password"></ion-input>
+            </ion-item>
+
+            <div padding>
+                <button ion-button block type="submit">Registrarse</button>
+            </div>
+
+        </form>
+
+    </div>
+
+    <div padding>
+        <p *ngIf="error" class="error">{{ error._body }}</p>
+    </div>
+
+</ion-content>
+
+<ion-content *ngIf="(usuario && usuario.nombre) || auth.authenticated()">
+    <div>
+        <div padding>
+            <h1>Hola, {{ usuario.nombre }}</h1>
+            <button ion-button block (click)="logout()">Cerrar Sesión</button>
+            <h3>Versión 1.5.7</h3>
+            <p>Ahora ya pueden modificar los datos de la cabecera: forma de pago, comentarios, etc.</p>
+        </div>
+    </div>
+</ion-content>

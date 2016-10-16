@@ -1,0 +1,51 @@
+﻿<ion-header>
+    <ion-navbar>
+        <button ion-button menuToggle>
+            <ion-icon name="menu"></ion-icon>
+        </button>
+        <ion-title>Últimas Ventas</ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content>
+    <ion-list>
+        <ion-item>
+            <ion-row>
+                <ion-col style="text-align:center" width-20>
+                    Fecha
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    Cantidad
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    Bruto
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    Dtos.
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    Neto
+                </ion-col>
+            </ion-row>
+        </ion-item>
+        <ion-item *ngFor="let movimiento of movimientos">
+            <ion-row>
+                <ion-col style="text-align:center" width-20>
+                    {{movimiento.fechaMostrar | date: 'dd/MM/yy' }}
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    {{movimiento.cantidad}}
+                </ion-col>
+                <ion-col style="text-align:right" width-20>
+                    {{movimiento.precioBruto | currency:'EUR':true:'1.2-2'}}
+                </ion-col>
+                <ion-col style="text-align:center" width-20>
+                    {{movimiento.descuentos | percent }}
+                </ion-col>
+                <ion-col style="text-align:right" width-20>
+                    {{movimiento.precioNeto | currency:'EUR':true:'1.2-2'}}
+                </ion-col>
+            </ion-row>
+        </ion-item>
+    </ion-list>
+</ion-content>

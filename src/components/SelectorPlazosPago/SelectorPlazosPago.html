@@ -1,0 +1,6 @@
+﻿<ion-item>
+    <ion-label>Plazos de Pago</ion-label>
+    <ion-select [(ngModel)]="seleccionado" (ionChange)="seleccionarDato(seleccionado)">
+        <ion-option *ngFor="let plazo of datosFiltrados" value="{{plazo.plazoPago}}" checked="plazo.plazoPago===seleccionado">{{plazo.descripcion}}</ion-option>
+    </ion-select>
+</ion-item>
