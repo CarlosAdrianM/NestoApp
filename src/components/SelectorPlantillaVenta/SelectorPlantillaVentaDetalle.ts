@@ -1,4 +1,4 @@
-﻿import {Component} from '@angular/core';
+﻿import { Component, ViewChild, OnInit } from '@angular/core';
 import {NavController, NavParams, AlertController, ToastController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
@@ -7,6 +7,7 @@ import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoC
     templateUrl: 'SelectorPlantillaVentaDetalle.html',
 })
 export class SelectorPlantillaVentaDetalle {
+    @ViewChild('cantidadInput') cantidadInput;
 
     constructor(servicio: SelectorPlantillaVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, toastCtrl: ToastController) {
         this.nav = nav;
@@ -26,6 +27,10 @@ export class SelectorPlantillaVentaDetalle {
         } 
         this.actualizarDescuento(this.producto.descuento * 100);
 
+    }
+
+    ngOnInit() {
+        this.cantidadInput.setFocus();
     }
 
     private errorMessage: string;
@@ -154,7 +159,7 @@ export class SelectorPlantillaVentaDetalle {
         }
     }
 
-    private actualizarDescuento(descuento: number): void {
+    public actualizarDescuento(descuento: number): void {
         this.producto.descuento = descuento / 100;
         this.descuentoMostrar = descuento + '%';
         this.comprobarCondicionesPrecio();
@@ -164,15 +169,15 @@ export class SelectorPlantillaVentaDetalle {
         evento.target.select();
     }
 
-    private abrirUltimasVentas(): void {
+    public abrirUltimasVentas(): void {
         this.nav.push(UltimasVentasProductoCliente, { producto: this.producto.producto, cliente: this.cliente });
     }
 
-    private sePuedeHacerDescuento(producto: any): boolean {
+    public sePuedeHacerDescuento(producto: any): boolean {
         return (producto.cantidadOferta === 0 || producto.cantidadOferta === "0") && producto.aplicarDescuento && producto.subGrupo.toLowerCase() !== 'otros aparatos';
     }
 
-    private mostrarStock(producto: any): void {
+    public mostrarStock(producto: any): void {
         let texto: string;
 
         if (producto.stock == 0) {

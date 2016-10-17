@@ -18,8 +18,8 @@ export class SelectorDireccionesEntrega extends SelectorBase {
     public direccionSeleccionada: any;
 
     // @Input() 
-    private cliente: any;
-    private seleccionado: string = "0";
+    public cliente: any;
+    public seleccionado: string = "0";
 
     constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController) {
         super();
@@ -69,7 +69,7 @@ export class SelectorDireccionesEntrega extends SelectorBase {
         this.seleccionarDato(direccion);
     }
 
-    public ngOnChanges(): void {
+    public ngOnChanges(changes): void {
         this.cargarDatos(this.cliente);
     }
 }

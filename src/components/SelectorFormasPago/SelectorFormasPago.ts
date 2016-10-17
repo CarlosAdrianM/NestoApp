@@ -13,7 +13,7 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 @Injectable()
 export class SelectorFormasPago extends SelectorBase {
 
-    @Input() private cliente: any;
+    @Input() public cliente: any;
     @Input() public seleccionado: any;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;

@@ -23,7 +23,7 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Cantidad</ion-label>
-                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)" (press)="mostrarStock(producto)"></ion-input>
+                            <ion-input #cantidadInput type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)" (press)="mostrarStock(producto)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>

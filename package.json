@@ -1,7 +1,8 @@
 {
-  "name": "ionic-hello-world",
-  "author": "Ionic Framework",
-  "homepage": "http://ionicframework.com/",
+  "name": "nestoapp",
+  "description": "NestoApp: Grupo Nueva Visión",
+  "author": "Grupo Nueva Visión",
+  "homepage": "http://www.nuevavision.es/",
   "private": true,
   "scripts": {
     "build": "ionic-app-scripts build",
@@ -33,10 +34,8 @@
   },
   "devDependencies": {
     "@ionic/app-scripts": "^0.0.33",
-    "@types/core-js": "^0.9.34",
     "typescript": "^2.0.3"
   },
-  "description": "NestoApp: Grupo Nueva Visi�n",
   "cordovaPlugins": [
     "cordova-plugin-device",
     "cordova-plugin-console",
@@ -46,5 +45,10 @@
     "ionic-plugin-keyboard"
   ],
   "cordovaPlatforms": [],
-  "version": "1.6.0"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CarlosAdrianM/NestoApp.git"
+  },
+  "license": "MIT",
+  "version": "1.5.8"
 }

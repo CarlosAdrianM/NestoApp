@@ -34,7 +34,7 @@ export class ProfilePage {
     constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage) {
         // let self: any = this;
         this.http = http;
-        this.auth = AuthService;
+        this.auth = new AuthService();
         this.nav = nav;
         this.loadingCtrl = loadingCtrl;
         this.usuario = usuario;

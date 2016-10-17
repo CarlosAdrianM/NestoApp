@@ -14,7 +14,7 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 export class SelectorPlazosPago extends SelectorBase {
 
     @Input() public seleccionado: any;
-    @Input() private cliente: any;
+    @Input() public cliente: any;
     private nav: NavController;
     private servicio: SelectorPlazosPagoService;
     private alertCtrl: AlertController;

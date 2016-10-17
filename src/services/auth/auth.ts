@@ -2,8 +2,7 @@
 
 export class AuthService {
     
-
-    public static authenticated(): any {
+    public authenticated(): any {
         return tokenNotExpired();
     }
 }

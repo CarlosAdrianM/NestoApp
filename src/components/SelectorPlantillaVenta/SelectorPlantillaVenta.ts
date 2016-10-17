@@ -1,5 +1,5 @@
 ﻿import {Component, Injectable, Input} from '@angular/core';
-import {Searchbar, List, Item, Button, AlertController, LoadingController, NavController, Toggle, Content} from 'ionic-angular';
+import {AlertController, LoadingController, NavController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
 import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
@@ -73,7 +73,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
         let productosResumen: any[] = [];
         this.baseImponiblePedido = 0;
         for (let value of this.datosIniciales()) {
-            if (value.cantidad !== 0 || value.cantidadOferta !== 0) {
+            if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
                 productosResumen.push(value);
                 this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
             }
@@ -81,7 +81,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
         return productosResumen;
     }
 
-    public ngOnChanges(): void {
+    public ngOnChanges(changes): void {
         this.cargarDatos(this.cliente);
     }
 
