@@ -1,8 +1,8 @@
 ﻿'use strict';
 import {Injectable, ViewChild} from '@angular/core';
 import {Storage} from '@ionic/storage';
-import {NavController, Nav} from 'ionic-angular';
-import { ProfilePage } from '../pages/profile/profile';
+import { Nav } from 'ionic-angular';
+//import { ProfilePage } from '../pages/profile/profile';
 
 
 @Injectable()

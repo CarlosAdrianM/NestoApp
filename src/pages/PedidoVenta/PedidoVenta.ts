@@ -1,17 +1,17 @@
 ﻿import {Component} from '@angular/core';
 import {NavController, NavParams, AlertController, LoadingController} from 'ionic-angular';
-import { Parametros } from '../../services/Parametros.service';
+//import { Parametros } from '../../services/Parametros.service';
 import {PedidoVentaService} from './PedidoVenta.service';
-import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
-import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
-import {SelectorDireccionesEntrega} from '../../components/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
+//import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
+//import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
+//import {SelectorDireccionesEntrega} from '../../components/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 
 @Component({
     templateUrl: 'PedidoVenta.html',
 })
 export class PedidoVenta {
 
-    private hoy: Date = new Date();
+    public hoy: Date = new Date();
     private iva: string;
     private nav: NavController;
     public pedido: any;
@@ -62,7 +62,7 @@ export class PedidoVenta {
         this.pedido.formaPago = evento;
     }
 
-    private cambiarIVA(): void {
+    public cambiarIVA(): void {
         this.pedido.iva = this.pedido.iva ? undefined : this.iva;
     }
 
@@ -133,7 +133,7 @@ export class PedidoVenta {
     }
 
 
-    private cadenaFecha(cadena: string): Date {
+    public cadenaFecha(cadena: string): Date {
         return new Date(cadena);
     }
 

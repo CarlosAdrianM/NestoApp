@@ -2,15 +2,15 @@
 import {Component, ViewChild} from '@angular/core';
 import {SelectorClientes} from '../../components/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
-import {SelectorDireccionesEntrega} from '../../components/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
+//import {SelectorDireccionesEntrega} from '../../components/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import {PlantillaVentaService} from './PlantillaVenta.service';
 import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
-import {DatePicker} from 'ionic-native';
-import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
-import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
+//import {DatePicker} from 'ionic-native';
+//import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
+//import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
 
 @Component({
     templateUrl: 'PlantillaVenta.html',
@@ -22,6 +22,7 @@ export class PlantillaVenta {
     private platform: Platform;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
+    public opcionesSlides: any;
 
     constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController) {
 
@@ -59,10 +60,11 @@ export class PlantillaVenta {
             console.log("El usuario no está cargado");
             this.nav.push(ProfilePage);
         }
+        console.log("Fecha minima " + this.fechaMinima);
+        console.log("Fecha entrega " + this.fechaEntrega);
     }
 
-    private nav: NavController;
-    public opcionesSlides: any;
+    private nav: NavController;   
     public slider: any;
     public clienteSeleccionado: any;
     public productosResumen: any[];
@@ -78,7 +80,9 @@ export class PlantillaVenta {
         }
     }
     private hoy: Date = new Date();
-    public fechaEntrega: string = this.hoy.toISOString();
+    private hoySinHora: Date = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
+    public fechaMinima: string = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0,10);
+    public fechaEntrega: string = this.fechaMinima;
     private iva: string;
     private formaPago: any;
     private plazosPago: any;
@@ -300,7 +304,8 @@ export class PlantillaVenta {
 
     }
 
-    private totalPedido(): number {
+
+    public totalPedido(): number {
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     }
 
@@ -308,4 +313,14 @@ export class PlantillaVenta {
         this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
     }
 
+    private ajustarFechaEntrega(fecha: Date): Date {
+        fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
+        if (this.hoy.getHours() < 11) {
+            return fecha;
+        } else {
+            let nuevaFecha: Date = fecha;
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1); //mañana
+            return nuevaFecha;
+        }
+    }
 }

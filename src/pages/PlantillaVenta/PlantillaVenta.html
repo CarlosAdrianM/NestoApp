@@ -29,10 +29,12 @@
                     <ion-avatar item-left>
                         <img src="{{producto.urlImagen}}">
                     </ion-avatar>
+                     
                     <h2>{{producto.texto}}</h2>
                     <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
                     <p>{{+producto.precio | currency:'EUR':true:'1.2-2'}} (Dto: {{producto.descuento | percent}})</p>
-                    <ion-badge [color]="producto.colorStock" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
+                    <ion-badge [color]="producto.colorStock" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge> 
+
                 </ion-item>
                 <ion-item>
                     <ion-label floating>Comentarios Picking (los ven en almacén)</ion-label>
@@ -48,7 +50,7 @@
                     <!--<ion-label>Fecha de Entrega</ion-label>-->
                     <!--<ion-input type="date" [(ngModel)]="fechaEntrega"></ion-input>-->
                     <ion-label>Fecha de Entrega:</ion-label>
-                    <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaEntrega" cancelText="Cancelar" doneText="Seleccionar"></ion-datetime>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [min]="fechaMinima" [(ngModel)]="fechaEntrega" cancelText="Cancelar" doneText="Seleccionar"></ion-datetime>
                 </ion-item>
                 <ion-item>
                     <ion-label>Servir Junto</ion-label>

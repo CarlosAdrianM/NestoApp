@@ -1,5 +1,5 @@
 ﻿import {Component, Injectable, Input} from '@angular/core';
-import {Select, List, Item, AlertController, NavController, LoadingController, Icon, Content, Option} from 'ionic-angular';
+import {AlertController, NavController, LoadingController} from 'ionic-angular';
 import {SelectorPlazosPagoService} from './SelectorPlazosPago.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
 

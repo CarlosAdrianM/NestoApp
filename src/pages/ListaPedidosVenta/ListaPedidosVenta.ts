@@ -5,7 +5,7 @@
 // Al abrir un pedido hacemos un nav.push al pedido en cuestión.
 import {Component} from '@angular/core';
 import { NavController, AlertController, LoadingController} from 'ionic-angular';
-import { Parametros } from '../../services/Parametros.service';
+// import { Parametros } from '../../services/Parametros.service';
 import {ListaPedidosVentaService} from './ListaPedidosVenta.service';
 import {PedidoVenta} from '../PedidoVenta/PedidoVenta';
 import {SelectorBase} from '../../components/SelectorBase/SelectorBase';
@@ -67,8 +67,10 @@ export class ListaPedidosVenta extends SelectorBase {
         );
     }
 
+/*
     private cadenaFecha(cadena: string): Date {
         return new Date(cadena);
     }
+*/
 
 }

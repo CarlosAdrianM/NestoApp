@@ -4,7 +4,7 @@
         <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto)">
             <h2>{{producto.texto}}</h2>
             <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
-            <!--<p>Fecha {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>-->
+            <p>Fecha {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>
             <ion-badge [color]="producto.colorStock" item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
         </ion-item>
     </ion-list>

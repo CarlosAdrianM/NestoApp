@@ -38,12 +38,14 @@ export class MyApp {
             // Here you can do any higher level native things you might need.
             StatusBar.styleDefault();
 
+/*
             // Actualizamos a la nueva versión
             this.deploy.check().then((snapshotAvailable: boolean) => {
                 this.deploy.download().then(() => {
                     return this.deploy.extract();
                 });
             });
+*/
         });
     }
 

@@ -1,4 +1,4 @@
-﻿import { Component, ViewChild, OnInit } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import {NavController, NavParams, AlertController, ToastController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
@@ -7,7 +7,6 @@ import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoC
     templateUrl: 'SelectorPlantillaVentaDetalle.html',
 })
 export class SelectorPlantillaVentaDetalle {
-    @ViewChild('cantidadInput') cantidadInput;
 
     constructor(servicio: SelectorPlantillaVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, toastCtrl: ToastController) {
         this.nav = nav;
@@ -29,9 +28,6 @@ export class SelectorPlantillaVentaDetalle {
 
     }
 
-    ngOnInit() {
-        this.cantidadInput.setFocus();
-    }
 
     private errorMessage: string;
     private nav: NavController;
