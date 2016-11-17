@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<widget id="com.ionicframework.nestoapp958858" version="1.5.9" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.ionicframework.nestoapp958858" version="1.6.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <name>Nesto</name>
   <description>Aplicación móvil para acceder a Nesto </description>
-  <author email="hi@ionicframework" href="http://ionicframework.com/">Grupo Nueva Visión</author>
+  <author email="nuevavision@nuevavision.es" href="http://www.nuevavision.es/">Grupo Nueva Visión</author>
   <content src="index.html" />
   <access origin="*" />
   <allow-intent href="http://*/*" />
@@ -35,11 +35,10 @@
   <preference name="DisallowOverscroll" value="true" />
   <preference name="android-minSdkVersion" value="16" />
   <preference name="BackupWebStorage" value="none" />
-  <preference name="SplashScreenDelay" value="0" />
+  <preference name="SplashScreenDelay" value="1" />
   <preference name="FadeSplashScreen" value="false" />
   <preference name="FadeSplashScreenDuration" value="0" />
   <preference name="SplashScreenBackgroundColor" value="0xFFFFFFFF" />
-  <preference name="KeyboardDisplayRequiresUserAction" value="false" />
   <preference name="SplashScreen" value="screen" />
   <feature name="StatusBar">
     <param name="ios-package" onload="true" value="CDVStatusBar" />

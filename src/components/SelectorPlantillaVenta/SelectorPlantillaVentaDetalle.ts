@@ -18,10 +18,12 @@ export class SelectorPlantillaVentaDetalle {
         this.toastCtrl = toastCtrl;
 
         if (!this.producto.stockActualizado) {
+            console.log("comprobar Si existe el producto");
             this.comprobarSiExisteElProducto(this.producto);
         }
         // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
         if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            console.log("Actualizar cantidad");
             this.actualizarCantidad(this.producto);
         } 
         this.actualizarDescuento(this.producto.descuento * 100);
@@ -46,42 +48,56 @@ export class SelectorPlantillaVentaDetalle {
                 producto.stock = data.stock;
                 producto.cantidadDisponible = data.cantidadDisponible;
                 producto.urlImagen = data.urlImagen;
+                console.log("Existe el producto y seleccionamos el color");
                 this.seleccionarColorStock(producto);
             },
-            error => this.errorMessage = <any>error
+            error => { 
+                this.errorMessage = <any>error;
+                console.log("Error: " + error);
+            }
         );
     }
 
     public actualizarCantidad(producto: any): void {
         if (producto.cantidadOferta > 0) {
+            console.log("No aplicar descuento");
             producto.aplicarDescuento = false;
         } else {
+            console.log("Guardamos aplicar descuento ficha");
             producto.aplicarDescuento = producto.aplicarDescuentoFicha;
         }
 
         this.servicio.actualizarPrecioProducto(producto, this.cliente).subscribe(
             data => {
                 if (!this.producto.precioEstaModificado && producto.precio !== data.precio) {
+                    console.log("Actualizamos precio");
                     producto.precio = data.precio;
                 }
                 if (producto.aplicarDescuento !== data.aplicarDescuento) {
                     producto.aplicarDescuento = data.aplicarDescuento;
+                    console.log("Aplicar descuento es diferente");
                     if (!producto.aplicarDescuento && producto.descuento !== 0) {
                         producto.descuento = 0;
+                        console.log("Hay descuento y lo actualizamos a cero");
                         this.actualizarDescuento(0);
                     }
                 }
                 if (producto.aplicarDescuento && producto.descuento !== data.descuento) {
                     producto.descuento = data.descuento;
+                    console.log("Hay descuento y lo actualizamos con valor");
                     this.actualizarDescuento(producto.descuento * 100);
                 }
                 // if (producto.descuento < producto.descuentoProducto || !producto.aplicarDescuento) {
                 //this.actualizarDescuento(producto.aplicarDescuento ? producto.descuentoProducto * 100 : 0);
                 // }
             },
-            error => this.errorMessage = <any>error
+            error => { 
+                this.errorMessage = <any>error;
+                console.log("Error: " + error);
+            }
         );
 
+        console.log("Comprobamos las condiciones precio");
         this.comprobarCondicionesPrecio();
 
         this.seleccionarColorStock(producto);
@@ -91,39 +107,38 @@ export class SelectorPlantillaVentaDetalle {
         // Esto lo hacemos porque guarda el precio como string y da error
         this.producto.precio = +this.producto.precio;
         this.producto.precioEstaModificado = true;
+        console.log("Actualizamos precio y comprobamos las condiciones precio");
         this.comprobarCondicionesPrecio();
     }
 
     private comprobarCondicionesPrecio(): void {
         if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
+            console.log("No hay cantidad al comprobar las condiciones precio");
             return;
         }
         this.servicio.comprobarCondicionesPrecio(this.producto).subscribe(
             data => {
                 if (data.motivo && data.motivo !== '') {
-                    /*
-                    let alert: Alert = Alert.create({
-                        title: 'Gestor de Precios',
-                        subTitle: data.motivo,
-                        buttons: ['Ok'],
-                    });
-                    this.nav.present(alert);
-                    */
+                    console.log("Hay data motivo al comprobar las condiciones precio");
                     if(this.producto.precio !== data.precio) {
                         this.producto.precio = data.precio;
                         this.producto.precioEstaModificado = false;
+                        console.log("Uno");
                     }
                     if (this.producto.aplicarDescuento !== data.aplicarDescuento) {
                         this.producto.aplicarDescuento = data.aplicarDescuento;
+                        console.log("Dos");
                     }
                     if (this.producto.cantidadOferta !== 0) {
                         this.producto.cantidadOferta = 0;
                         this.seleccionarColorStock(this.producto);
                         this.producto.aplicarDescuento = this.producto.aplicarDescuentoFicha;
+                        console.log("tres");
                     }
                     if (this.producto.descuento !== data.descuento) {
                         this.producto.descuento = data.descuento;
                         this.actualizarDescuento(this.producto.descuento * 100);
+                        console.log("Cuatro");
                     }
                     let toast = this.toastCtrl.create({
                         message: data.motivo,
@@ -134,6 +149,7 @@ export class SelectorPlantillaVentaDetalle {
             },
             error => {
                 this.errorMessage = <any>error;
+                console.log("Error: " + error);
             }
         )
     }
@@ -143,21 +159,28 @@ export class SelectorPlantillaVentaDetalle {
         let cantidadOferta: number = producto.cantidadOferta;
         cantidad = +cantidad;
         cantidadOferta = +cantidadOferta;
+
+        console.log("Cantidad: " + cantidad + " + " + cantidadOferta);
         
         if (cantidad === 0 && cantidadOferta === 0) {
             producto.colorStock = 'default';
+            console.log("Seleccionamos el color default");
         } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
             producto.colorStock = 'secondary';
+            console.log("Seleccionamos el color secondary");
         } else if (producto.stock >= cantidad + cantidadOferta) {
             producto.colorStock = 'dark';
+            console.log("Seleccionamos el color dark");
         } else {
             producto.colorStock = 'danger';
+            console.log("Seleccionamos el color danger");
         }
     }
 
     public actualizarDescuento(descuento: number): void {
         this.producto.descuento = descuento / 100;
         this.descuentoMostrar = descuento + '%';
+        console.log("Actualizamos descuento y comprobamos las condiciones precio");
         this.comprobarCondicionesPrecio();
     }
     

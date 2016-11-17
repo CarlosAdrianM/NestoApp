@@ -4,10 +4,10 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    //"lib": [
-    //  "dom",
-    //  "es2015"
-    //],
+    "lib": [
+      "dom",
+      "es2015"
+    ],
     "module": "es2015",
     "moduleResolution": "node",
     "sourceMap": true,

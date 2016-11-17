@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,9 +7,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var ionic_angular_1 = require('ionic-angular');
-var UltimasVentasProductoCliente_service_1 = require('./UltimasVentasProductoCliente.service');
-var UltimasVentasProductoCliente = (function () {
+import { Component } from '@angular/core';
+import { NavController, NavParams } from 'ionic-angular';
+import { UltimasVentasProductoClienteService } from './UltimasVentasProductoCliente.service';
+export var UltimasVentasProductoCliente = (function () {
     function UltimasVentasProductoCliente(nav, servicio, navParams) {
         this.nav = nav;
         this.navParams = navParams;
@@ -28,12 +28,11 @@ var UltimasVentasProductoCliente = (function () {
         }, function (error) { return _this.errorMessage = error; });
     };
     UltimasVentasProductoCliente = __decorate([
-        ionic_angular_1.Page({
-            templateUrl: 'build/pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente.html',
-            providers: [UltimasVentasProductoCliente_service_1.UltimasVentasProductoClienteService],
+        Component({
+            templateUrl: 'UltimasVentasProductoCliente.html',
         }), 
-        __metadata('design:paramtypes', [ionic_angular_1.NavController, UltimasVentasProductoCliente_service_1.UltimasVentasProductoClienteService, ionic_angular_1.NavParams])
+        __metadata('design:paramtypes', [NavController, UltimasVentasProductoClienteService, NavParams])
     ], UltimasVentasProductoCliente);
     return UltimasVentasProductoCliente;
 }());
-exports.UltimasVentasProductoCliente = UltimasVentasProductoCliente;
+//# sourceMappingURL=UltimasVentasProductoCliente.js.map

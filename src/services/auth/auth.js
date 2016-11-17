@@ -1,11 +1,10 @@
-"use strict";
-var angular2_jwt_1 = require('angular2-jwt');
-var AuthService = (function () {
+import { tokenNotExpired } from 'angular2-jwt';
+export var AuthService = (function () {
     function AuthService() {
     }
-    AuthService.authenticated = function () {
-        return angular2_jwt_1.tokenNotExpired();
+    AuthService.prototype.authenticated = function () {
+        return tokenNotExpired();
     };
     return AuthService;
 }());
-exports.AuthService = AuthService;
+//# sourceMappingURL=auth.js.map

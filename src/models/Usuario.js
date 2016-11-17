@@ -8,31 +8,39 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var ionic_angular_1 = require('ionic-angular');
+import { Injectable, ViewChild } from '@angular/core';
+import { Storage } from '@ionic/storage';
+import { Nav } from 'ionic-angular';
 //import { ProfilePage } from '../pages/profile/profile';
-var Usuario = (function () {
+export var Usuario = (function () {
     function Usuario() {
         var _this = this;
-        this.local = new ionic_angular_1.Storage(ionic_angular_1.LocalStorage);
         this.almacen = 'ALG';
         this.delegacion = 'ALG';
         this.formaVenta = 'DIR';
-        this.local.get('profile').then(function (profile) {
-            _this.nombre = JSON.parse(profile);
+        var local = new Storage();
+        local.get('profile').then(function (profile) {
+            console.log(profile);
+            _this.nombre = profile;
         }).catch(function (error) {
             console.log(error);
+            //this.nav.push(ProfilePage);
         });
         /*
         if (!this.nombre) {
             this.nav.push(ProfilePage);
         }
         */
+        // console.log(this.nombre);
     }
+    __decorate([
+        ViewChild(Nav), 
+        __metadata('design:type', Object)
+    ], Usuario.prototype, "nav", void 0);
     Usuario = __decorate([
-        core_1.Injectable(), 
+        Injectable(), 
         __metadata('design:paramtypes', [])
     ], Usuario);
     return Usuario;
 }());
-exports.Usuario = Usuario;
+//# sourceMappingURL=Usuario.js.map

@@ -1,4 +1,4 @@
-﻿import {Component, Injectable, Input} from '@angular/core';
+﻿import {Component, Input } from '@angular/core';
 import {AlertController, LoadingController, NavController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
@@ -10,7 +10,6 @@ import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
     // inputs: ['cliente'],
 })
 
-@Injectable()
 export class SelectorPlantillaVenta extends SelectorBase {
 
     private alertCtrl: AlertController;
@@ -64,6 +63,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     public abrirDetalle(producto: any): void {
         if (this.agregarDato(producto)) {
+            console.log("Agregado dato");
             producto.aplicarDescuentoFicha = producto.aplicarDescuento;
         }
         this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente });
@@ -75,9 +75,11 @@ export class SelectorPlantillaVenta extends SelectorBase {
         for (let value of this.datosIniciales()) {
             if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
                 productosResumen.push(value);
+                console.log("Nº elementos en resumen: " + productosResumen.length);
                 this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
             }
         }
+        console.log("Productos resumen: " +  productosResumen.toString());
         return productosResumen;
     }
 

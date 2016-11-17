@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,45 +7,50 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var ionic_angular_1 = require('ionic-angular');
-var core_1 = require('@angular/core');
-var SelectorClientes_1 = require('../../componentes/SelectorClientes/SelectorClientes');
-var SelectorPlantillaVenta_1 = require('../../componentes/SelectorPlantillaVenta/SelectorPlantillaVenta');
-var SelectorDireccionesEntrega_1 = require('../../componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega');
-var configuracion_1 = require('../../componentes/configuracion/configuracion');
-var PlantillaVenta_service_1 = require('./PlantillaVenta.service');
-var Usuario_1 = require('../../models/Usuario');
-var Parametros_service_1 = require('../../services/Parametros.service');
-var profile_1 = require('../../pages/profile/profile');
-var SelectorFormasPago_1 = require('../../componentes/SelectorFormasPago/SelectorFormasPago');
-var SelectorPlazosPago_1 = require('../../componentes/SelectorPlazosPago/SelectorPlazosPago');
-var PlantillaVenta = (function () {
-    function PlantillaVenta(nav, servicio, usuario, parametros, platform, events) {
+import { NavController, AlertController, LoadingController, Platform, Events } from 'ionic-angular';
+import { Component, ViewChild } from '@angular/core';
+import { SelectorClientes } from '../../components/SelectorClientes/SelectorClientes';
+import { SelectorPlantillaVenta } from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
+import { Configuracion } from '../../components/configuracion/configuracion';
+import { PlantillaVentaService } from './PlantillaVenta.service';
+import { Usuario } from '../../models/Usuario';
+import { Parametros } from '../../services/Parametros.service';
+import { ProfilePage } from '../../pages/profile/profile';
+//import {DatePicker} from 'ionic-native';
+//import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
+//import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
+export var PlantillaVenta = (function () {
+    function PlantillaVenta(usuario, nav, servicio, parametros, platform, events, alertCtrl, loadingCtrl) {
         var _this = this;
         this.hoy = new Date();
-        this.fechaEntrega = this.hoy.toISOString();
-        // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
-        if (!usuario.nombre) {
-            nav.push(profile_1.ProfilePage);
-        }
+        this.hoySinHora = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
+        this.fechaMinima = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
+        this.fechaEntrega = this.fechaMinima;
+        this.usuario = usuario;
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
             onInit: function (slides) {
                 _this.slider = slides;
-                platform.backButton.subscribe(function () {
-                    _this.slider.slidePrev();
-                });
             },
-            onSlideChangeStart: function (slides) { return _this.avanzar(slides); },
         };
         this.nav = nav;
+        this.alertCtrl = alertCtrl;
+        this.loadingCtrl = loadingCtrl;
         this.servicio = servicio;
-        this.usuario = usuario;
         this.parametros = parametros;
         this.platform = platform;
-        this.cargarParametros();
     }
+    PlantillaVenta.prototype.ionViewDidLoad = function () {
+        if (this.usuario != undefined && this.usuario.nombre != undefined) {
+            console.log("El usuario es " + this.usuario.nombre);
+            this.cargarParametros();
+        }
+        else {
+            console.log("El usuario no está cargado");
+            this.nav.push(ProfilePage);
+        }
+    };
     Object.defineProperty(PlantillaVenta.prototype, "direccionSeleccionada", {
         get: function () {
             return this._direccionSeleccionada;
@@ -61,16 +65,13 @@ var PlantillaVenta = (function () {
         enumerable: true,
         configurable: true
     });
-    PlantillaVenta.prototype.onPageWillUnload = function () {
-        console.log("Guardamos el pedido");
-    };
     PlantillaVenta.prototype.cargarProductos = function (cliente) {
         var _this = this;
         if (!this.clienteSeleccionado) {
             this.cargarProductosPlantilla(cliente);
         }
         else if (this.clienteSeleccionado && this.clienteSeleccionado !== cliente) {
-            var alert_1 = ionic_angular_1.Alert.create({
+            var alert_1 = this.alertCtrl.create({
                 title: 'Cambiar cliente',
                 message: '¿Desea cambiar de cliente y comenzar el pedido de nuevo?',
                 buttons: [
@@ -89,16 +90,16 @@ var PlantillaVenta = (function () {
                     },
                 ],
             });
-            this.nav.present(alert_1);
+            alert_1.present();
         }
         else if (this.clienteSeleccionado === cliente) {
-            this.slider.slideNext();
+            this.siguientePantalla();
         }
     };
     PlantillaVenta.prototype.cargarProductosPlantilla = function (cliente) {
-        this.clienteSeleccionado = cliente;
         this.slider.unlockSwipeToNext();
         this.siguientePantalla();
+        this.clienteSeleccionado = cliente;
     };
     /*
     public cargarResumen(productosResumen: any[]): void {
@@ -107,6 +108,7 @@ var PlantillaVenta = (function () {
     */
     PlantillaVenta.prototype.avanzar = function (slides) {
         if (slides.activeIndex === 2 && slides.previousIndex === 1) {
+            console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
         } /* else if (slides.activeIndex === 3 && slides.previousIndex === 2) {
             
@@ -148,7 +150,7 @@ var PlantillaVenta = (function () {
             'noComisiona': this.direccionSeleccionada.noComisiona,
             'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
             'servirJunto': this.direccionSeleccionada.servirJunto,
-            'usuario': configuracion_1.Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+            'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
             'LineasPedido': [],
         };
         var nuevaLinea = {};
@@ -169,7 +171,7 @@ var PlantillaVenta = (function () {
                 'descuento': linea.descuento,
                 'aplicarDescuento': linea.aplicarDescuento,
                 'vistoBueno': 0,
-                'usuario': configuracion_1.Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+                'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
                 'almacen': this.usuario.almacen,
                 'iva': linea.iva,
                 'delegacion': this.usuario.delegacion,
@@ -185,30 +187,31 @@ var PlantillaVenta = (function () {
                 pedido.LineasPedido.push(lineaPedidoOferta);
             }
         }
+        console.log(pedido);
         return pedido;
     };
     PlantillaVenta.prototype.crearPedido = function () {
         var _this = this;
-        var loading = ionic_angular_1.Loading.create({
+        var loading = this.loadingCtrl.create({
             content: 'Creando Pedido...',
         });
-        this.nav.present(loading);
+        loading.present();
         this.servicio.crearPedido(this.prepararPedido()).subscribe(function (data) {
             var numeroPedido = data.numero;
-            var alert = ionic_angular_1.Alert.create({
+            var alert = _this.alertCtrl.create({
                 title: 'Creado',
                 subTitle: 'Pedido ' + numeroPedido + ' creado correctamente',
                 buttons: ['Ok'],
             });
-            _this.nav.present(alert);
+            alert.present();
             _this.reinicializar();
         }, function (error) {
-            var alert = ionic_angular_1.Alert.create({
+            var alert = _this.alertCtrl.create({
                 title: 'Error',
                 subTitle: 'No se ha podido crear el pedido',
                 buttons: ['Ok'],
             });
-            _this.nav.present(alert);
+            alert.present();
             loading.dismiss();
         }, function () {
             loading.dismiss();
@@ -244,27 +247,37 @@ var PlantillaVenta = (function () {
         });
     };
     PlantillaVenta.prototype.totalPedido = function () {
+        console.log("total");
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     };
     PlantillaVenta.prototype.cambiarIVA = function () {
         this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
     };
+    PlantillaVenta.prototype.ajustarFechaEntrega = function (fecha) {
+        fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
+        if (this.hoy.getHours() < 11) {
+            return fecha;
+        }
+        else {
+            var nuevaFecha = fecha;
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1); //mañana
+            return nuevaFecha;
+        }
+    };
     __decorate([
-        core_1.ViewChild(SelectorPlantillaVenta_1.SelectorPlantillaVenta), 
-        __metadata('design:type', SelectorPlantillaVenta_1.SelectorPlantillaVenta)
+        ViewChild(SelectorPlantillaVenta), 
+        __metadata('design:type', SelectorPlantillaVenta)
     ], PlantillaVenta.prototype, "_selectorPlantillaVenta", void 0);
     __decorate([
-        core_1.ViewChild(SelectorClientes_1.SelectorClientes), 
-        __metadata('design:type', SelectorClientes_1.SelectorClientes)
+        ViewChild(SelectorClientes), 
+        __metadata('design:type', SelectorClientes)
     ], PlantillaVenta.prototype, "_selectorClientes", void 0);
     PlantillaVenta = __decorate([
-        ionic_angular_1.Page({
-            templateUrl: 'build/pages/PlantillaVenta/PlantillaVenta.html',
-            directives: [SelectorClientes_1.SelectorClientes, SelectorPlantillaVenta_1.SelectorPlantillaVenta, SelectorDireccionesEntrega_1.SelectorDireccionesEntrega, SelectorFormasPago_1.SelectorFormasPago, SelectorPlazosPago_1.SelectorPlazosPago],
-            providers: [PlantillaVenta_service_1.PlantillaVentaService, Parametros_service_1.Parametros],
+        Component({
+            templateUrl: 'PlantillaVenta.html',
         }), 
-        __metadata('design:paramtypes', [ionic_angular_1.NavController, PlantillaVenta_service_1.PlantillaVentaService, Usuario_1.Usuario, Parametros_service_1.Parametros, ionic_angular_1.Platform, ionic_angular_1.Events])
+        __metadata('design:paramtypes', [Usuario, NavController, PlantillaVentaService, Parametros, Platform, Events, AlertController, LoadingController])
     ], PlantillaVenta);
     return PlantillaVenta;
 }());
-exports.PlantillaVenta = PlantillaVenta;
+//# sourceMappingURL=PlantillaVenta.js.map

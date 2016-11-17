@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,10 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var ionic_angular_1 = require('ionic-angular');
-var SelectorClientes_1 = require('../../componentes/SelectorClientes/SelectorClientes');
-var ExtractoCliente_service_1 = require('./ExtractoCliente.service');
-var ExtractoCliente = (function () {
+import { Component } from '@angular/core';
+import { ExtractoClienteService } from './ExtractoCliente.service';
+export var ExtractoCliente = (function () {
     function ExtractoCliente(servicio) {
         this.mostrarClientes = true;
         this.resumenDeuda = {};
@@ -38,26 +36,25 @@ var ExtractoCliente = (function () {
                 if (mov.tipo.trim() === '4') {
                     _this.resumenDeuda.impagados += mov.importePendiente;
                 }
-                if (mov.ruta && mov.ruta.trim() === 'AB') {
-                    _this.resumenDeuda.abogado += mov.importePendiente;
-                }
                 if (mov.vencimiento < _this.hoy.toISOString()) {
                     _this.resumenDeuda.vencida += mov.importePendiente;
                 }
-                _this.resumenDeuda.total += mov.importePendiente;
-                mov.vencimientoMostrar = new Date(mov.vencimiento);
+                if ((!mov.estado) || (mov.estado && mov.estado.trim() !== "DVD")) {
+                    _this.resumenDeuda.total += mov.importePendiente;
+                    if (mov.ruta && mov.ruta.trim() === 'AB') {
+                        _this.resumenDeuda.abogado += mov.importePendiente;
+                    }
+                }
             }
             console.log(_this.resumenDeuda);
         }, function (error) { return _this.errorMessage = error; });
     };
     ExtractoCliente = __decorate([
-        ionic_angular_1.Page({
-            templateUrl: 'build/pages/ExtractoCliente/ExtractoCliente.html',
-            directives: [SelectorClientes_1.SelectorClientes],
-            providers: [ExtractoCliente_service_1.ExtractoClienteService],
+        Component({
+            templateUrl: 'ExtractoCliente.html',
         }), 
-        __metadata('design:paramtypes', [ExtractoCliente_service_1.ExtractoClienteService])
+        __metadata('design:paramtypes', [ExtractoClienteService])
     ], ExtractoCliente);
     return ExtractoCliente;
 }());
-exports.ExtractoCliente = ExtractoCliente;
+//# sourceMappingURL=ExtractoCliente.js.map

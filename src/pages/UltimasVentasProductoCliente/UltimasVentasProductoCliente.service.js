@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,19 +7,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var http_1 = require('@angular/http');
-var Observable_1 = require('rxjs/Observable');
-require('rxjs/add/operator/map');
-var configuracion_1 = require('../../componentes/configuracion/configuracion');
-var UltimasVentasProductoClienteService = (function () {
+import { Injectable } from '@angular/core';
+import { Http, URLSearchParams } from '@angular/http';
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/operator/map';
+import { Configuracion } from '../../components/configuracion/configuracion';
+export var UltimasVentasProductoClienteService = (function () {
     function UltimasVentasProductoClienteService(http) {
         this.http = http;
     }
     UltimasVentasProductoClienteService.prototype.cargarUltimasVentas = function (producto, cliente) {
-        var _baseUrl = configuracion_1.Configuracion.API_URL + '/PlantillaVentas/UltimasVentasProductoCliente';
-        var params = new http_1.URLSearchParams();
-        params.set('empresa', configuracion_1.Configuracion.EMPRESA_POR_DEFECTO);
+        var _baseUrl = Configuracion.API_URL + '/PlantillaVentas/UltimasVentasProductoCliente';
+        var params = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
         params.set('clienteUltimasVentas', cliente);
         params.set('productoUltimasVentas', producto);
         return this.http.get(_baseUrl, { search: params })
@@ -31,12 +30,12 @@ var UltimasVentasProductoClienteService = (function () {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Observable_1.Observable.throw(error.json().error || 'Server error');
+        return Observable.throw(error.json().error || 'Server error');
     };
     UltimasVentasProductoClienteService = __decorate([
-        core_1.Injectable(), 
-        __metadata('design:paramtypes', [http_1.Http])
+        Injectable(), 
+        __metadata('design:paramtypes', [Http])
     ], UltimasVentasProductoClienteService);
     return UltimasVentasProductoClienteService;
 }());
-exports.UltimasVentasProductoClienteService = UltimasVentasProductoClienteService;
+//# sourceMappingURL=UltimasVentasProductoCliente.service.js.map

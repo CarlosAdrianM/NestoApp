@@ -1,16 +1,12 @@
 ﻿import {NavController, AlertController, LoadingController, Platform, Events} from 'ionic-angular';
-import {Component, ViewChild} from '@angular/core';
+import {Component, ViewChild, ChangeDetectorRef} from '@angular/core';
 import {SelectorClientes} from '../../components/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
-//import {SelectorDireccionesEntrega} from '../../components/SelectorDireccionesEntrega/SelectorDireccionesEntrega';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import {PlantillaVentaService} from './PlantillaVenta.service';
 import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
-//import {DatePicker} from 'ionic-native';
-//import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
-//import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
 
 @Component({
     templateUrl: 'PlantillaVenta.html',
@@ -24,7 +20,7 @@ export class PlantillaVenta {
     private loadingCtrl: LoadingController;
     public opcionesSlides: any;
 
-    constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController) {
+    constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController, private ref: ChangeDetectorRef) {
 
         this.usuario = usuario;
         this.opcionesSlides = {
@@ -33,7 +29,7 @@ export class PlantillaVenta {
             onInit: (slides: any): any => {
                 this.slider = slides;
             },
-            onSlideChangeStart: (slides: any): void => this.avanzar(slides),
+            //onSlideChangeStart: (slides: any): void => this.avanzar(slides),
         };
         this.nav = nav;
         this.alertCtrl = alertCtrl;
@@ -46,23 +42,21 @@ export class PlantillaVenta {
         
     }
 
-    ionViewDidEnter() {
-        // Esto es para que tenga que haber usuario. Debería ir en la clase usuario, pero no funciona
-        /*
-        if (!this.usuario.nombre) {
-            this.nav.push(ProfilePage);
-        }
-        */
+    ionViewDidLoad() {
         if (this.usuario != undefined && this.usuario.nombre != undefined) {
             console.log("El usuario es " + this.usuario.nombre);
             this.cargarParametros();
         } else {
             console.log("El usuario no está cargado");
-            this.nav.push(ProfilePage);
+            this.nav.setRoot(ProfilePage);
         }
-        console.log("Fecha minima " + this.fechaMinima);
-        console.log("Fecha entrega " + this.fechaEntrega);
     }
+
+    ionViewWillEnter() {
+        console.log("Refrescamos...");
+        this.ref.detectChanges();
+    }
+
 
     private nav: NavController;   
     public slider: any;
@@ -135,7 +129,9 @@ export class PlantillaVenta {
     */
     public avanzar(slides: any): void {
         if (slides.activeIndex === 2 && slides.previousIndex === 1) {
+            console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+            this.ref.detectChanges();
         }/* else if (slides.activeIndex === 3 && slides.previousIndex === 2) {
             
         }*/
@@ -304,8 +300,8 @@ export class PlantillaVenta {
 
     }
 
-
-    public totalPedido(): number {
+    get totalPedido(): number {
+        console.log("total");
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     }
 
@@ -314,6 +310,7 @@ export class PlantillaVenta {
     }
 
     private ajustarFechaEntrega(fecha: Date): Date {
+        console.log("Ajustar fecha");
         fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
         if (this.hoy.getHours() < 11) {
             return fecha;

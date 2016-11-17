@@ -1,7 +1,11 @@
 // Cargar un stub porque no hay servicio creado en la API
 // últimos 20 pedidos del vendedor
 // botón de cargar 20 siguienes
-"use strict";
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,37 +15,44 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-// Al abrir un pedido hacemos un nav.push al pedido en cuestión.
-var ionic_angular_1 = require('ionic-angular');
-var Parametros_service_1 = require('../../services/Parametros.service');
-var ListaPedidosVenta_service_1 = require('./ListaPedidosVenta.service');
-var PedidoVenta_1 = require('../PedidoVenta/PedidoVenta');
-var ListaPedidosVenta = (function () {
-    function ListaPedidosVenta(servicio, nav) {
+import { Component } from '@angular/core';
+import { NavController, AlertController, LoadingController } from 'ionic-angular';
+import { ListaPedidosVentaService } from './ListaPedidosVenta.service';
+import { PedidoVenta } from '../PedidoVenta/PedidoVenta';
+import { SelectorBase } from '../../components/SelectorBase/SelectorBase';
+export var ListaPedidosVenta = (function (_super) {
+    __extends(ListaPedidosVenta, _super);
+    function ListaPedidosVenta(servicio, nav, alertCtrl, loadingCtrl) {
+        _super.call(this);
         this.servicio = servicio;
         this.nav = nav;
-        this.cargarLista();
+        this.alertCtrl = alertCtrl;
+        this.loadingCtrl = loadingCtrl;
+        this.cargarDatos(''); // El parámetro no se usa para nada
     }
     ListaPedidosVenta.prototype.abrirPedido = function (pedido) {
-        this.nav.push(PedidoVenta_1.PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
+        this.nav.push(PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
     };
-    ListaPedidosVenta.prototype.cargarLista = function () {
+    ListaPedidosVenta.prototype.abrirPedidoNumero = function (numeroPedido) {
+        this.nav.push(PedidoVenta, { empresa: "1", numero: numeroPedido });
+    };
+    ListaPedidosVenta.prototype.cargarDatos = function (nada) {
         var _this = this;
-        var loading = ionic_angular_1.Loading.create({
+        var loading = this.loadingCtrl.create({
             content: 'Cargando Pedidos...',
         });
-        this.nav.present(loading);
+        loading.present();
         this.servicio.cargarLista().subscribe(function (data) {
             if (data.length === 0) {
-                var alert_1 = ionic_angular_1.Alert.create({
+                var alert_1 = _this.alertCtrl.create({
                     title: 'Error',
                     subTitle: 'No hay ningún pedido pendiente de servir',
                     buttons: ['Ok'],
                 });
-                _this.nav.present(alert_1);
+                alert_1.present();
             }
             else {
-                _this.listaPedidos = data;
+                _this.inicializarDatos(data);
             }
         }, function (error) {
             loading.dismiss();
@@ -51,12 +62,11 @@ var ListaPedidosVenta = (function () {
         });
     };
     ListaPedidosVenta = __decorate([
-        ionic_angular_1.Page({
-            templateUrl: 'build/pages/ListaPedidosVenta/ListaPedidosVenta.html',
-            providers: [ListaPedidosVenta_service_1.ListaPedidosVentaService, Parametros_service_1.Parametros],
+        Component({
+            templateUrl: 'ListaPedidosVenta.html',
         }), 
-        __metadata('design:paramtypes', [ListaPedidosVenta_service_1.ListaPedidosVentaService, ionic_angular_1.NavController])
+        __metadata('design:paramtypes', [ListaPedidosVentaService, NavController, AlertController, LoadingController])
     ], ListaPedidosVenta);
     return ListaPedidosVenta;
-}());
-exports.ListaPedidosVenta = ListaPedidosVenta;
+}(SelectorBase));
+//# sourceMappingURL=ListaPedidosVenta.js.map

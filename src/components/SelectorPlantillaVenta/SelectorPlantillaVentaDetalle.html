@@ -23,13 +23,13 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Cantidad</ion-label>
-                            <ion-input #cantidadInput type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)" (press)="mostrarStock(producto)"></ion-input>
+                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()" (press)="mostrarStock(producto)"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Oferta</ion-label>
-                            <ion-input type="number" min="0" disabled="{{!producto.aplicarDescuentoFicha}}" [(ngModel)]="producto.cantidadOferta" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input type="number" min="0" disabled="{{!producto.aplicarDescuentoFicha}}" [(ngModel)]="producto.cantidadOferta" (change)="actualizarCantidad(producto)" (focus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>
@@ -37,13 +37,13 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Precio</ion-label>
-                            <ion-input type="number"  disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (change)="actualizarPrecio()" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input type="number"  disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (change)="actualizarPrecio()" (focus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Descuento</ion-label>
-                            <ion-input disabled="{{!sePuedeHacerDescuento(producto)}}" [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (focus)="seleccionarTexto($event)"></ion-input>
+                            <ion-input disabled="{{!sePuedeHacerDescuento(producto)}}" [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (focus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                         </ion-item>
                     </ion-col>
                 </ion-row>

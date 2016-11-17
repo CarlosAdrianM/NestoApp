@@ -71,7 +71,7 @@
             <ion-item>
                 <ion-row>
                     <ion-col>Total pedido:</ion-col>
-                    <ion-col style="text-align:right">{{totalPedido() | currency:'EUR':true:'1.2-2'}}</ion-col>
+                    <ion-col style="text-align:right">{{totalPedido | currency:'EUR':true:'1.2-2'}}</ion-col>
                 </ion-row>
             </ion-item>
             <ion-item style="text-align:center" (press)="cambiarIVA()">

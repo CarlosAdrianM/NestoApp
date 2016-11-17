@@ -1,4 +1,3 @@
-"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -13,31 +12,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var ionic_angular_1 = require('ionic-angular');
-var SelectorClientes_service_1 = require('./SelectorClientes.service');
-var SelectorBase_1 = require('../SelectorBase/SelectorBase');
-var SelectorClientes = (function (_super) {
+import { Component, Injectable } from '@angular/core';
+import { AlertController, LoadingController } from 'ionic-angular';
+import { SelectorClientesService } from './SelectorClientes.service';
+import { SelectorBase } from '../SelectorBase/SelectorBase';
+export var SelectorClientes = (function (_super) {
     __extends(SelectorClientes, _super);
-    function SelectorClientes(servicio, nav) {
+    function SelectorClientes(servicio, loadingCtrl, alertCtrl) {
         _super.call(this);
         this.servicio = servicio;
-        this.nav = nav;
+        this.loadingCtrl = loadingCtrl;
+        this.alertCtrl = alertCtrl;
     }
     SelectorClientes.prototype.cargarDatos = function (filtro) {
         var _this = this;
-        var loading = ionic_angular_1.Loading.create({
+        var loading = this.loadingCtrl.create({
             content: 'Cargando Clientes...',
         });
-        this.nav.present(loading);
+        loading.present();
         this.servicio.getClientes(filtro).subscribe(function (data) {
             if (data.length === 0) {
-                var alert_1 = ionic_angular_1.Alert.create({
+                var alert_1 = _this.alertCtrl.create({
                     title: 'Error',
                     subTitle: 'No se encuentra ningún cliente que coincida con ' + filtro,
                     buttons: ['Ok'],
                 });
-                _this.nav.present(alert_1);
+                alert_1.present();
             }
             else {
                 _this.inicializarDatos(data);
@@ -50,15 +50,14 @@ var SelectorClientes = (function (_super) {
         });
     };
     SelectorClientes = __decorate([
-        core_1.Component({
+        Component({
             selector: 'selector-clientes',
-            templateUrl: 'build/componentes/SelectorClientes/SelectorClientes.html',
-            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Icon, ionic_angular_1.Content],
-            providers: [SelectorClientes_service_1.SelectorClientesService],
+            templateUrl: 'SelectorClientes.html',
+            outputs: ['seleccionar']
         }),
-        core_1.Injectable(), 
-        __metadata('design:paramtypes', [SelectorClientes_service_1.SelectorClientesService, ionic_angular_1.NavController])
+        Injectable(), 
+        __metadata('design:paramtypes', [SelectorClientesService, LoadingController, AlertController])
     ], SelectorClientes);
     return SelectorClientes;
-}(SelectorBase_1.SelectorBase));
-exports.SelectorClientes = SelectorClientes;
+}(SelectorBase));
+//# sourceMappingURL=SelectorClientes.js.map

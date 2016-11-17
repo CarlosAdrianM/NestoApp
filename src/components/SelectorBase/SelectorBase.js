@@ -1,4 +1,3 @@
-"use strict";
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -8,16 +7,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var SelectorBase = (function () {
+import { Output, EventEmitter } from '@angular/core';
+export var SelectorBase = (function () {
     function SelectorBase() {
-        this.seleccionar = new core_1.EventEmitter();
+        this.seleccionar = new EventEmitter();
     }
     SelectorBase.prototype.seleccionarDato = function (dato) {
         this.seleccionar.emit(dato);
     };
     SelectorBase.prototype.filtrarBusqueda = function (searchbar) {
-        var filtro = searchbar.value.toUpperCase();
+        var filtro;
+        if (searchbar.target.value) {
+            filtro = searchbar.target.value.toUpperCase();
+        }
+        else {
+            filtro = "";
+        }
         if (this.datos) {
             this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
         }
@@ -39,7 +44,9 @@ var SelectorBase = (function () {
     };
     SelectorBase.prototype.aplicarFiltro = function (datos, filtro) {
         return datos.filter(function (f) { return Object.keys(f).some(function (key) { return (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
-            f[key].toUpperCase().indexOf(filtro) > -1 : false; }); });
+            f[key].toUpperCase().indexOf(filtro) > -1 :
+            (f[key] && typeof f[key] === 'number' && !isNaN(parseFloat(filtro))) ? f[key] === parseFloat(filtro) :
+                false; }); });
     };
     SelectorBase.prototype.inicializarDatos = function (datos) {
         this.datos = datos; // ¿vale para algo?
@@ -47,6 +54,7 @@ var SelectorBase = (function () {
         this.datosFiltrados = datos;
     };
     SelectorBase.prototype.inicializarDatosFiltrados = function (datos) {
+        this.datos = datos;
         this.datosFiltrados = datos;
         var i;
         var posicion;
@@ -79,9 +87,9 @@ var SelectorBase = (function () {
         evento.inputElement ? evento.inputElement.select() : evento.target.select();
     };
     __decorate([
-        core_1.Output(), 
-        __metadata('design:type', core_1.EventEmitter)
+        Output(), 
+        __metadata('design:type', EventEmitter)
     ], SelectorBase.prototype, "seleccionar", void 0);
     return SelectorBase;
 }());
-exports.SelectorBase = SelectorBase;
+//# sourceMappingURL=SelectorBase.js.map

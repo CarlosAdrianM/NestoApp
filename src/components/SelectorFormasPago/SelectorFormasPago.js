@@ -1,4 +1,3 @@
-"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -13,15 +12,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var ionic_angular_1 = require('ionic-angular');
-var SelectorFormasPago_service_1 = require('./SelectorFormasPago.service');
-var SelectorBase_1 = require('../SelectorBase/SelectorBase');
-var SelectorFormasPago = (function (_super) {
+import { Component, Injectable, Input } from '@angular/core';
+import { AlertController, LoadingController } from 'ionic-angular';
+import { SelectorFormasPagoService } from './SelectorFormasPago.service';
+import { SelectorBase } from '../SelectorBase/SelectorBase';
+export var SelectorFormasPago = (function (_super) {
     __extends(SelectorFormasPago, _super);
-    function SelectorFormasPago(servicio, nav) {
+    function SelectorFormasPago(servicio, alertCtrl, loadingCtrl) {
         _super.call(this);
-        this.nav = nav;
+        this.alertCtrl = alertCtrl;
+        this.loadingCtrl = loadingCtrl;
         this.servicio = servicio;
     }
     SelectorFormasPago.prototype.ngOnInit = function () {
@@ -31,12 +31,12 @@ var SelectorFormasPago = (function (_super) {
         var _this = this;
         this.servicio.getFormasPago(this.cliente).subscribe(function (data) {
             if (data.length === 0) {
-                var alert_1 = ionic_angular_1.Alert.create({
+                var alert_1 = _this.alertCtrl.create({
                     title: 'Error',
                     subTitle: 'Error al cargar las formas de pago',
                     buttons: ['Ok'],
                 });
-                _this.nav.present(alert_1);
+                alert_1.present();
             }
             else {
                 _this.inicializarDatos(data);
@@ -49,25 +49,23 @@ var SelectorFormasPago = (function (_super) {
         });
     };
     __decorate([
-        core_1.Input(), 
+        Input(), 
         __metadata('design:type', Object)
     ], SelectorFormasPago.prototype, "cliente", void 0);
     __decorate([
-        core_1.Input(), 
+        Input(), 
         __metadata('design:type', Object)
     ], SelectorFormasPago.prototype, "seleccionado", void 0);
     SelectorFormasPago = __decorate([
-        core_1.Component({
+        Component({
             selector: 'selector-formas-pago',
-            templateUrl: 'build/componentes/SelectorFormasPago/SelectorFormasPago.html',
-            directives: [ionic_angular_1.Select, ionic_angular_1.Item, ionic_angular_1.Icon, ionic_angular_1.Content, ionic_angular_1.Option],
-            providers: [SelectorFormasPago_service_1.SelectorFormasPagoService],
-            inputs: ['cliente', 'seleccionado'],
+            templateUrl: 'SelectorFormasPago.html',
+            // inputs: ['cliente', 'seleccionado'],
             outputs: ['seleccionar'],
         }),
-        core_1.Injectable(), 
-        __metadata('design:paramtypes', [SelectorFormasPago_service_1.SelectorFormasPagoService, ionic_angular_1.NavController])
+        Injectable(), 
+        __metadata('design:paramtypes', [SelectorFormasPagoService, AlertController, LoadingController])
     ], SelectorFormasPago);
     return SelectorFormasPago;
-}(SelectorBase_1.SelectorBase));
-exports.SelectorFormasPago = SelectorFormasPago;
+}(SelectorBase));
+//# sourceMappingURL=SelectorFormasPago.js.map

@@ -1,4 +1,4 @@
-﻿import {Component, Injectable} from '@angular/core';
+﻿import {Component, Injectable, Output, EventEmitter} from '@angular/core';
 import {AlertController, LoadingController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
@@ -6,11 +6,12 @@ import {SelectorBase} from '../SelectorBase/SelectorBase';
 @Component({
     selector: 'selector-clientes',
     templateUrl: 'SelectorClientes.html',
-    outputs: ['seleccionar']
+    // outputs: ['seleccionar']
 })
 
 @Injectable()
 export class SelectorClientes extends SelectorBase {
+    @Output() seleccionar = new EventEmitter();
     private servicio: SelectorClientesService;
     private loadingCtrl: LoadingController;
     private alertCtrl: AlertController;

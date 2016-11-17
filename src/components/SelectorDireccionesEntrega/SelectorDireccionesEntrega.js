@@ -1,4 +1,3 @@
-"use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -13,27 +12,28 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var ionic_angular_1 = require('ionic-angular');
-var SelectorDireccionesEntrega_service_1 = require('./SelectorDireccionesEntrega.service');
-var SelectorBase_1 = require('../SelectorBase/SelectorBase');
-var SelectorDireccionesEntrega = (function (_super) {
+import { Component, Injectable } from '@angular/core';
+import { AlertController } from 'ionic-angular';
+import { SelectorDireccionesEntregaService } from './SelectorDireccionesEntrega.service';
+import { SelectorBase } from '../SelectorBase/SelectorBase';
+export var SelectorDireccionesEntrega = (function (_super) {
     __extends(SelectorDireccionesEntrega, _super);
-    function SelectorDireccionesEntrega(servicio, nav) {
+    function SelectorDireccionesEntrega(servicio, alertCtrl) {
         _super.call(this);
+        this.seleccionado = "0";
         this.servicio = servicio;
-        this.nav = nav;
+        this.alertCtrl = alertCtrl;
     }
     SelectorDireccionesEntrega.prototype.cargarDatos = function (cliente) {
         var _this = this;
         this.servicio.direccionesEntrega(cliente).subscribe(function (data) {
             if (data.length === 0) {
-                var alert_1 = ionic_angular_1.Alert.create({
+                var alert_1 = _this.alertCtrl.create({
                     title: 'Error',
                     subTitle: 'El cliente ' + cliente.cliente + ' no tiene ninguna dirección de entrega',
                     buttons: ['Ok'],
                 });
-                _this.nav.present(alert_1);
+                alert_1.present();
             }
             else {
                 _this.direccionesEntrega = data;
@@ -43,9 +43,17 @@ var SelectorDireccionesEntrega = (function (_super) {
                     if (i + 1 > _this.direccionesEntrega.length) {
                         throw 'Error en la API de Nesto: cliente sin dirección por defecto';
                     }
-                    if (_this.direccionesEntrega[i].esDireccionPorDefecto) {
-                        _this.direccionSeleccionada = _this.direccionesEntrega[i];
-                        _this.seleccionarDato(_this.direccionSeleccionada);
+                    if (_this.seleccionado === undefined) {
+                        if (_this.direccionesEntrega[i].esDireccionPorDefecto) {
+                            _this.direccionSeleccionada = _this.direccionesEntrega[i];
+                            _this.seleccionarDato(_this.direccionSeleccionada);
+                        }
+                    }
+                    else {
+                        if (_this.seleccionado === _this.direccionesEntrega[i].contacto) {
+                            _this.direccionSeleccionada = _this.direccionesEntrega[i];
+                            _this.seleccionarDato(_this.direccionSeleccionada);
+                        }
                     }
                     i++;
                 }
@@ -56,20 +64,19 @@ var SelectorDireccionesEntrega = (function (_super) {
         this.direccionSeleccionada = direccion;
         this.seleccionarDato(direccion);
     };
-    SelectorDireccionesEntrega.prototype.ngOnChanges = function () {
+    SelectorDireccionesEntrega.prototype.ngOnChanges = function (changes) {
         this.cargarDatos(this.cliente);
     };
     SelectorDireccionesEntrega = __decorate([
-        core_1.Component({
+        Component({
             selector: 'selector-direcciones-entrega',
-            templateUrl: 'build/componentes/SelectorDireccionesEntrega/SelectorDireccionesEntrega.html',
-            directives: [ionic_angular_1.Searchbar, ionic_angular_1.List, ionic_angular_1.Item, ionic_angular_1.Icon],
-            providers: [SelectorDireccionesEntrega_service_1.SelectorDireccionesEntregaService],
-            inputs: ['cliente'],
+            templateUrl: 'SelectorDireccionesEntrega.html',
+            inputs: ['cliente', 'seleccionado'],
+            outputs: ['seleccionar'],
         }),
-        core_1.Injectable(), 
-        __metadata('design:paramtypes', [SelectorDireccionesEntrega_service_1.SelectorDireccionesEntregaService, ionic_angular_1.NavController])
+        Injectable(), 
+        __metadata('design:paramtypes', [SelectorDireccionesEntregaService, AlertController])
     ], SelectorDireccionesEntrega);
     return SelectorDireccionesEntrega;
-}(SelectorBase_1.SelectorBase));
-exports.SelectorDireccionesEntrega = SelectorDireccionesEntrega;
+}(SelectorBase));
+//# sourceMappingURL=SelectorDireccionesEntrega.js.map

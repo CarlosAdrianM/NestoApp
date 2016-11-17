@@ -6,6 +6,8 @@ import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
+import {Usuario} from '../models/Usuario';
+
 
 import { Deploy } from '@ionic/cloud-angular';
 
@@ -19,7 +21,7 @@ export class MyApp {
 
     pages: Array<{ title: string, component: any }>;
 
-    constructor(public platform: Platform, public deploy: Deploy) {
+    constructor(public platform: Platform, public deploy: Deploy, public usuario: Usuario) {
         this.initializeApp();
 
         // used for an example of ngFor and navigation
@@ -30,6 +32,10 @@ export class MyApp {
             { title: 'Usuario', component: ProfilePage }
         ];
 
+        if (this.usuario == undefined || this.usuario.nombre == undefined) {
+            this.rootPage = ProfilePage;
+        }
+
     }
 
     initializeApp() {
@@ -38,14 +44,14 @@ export class MyApp {
             // Here you can do any higher level native things you might need.
             StatusBar.styleDefault();
 
-/*
+
             // Actualizamos a la nueva versión
             this.deploy.check().then((snapshotAvailable: boolean) => {
                 this.deploy.download().then(() => {
                     return this.deploy.extract();
                 });
             });
-*/
+
         });
     }
 
