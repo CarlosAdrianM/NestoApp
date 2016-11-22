@@ -1,5 +1,5 @@
-import { NgModule } from '@angular/core';
-import { IonicApp, IonicModule } from 'ionic-angular';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
@@ -84,6 +84,7 @@ const cloudSettings: CloudSettings = {
         useFactory: getAuthHttp,
         deps: [Http],
       },
+      {provide: ErrorHandler, useClass: IonicErrorHandler},
       ExtractoClienteService,
       ListaPedidosVentaService,
       Parametros,

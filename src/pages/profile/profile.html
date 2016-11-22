@@ -7,7 +7,7 @@
     </ion-navbar>
 </ion-header>
 
-<ion-content class="login" *ngIf="!((usuario && usuario.nombre) || auth.authenticated())">
+<ion-content class="login" *ngIf="!(usuario && usuario.nombre)">
 
     <div padding>
         <ion-segment [(ngModel)]="authType">
@@ -65,12 +65,12 @@
 
 </ion-content>
 
-<ion-content *ngIf="(usuario && usuario.nombre) || auth.authenticated()">
+<ion-content *ngIf="(usuario && usuario.nombre)">
     <div>
         <div padding>
             <h1>Hola, {{ usuario.nombre }}</h1>
             <button ion-button block (click)="logout()">Cerrar Sesión</button>
-            <h3>Versión 1.6.0</h3>
+            <h3>Versión 1.6.1</h3>
             <p>Ahora ya pueden modificar los datos de la cabecera: forma de pago, comentarios, etc.</p>
             <p></p>
         </div>
