@@ -7,7 +7,7 @@ import {Component} from '@angular/core';
 import { NavController, AlertController, LoadingController} from 'ionic-angular';
 // import { Parametros } from '../../services/Parametros.service';
 import {ListaPedidosVentaService} from './ListaPedidosVenta.service';
-import {PedidoVenta} from '../PedidoVenta/PedidoVenta';
+import {PedidoVentaComponent} from '../PedidoVenta/PedidoVenta.component';
 import {SelectorBase} from '../../components/SelectorBase/SelectorBase';
 
 @Component({
@@ -30,11 +30,11 @@ export class ListaPedidosVenta extends SelectorBase {
     }
 
     public abrirPedido(pedido: any): void {
-        this.nav.push(PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
+        this.nav.push(PedidoVentaComponent, { empresa: pedido.empresa, numero: pedido.numero });
     }
 
     public abrirPedidoNumero(numeroPedido: number): void {
-        this.nav.push(PedidoVenta, { empresa: "1", numero: numeroPedido });
+        this.nav.push(PedidoVentaComponent, { empresa: "1", numero: numeroPedido });
     }
 
     public cargarDatos(nada: string): void {

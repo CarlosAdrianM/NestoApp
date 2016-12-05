@@ -3,7 +3,7 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
-import { PedidoVenta } from '../pages/PedidoVenta/PedidoVenta';
+import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
 import { UltimasVentasProductoCliente } from '../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
@@ -29,6 +29,11 @@ import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http } from '@angular/http';
 import { CloudSettings, CloudModule } from '@ionic/cloud-angular';
+import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
+import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
+import { FormsModule }   from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
+
 
 let storage = new Storage();
 
@@ -52,7 +57,7 @@ const cloudSettings: CloudSettings = {
     MyApp,
     ExtractoCliente,
     ListaPedidosVenta,
-    PedidoVenta,
+    PedidoVentaComponent,
     PlantillaVenta,
     ProfilePage,
     UltimasVentasProductoCliente,
@@ -61,22 +66,26 @@ const cloudSettings: CloudSettings = {
     SelectorFormasPago,
     SelectorPlantillaVenta,
     SelectorPlantillaVentaDetalle,
-    SelectorPlazosPago
+    SelectorPlazosPago,
+    LineaVentaComponent
   ],
   imports: [
       IonicModule.forRoot(MyApp),
-      CloudModule.forRoot(cloudSettings)
+      CloudModule.forRoot(cloudSettings),
+      BrowserModule,
+      FormsModule
   ],
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
     ExtractoCliente,
     ListaPedidosVenta,
-    PedidoVenta,
+    PedidoVentaComponent,
     PlantillaVenta,
     SelectorPlantillaVentaDetalle,
     ProfilePage,
-    UltimasVentasProductoCliente
+    UltimasVentasProductoCliente,
+    LineaVentaComponent
   ],
   providers: [
       {   
@@ -97,7 +106,8 @@ const cloudSettings: CloudSettings = {
       SelectorPlazosPagoService,
       Storage,
       UltimasVentasProductoClienteService,
-      Usuario
+      Usuario,
+      LineaVentaService,
   ]
 })
 export class AppModule {}

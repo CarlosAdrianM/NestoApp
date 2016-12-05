@@ -3,6 +3,8 @@ import {Http, Response, URLSearchParams, Headers} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
+import { PedidoVenta } from '../PedidoVenta/PedidoVenta';
+
 
 @Injectable()
 export class PedidoVentaService {
@@ -13,13 +15,13 @@ export class PedidoVentaService {
 
     private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
-    public cargarPedido(empresa: string, numero: number): Observable<any> {
+    public cargarPedido(empresa: string, numero: number): Observable<PedidoVenta> {
         let params: URLSearchParams = new URLSearchParams();
         params.set('empresa', empresa);
         params.set('numero', numero.toString());
 
         return this.http.get(this._baseUrl, { search: params })
-            .map(res => <any[]>res.json())
+            .map(res => res.json())
             .catch(this.handleError);
     }
 

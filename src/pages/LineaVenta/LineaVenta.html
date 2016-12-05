@@ -1,0 +1,37 @@
+﻿<ion-header>
+    <ion-navbar>
+        <ion-title>Línea Venta</ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content>
+    <h1>Línea Venta</h1>
+    <form>
+        <ion-item>
+            <ion-label for="producto">Producto</ion-label>
+            <ion-input type="text" class="form-control" id="producto" required
+                       (blur)="cambiarProducto($event)" [ngModel]="linea.producto" name="producto"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label for="texto">Texto</ion-label>
+            <ion-input type="text" class="form-control" id="texto"
+                       [(ngModel)]="linea.texto" name="texto"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label for="cantidad">Cantidad</ion-label>
+            <ion-input type="text" class="form-control" id="cantidad"
+                       [(ngModel)]="linea.cantidad" name="cantidad"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label for="precio">Precio</ion-label>
+            <ion-input type="text" class="form-control" id="precio"
+                       [(ngModel)]="linea.precio" name="precio"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label for="descuento">Descuento</ion-label>
+            <ion-input type="text" class="form-control" id="descuento"
+                       [(ngModel)]="linea.descuento" name="descuento"></ion-input>
+        </ion-item>
+</form>
+    {{errorMessage}}
+</ion-content>

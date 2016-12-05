@@ -47,10 +47,13 @@ export class MyApp {
 
             // Actualizamos a la nueva versión
             this.deploy.check().then((snapshotAvailable: boolean) => {
-                this.deploy.download().then(() => {
-                    return this.deploy.extract();
-                });
+                if (snapshotAvailable) {
+                    this.deploy.download().then(() => {
+                        return this.deploy.extract();
+                    });
+                }
             });
+
 
         });
     }
