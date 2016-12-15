@@ -12,6 +12,7 @@
             this.formaVenta = linea.formaVenta;
             this.iva = linea.iva;
             this.oferta = linea.oferta;
+            this.picking = linea.picking;
             this.precio = linea.precio;
             this.producto = linea.producto;
             this.texto = linea.texto;
@@ -27,6 +28,7 @@
             this.descuento = 0;
             this.estado = 1;
             this.oferta = null;
+            this.picking = 0;
             this.precio = 0;
             this.producto = "";
             this.texto = "";
@@ -49,6 +51,7 @@
     public formaVenta: string;
     public iva: string;
     public oferta: number;
+    public picking: number;
     public precio: number;
     public producto: string;
     public texto: string;

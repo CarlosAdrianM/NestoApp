@@ -71,6 +71,7 @@
                     </ion-row>
                     <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
                     <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>
+                    <ion-badge color="secondary" *ngIf="linea.estado == 1 && linea.picking > 0">Picking</ion-badge>
                     <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
                     <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
                     <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>

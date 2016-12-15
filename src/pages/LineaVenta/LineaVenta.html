@@ -5,32 +5,37 @@
 </ion-header>
 
 <ion-content>
-    <h1>Línea Venta</h1>
     <form>
         <ion-item>
             <ion-label for="producto">Producto</ion-label>
-            <ion-input type="text" class="form-control" id="producto" required
-                       (blur)="cambiarProducto($event)" [ngModel]="linea.producto" name="producto"></ion-input>
+            <ion-input type="text" class="form-control" id="producto" required disabled="{{linea.estado > 0 || linea.picking > 0}}"
+                       (blur)="cambiarProducto($event)" [ngModel]="linea.producto" 
+                       name="producto"></ion-input>
         </ion-item>
         <ion-item>
             <ion-label for="texto">Texto</ion-label>
-            <ion-input type="text" class="form-control" id="texto"
+            <ion-input type="text" class="form-control" id="texto" disabled="{{linea.estado > 2}}"
                        [(ngModel)]="linea.texto" name="texto"></ion-input>
         </ion-item>
         <ion-item>
             <ion-label for="cantidad">Cantidad</ion-label>
-            <ion-input type="text" class="form-control" id="cantidad"
+            <ion-input type="text" class="form-control" id="cantidad" disabled="{{linea.estado > 0 || linea.picking > 0}}"
                        [(ngModel)]="linea.cantidad" name="cantidad"></ion-input>
         </ion-item>
         <ion-item>
             <ion-label for="precio">Precio</ion-label>
-            <ion-input type="text" class="form-control" id="precio"
+            <ion-input type="number" class="form-control" id="precio" disabled="{{linea.estado > 2}}"
                        [(ngModel)]="linea.precio" name="precio"></ion-input>
         </ion-item>
         <ion-item>
             <ion-label for="descuento">Descuento</ion-label>
-            <ion-input type="text" class="form-control" id="descuento"
+            <ion-input type="number" step="0.01" class="form-control" id="descuento" disabled="{{linea.estado > 2}}"
                        [(ngModel)]="linea.descuento" name="descuento"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label for="descuento">Aplicar Descuento</ion-label>
+            <ion-checkbox class="form-control" id="aplicarDescuento" disabled="{{linea.estado > 2}}"
+                       [(ngModel)]="linea.aplicarDescuento" name="aplicarDescuento"></ion-checkbox>
         </ion-item>
 </form>
     {{errorMessage}}
