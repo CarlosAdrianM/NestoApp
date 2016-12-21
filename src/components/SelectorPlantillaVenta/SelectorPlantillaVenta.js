@@ -12,7 +12,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, Injectable, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { AlertController, LoadingController, NavController } from 'ionic-angular';
 import { SelectorPlantillaVentaService } from './SelectorPlantillaVenta.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
@@ -69,6 +69,7 @@ export var SelectorPlantillaVenta = (function (_super) {
             var value = _a[_i];
             if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
                 productosResumen.push(value);
+                console.log("Nº elementos en resumen: " + productosResumen.length);
                 this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
             }
         }
@@ -120,8 +121,7 @@ export var SelectorPlantillaVenta = (function (_super) {
         Component({
             selector: 'selector-plantilla-venta',
             templateUrl: 'SelectorPlantillaVenta.html',
-        }),
-        Injectable(), 
+        }), 
         __metadata('design:paramtypes', [SelectorPlantillaVentaService, AlertController, LoadingController, NavController])
     ], SelectorPlantillaVenta);
     return SelectorPlantillaVenta;

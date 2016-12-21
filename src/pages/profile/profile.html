@@ -7,9 +7,9 @@
     </ion-navbar>
 </ion-header>
 
-<ion-content class="login" *ngIf="!(usuario && usuario.nombre)">
+<ion-content>
 
-    <div padding>
+    <div [ngSwitch]="authType" class="login" *ngIf="!(usuario && usuario.nombre)">
         <ion-segment [(ngModel)]="authType">
             <ion-segment-button value="login">
                 Iniciar Sesión
@@ -18,9 +18,6 @@
                 Registrarse
             </ion-segment-button>
         </ion-segment>
-    </div>
-
-    <div [ngSwitch]="authType">
         
         <form *ngSwitchCase="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
             <ion-item>
@@ -63,15 +60,12 @@
         <p *ngIf="error" class="error">{{ error._body }}</p>
     </div>
 
-</ion-content>
-
-<ion-content *ngIf="(usuario && usuario.nombre)">
-    <div>
+    <div *ngIf="(usuario && usuario.nombre)">
         <div padding>
             <h1>Hola, {{ usuario.nombre }}</h1>
             <button ion-button block (click)="logout()">Cerrar Sesión</button>
-            <h3>Versión 1.6.1</h3>
-            <p>Ahora ya pueden modificar los datos de la cabecera: forma de pago, comentarios, etc.</p>
+            <h3>Versión 1.6.2</h3>
+            <p>Ahora ya pueden hacer ampliaciones de pedidos.</p>
             <p></p>
         </div>
     </div>

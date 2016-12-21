@@ -59,6 +59,11 @@
             </ion-list>
         </div>
         <div *ngSwitchCase="'lineas'">
+            <ion-fab right bottom>
+                <button ion-fab (click)="annadirLinea()">
+                    <ion-icon name="add"></ion-icon>
+                </button>
+            </ion-fab>
             <ion-list>
                 <ion-item *ngFor="let linea of pedido.LineasPedido" (click)="abrirLinea(linea)">
                     <h2>{{linea.texto}}</h2>
@@ -77,11 +82,6 @@
                     <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>
                 </ion-item>
             </ion-list>
-            <ion-fab right bottom>
-                <button ion-fab (click)="annadirLinea()">
-                    <ion-icon name="add"></ion-icon>
-                </button>
-            </ion-fab>
         </div>
         <ion-list *ngSwitchCase="'comentarios'">
             <ion-item>

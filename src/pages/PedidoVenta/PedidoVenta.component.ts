@@ -4,6 +4,9 @@ import {PedidoVentaService} from './PedidoVenta.service';
 import {LineaVentaComponent} from '../LineaVenta/LineaVenta.component';
 import {LineaVenta} from '../LineaVenta/LineaVenta';
 import { PedidoVenta } from './PedidoVenta';
+import {Configuracion} from '../../components/configuracion/configuracion';
+import {Usuario} from '../../models/Usuario';
+
 
 @Component({
     templateUrl: 'PedidoVenta.html',
@@ -20,7 +23,7 @@ export class PedidoVentaComponent {
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
     
-    constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController) {
+    constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController, private usuario: Usuario) {
         this.nav = nav;
         this.servicio = servicio;
         this.alertCtrl = alertCtrl;
@@ -75,6 +78,7 @@ export class PedidoVentaComponent {
     public annadirLinea() {
         let linea: LineaVenta = new LineaVenta();
         linea.copiarDatosPedido(this.pedido);
+        linea.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
         this.abrirLinea(linea);
         this.pedido.LineasPedido = this.pedido.LineasPedido.concat(linea);
     }
@@ -97,6 +101,7 @@ export class PedidoVentaComponent {
 
                         this.servicio.modificarPedido(this.pedido).subscribe(
                             data => {
+                                this.cargarPedido(this.pedido.empresa, this.pedido.numero);
                                 let alert = this.alertCtrl.create({
                                     title: 'Modificado',
                                     subTitle: 'Pedido modificado correctamente',
@@ -109,14 +114,14 @@ export class PedidoVentaComponent {
                             error => {
                                 let alert = this.alertCtrl.create({
                                     title: 'Error',
-                                    subTitle: 'No se ha podido modificar el pedido',
+                                    subTitle: 'No se ha podido modificar el pedido.\n' + error,
                                     buttons: ['Ok'],
                                 });
                                 alert.present();
                                 loading.dismiss();
                             },
                             () => {
-                                loading.dismiss();
+                                //loading.dismiss();
                             }
                         );
                     }

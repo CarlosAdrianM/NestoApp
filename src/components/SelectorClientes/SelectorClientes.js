@@ -12,7 +12,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, Injectable } from '@angular/core';
+import { Component, Injectable, Output, EventEmitter } from '@angular/core';
 import { AlertController, LoadingController } from 'ionic-angular';
 import { SelectorClientesService } from './SelectorClientes.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
@@ -20,6 +20,7 @@ export var SelectorClientes = (function (_super) {
     __extends(SelectorClientes, _super);
     function SelectorClientes(servicio, loadingCtrl, alertCtrl) {
         _super.call(this);
+        this.seleccionar = new EventEmitter();
         this.servicio = servicio;
         this.loadingCtrl = loadingCtrl;
         this.alertCtrl = alertCtrl;
@@ -49,11 +50,14 @@ export var SelectorClientes = (function (_super) {
             loading.dismiss();
         });
     };
+    __decorate([
+        Output(), 
+        __metadata('design:type', Object)
+    ], SelectorClientes.prototype, "seleccionar", void 0);
     SelectorClientes = __decorate([
         Component({
             selector: 'selector-clientes',
             templateUrl: 'SelectorClientes.html',
-            outputs: ['seleccionar']
         }),
         Injectable(), 
         __metadata('design:paramtypes', [SelectorClientesService, LoadingController, AlertController])

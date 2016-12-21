@@ -14,11 +14,13 @@ import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
+import { Usuario } from '../models/Usuario';
 import { Deploy } from '@ionic/cloud-angular';
 export var MyApp = (function () {
-    function MyApp(platform, deploy) {
+    function MyApp(platform, deploy, usuario) {
         this.platform = platform;
         this.deploy = deploy;
+        this.usuario = usuario;
         this.rootPage = PlantillaVenta;
         this.initializeApp();
         // used for an example of ngFor and navigation
@@ -28,20 +30,24 @@ export var MyApp = (function () {
             { title: 'Extracto Cliente', component: ExtractoCliente },
             { title: 'Usuario', component: ProfilePage }
         ];
+        if (this.usuario == undefined || this.usuario.nombre == undefined) {
+            this.rootPage = ProfilePage;
+        }
     }
     MyApp.prototype.initializeApp = function () {
+        var _this = this;
         this.platform.ready().then(function () {
             // Okay, so the platform is ready and our plugins are available.
             // Here you can do any higher level native things you might need.
             StatusBar.styleDefault();
-            /*
-                        // Actualizamos a la nueva versi�n
-                        this.deploy.check().then((snapshotAvailable: boolean) => {
-                            this.deploy.download().then(() => {
-                                return this.deploy.extract();
-                            });
-                        });
-            */
+            // Actualizamos a la nueva versi�n
+            _this.deploy.check().then(function (snapshotAvailable) {
+                if (snapshotAvailable) {
+                    _this.deploy.download().then(function () {
+                        return _this.deploy.extract();
+                    });
+                }
+            });
         });
     };
     MyApp.prototype.openPage = function (page) {
@@ -57,7 +63,7 @@ export var MyApp = (function () {
         Component({
             templateUrl: 'app.html'
         }), 
-        __metadata('design:paramtypes', [Platform, Deploy])
+        __metadata('design:paramtypes', [Platform, Deploy, Usuario])
     ], MyApp);
     return MyApp;
 }());

@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { NavController, AlertController, LoadingController, Platform, Events } from 'ionic-angular';
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { SelectorClientes } from '../../components/SelectorClientes/SelectorClientes';
 import { SelectorPlantillaVenta } from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
 import { Configuracion } from '../../components/configuracion/configuracion';
@@ -16,12 +16,10 @@ import { PlantillaVentaService } from './PlantillaVenta.service';
 import { Usuario } from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
-//import {DatePicker} from 'ionic-native';
-//import { SelectorFormasPago } from '../../components/SelectorFormasPago/SelectorFormasPago';
-//import { SelectorPlazosPago } from '../../components/SelectorPlazosPago/SelectorPlazosPago';
 export var PlantillaVenta = (function () {
-    function PlantillaVenta(usuario, nav, servicio, parametros, platform, events, alertCtrl, loadingCtrl) {
+    function PlantillaVenta(usuario, nav, servicio, parametros, platform, events, alertCtrl, loadingCtrl, ref) {
         var _this = this;
+        this.ref = ref;
         this.hoy = new Date();
         this.hoySinHora = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
         this.fechaMinima = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
@@ -48,8 +46,12 @@ export var PlantillaVenta = (function () {
         }
         else {
             console.log("El usuario no está cargado");
-            this.nav.push(ProfilePage);
+            this.nav.setRoot(ProfilePage);
         }
+    };
+    PlantillaVenta.prototype.ionViewWillEnter = function () {
+        console.log("Refrescamos...");
+        this.ref.detectChanges();
     };
     Object.defineProperty(PlantillaVenta.prototype, "direccionSeleccionada", {
         get: function () {
@@ -110,6 +112,7 @@ export var PlantillaVenta = (function () {
         if (slides.activeIndex === 2 && slides.previousIndex === 1) {
             console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+            this.ref.detectChanges();
         } /* else if (slides.activeIndex === 3 && slides.previousIndex === 2) {
             
         }*/
@@ -246,14 +249,19 @@ export var PlantillaVenta = (function () {
             console.log('No se ha podido cargar el almacén por defecto');
         });
     };
-    PlantillaVenta.prototype.totalPedido = function () {
-        console.log("total");
-        return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
-    };
+    Object.defineProperty(PlantillaVenta.prototype, "totalPedido", {
+        get: function () {
+            console.log("total");
+            return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
+        },
+        enumerable: true,
+        configurable: true
+    });
     PlantillaVenta.prototype.cambiarIVA = function () {
         this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
     };
     PlantillaVenta.prototype.ajustarFechaEntrega = function (fecha) {
+        console.log("Ajustar fecha");
         fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
         if (this.hoy.getHours() < 11) {
             return fecha;
@@ -276,7 +284,7 @@ export var PlantillaVenta = (function () {
         Component({
             templateUrl: 'PlantillaVenta.html',
         }), 
-        __metadata('design:paramtypes', [Usuario, NavController, PlantillaVentaService, Parametros, Platform, Events, AlertController, LoadingController])
+        __metadata('design:paramtypes', [Usuario, NavController, PlantillaVentaService, Parametros, Platform, Events, AlertController, LoadingController, ChangeDetectorRef])
     ], PlantillaVenta);
     return PlantillaVenta;
 }());

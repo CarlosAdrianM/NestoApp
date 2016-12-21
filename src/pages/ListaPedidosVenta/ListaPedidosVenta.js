@@ -18,7 +18,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Component } from '@angular/core';
 import { NavController, AlertController, LoadingController } from 'ionic-angular';
 import { ListaPedidosVentaService } from './ListaPedidosVenta.service';
-import { PedidoVenta } from '../PedidoVenta/PedidoVenta';
+import { PedidoVentaComponent } from '../PedidoVenta/PedidoVenta.component';
 import { SelectorBase } from '../../components/SelectorBase/SelectorBase';
 export var ListaPedidosVenta = (function (_super) {
     __extends(ListaPedidosVenta, _super);
@@ -31,10 +31,10 @@ export var ListaPedidosVenta = (function (_super) {
         this.cargarDatos(''); // El parámetro no se usa para nada
     }
     ListaPedidosVenta.prototype.abrirPedido = function (pedido) {
-        this.nav.push(PedidoVenta, { empresa: pedido.empresa, numero: pedido.numero });
+        this.nav.push(PedidoVentaComponent, { empresa: pedido.empresa, numero: pedido.numero });
     };
     ListaPedidosVenta.prototype.abrirPedidoNumero = function (numeroPedido) {
-        this.nav.push(PedidoVenta, { empresa: "1", numero: numeroPedido });
+        this.nav.push(PedidoVentaComponent, { empresa: "1", numero: numeroPedido });
     };
     ListaPedidosVenta.prototype.cargarDatos = function (nada) {
         var _this = this;

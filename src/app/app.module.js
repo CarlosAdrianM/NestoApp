@@ -7,12 +7,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { NgModule } from '@angular/core';
-import { IonicApp, IonicModule } from 'ionic-angular';
+import { NgModule, ErrorHandler } from '@angular/core';
+import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
-import { PedidoVenta } from '../pages/PedidoVenta/PedidoVenta';
+import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
 import { UltimasVentasProductoCliente } from '../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
@@ -38,6 +38,10 @@ import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http } from '@angular/http';
 import { CloudModule } from '@ionic/cloud-angular';
+import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
+import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
+import { FormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
 var storage = new Storage();
 export function getAuthHttp(http) {
     return new AuthHttp(new AuthConfig({
@@ -61,7 +65,7 @@ export var AppModule = (function () {
                 MyApp,
                 ExtractoCliente,
                 ListaPedidosVenta,
-                PedidoVenta,
+                PedidoVentaComponent,
                 PlantillaVenta,
                 ProfilePage,
                 UltimasVentasProductoCliente,
@@ -70,22 +74,26 @@ export var AppModule = (function () {
                 SelectorFormasPago,
                 SelectorPlantillaVenta,
                 SelectorPlantillaVentaDetalle,
-                SelectorPlazosPago
+                SelectorPlazosPago,
+                LineaVentaComponent
             ],
             imports: [
                 IonicModule.forRoot(MyApp),
-                CloudModule.forRoot(cloudSettings)
+                CloudModule.forRoot(cloudSettings),
+                BrowserModule,
+                FormsModule
             ],
             bootstrap: [IonicApp],
             entryComponents: [
                 MyApp,
                 ExtractoCliente,
                 ListaPedidosVenta,
-                PedidoVenta,
+                PedidoVentaComponent,
                 PlantillaVenta,
                 SelectorPlantillaVentaDetalle,
                 ProfilePage,
-                UltimasVentasProductoCliente
+                UltimasVentasProductoCliente,
+                LineaVentaComponent
             ],
             providers: [
                 {
@@ -93,6 +101,7 @@ export var AppModule = (function () {
                     useFactory: getAuthHttp,
                     deps: [Http],
                 },
+                { provide: ErrorHandler, useClass: IonicErrorHandler },
                 ExtractoClienteService,
                 ListaPedidosVentaService,
                 Parametros,
@@ -105,7 +114,8 @@ export var AppModule = (function () {
                 SelectorPlazosPagoService,
                 Storage,
                 UltimasVentasProductoClienteService,
-                Usuario
+                Usuario,
+                LineaVentaService,
             ]
         }), 
         __metadata('design:paramtypes', [])

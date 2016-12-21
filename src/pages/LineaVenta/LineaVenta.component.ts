@@ -4,7 +4,6 @@ import {LineaVenta} from './LineaVenta';
 import { LineaVentaService } from './LineaVenta.service';
 
 
-
 @Component({
     templateUrl: 'LineaVenta.html',
 })
@@ -12,13 +11,24 @@ export class LineaVentaComponent {
     
     public linea: LineaVenta;
     public errorMessage: string;
+    private descuentoCadena: string;
 
     constructor(navParams: NavParams, private servicio: LineaVentaService, private alertCtrl: AlertController) {
         this.linea = navParams.get('linea');
+        this.actualizarDescuento(this.linea.descuento * 100);
     }
 
     submitted = false;
     onSubmit() { this.submitted = true; }
+
+    public actualizarDescuento(dto: any): void {
+        if(isNaN(dto)) {
+            dto = (String(dto)).replace(/[^\d.-]/g, '');
+        }
+        
+        this.linea.descuento = dto / 100;
+        this.descuentoCadena = dto + '%';
+    }
 
     public cambiarProducto(evento): void {
         let nuevoProducto: string = evento.currentTarget.value;
@@ -51,4 +61,9 @@ export class LineaVentaComponent {
             }
         );
     }
+
+    public seleccionarTexto(evento: any): void {
+        evento.target.select();
+    }
+
 }
