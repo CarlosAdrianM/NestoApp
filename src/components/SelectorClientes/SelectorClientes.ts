@@ -42,13 +42,15 @@ export class SelectorClientes extends SelectorBase {
                 } else {
                     this.inicializarDatos(data);
                 }
+                loading.dismiss();
             },
             error => {
                 // loading.dismiss();
                 this.errorMessage = <any>error;
+                loading.dismiss();
             },
             () => {
-                loading.dismiss();
+                
             }
         );
     }

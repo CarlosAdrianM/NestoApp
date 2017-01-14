@@ -1,4 +1,4 @@
-﻿import {NavController, AlertController, LoadingController, Platform, Events} from 'ionic-angular';
+﻿import {NavController, AlertController, LoadingController, Platform, Events, Slides} from 'ionic-angular';
 import {Component, ViewChild, ChangeDetectorRef} from '@angular/core';
 import {SelectorClientes} from '../../components/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
@@ -18,11 +18,12 @@ export class PlantillaVenta {
     private platform: Platform;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
-    public opcionesSlides: any;
+    //public opcionesSlides: any;
 
     constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController, private ref: ChangeDetectorRef) {
 
         this.usuario = usuario;
+        /*
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
@@ -31,6 +32,7 @@ export class PlantillaVenta {
             },
             //onSlideChangeStart: (slides: any): void => this.avanzar(slides),
         };
+        */
         this.nav = nav;
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
@@ -42,10 +44,18 @@ export class PlantillaVenta {
         
     }
 
+   @ViewChild(Slides) slider: Slides;
+
+/*
+   ngAfterViewInit() {
+     this.slider.freeMode = true;
+     this.slider.freeModeSticky = true;
+   }
+*/
     ionViewDidLoad() {
         if (this.usuario != undefined && this.usuario.nombre != undefined) {
             console.log("El usuario es " + this.usuario.nombre);
-            this.cargarParametros();
+            //this.cargarParametros();
         } else {
             console.log("El usuario no está cargado");
             this.nav.setRoot(ProfilePage);
@@ -59,7 +69,7 @@ export class PlantillaVenta {
 
 
     private nav: NavController;   
-    public slider: any;
+    //public slider: any;
     public clienteSeleccionado: any;
     public productosResumen: any[];
     private _direccionSeleccionada: any;
@@ -117,7 +127,7 @@ export class PlantillaVenta {
     }
 
     private cargarProductosPlantilla(cliente: any[]): void {
-        this.slider.unlockSwipeToNext();
+        this.slider.lockSwipeToNext(false);
         this.siguientePantalla();
         this.clienteSeleccionado = cliente;
     }
@@ -128,7 +138,9 @@ export class PlantillaVenta {
     }
     */
     public avanzar(slides: any): void {
-        if (slides.activeIndex === 2 && slides.previousIndex === 1) {
+        console.log(slides.getActiveIndex());
+        console.log(slides.getPreviousIndex());
+        if (slides.getActiveIndex() === 2 && slides.getPreviousIndex() === 1) {
             console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
             this.ref.detectChanges();
@@ -139,10 +151,10 @@ export class PlantillaVenta {
 
     public sePuedeAvanzar(): boolean {
         return this.slider && (
-            this.slider.activeIndex === 0 && this.clienteSeleccionado ||
-            this.slider.activeIndex === 1 ||
-            this.slider.activeIndex === 2 && this.productosResumen && this.productosResumen.length > 0 ||
-            this.slider.activeIndex === 3);
+            this.slider.getActiveIndex() === 0 && this.clienteSeleccionado ||
+            this.slider.getActiveIndex() === 1 ||
+            this.slider.getActiveIndex() === 2 && this.productosResumen && this.productosResumen.length > 0 ||
+            this.slider.getActiveIndex() === 3);
     }
 
     public siguientePantalla(): void {
@@ -265,43 +277,10 @@ export class PlantillaVenta {
         this.productosResumen = null;
         this.direccionSeleccionada = null;
         this.slider.slideTo(0);
-        this.slider.lockSwipeToNext();
+        this.slider.lockSwipeToNext(true);
     }
-    
-    private cargarParametros(): void {
-        let self: any = this;
-
-        this.parametros.leer('Vendedor').subscribe(
-            data => {
-                self.usuario.vendedor = data;
-            },
-            error => {
-                console.log('No se ha podido cargar el almacén por defecto');
-            }
-        );
-
-        this.parametros.leer('DelegaciónDefecto').subscribe(
-            data => {
-                self.usuario.delegacion = data;
-            },
-            error => {
-                console.log('No se ha podido cargar la delegación por defecto');
-            }
-        );
-
-        this.parametros.leer('AlmacénRuta').subscribe(
-            data => {
-                self.usuario.almacen = data;
-            },
-            error => {
-                console.log('No se ha podido cargar el almacén por defecto');
-            }
-        );
-
-    }
-
+        
     get totalPedido(): number {
-        console.log("total");
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     }
 

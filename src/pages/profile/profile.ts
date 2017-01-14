@@ -7,6 +7,7 @@ import {AuthService} from '../../services/auth/auth';
 import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
+import { Parametros } from '../../services/Parametros.service';
 
 @Component({
     templateUrl: 'profile.html',
@@ -30,7 +31,7 @@ export class ProfilePage {
     private nav: NavController;
     private loadingCtrl: LoadingController;
 
-    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage) {
+    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, private parametros: Parametros) {
         // let self: any = this;
         this.http = http;
         this.auth = new AuthService();
@@ -45,31 +46,28 @@ export class ProfilePage {
             console.log(error);
         });
         */
-        
+        //let local: Storage = new Storage();
 
+
+        
+    
         
     }
 
-    /*
+    
     ionViewDidEnter() {
-        console.log('ionViewDidEnter');
-        let self: any = this;
-
-        this.local.get('profile').then(profile => {
-            self.usuario.nombre = profile;
-        }).catch(error => {
-            console.log(error);
-        });
-        
-        this.local.get('id_token').then(id_token => {
-            self.token = id_token;
-        }).catch(error => {
-            console.log(error);
+        if(this.usuario && !this.usuario.nombre) {
+            this.local.get('profile').then(profile => {
+                console.log(profile);
+                this.usuario.nombre = profile;
+                this.cargarParametros();
+            }).catch(error => {
+                console.log(error);
+                //this.nav.push(ProfilePage);
             });
-
-        console.log('Token:' + this.token);
+        }
     }
-    */
+    
 
     public login(credentials: any): void {
         let loading: any = this.loadingCtrl.create({
@@ -92,6 +90,7 @@ export class ProfilePage {
             data => {
                 this.usuario.nombre = credentials.username;
                 this.authSuccess(data.access_token);
+                this.cargarParametros();
             },
             err => {
                 this.error = err,
@@ -123,5 +122,37 @@ export class ProfilePage {
         this.local.set('id_token', token);
         // this.usuario.nombre = this.jwtHelper.decodeToken(token).unique_name;
         this.local.set('profile', this.usuario.nombre.trim());
+    }
+
+    private cargarParametros(): void {
+        let self: any = this;
+
+        this.parametros.leer('Vendedor').subscribe(
+            data => {
+                self.usuario.vendedor = data;
+            },
+            error => {
+                console.log('No se ha podido cargar el vendedor por defecto');
+            }
+        );
+
+        this.parametros.leer('DelegaciónDefecto').subscribe(
+            data => {
+                self.usuario.delegacion = data;
+            },
+            error => {
+                console.log('No se ha podido cargar la delegación por defecto');
+            }
+        );
+
+        this.parametros.leer('AlmacénRuta').subscribe(
+            data => {
+                self.usuario.almacen = data;
+            },
+            error => {
+                console.log('No se ha podido cargar el almacén por defecto');
+            }
+        );
+
     }
 }
