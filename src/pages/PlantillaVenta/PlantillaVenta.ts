@@ -284,6 +284,14 @@ export class PlantillaVenta {
         return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
     }
 
+    get baseImponiblePedido(): number {
+        return this._selectorPlantillaVenta.baseImponiblePedido;
+    }
+
+    get baseImponibleParaPortes(): number {
+        return this._selectorPlantillaVenta.baseImponibleParaPortes;
+    }
+
     public cambiarIVA(): void {
         this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
     }

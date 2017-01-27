@@ -39,6 +39,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
                 data = data.map(function (item): any {
                     let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                     clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                    clone.esSobrePedido = clone.estado != 0;
                     return clone;
                 });
                 this.inicializarDatos(data);
@@ -72,11 +73,24 @@ export class SelectorPlantillaVenta extends SelectorBase {
     public cargarResumen(): any[] {
         let productosResumen: any[] = [];
         this.baseImponiblePedido = 0;
+        this.baseImponibleParaPortes = 0;
         for (let value of this.datosIniciales()) {
             if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
                 productosResumen.push(value);
                 console.log("Nº elementos en resumen: " + productosResumen.length);
+                value.esSobrePedido = !(value.estado == 0 ||(value.stockActualizado && value.cantidadDisponible >= +value.cantidad + value.cantidadOferta));
+                if(!value.stockActualizado) {
+                    value.colorSobrePedido = 'default';
+                } else if (value.esSobrePedido) {
+                    value.colorSobrePedido = 'danger';
+                } else {
+                    value.colorSobrePedido = 'none';
+                }
                 this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
+                if (!value.esSobrePedido) {
+                    this.baseImponibleParaPortes += value.cantidad * value.precio * (1 - value.descuento);
+                }
+
             }
         }
         console.log("Productos resumen: " +  productosResumen.toString());
@@ -116,6 +130,14 @@ export class SelectorPlantillaVenta extends SelectorBase {
     }
     set baseImponiblePedido(value: number) {
         this._baseImponiblePedido = value;
+    }
+
+    private _baseImponibleParaPortes: number = 0;
+    get baseImponibleParaPortes(): number {
+        return this._baseImponibleParaPortes;
+    }
+    set baseImponibleParaPortes(value: number) {
+        this._baseImponibleParaPortes = value;
     }
 
 }

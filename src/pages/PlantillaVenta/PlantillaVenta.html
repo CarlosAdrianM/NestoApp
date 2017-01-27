@@ -23,17 +23,30 @@
         <ion-slide  style="overflow-y:scroll">
             <h3>Resumen</h3>
             <ion-list *ngIf="productosResumen">
-                <ion-item *ngFor="let producto of productosResumen">
+                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen">
                     <ion-avatar item-left>
                         <img src="{{producto.urlImagen}}">
                     </ion-avatar>
-                     
+
                     <h2>{{producto.texto}}</h2>
                     <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
                     <p>{{+producto.precio | currency:'EUR':true:'1.2-2'}} (Dto: {{producto.descuento | percent}})</p>
                     <ion-badge [color]="producto.colorStock" item-right>{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge> 
 
                 </ion-item>
+                <ion-item>
+                    <ion-row>
+                        <ion-col>Base Imponible Para Portes:</ion-col>
+                        <ion-col style="text-align:right">{{baseImponibleParaPortes | currency:'EUR':true:'1.2-2'}}</ion-col>
+                    </ion-row>
+                </ion-item>
+                <ion-item>
+                    <ion-row>
+                        <ion-col>Base Imponible Pedido:</ion-col>
+                        <ion-col style="text-align:right">{{baseImponiblePedido | currency:'EUR':true:'1.2-2'}}</ion-col>
+                    </ion-row>
+                </ion-item>
+
                 <ion-item>
                     <ion-label floating>Comentarios Picking (los ven en almacén)</ion-label>
                     <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
