@@ -59,11 +59,6 @@
             </ion-list>
         </div>
         <div *ngSwitchCase="'lineas'">
-            <ion-fab right bottom>
-                <button ion-fab (click)="annadirLinea()">
-                    <ion-icon name="add"></ion-icon>
-                </button>
-            </ion-fab>
             <ion-list>
                 <ion-item *ngFor="let linea of pedido.LineasPedido" (click)="abrirLinea(linea)">
                     <h2>{{linea.texto}}</h2>
@@ -95,3 +90,10 @@
         </ion-list>
     </div>
 </ion-content>
+<ion-footer *ngIf="segmentoPedido == 'lineas'">
+  <ion-fab right bottom>
+    <button ion-fab (click)="annadirLinea()">
+      <ion-icon name="add"></ion-icon>
+    </button>
+  </ion-fab>
+</ion-footer>
