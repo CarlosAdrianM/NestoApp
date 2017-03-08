@@ -26,5 +26,4 @@ export class PedidoVenta {
     public usuario: string;
     
     public LineasPedido: Array<LineaVenta>;
-
 }

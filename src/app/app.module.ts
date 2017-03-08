@@ -1,4 +1,4 @@
-import { NgModule, ErrorHandler } from '@angular/core';
+﻿import { NgModule, ErrorHandler } from '@angular/core';
 import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
@@ -13,6 +13,7 @@ import { SelectorFormasPago } from '../components/SelectorFormasPago/SelectorFor
 import { SelectorPlantillaVenta } from '../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
 import { SelectorPlantillaVentaDetalle } from '../components/SelectorPlantillaVenta/SelectorPlantillaVentaDetalle';
 import { SelectorPlazosPago } from '../components/SelectorPlazosPago/SelectorPlazosPago';
+import { SelectorVendedoresComponent } from '../components/SelectorVendedores/SelectorVendedores.component';
 import { ExtractoClienteService } from '../pages/ExtractoCliente/ExtractoCliente.service';
 import { ListaPedidosVentaService } from '../pages/ListaPedidosVenta/ListaPedidosVenta.service';
 import { PedidoVentaService } from '../pages/PedidoVenta/PedidoVenta.service';
@@ -23,6 +24,7 @@ import { SelectorDireccionesEntregaService } from '../components/SelectorDirecci
 import { SelectorFormasPagoService } from '../components/SelectorFormasPago/SelectorFormasPago.service';
 import { SelectorPlantillaVentaService } from '../components/SelectorPlantillaVenta/SelectorPlantillaVenta.service';
 import { SelectorPlazosPagoService } from '../components/SelectorPlazosPago/SelectorPlazosPago.service';
+import { SelectorVendedoresService } from '../components/SelectorVendedores/SelectorVendedores.service';
 import { Usuario } from '../models/Usuario';
 import { Storage } from '@ionic/storage';
 import { Parametros } from '../services/Parametros.service';
@@ -67,6 +69,7 @@ const cloudSettings: CloudSettings = {
     SelectorPlantillaVenta,
     SelectorPlantillaVentaDetalle,
     SelectorPlazosPago,
+    SelectorVendedoresComponent,
     LineaVentaComponent
   ],
   imports: [
@@ -104,6 +107,7 @@ const cloudSettings: CloudSettings = {
       SelectorFormasPagoService,
       SelectorPlantillaVentaService,
       SelectorPlazosPagoService,
+      SelectorVendedoresService,
       Storage,
       UltimasVentasProductoClienteService,
       Usuario,

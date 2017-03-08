@@ -22,7 +22,7 @@ export class PedidoVentaComponent {
     private servicio: PedidoVentaService;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
-    
+        
     constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController, private usuario: Usuario) {
         this.nav = nav;
         this.servicio = servicio;
@@ -46,6 +46,7 @@ export class PedidoVentaComponent {
                 }
                 this.iva = this.pedido.iva;
                 this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
+                this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
             },
             error => {
                 let alert = this.alertCtrl.create({
