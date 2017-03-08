@@ -6,11 +6,11 @@ export declare class LineaVentaComponent {
     private alertCtrl;
     linea: LineaVenta;
     errorMessage: string;
-    private descuentoNumero;
     private descuentoCadena;
     constructor(navParams: NavParams, servicio: LineaVentaService, alertCtrl: AlertController);
     submitted: boolean;
     onSubmit(): void;
-    actualizarDescuento(dto: number): void;
+    actualizarDescuento(dto: any): void;
     cambiarProducto(evento: any): void;
+    seleccionarTexto(evento: any): void;
 }

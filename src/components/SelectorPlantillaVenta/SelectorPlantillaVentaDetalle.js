@@ -11,7 +11,7 @@ import { Component } from '@angular/core';
 import { NavController, NavParams, AlertController, ToastController } from 'ionic-angular';
 import { SelectorPlantillaVentaService } from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
-export var SelectorPlantillaVentaDetalle = (function () {
+var SelectorPlantillaVentaDetalle = (function () {
     function SelectorPlantillaVentaDetalle(servicio, nav, navParams, alertCtrl, toastCtrl) {
         this.nav = nav;
         this.navParams = navParams;
@@ -188,12 +188,13 @@ export var SelectorPlantillaVentaDetalle = (function () {
         });
         alert.present();
     };
-    SelectorPlantillaVentaDetalle = __decorate([
-        Component({
-            templateUrl: 'SelectorPlantillaVentaDetalle.html',
-        }), 
-        __metadata('design:paramtypes', [SelectorPlantillaVentaService, NavController, NavParams, AlertController, ToastController])
-    ], SelectorPlantillaVentaDetalle);
     return SelectorPlantillaVentaDetalle;
 }());
+SelectorPlantillaVentaDetalle = __decorate([
+    Component({
+        templateUrl: 'SelectorPlantillaVentaDetalle.html',
+    }),
+    __metadata("design:paramtypes", [SelectorPlantillaVentaService, NavController, NavParams, AlertController, ToastController])
+], SelectorPlantillaVentaDetalle);
+export { SelectorPlantillaVentaDetalle };
 //# sourceMappingURL=SelectorPlantillaVentaDetalle.js.map

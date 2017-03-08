@@ -10,7 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Component } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
 import { UltimasVentasProductoClienteService } from './UltimasVentasProductoCliente.service';
-export var UltimasVentasProductoCliente = (function () {
+var UltimasVentasProductoCliente = (function () {
     function UltimasVentasProductoCliente(nav, servicio, navParams) {
         this.nav = nav;
         this.navParams = navParams;
@@ -27,12 +27,13 @@ export var UltimasVentasProductoCliente = (function () {
             }
         }, function (error) { return _this.errorMessage = error; });
     };
-    UltimasVentasProductoCliente = __decorate([
-        Component({
-            templateUrl: 'UltimasVentasProductoCliente.html',
-        }), 
-        __metadata('design:paramtypes', [NavController, UltimasVentasProductoClienteService, NavParams])
-    ], UltimasVentasProductoCliente);
     return UltimasVentasProductoCliente;
 }());
+UltimasVentasProductoCliente = __decorate([
+    Component({
+        templateUrl: 'UltimasVentasProductoCliente.html',
+    }),
+    __metadata("design:paramtypes", [NavController, UltimasVentasProductoClienteService, NavParams])
+], UltimasVentasProductoCliente);
+export { UltimasVentasProductoCliente };
 //# sourceMappingURL=UltimasVentasProductoCliente.js.map

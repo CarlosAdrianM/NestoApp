@@ -11,12 +11,15 @@ import { Component } from '@angular/core';
 import { LoadingController, NavController } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 import { Http, Headers } from '@angular/http';
+//import {JwtHelper} from 'angular2-jwt';
 import { AuthService } from '../../services/auth/auth';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
-export var ProfilePage = (function () {
-    function ProfilePage(http, usuario, nav, loadingCtrl, local) {
+import { Parametros } from '../../services/Parametros.service';
+var ProfilePage = (function () {
+    function ProfilePage(http, usuario, nav, loadingCtrl, local, parametros) {
+        this.parametros = parametros;
         this.LOGIN_URL = Configuracion.URL_SERVIDOR + '/oauth/token';
         this.SIGNUP_URL = Configuracion.URL_SERVIDOR + '/users';
         // When the page loads, we want the Login segment to be selected
@@ -39,27 +42,21 @@ export var ProfilePage = (function () {
             console.log(error);
         });
         */
+        //let local: Storage = new Storage();
     }
-    /*
-    ionViewDidEnter() {
-        console.log('ionViewDidEnter');
-        let self: any = this;
-
-        this.local.get('profile').then(profile => {
-            self.usuario.nombre = profile;
-        }).catch(error => {
-            console.log(error);
-        });
-        
-        this.local.get('id_token').then(id_token => {
-            self.token = id_token;
-        }).catch(error => {
-            console.log(error);
+    ProfilePage.prototype.ionViewDidEnter = function () {
+        var _this = this;
+        if (this.usuario && !this.usuario.nombre) {
+            this.local.get('profile').then(function (profile) {
+                console.log(profile);
+                _this.usuario.nombre = profile;
+                _this.cargarParametros();
+            }).catch(function (error) {
+                console.log(error);
+                //this.nav.push(ProfilePage);
             });
-
-        console.log('Token:' + this.token);
-    }
-    */
+        }
+    };
     ProfilePage.prototype.login = function (credentials) {
         var _this = this;
         var loading = this.loadingCtrl.create({
@@ -76,6 +73,7 @@ export var ProfilePage = (function () {
             .subscribe(function (data) {
             _this.usuario.nombre = credentials.username;
             _this.authSuccess(data.access_token);
+            _this.cargarParametros();
         }, function (err) {
             _this.error = err,
                 loading.dismiss();
@@ -100,12 +98,31 @@ export var ProfilePage = (function () {
         // this.usuario.nombre = this.jwtHelper.decodeToken(token).unique_name;
         this.local.set('profile', this.usuario.nombre.trim());
     };
-    ProfilePage = __decorate([
-        Component({
-            templateUrl: 'profile.html',
-        }), 
-        __metadata('design:paramtypes', [Http, Usuario, NavController, LoadingController, Storage])
-    ], ProfilePage);
+    ProfilePage.prototype.cargarParametros = function () {
+        var self = this;
+        this.parametros.leer('Vendedor').subscribe(function (data) {
+            self.usuario.vendedor = data;
+        }, function (error) {
+            console.log('No se ha podido cargar el vendedor por defecto');
+        });
+        this.parametros.leer('DelegaciónDefecto').subscribe(function (data) {
+            self.usuario.delegacion = data;
+        }, function (error) {
+            console.log('No se ha podido cargar la delegación por defecto');
+        });
+        this.parametros.leer('AlmacénRuta').subscribe(function (data) {
+            self.usuario.almacen = data;
+        }, function (error) {
+            console.log('No se ha podido cargar el almacén por defecto');
+        });
+    };
     return ProfilePage;
 }());
+ProfilePage = __decorate([
+    Component({
+        templateUrl: 'profile.html',
+    }),
+    __metadata("design:paramtypes", [Http, Usuario, NavController, LoadingController, Storage, Parametros])
+], ProfilePage);
+export { ProfilePage };
 //# sourceMappingURL=profile.js.map

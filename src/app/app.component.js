@@ -16,7 +16,7 @@ import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
 import { Usuario } from '../models/Usuario';
 import { Deploy } from '@ionic/cloud-angular';
-export var MyApp = (function () {
+var MyApp = (function () {
     function MyApp(platform, deploy, usuario) {
         this.platform = platform;
         this.deploy = deploy;
@@ -55,16 +55,17 @@ export var MyApp = (function () {
         // we wouldn't want the back button to show in this scenario
         this.nav.setRoot(page.component);
     };
-    __decorate([
-        ViewChild(Nav), 
-        __metadata('design:type', Nav)
-    ], MyApp.prototype, "nav", void 0);
-    MyApp = __decorate([
-        Component({
-            templateUrl: 'app.html'
-        }), 
-        __metadata('design:paramtypes', [Platform, Deploy, Usuario])
-    ], MyApp);
     return MyApp;
 }());
+__decorate([
+    ViewChild(Nav),
+    __metadata("design:type", Nav)
+], MyApp.prototype, "nav", void 0);
+MyApp = __decorate([
+    Component({
+        templateUrl: 'app.html'
+    }),
+    __metadata("design:paramtypes", [Platform, Deploy, Usuario])
+], MyApp);
+export { MyApp };
 //# sourceMappingURL=app.component.js.map

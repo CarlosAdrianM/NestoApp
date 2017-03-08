@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { NavController, AlertController, LoadingController, Platform, Events } from 'ionic-angular';
+import { NavController, AlertController, LoadingController, Platform, Events, Slides } from 'ionic-angular';
 import { Component, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { SelectorClientes } from '../../components/SelectorClientes/SelectorClientes';
 import { SelectorPlantillaVenta } from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
@@ -16,22 +16,25 @@ import { PlantillaVentaService } from './PlantillaVenta.service';
 import { Usuario } from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
-export var PlantillaVenta = (function () {
+var PlantillaVenta = (function () {
+    //public opcionesSlides: any;
     function PlantillaVenta(usuario, nav, servicio, parametros, platform, events, alertCtrl, loadingCtrl, ref) {
-        var _this = this;
         this.ref = ref;
         this.hoy = new Date();
         this.hoySinHora = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
         this.fechaMinima = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
         this.fechaEntrega = this.fechaMinima;
         this.usuario = usuario;
+        /*
         this.opcionesSlides = {
             allowSwipeToNext: false,
             paginationHide: false,
-            onInit: function (slides) {
-                _this.slider = slides;
+            onInit: (slides: any): any => {
+                this.slider = slides;
             },
+            //onSlideChangeStart: (slides: any): void => this.avanzar(slides),
         };
+        */
         this.nav = nav;
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
@@ -39,10 +42,15 @@ export var PlantillaVenta = (function () {
         this.parametros = parametros;
         this.platform = platform;
     }
+    /*
+       ngAfterViewInit() {
+         this.slider.freeMode = true;
+         this.slider.freeModeSticky = true;
+       }
+    */
     PlantillaVenta.prototype.ionViewDidLoad = function () {
         if (this.usuario != undefined && this.usuario.nombre != undefined) {
             console.log("El usuario es " + this.usuario.nombre);
-            this.cargarParametros();
         }
         else {
             console.log("El usuario no está cargado");
@@ -99,7 +107,7 @@ export var PlantillaVenta = (function () {
         }
     };
     PlantillaVenta.prototype.cargarProductosPlantilla = function (cliente) {
-        this.slider.unlockSwipeToNext();
+        this.slider.lockSwipeToNext(false);
         this.siguientePantalla();
         this.clienteSeleccionado = cliente;
     };
@@ -109,7 +117,9 @@ export var PlantillaVenta = (function () {
     }
     */
     PlantillaVenta.prototype.avanzar = function (slides) {
-        if (slides.activeIndex === 2 && slides.previousIndex === 1) {
+        console.log(slides.getActiveIndex());
+        console.log(slides.getPreviousIndex());
+        if (slides.getActiveIndex() === 2 && slides.getPreviousIndex() === 1) {
             console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
             this.ref.detectChanges();
@@ -118,10 +128,10 @@ export var PlantillaVenta = (function () {
         }*/
     };
     PlantillaVenta.prototype.sePuedeAvanzar = function () {
-        return this.slider && (this.slider.activeIndex === 0 && this.clienteSeleccionado ||
-            this.slider.activeIndex === 1 ||
-            this.slider.activeIndex === 2 && this.productosResumen && this.productosResumen.length > 0 ||
-            this.slider.activeIndex === 3);
+        return this.slider && (this.slider.getActiveIndex() === 0 && this.clienteSeleccionado ||
+            this.slider.getActiveIndex() === 1 ||
+            this.slider.getActiveIndex() === 2 && this.productosResumen && this.productosResumen.length > 0 ||
+            this.slider.getActiveIndex() === 3);
     };
     PlantillaVenta.prototype.siguientePantalla = function () {
         this.slider.slideNext();
@@ -229,30 +239,25 @@ export var PlantillaVenta = (function () {
         this.productosResumen = null;
         this.direccionSeleccionada = null;
         this.slider.slideTo(0);
-        this.slider.lockSwipeToNext();
-    };
-    PlantillaVenta.prototype.cargarParametros = function () {
-        var self = this;
-        this.parametros.leer('Vendedor').subscribe(function (data) {
-            self.usuario.vendedor = data;
-        }, function (error) {
-            console.log('No se ha podido cargar el almacén por defecto');
-        });
-        this.parametros.leer('DelegaciónDefecto').subscribe(function (data) {
-            self.usuario.delegacion = data;
-        }, function (error) {
-            console.log('No se ha podido cargar la delegación por defecto');
-        });
-        this.parametros.leer('AlmacénRuta').subscribe(function (data) {
-            self.usuario.almacen = data;
-        }, function (error) {
-            console.log('No se ha podido cargar el almacén por defecto');
-        });
+        this.slider.lockSwipeToNext(true);
     };
     Object.defineProperty(PlantillaVenta.prototype, "totalPedido", {
         get: function () {
-            console.log("total");
             return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PlantillaVenta.prototype, "baseImponiblePedido", {
+        get: function () {
+            return this._selectorPlantillaVenta.baseImponiblePedido;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(PlantillaVenta.prototype, "baseImponibleParaPortes", {
+        get: function () {
+            return this._selectorPlantillaVenta.baseImponibleParaPortes;
         },
         enumerable: true,
         configurable: true
@@ -272,20 +277,25 @@ export var PlantillaVenta = (function () {
             return nuevaFecha;
         }
     };
-    __decorate([
-        ViewChild(SelectorPlantillaVenta), 
-        __metadata('design:type', SelectorPlantillaVenta)
-    ], PlantillaVenta.prototype, "_selectorPlantillaVenta", void 0);
-    __decorate([
-        ViewChild(SelectorClientes), 
-        __metadata('design:type', SelectorClientes)
-    ], PlantillaVenta.prototype, "_selectorClientes", void 0);
-    PlantillaVenta = __decorate([
-        Component({
-            templateUrl: 'PlantillaVenta.html',
-        }), 
-        __metadata('design:paramtypes', [Usuario, NavController, PlantillaVentaService, Parametros, Platform, Events, AlertController, LoadingController, ChangeDetectorRef])
-    ], PlantillaVenta);
     return PlantillaVenta;
 }());
+__decorate([
+    ViewChild(Slides),
+    __metadata("design:type", Slides)
+], PlantillaVenta.prototype, "slider", void 0);
+__decorate([
+    ViewChild(SelectorPlantillaVenta),
+    __metadata("design:type", SelectorPlantillaVenta)
+], PlantillaVenta.prototype, "_selectorPlantillaVenta", void 0);
+__decorate([
+    ViewChild(SelectorClientes),
+    __metadata("design:type", SelectorClientes)
+], PlantillaVenta.prototype, "_selectorClientes", void 0);
+PlantillaVenta = __decorate([
+    Component({
+        templateUrl: 'PlantillaVenta.html',
+    }),
+    __metadata("design:paramtypes", [Usuario, NavController, PlantillaVentaService, Parametros, Platform, Events, AlertController, LoadingController, ChangeDetectorRef])
+], PlantillaVenta);
+export { PlantillaVenta };
 //# sourceMappingURL=PlantillaVenta.js.map

@@ -12,7 +12,7 @@ import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
-export var SelectorFormasPagoService = (function () {
+var SelectorFormasPagoService = (function () {
     function SelectorFormasPagoService(http, usuario) {
         this._baseUrl = Configuracion.API_URL + '/FormasPago';
         this.http = http;
@@ -34,10 +34,11 @@ export var SelectorFormasPagoService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    SelectorFormasPagoService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http, Usuario])
-    ], SelectorFormasPagoService);
     return SelectorFormasPagoService;
 }());
+SelectorFormasPagoService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http, Usuario])
+], SelectorFormasPagoService);
+export { SelectorFormasPagoService };
 //# sourceMappingURL=SelectorFormasPago.service.js.map

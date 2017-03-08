@@ -12,7 +12,7 @@ import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../configuracion/configuracion';
-export var SelectorDireccionesEntregaService = (function () {
+var SelectorDireccionesEntregaService = (function () {
     function SelectorDireccionesEntregaService(http) {
         this.http = http;
     }
@@ -31,10 +31,11 @@ export var SelectorDireccionesEntregaService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    SelectorDireccionesEntregaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], SelectorDireccionesEntregaService);
     return SelectorDireccionesEntregaService;
 }());
+SelectorDireccionesEntregaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], SelectorDireccionesEntregaService);
+export { SelectorDireccionesEntregaService };
 //# sourceMappingURL=SelectorDireccionesEntrega.service.js.map

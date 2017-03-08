@@ -16,4 +16,6 @@ export declare class SelectorPlantillaVenta extends SelectorBase {
     readonly totalPedido: number;
     private _baseImponiblePedido;
     baseImponiblePedido: number;
+    private _baseImponibleParaPortes;
+    baseImponibleParaPortes: number;
 }

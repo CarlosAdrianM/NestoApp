@@ -12,7 +12,7 @@ import { Http, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
-export var PlantillaVentaService = (function () {
+var PlantillaVentaService = (function () {
     function PlantillaVentaService(http) {
         this._baseUrl = Configuracion.API_URL + '/PedidosVenta';
         this.http = http;
@@ -30,10 +30,11 @@ export var PlantillaVentaService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    PlantillaVentaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], PlantillaVentaService);
     return PlantillaVentaService;
 }());
+PlantillaVentaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], PlantillaVentaService);
+export { PlantillaVentaService };
 //# sourceMappingURL=PlantillaVenta.service.js.map

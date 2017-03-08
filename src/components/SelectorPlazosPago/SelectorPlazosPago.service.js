@@ -13,7 +13,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
-export var SelectorPlazosPagoService = (function () {
+var SelectorPlazosPagoService = (function () {
     function SelectorPlazosPagoService(http, usuario) {
         this._baseUrl = Configuracion.API_URL + '/PlazosPago';
         this.http = http;
@@ -35,10 +35,11 @@ export var SelectorPlazosPagoService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    SelectorPlazosPagoService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http, Usuario])
-    ], SelectorPlazosPagoService);
     return SelectorPlazosPagoService;
 }());
+SelectorPlazosPagoService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http, Usuario])
+], SelectorPlazosPagoService);
+export { SelectorPlazosPagoService };
 //# sourceMappingURL=SelectorPlazosPago.service.js.map

@@ -12,7 +12,7 @@ import { Http, URLSearchParams, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
-export var PedidoVentaService = (function () {
+var PedidoVentaService = (function () {
     function PedidoVentaService(http) {
         this._baseUrl = Configuracion.API_URL + '/PedidosVenta';
         this.http = http;
@@ -39,10 +39,11 @@ export var PedidoVentaService = (function () {
         console.error(error);
         return Observable.throw(error.message || 'Server error');
     };
-    PedidoVentaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], PedidoVentaService);
     return PedidoVentaService;
 }());
+PedidoVentaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], PedidoVentaService);
+export { PedidoVentaService };
 //# sourceMappingURL=PedidoVenta.service.js.map

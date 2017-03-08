@@ -13,7 +13,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
-export var ListaPedidosVentaService = (function () {
+var ListaPedidosVentaService = (function () {
     function ListaPedidosVentaService(http, usuario) {
         this._baseUrl = Configuracion.API_URL + '/PedidosVenta';
         this.http = http;
@@ -32,10 +32,11 @@ export var ListaPedidosVentaService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    ListaPedidosVentaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http, Usuario])
-    ], ListaPedidosVentaService);
     return ListaPedidosVentaService;
 }());
+ListaPedidosVentaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http, Usuario])
+], ListaPedidosVentaService);
+export { ListaPedidosVentaService };
 //# sourceMappingURL=ListaPedidosVenta.service.js.map

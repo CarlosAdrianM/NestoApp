@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { Output, EventEmitter } from '@angular/core';
-export var SelectorBase = (function () {
+var SelectorBase = (function () {
     function SelectorBase() {
         this.seleccionar = new EventEmitter();
     }
@@ -86,10 +86,11 @@ export var SelectorBase = (function () {
     SelectorBase.prototype.seleccionarTexto = function (evento) {
         evento.inputElement ? evento.inputElement.select() : evento.target.select();
     };
-    __decorate([
-        Output(), 
-        __metadata('design:type', EventEmitter)
-    ], SelectorBase.prototype, "seleccionar", void 0);
     return SelectorBase;
 }());
+export { SelectorBase };
+__decorate([
+    Output(),
+    __metadata("design:type", EventEmitter)
+], SelectorBase.prototype, "seleccionar", void 0);
 //# sourceMappingURL=SelectorBase.js.map

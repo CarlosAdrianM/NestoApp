@@ -1,5 +1,5 @@
 import { tokenNotExpired } from 'angular2-jwt';
-export var AuthService = (function () {
+var AuthService = (function () {
     function AuthService() {
     }
     AuthService.prototype.authenticated = function () {
@@ -7,4 +7,5 @@ export var AuthService = (function () {
     };
     return AuthService;
 }());
+export { AuthService };
 //# sourceMappingURL=auth.js.map

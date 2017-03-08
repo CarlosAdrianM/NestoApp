@@ -12,7 +12,7 @@ import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../configuracion/configuracion';
-export var SelectorPlantillaVentaService = (function () {
+var SelectorPlantillaVentaService = (function () {
     function SelectorPlantillaVentaService(http) {
         this.http = http;
     }
@@ -78,10 +78,11 @@ export var SelectorPlantillaVentaService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    SelectorPlantillaVentaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], SelectorPlantillaVentaService);
     return SelectorPlantillaVentaService;
 }());
+SelectorPlantillaVentaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], SelectorPlantillaVentaService);
+export { SelectorPlantillaVentaService };
 //# sourceMappingURL=SelectorPlantillaVenta.service.js.map

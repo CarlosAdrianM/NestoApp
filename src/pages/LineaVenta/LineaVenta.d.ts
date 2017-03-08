@@ -6,6 +6,7 @@ export declare class LineaVenta {
     cantidad: number;
     delegacion: string;
     descuento: number;
+    descuentoProducto: number;
     estado: number;
     fechaEntrega: Date;
     formaVenta: string;
@@ -22,5 +23,6 @@ export declare class LineaVenta {
     baseImponible: number;
     importeIva: number;
     total: number;
+    readonly sumaDescuentos: number;
     copiarDatosPedido(pedido: any): void;
 }

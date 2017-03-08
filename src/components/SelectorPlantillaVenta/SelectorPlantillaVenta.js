@@ -17,15 +17,17 @@ import { AlertController, LoadingController, NavController } from 'ionic-angular
 import { SelectorPlantillaVentaService } from './SelectorPlantillaVenta.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
 import { SelectorPlantillaVentaDetalle } from './SelectorPlantillaVentaDetalle';
-export var SelectorPlantillaVenta = (function (_super) {
+var SelectorPlantillaVenta = (function (_super) {
     __extends(SelectorPlantillaVenta, _super);
     function SelectorPlantillaVenta(servicio, alertCtrl, loadingCtrl, nav) {
-        _super.call(this);
-        this._baseImponiblePedido = 0;
-        this.servicio = servicio;
-        this.alertCtrl = alertCtrl;
-        this.loadingCtrl = loadingCtrl;
-        this.nav = nav;
+        var _this = _super.call(this) || this;
+        _this._baseImponiblePedido = 0;
+        _this._baseImponibleParaPortes = 0;
+        _this.servicio = servicio;
+        _this.alertCtrl = alertCtrl;
+        _this.loadingCtrl = loadingCtrl;
+        _this.nav = nav;
+        return _this;
     }
     SelectorPlantillaVenta.prototype.cargarDatos = function (cliente) {
         var _this = this;
@@ -37,6 +39,7 @@ export var SelectorPlantillaVenta = (function (_super) {
             data = data.map(function (item) {
                 var clone = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                 clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                clone.esSobrePedido = clone.estado != 0;
                 return clone;
             });
             _this.inicializarDatos(data);
@@ -65,12 +68,26 @@ export var SelectorPlantillaVenta = (function (_super) {
     SelectorPlantillaVenta.prototype.cargarResumen = function () {
         var productosResumen = [];
         this.baseImponiblePedido = 0;
+        this.baseImponibleParaPortes = 0;
         for (var _i = 0, _a = this.datosIniciales(); _i < _a.length; _i++) {
             var value = _a[_i];
             if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
                 productosResumen.push(value);
                 console.log("Nº elementos en resumen: " + productosResumen.length);
+                value.esSobrePedido = !(value.estado == 0 || (value.stockActualizado && value.cantidadDisponible >= +value.cantidad + value.cantidadOferta));
+                if (!value.stockActualizado) {
+                    value.colorSobrePedido = 'default';
+                }
+                else if (value.esSobrePedido) {
+                    value.colorSobrePedido = 'danger';
+                }
+                else {
+                    value.colorSobrePedido = 'none';
+                }
                 this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
+                if (!value.esSobrePedido) {
+                    this.baseImponibleParaPortes += value.cantidad * value.precio * (1 - value.descuento);
+                }
             }
         }
         console.log("Productos resumen: " + productosResumen.toString());
@@ -113,17 +130,28 @@ export var SelectorPlantillaVenta = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    __decorate([
-        Input(), 
-        __metadata('design:type', Object)
-    ], SelectorPlantillaVenta.prototype, "cliente", void 0);
-    SelectorPlantillaVenta = __decorate([
-        Component({
-            selector: 'selector-plantilla-venta',
-            templateUrl: 'SelectorPlantillaVenta.html',
-        }), 
-        __metadata('design:paramtypes', [SelectorPlantillaVentaService, AlertController, LoadingController, NavController])
-    ], SelectorPlantillaVenta);
+    Object.defineProperty(SelectorPlantillaVenta.prototype, "baseImponibleParaPortes", {
+        get: function () {
+            return this._baseImponibleParaPortes;
+        },
+        set: function (value) {
+            this._baseImponibleParaPortes = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return SelectorPlantillaVenta;
 }(SelectorBase));
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorPlantillaVenta.prototype, "cliente", void 0);
+SelectorPlantillaVenta = __decorate([
+    Component({
+        selector: 'selector-plantilla-venta',
+        templateUrl: 'SelectorPlantillaVenta.html',
+    }),
+    __metadata("design:paramtypes", [SelectorPlantillaVentaService, AlertController, LoadingController, NavController])
+], SelectorPlantillaVenta);
+export { SelectorPlantillaVenta };
 //# sourceMappingURL=SelectorPlantillaVenta.js.map

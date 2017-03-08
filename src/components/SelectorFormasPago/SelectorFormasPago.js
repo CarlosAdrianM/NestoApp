@@ -16,13 +16,14 @@ import { Component, Injectable, Input } from '@angular/core';
 import { AlertController, LoadingController } from 'ionic-angular';
 import { SelectorFormasPagoService } from './SelectorFormasPago.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
-export var SelectorFormasPago = (function (_super) {
+var SelectorFormasPago = (function (_super) {
     __extends(SelectorFormasPago, _super);
     function SelectorFormasPago(servicio, alertCtrl, loadingCtrl) {
-        _super.call(this);
-        this.alertCtrl = alertCtrl;
-        this.loadingCtrl = loadingCtrl;
-        this.servicio = servicio;
+        var _this = _super.call(this) || this;
+        _this.alertCtrl = alertCtrl;
+        _this.loadingCtrl = loadingCtrl;
+        _this.servicio = servicio;
+        return _this;
     }
     SelectorFormasPago.prototype.ngOnInit = function () {
         this.cargarDatos();
@@ -48,24 +49,25 @@ export var SelectorFormasPago = (function (_super) {
             // loading.dismiss();
         });
     };
-    __decorate([
-        Input(), 
-        __metadata('design:type', Object)
-    ], SelectorFormasPago.prototype, "cliente", void 0);
-    __decorate([
-        Input(), 
-        __metadata('design:type', Object)
-    ], SelectorFormasPago.prototype, "seleccionado", void 0);
-    SelectorFormasPago = __decorate([
-        Component({
-            selector: 'selector-formas-pago',
-            templateUrl: 'SelectorFormasPago.html',
-            // inputs: ['cliente', 'seleccionado'],
-            outputs: ['seleccionar'],
-        }),
-        Injectable(), 
-        __metadata('design:paramtypes', [SelectorFormasPagoService, AlertController, LoadingController])
-    ], SelectorFormasPago);
     return SelectorFormasPago;
 }(SelectorBase));
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorFormasPago.prototype, "cliente", void 0);
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorFormasPago.prototype, "seleccionado", void 0);
+SelectorFormasPago = __decorate([
+    Component({
+        selector: 'selector-formas-pago',
+        templateUrl: 'SelectorFormasPago.html',
+        // inputs: ['cliente', 'seleccionado'],
+        outputs: ['seleccionar'],
+    }),
+    Injectable(),
+    __metadata("design:paramtypes", [SelectorFormasPagoService, AlertController, LoadingController])
+], SelectorFormasPago);
+export { SelectorFormasPago };
 //# sourceMappingURL=SelectorFormasPago.js.map

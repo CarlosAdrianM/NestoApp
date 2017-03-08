@@ -12,29 +12,31 @@ import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
-var ExtractoClienteService = (function () {
-    function ExtractoClienteService(http) {
-        this._baseUrl = Configuracion.API_URL + '/ExtractosCliente';
+import { Usuario } from '../../models/Usuario';
+var SelectorVendedoresService = (function () {
+    function SelectorVendedoresService(http, usuario) {
+        this._baseUrl = Configuracion.API_URL + '/Vendedores';
         this.http = http;
+        this.usuario = usuario;
     }
-    ExtractoClienteService.prototype.cargarDeuda = function (cliente) {
+    SelectorVendedoresService.prototype.getVendedores = function () {
         var params = new URLSearchParams();
-        params.set('cliente', cliente.cliente);
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
         return this.http.get(this._baseUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
-    ExtractoClienteService.prototype.handleError = function (error) {
+    SelectorVendedoresService.prototype.handleError = function (error) {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    return ExtractoClienteService;
+    return SelectorVendedoresService;
 }());
-ExtractoClienteService = __decorate([
+SelectorVendedoresService = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [Http])
-], ExtractoClienteService);
-export { ExtractoClienteService };
-//# sourceMappingURL=ExtractoCliente.service.js.map
+    __metadata("design:paramtypes", [Http, Usuario])
+], SelectorVendedoresService);
+export { SelectorVendedoresService };
+//# sourceMappingURL=SelectorVendedores.service.js.map

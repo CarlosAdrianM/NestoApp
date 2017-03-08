@@ -2,7 +2,9 @@ import { NavController, NavParams, AlertController, LoadingController } from 'io
 import { PedidoVentaService } from './PedidoVenta.service';
 import { LineaVenta } from '../LineaVenta/LineaVenta';
 import { PedidoVenta } from './PedidoVenta';
+import { Usuario } from '../../models/Usuario';
 export declare class PedidoVentaComponent {
+    private usuario;
     hoy: Date;
     private iva;
     private nav;
@@ -11,7 +13,7 @@ export declare class PedidoVentaComponent {
     private servicio;
     private alertCtrl;
     private loadingCtrl;
-    constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController);
+    constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController, usuario: Usuario);
     cargarPedido(empresa: string, numero: number): void;
     seleccionarFormaPago(evento: any): void;
     cambiarIVA(): void;

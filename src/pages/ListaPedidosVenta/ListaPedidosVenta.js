@@ -15,20 +15,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+// Al abrir un pedido hacemos un nav.push al pedido en cuestión.
 import { Component } from '@angular/core';
 import { NavController, AlertController, LoadingController } from 'ionic-angular';
 import { ListaPedidosVentaService } from './ListaPedidosVenta.service';
 import { PedidoVentaComponent } from '../PedidoVenta/PedidoVenta.component';
 import { SelectorBase } from '../../components/SelectorBase/SelectorBase';
-export var ListaPedidosVenta = (function (_super) {
+var ListaPedidosVenta = (function (_super) {
     __extends(ListaPedidosVenta, _super);
     function ListaPedidosVenta(servicio, nav, alertCtrl, loadingCtrl) {
-        _super.call(this);
-        this.servicio = servicio;
-        this.nav = nav;
-        this.alertCtrl = alertCtrl;
-        this.loadingCtrl = loadingCtrl;
-        this.cargarDatos(''); // El parámetro no se usa para nada
+        var _this = _super.call(this) || this;
+        _this.servicio = servicio;
+        _this.nav = nav;
+        _this.alertCtrl = alertCtrl;
+        _this.loadingCtrl = loadingCtrl;
+        _this.cargarDatos(''); // El parámetro no se usa para nada
+        return _this;
     }
     ListaPedidosVenta.prototype.abrirPedido = function (pedido) {
         this.nav.push(PedidoVentaComponent, { empresa: pedido.empresa, numero: pedido.numero });
@@ -61,12 +63,13 @@ export var ListaPedidosVenta = (function (_super) {
             loading.dismiss();
         });
     };
-    ListaPedidosVenta = __decorate([
-        Component({
-            templateUrl: 'ListaPedidosVenta.html',
-        }), 
-        __metadata('design:paramtypes', [ListaPedidosVentaService, NavController, AlertController, LoadingController])
-    ], ListaPedidosVenta);
     return ListaPedidosVenta;
 }(SelectorBase));
+ListaPedidosVenta = __decorate([
+    Component({
+        templateUrl: 'ListaPedidosVenta.html',
+    }),
+    __metadata("design:paramtypes", [ListaPedidosVentaService, NavController, AlertController, LoadingController])
+], ListaPedidosVenta);
+export { ListaPedidosVenta };
 //# sourceMappingURL=ListaPedidosVenta.js.map

@@ -11,7 +11,7 @@ import { Injectable } from '@angular/core';
 import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
-export var LineaVentaService = (function () {
+var LineaVentaService = (function () {
     function LineaVentaService(http) {
         this._baseUrl = Configuracion.API_URL + '/Productos';
         this.http = http;
@@ -30,10 +30,11 @@ export var LineaVentaService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    LineaVentaService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], LineaVentaService);
     return LineaVentaService;
 }());
+LineaVentaService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], LineaVentaService);
+export { LineaVentaService };
 //# sourceMappingURL=LineaVenta.service.js.map

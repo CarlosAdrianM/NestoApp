@@ -4,9 +4,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 import { NgModule, ErrorHandler } from '@angular/core';
 import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
@@ -22,6 +19,7 @@ import { SelectorFormasPago } from '../components/SelectorFormasPago/SelectorFor
 import { SelectorPlantillaVenta } from '../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
 import { SelectorPlantillaVentaDetalle } from '../components/SelectorPlantillaVenta/SelectorPlantillaVentaDetalle';
 import { SelectorPlazosPago } from '../components/SelectorPlazosPago/SelectorPlazosPago';
+import { SelectorVendedoresComponent } from '../components/SelectorVendedores/SelectorVendedores.component';
 import { ExtractoClienteService } from '../pages/ExtractoCliente/ExtractoCliente.service';
 import { ListaPedidosVentaService } from '../pages/ListaPedidosVenta/ListaPedidosVenta.service';
 import { PedidoVentaService } from '../pages/PedidoVenta/PedidoVenta.service';
@@ -32,8 +30,9 @@ import { SelectorDireccionesEntregaService } from '../components/SelectorDirecci
 import { SelectorFormasPagoService } from '../components/SelectorFormasPago/SelectorFormasPago.service';
 import { SelectorPlantillaVentaService } from '../components/SelectorPlantillaVenta/SelectorPlantillaVenta.service';
 import { SelectorPlazosPagoService } from '../components/SelectorPlazosPago/SelectorPlazosPago.service';
+import { SelectorVendedoresService } from '../components/SelectorVendedores/SelectorVendedores.service';
 import { Usuario } from '../models/Usuario';
-import { Storage } from '@ionic/storage';
+import { IonicStorageModule } from '@ionic/storage';
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http } from '@angular/http';
@@ -48,7 +47,7 @@ export function getAuthHttp(http) {
         //        headerPrefix: "PELU_ESTETICA",
         noJwtError: true,
         globalHeaders: [{ 'Accept': 'application/json' }],
-        tokenGetter: (function () { return storage.get('id_token'); }),
+        tokenGetter: (function () { return storage.getItem('id_token'); }),
     }), http);
 }
 var cloudSettings = {
@@ -56,70 +55,72 @@ var cloudSettings = {
         'app_id': '0eb19c2c'
     }
 };
-export var AppModule = (function () {
+var AppModule = (function () {
     function AppModule() {
     }
-    AppModule = __decorate([
-        NgModule({
-            declarations: [
-                MyApp,
-                ExtractoCliente,
-                ListaPedidosVenta,
-                PedidoVentaComponent,
-                PlantillaVenta,
-                ProfilePage,
-                UltimasVentasProductoCliente,
-                SelectorClientes,
-                SelectorDireccionesEntrega,
-                SelectorFormasPago,
-                SelectorPlantillaVenta,
-                SelectorPlantillaVentaDetalle,
-                SelectorPlazosPago,
-                LineaVentaComponent
-            ],
-            imports: [
-                IonicModule.forRoot(MyApp),
-                CloudModule.forRoot(cloudSettings),
-                BrowserModule,
-                FormsModule
-            ],
-            bootstrap: [IonicApp],
-            entryComponents: [
-                MyApp,
-                ExtractoCliente,
-                ListaPedidosVenta,
-                PedidoVentaComponent,
-                PlantillaVenta,
-                SelectorPlantillaVentaDetalle,
-                ProfilePage,
-                UltimasVentasProductoCliente,
-                LineaVentaComponent
-            ],
-            providers: [
-                {
-                    provide: AuthHttp,
-                    useFactory: getAuthHttp,
-                    deps: [Http],
-                },
-                { provide: ErrorHandler, useClass: IonicErrorHandler },
-                ExtractoClienteService,
-                ListaPedidosVentaService,
-                Parametros,
-                PedidoVentaService,
-                PlantillaVentaService,
-                SelectorClientesService,
-                SelectorDireccionesEntregaService,
-                SelectorFormasPagoService,
-                SelectorPlantillaVentaService,
-                SelectorPlazosPagoService,
-                Storage,
-                UltimasVentasProductoClienteService,
-                Usuario,
-                LineaVentaService,
-            ]
-        }), 
-        __metadata('design:paramtypes', [])
-    ], AppModule);
     return AppModule;
 }());
+AppModule = __decorate([
+    NgModule({
+        declarations: [
+            MyApp,
+            ExtractoCliente,
+            ListaPedidosVenta,
+            PedidoVentaComponent,
+            PlantillaVenta,
+            ProfilePage,
+            UltimasVentasProductoCliente,
+            SelectorClientes,
+            SelectorDireccionesEntrega,
+            SelectorFormasPago,
+            SelectorPlantillaVenta,
+            SelectorPlantillaVentaDetalle,
+            SelectorPlazosPago,
+            SelectorVendedoresComponent,
+            LineaVentaComponent
+        ],
+        imports: [
+            IonicModule.forRoot(MyApp),
+            CloudModule.forRoot(cloudSettings),
+            IonicStorageModule.forRoot(),
+            BrowserModule,
+            FormsModule
+        ],
+        bootstrap: [IonicApp],
+        entryComponents: [
+            MyApp,
+            ExtractoCliente,
+            ListaPedidosVenta,
+            PedidoVentaComponent,
+            PlantillaVenta,
+            SelectorPlantillaVentaDetalle,
+            ProfilePage,
+            UltimasVentasProductoCliente,
+            LineaVentaComponent
+        ],
+        providers: [
+            {
+                provide: AuthHttp,
+                useFactory: getAuthHttp,
+                deps: [Http],
+            },
+            { provide: ErrorHandler, useClass: IonicErrorHandler },
+            ExtractoClienteService,
+            ListaPedidosVentaService,
+            Parametros,
+            PedidoVentaService,
+            PlantillaVentaService,
+            SelectorClientesService,
+            SelectorDireccionesEntregaService,
+            SelectorFormasPagoService,
+            SelectorPlantillaVentaService,
+            SelectorPlazosPagoService,
+            SelectorVendedoresService,
+            UltimasVentasProductoClienteService,
+            Usuario,
+            LineaVentaService,
+        ]
+    })
+], AppModule);
+export { AppModule };
 //# sourceMappingURL=app.module.js.map

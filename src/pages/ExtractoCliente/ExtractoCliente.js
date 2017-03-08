@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 import { Component } from '@angular/core';
 import { ExtractoClienteService } from './ExtractoCliente.service';
-export var ExtractoCliente = (function () {
+var ExtractoCliente = (function () {
     function ExtractoCliente(servicio) {
         this.mostrarClientes = true;
         this.resumenDeuda = {};
@@ -49,12 +49,13 @@ export var ExtractoCliente = (function () {
             console.log(_this.resumenDeuda);
         }, function (error) { return _this.errorMessage = error; });
     };
-    ExtractoCliente = __decorate([
-        Component({
-            templateUrl: 'ExtractoCliente.html',
-        }), 
-        __metadata('design:paramtypes', [ExtractoClienteService])
-    ], ExtractoCliente);
     return ExtractoCliente;
 }());
+ExtractoCliente = __decorate([
+    Component({
+        templateUrl: 'ExtractoCliente.html',
+    }),
+    __metadata("design:paramtypes", [ExtractoClienteService])
+], ExtractoCliente);
+export { ExtractoCliente };
 //# sourceMappingURL=ExtractoCliente.js.map

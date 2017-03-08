@@ -16,13 +16,14 @@ import { Component, Injectable } from '@angular/core';
 import { AlertController } from 'ionic-angular';
 import { SelectorDireccionesEntregaService } from './SelectorDireccionesEntrega.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
-export var SelectorDireccionesEntrega = (function (_super) {
+var SelectorDireccionesEntrega = (function (_super) {
     __extends(SelectorDireccionesEntrega, _super);
     function SelectorDireccionesEntrega(servicio, alertCtrl) {
-        _super.call(this);
-        this.seleccionado = "0";
-        this.servicio = servicio;
-        this.alertCtrl = alertCtrl;
+        var _this = _super.call(this) || this;
+        _this.seleccionado = "0";
+        _this.servicio = servicio;
+        _this.alertCtrl = alertCtrl;
+        return _this;
     }
     SelectorDireccionesEntrega.prototype.cargarDatos = function (cliente) {
         var _this = this;
@@ -67,16 +68,17 @@ export var SelectorDireccionesEntrega = (function (_super) {
     SelectorDireccionesEntrega.prototype.ngOnChanges = function (changes) {
         this.cargarDatos(this.cliente);
     };
-    SelectorDireccionesEntrega = __decorate([
-        Component({
-            selector: 'selector-direcciones-entrega',
-            templateUrl: 'SelectorDireccionesEntrega.html',
-            inputs: ['cliente', 'seleccionado'],
-            outputs: ['seleccionar'],
-        }),
-        Injectable(), 
-        __metadata('design:paramtypes', [SelectorDireccionesEntregaService, AlertController])
-    ], SelectorDireccionesEntrega);
     return SelectorDireccionesEntrega;
 }(SelectorBase));
+SelectorDireccionesEntrega = __decorate([
+    Component({
+        selector: 'selector-direcciones-entrega',
+        templateUrl: 'SelectorDireccionesEntrega.html',
+        inputs: ['cliente', 'seleccionado'],
+        outputs: ['seleccionar'],
+    }),
+    Injectable(),
+    __metadata("design:paramtypes", [SelectorDireccionesEntregaService, AlertController])
+], SelectorDireccionesEntrega);
+export { SelectorDireccionesEntrega };
 //# sourceMappingURL=SelectorDireccionesEntrega.js.map

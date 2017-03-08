@@ -13,7 +13,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
-export var SelectorClientesService = (function () {
+var SelectorClientesService = (function () {
     function SelectorClientesService(http, usuario) {
         this._clientesUrl = Configuracion.API_URL + '/Clientes';
         this.http = http;
@@ -36,10 +36,11 @@ export var SelectorClientesService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    SelectorClientesService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http, Usuario])
-    ], SelectorClientesService);
     return SelectorClientesService;
 }());
+SelectorClientesService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http, Usuario])
+], SelectorClientesService);
+export { SelectorClientesService };
 //# sourceMappingURL=SelectorClientes.service.js.map

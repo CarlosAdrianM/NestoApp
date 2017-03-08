@@ -1,4 +1,4 @@
-import { NavController, AlertController, LoadingController, Platform, Events } from 'ionic-angular';
+import { NavController, AlertController, LoadingController, Platform, Events, Slides } from 'ionic-angular';
 import { ChangeDetectorRef } from '@angular/core';
 import { SelectorClientes } from '../../components/SelectorClientes/SelectorClientes';
 import { SelectorPlantillaVenta } from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
@@ -13,12 +13,11 @@ export declare class PlantillaVenta {
     private platform;
     private alertCtrl;
     private loadingCtrl;
-    opcionesSlides: any;
     constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController, ref: ChangeDetectorRef);
+    slider: Slides;
     ionViewDidLoad(): void;
     ionViewWillEnter(): void;
     private nav;
-    slider: any;
     clienteSeleccionado: any;
     productosResumen: any[];
     private _direccionSeleccionada;
@@ -42,8 +41,9 @@ export declare class PlantillaVenta {
     crearPedido(): void;
     hayAlgunProducto(): boolean;
     reinicializar(): void;
-    private cargarParametros();
     readonly totalPedido: number;
+    readonly baseImponiblePedido: number;
+    readonly baseImponibleParaPortes: number;
     cambiarIVA(): void;
     private ajustarFechaEntrega(fecha);
 }

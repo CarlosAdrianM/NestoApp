@@ -13,7 +13,7 @@ import { Usuario } from '../models/Usuario';
 import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
-export var Parametros = (function () {
+var Parametros = (function () {
     function Parametros(http, usuario) {
         this.http = http;
         this.usuario = usuario;
@@ -34,10 +34,11 @@ export var Parametros = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    Parametros = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http, Usuario])
-    ], Parametros);
     return Parametros;
 }());
+Parametros = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http, Usuario])
+], Parametros);
+export { Parametros };
 //# sourceMappingURL=Parametros.service.js.map

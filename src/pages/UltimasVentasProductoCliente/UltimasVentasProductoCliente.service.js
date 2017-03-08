@@ -12,7 +12,7 @@ import { Http, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import { Configuracion } from '../../components/configuracion/configuracion';
-export var UltimasVentasProductoClienteService = (function () {
+var UltimasVentasProductoClienteService = (function () {
     function UltimasVentasProductoClienteService(http) {
         this.http = http;
     }
@@ -32,10 +32,11 @@ export var UltimasVentasProductoClienteService = (function () {
         console.error(error);
         return Observable.throw(error.json().error || 'Server error');
     };
-    UltimasVentasProductoClienteService = __decorate([
-        Injectable(), 
-        __metadata('design:paramtypes', [Http])
-    ], UltimasVentasProductoClienteService);
     return UltimasVentasProductoClienteService;
 }());
+UltimasVentasProductoClienteService = __decorate([
+    Injectable(),
+    __metadata("design:paramtypes", [Http])
+], UltimasVentasProductoClienteService);
+export { UltimasVentasProductoClienteService };
 //# sourceMappingURL=UltimasVentasProductoCliente.service.js.map

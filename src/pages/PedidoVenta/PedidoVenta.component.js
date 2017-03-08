@@ -12,8 +12,11 @@ import { NavController, NavParams, AlertController, LoadingController } from 'io
 import { PedidoVentaService } from './PedidoVenta.service';
 import { LineaVentaComponent } from '../LineaVenta/LineaVenta.component';
 import { LineaVenta } from '../LineaVenta/LineaVenta';
-export var PedidoVentaComponent = (function () {
-    function PedidoVentaComponent(servicio, nav, navParams, alertCtrl, loadingCtrl) {
+import { Configuracion } from '../../components/configuracion/configuracion';
+import { Usuario } from '../../models/Usuario';
+var PedidoVentaComponent = (function () {
+    function PedidoVentaComponent(servicio, nav, navParams, alertCtrl, loadingCtrl, usuario) {
+        this.usuario = usuario;
         this.hoy = new Date();
         this.segmentoPedido = 'cabecera';
         this.nav = nav;
@@ -35,6 +38,7 @@ export var PedidoVentaComponent = (function () {
             }
             _this.iva = _this.pedido.iva;
             _this.pedido.plazosPago = _this.pedido.plazosPago.trim(); // Cambiar en la API
+            _this.pedido.vendedor = _this.pedido.vendedor.trim(); // Cambiar en la API
         }, function (error) {
             var alert = _this.alertCtrl.create({
                 title: 'Error',
@@ -60,6 +64,7 @@ export var PedidoVentaComponent = (function () {
     PedidoVentaComponent.prototype.annadirLinea = function () {
         var linea = new LineaVenta();
         linea.copiarDatosPedido(this.pedido);
+        linea.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
         this.abrirLinea(linea);
         this.pedido.LineasPedido = this.pedido.LineasPedido.concat(linea);
     };
@@ -78,6 +83,7 @@ export var PedidoVentaComponent = (function () {
                         });
                         loading.present();
                         _this.servicio.modificarPedido(_this.pedido).subscribe(function (data) {
+                            _this.cargarPedido(_this.pedido.empresa, _this.pedido.numero);
                             var alert = _this.alertCtrl.create({
                                 title: 'Modificado',
                                 subTitle: 'Pedido modificado correctamente',
@@ -89,13 +95,13 @@ export var PedidoVentaComponent = (function () {
                         }, function (error) {
                             var alert = _this.alertCtrl.create({
                                 title: 'Error',
-                                subTitle: 'No se ha podido modificar el pedido',
+                                subTitle: 'No se ha podido modificar el pedido.\n' + error,
                                 buttons: ['Ok'],
                             });
                             alert.present();
                             loading.dismiss();
                         }, function () {
-                            loading.dismiss();
+                            //loading.dismiss();
                         });
                     }
                 },
@@ -112,12 +118,13 @@ export var PedidoVentaComponent = (function () {
     PedidoVentaComponent.prototype.cadenaFecha = function (cadena) {
         return new Date(cadena);
     };
-    PedidoVentaComponent = __decorate([
-        Component({
-            templateUrl: 'PedidoVenta.html',
-        }), 
-        __metadata('design:paramtypes', [PedidoVentaService, NavController, NavParams, AlertController, LoadingController])
-    ], PedidoVentaComponent);
     return PedidoVentaComponent;
 }());
+PedidoVentaComponent = __decorate([
+    Component({
+        templateUrl: 'PedidoVenta.html',
+    }),
+    __metadata("design:paramtypes", [PedidoVentaService, NavController, NavParams, AlertController, LoadingController, Usuario])
+], PedidoVentaComponent);
+export { PedidoVentaComponent };
 //# sourceMappingURL=PedidoVenta.component.js.map

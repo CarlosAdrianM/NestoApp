@@ -26,7 +26,8 @@ import { SelectorPlantillaVentaService } from '../components/SelectorPlantillaVe
 import { SelectorPlazosPagoService } from '../components/SelectorPlazosPago/SelectorPlazosPago.service';
 import { SelectorVendedoresService } from '../components/SelectorVendedores/SelectorVendedores.service';
 import { Usuario } from '../models/Usuario';
-import { Storage } from '@ionic/storage';
+import { IonicStorageModule } from '@ionic/storage'
+import { Storage } from '@ionic/storage'
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http } from '@angular/http';
@@ -75,6 +76,7 @@ const cloudSettings: CloudSettings = {
   imports: [
       IonicModule.forRoot(MyApp),
       CloudModule.forRoot(cloudSettings),
+      IonicStorageModule.forRoot(),
       BrowserModule,
       FormsModule
   ],
@@ -108,7 +110,6 @@ const cloudSettings: CloudSettings = {
       SelectorPlantillaVentaService,
       SelectorPlazosPagoService,
       SelectorVendedoresService,
-      Storage,
       UltimasVentasProductoClienteService,
       Usuario,
       LineaVentaService,

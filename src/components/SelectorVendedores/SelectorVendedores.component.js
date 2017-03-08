@@ -12,31 +12,30 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Component, Injectable, Output, EventEmitter } from '@angular/core';
-import { AlertController, LoadingController } from 'ionic-angular';
-import { SelectorClientesService } from './SelectorClientes.service';
+import { Component, Injectable, Input } from '@angular/core';
+import { AlertController, NavController, LoadingController } from 'ionic-angular';
+import { SelectorVendedoresService } from './SelectorVendedores.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
-var SelectorClientes = (function (_super) {
-    __extends(SelectorClientes, _super);
-    function SelectorClientes(servicio, loadingCtrl, alertCtrl) {
+var SelectorVendedoresComponent = (function (_super) {
+    __extends(SelectorVendedoresComponent, _super);
+    function SelectorVendedoresComponent(servicio, nav, alertCtrl, loadingCtrl) {
         var _this = _super.call(this) || this;
-        _this.seleccionar = new EventEmitter();
+        _this.nav = nav;
         _this.servicio = servicio;
-        _this.loadingCtrl = loadingCtrl;
         _this.alertCtrl = alertCtrl;
+        _this.loadingCtrl = loadingCtrl;
         return _this;
     }
-    SelectorClientes.prototype.cargarDatos = function (filtro) {
+    SelectorVendedoresComponent.prototype.ngOnInit = function () {
+        this.cargarDatos();
+    };
+    SelectorVendedoresComponent.prototype.cargarDatos = function () {
         var _this = this;
-        var loading = this.loadingCtrl.create({
-            content: 'Cargando Clientes...',
-        });
-        loading.present();
-        this.servicio.getClientes(filtro).subscribe(function (data) {
+        this.servicio.getVendedores().subscribe(function (data) {
             if (data.length === 0) {
                 var alert_1 = _this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se encuentra ningún cliente que coincida con ' + filtro,
+                    subTitle: 'Error al cargar vendedores',
                     buttons: ['Ok'],
                 });
                 alert_1.present();
@@ -44,27 +43,31 @@ var SelectorClientes = (function (_super) {
             else {
                 _this.inicializarDatos(data);
             }
-            loading.dismiss();
         }, function (error) {
             // loading.dismiss();
             _this.errorMessage = error;
-            loading.dismiss();
         }, function () {
+            // loading.dismiss();
         });
     };
-    return SelectorClientes;
+    return SelectorVendedoresComponent;
 }(SelectorBase));
 __decorate([
-    Output(),
+    Input(),
     __metadata("design:type", Object)
-], SelectorClientes.prototype, "seleccionar", void 0);
-SelectorClientes = __decorate([
+], SelectorVendedoresComponent.prototype, "seleccionado", void 0);
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorVendedoresComponent.prototype, "etiqueta", void 0);
+SelectorVendedoresComponent = __decorate([
     Component({
-        selector: 'selector-clientes',
-        templateUrl: 'SelectorClientes.html',
+        selector: 'selector-vendedores',
+        templateUrl: 'SelectorVendedores.html',
+        outputs: ['seleccionar'],
     }),
     Injectable(),
-    __metadata("design:paramtypes", [SelectorClientesService, LoadingController, AlertController])
-], SelectorClientes);
-export { SelectorClientes };
-//# sourceMappingURL=SelectorClientes.js.map
+    __metadata("design:paramtypes", [SelectorVendedoresService, NavController, AlertController, LoadingController])
+], SelectorVendedoresComponent);
+export { SelectorVendedoresComponent };
+//# sourceMappingURL=SelectorVendedores.component.js.map

@@ -10,17 +10,20 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Component } from '@angular/core';
 import { NavParams, AlertController } from 'ionic-angular';
 import { LineaVentaService } from './LineaVenta.service';
-export var LineaVentaComponent = (function () {
+var LineaVentaComponent = (function () {
     function LineaVentaComponent(navParams, servicio, alertCtrl) {
         this.servicio = servicio;
         this.alertCtrl = alertCtrl;
         this.submitted = false;
         this.linea = navParams.get('linea');
-        //this.actualizarDescuento(this.linea.descuento);
+        this.actualizarDescuento(this.linea.descuento * 100);
     }
     LineaVentaComponent.prototype.onSubmit = function () { this.submitted = true; };
     LineaVentaComponent.prototype.actualizarDescuento = function (dto) {
-        this.descuentoNumero = dto / 100;
+        if (isNaN(dto)) {
+            dto = (String(dto)).replace(/[^\d.-]/g, '');
+        }
+        this.linea.descuento = dto / 100;
         this.descuentoCadena = dto + '%';
     };
     LineaVentaComponent.prototype.cambiarProducto = function (evento) {
@@ -51,12 +54,16 @@ export var LineaVentaComponent = (function () {
             // loading.dismiss();
         });
     };
-    LineaVentaComponent = __decorate([
-        Component({
-            templateUrl: 'LineaVenta.html',
-        }), 
-        __metadata('design:paramtypes', [NavParams, LineaVentaService, AlertController])
-    ], LineaVentaComponent);
+    LineaVentaComponent.prototype.seleccionarTexto = function (evento) {
+        evento.target.select();
+    };
     return LineaVentaComponent;
 }());
+LineaVentaComponent = __decorate([
+    Component({
+        templateUrl: 'LineaVenta.html',
+    }),
+    __metadata("design:paramtypes", [NavParams, LineaVentaService, AlertController])
+], LineaVentaComponent);
+export { LineaVentaComponent };
 //# sourceMappingURL=LineaVenta.component.js.map

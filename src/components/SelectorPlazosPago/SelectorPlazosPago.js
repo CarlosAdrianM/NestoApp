@@ -16,14 +16,15 @@ import { Component, Injectable, Input } from '@angular/core';
 import { AlertController, NavController, LoadingController } from 'ionic-angular';
 import { SelectorPlazosPagoService } from './SelectorPlazosPago.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
-export var SelectorPlazosPago = (function (_super) {
+var SelectorPlazosPago = (function (_super) {
     __extends(SelectorPlazosPago, _super);
     function SelectorPlazosPago(servicio, nav, alertCtrl, loadingCtrl) {
-        _super.call(this);
-        this.nav = nav;
-        this.servicio = servicio;
-        this.alertCtrl = alertCtrl;
-        this.loadingCtrl = loadingCtrl;
+        var _this = _super.call(this) || this;
+        _this.nav = nav;
+        _this.servicio = servicio;
+        _this.alertCtrl = alertCtrl;
+        _this.loadingCtrl = loadingCtrl;
+        return _this;
     }
     SelectorPlazosPago.prototype.ngOnInit = function () {
         this.cargarDatos();
@@ -49,24 +50,25 @@ export var SelectorPlazosPago = (function (_super) {
             // loading.dismiss();
         });
     };
-    __decorate([
-        Input(), 
-        __metadata('design:type', Object)
-    ], SelectorPlazosPago.prototype, "seleccionado", void 0);
-    __decorate([
-        Input(), 
-        __metadata('design:type', Object)
-    ], SelectorPlazosPago.prototype, "cliente", void 0);
-    SelectorPlazosPago = __decorate([
-        Component({
-            selector: 'selector-plazos-pago',
-            templateUrl: 'SelectorPlazosPago.html',
-            // inputs: ['seleccionado', 'cliente'],
-            outputs: ['seleccionar'],
-        }),
-        Injectable(), 
-        __metadata('design:paramtypes', [SelectorPlazosPagoService, NavController, AlertController, LoadingController])
-    ], SelectorPlazosPago);
     return SelectorPlazosPago;
 }(SelectorBase));
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorPlazosPago.prototype, "seleccionado", void 0);
+__decorate([
+    Input(),
+    __metadata("design:type", Object)
+], SelectorPlazosPago.prototype, "cliente", void 0);
+SelectorPlazosPago = __decorate([
+    Component({
+        selector: 'selector-plazos-pago',
+        templateUrl: 'SelectorPlazosPago.html',
+        // inputs: ['seleccionado', 'cliente'],
+        outputs: ['seleccionar'],
+    }),
+    Injectable(),
+    __metadata("design:paramtypes", [SelectorPlazosPagoService, NavController, AlertController, LoadingController])
+], SelectorPlazosPago);
+export { SelectorPlazosPago };
 //# sourceMappingURL=SelectorPlazosPago.js.map
