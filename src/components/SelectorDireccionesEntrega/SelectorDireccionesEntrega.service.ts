@@ -19,6 +19,8 @@ export class SelectorDireccionesEntregaService {
 
         return this.http.get(_baseUrl, { search: params })
             .map(res => <any[]>res.json())
+            .publishReplay(1)
+            .refCount()
             .catch(this.handleError);
     }
 

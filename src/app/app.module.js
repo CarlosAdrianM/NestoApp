@@ -9,6 +9,7 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
@@ -22,6 +23,7 @@ import { SelectorPlazosPago } from '../components/SelectorPlazosPago/SelectorPla
 import { SelectorVendedoresComponent } from '../components/SelectorVendedores/SelectorVendedores.component';
 import { ExtractoClienteService } from '../pages/ExtractoCliente/ExtractoCliente.service';
 import { ListaPedidosVentaService } from '../pages/ListaPedidosVenta/ListaPedidosVenta.service';
+import { ListaRapportsService } from '../pages/ListaRapports/ListaRapports.service';
 import { PedidoVentaService } from '../pages/PedidoVenta/PedidoVenta.service';
 import { PlantillaVentaService } from '../pages/PlantillaVenta/PlantillaVenta.service';
 import { UltimasVentasProductoClienteService } from '../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente.service';
@@ -33,6 +35,7 @@ import { SelectorPlazosPagoService } from '../components/SelectorPlazosPago/Sele
 import { SelectorVendedoresService } from '../components/SelectorVendedores/SelectorVendedores.service';
 import { Usuario } from '../models/Usuario';
 import { IonicStorageModule } from '@ionic/storage';
+import { Storage } from '@ionic/storage';
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http } from '@angular/http';
@@ -41,13 +44,15 @@ import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
+import { RapportComponent } from '../pages/Rapport/Rapport.component';
+import { RapportService } from '../pages/Rapport/Rapport.service';
 var storage = new Storage();
 export function getAuthHttp(http) {
     return new AuthHttp(new AuthConfig({
         //        headerPrefix: "PELU_ESTETICA",
         noJwtError: true,
         globalHeaders: [{ 'Accept': 'application/json' }],
-        tokenGetter: (function () { return storage.getItem('id_token'); }),
+        tokenGetter: (function () { return storage.get('id_token'); }),
     }), http);
 }
 var cloudSettings = {
@@ -66,6 +71,7 @@ AppModule = __decorate([
             MyApp,
             ExtractoCliente,
             ListaPedidosVenta,
+            ListaRapports,
             PedidoVentaComponent,
             PlantillaVenta,
             ProfilePage,
@@ -77,7 +83,8 @@ AppModule = __decorate([
             SelectorPlantillaVentaDetalle,
             SelectorPlazosPago,
             SelectorVendedoresComponent,
-            LineaVentaComponent
+            LineaVentaComponent,
+            RapportComponent
         ],
         imports: [
             IonicModule.forRoot(MyApp),
@@ -91,12 +98,14 @@ AppModule = __decorate([
             MyApp,
             ExtractoCliente,
             ListaPedidosVenta,
+            ListaRapports,
             PedidoVentaComponent,
             PlantillaVenta,
             SelectorPlantillaVentaDetalle,
             ProfilePage,
             UltimasVentasProductoCliente,
-            LineaVentaComponent
+            LineaVentaComponent,
+            RapportComponent
         ],
         providers: [
             {
@@ -107,6 +116,7 @@ AppModule = __decorate([
             { provide: ErrorHandler, useClass: IonicErrorHandler },
             ExtractoClienteService,
             ListaPedidosVentaService,
+            ListaRapportsService,
             Parametros,
             PedidoVentaService,
             PlantillaVentaService,
@@ -119,6 +129,7 @@ AppModule = __decorate([
             UltimasVentasProductoClienteService,
             Usuario,
             LineaVentaService,
+            RapportService
         ]
     })
 ], AppModule);

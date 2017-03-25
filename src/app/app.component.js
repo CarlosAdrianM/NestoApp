@@ -13,6 +13,7 @@ import { StatusBar } from 'ionic-native';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
 import { ProfilePage } from '../pages/profile/profile';
 import { Usuario } from '../models/Usuario';
 import { Deploy } from '@ionic/cloud-angular';
@@ -28,6 +29,7 @@ var MyApp = (function () {
             { title: 'Plantilla Venta', component: PlantillaVenta },
             { title: 'Pedidos Venta', component: ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente },
+            { title: 'Rapports', component: ListaRapports },
             { title: 'Usuario', component: ProfilePage }
         ];
         if (this.usuario == undefined || this.usuario.nombre == undefined) {
@@ -40,7 +42,7 @@ var MyApp = (function () {
             // Okay, so the platform is ready and our plugins are available.
             // Here you can do any higher level native things you might need.
             StatusBar.styleDefault();
-            // Actualizamos a la nueva versi�n
+            // Actualizamos a la nueva versión
             _this.deploy.check().then(function (snapshotAvailable) {
                 if (snapshotAvailable) {
                     _this.deploy.download().then(function () {

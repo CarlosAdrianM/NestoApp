@@ -28,6 +28,9 @@ export class SelectorDireccionesEntrega extends SelectorBase {
     }
 
     public cargarDatos(cliente: any): void {
+        if (!cliente) {
+            return;
+        }
         this.servicio.direccionesEntrega(cliente).subscribe(
             data => {
                 if (data.length === 0) {
@@ -51,7 +54,7 @@ export class SelectorDireccionesEntrega extends SelectorBase {
                                 this.seleccionarDato(this.direccionSeleccionada);
                             }
                         } else {
-                            if (this.seleccionado === this.direccionesEntrega[i].contacto) {
+                            if (this.seleccionado && this.direccionesEntrega[i].contacto && this.seleccionado.trim()  === this.direccionesEntrega[i].contacto.trim()) {
                                 this.direccionSeleccionada = this.direccionesEntrega[i];
                                 this.seleccionarDato(this.direccionSeleccionada);
                             }

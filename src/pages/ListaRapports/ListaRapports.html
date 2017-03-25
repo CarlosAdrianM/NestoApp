@@ -1,0 +1,63 @@
+﻿<ion-header>
+    <ion-navbar>
+        <button ion-button menuToggle>
+            <ion-icon name="menu"></ion-icon>
+        </button>
+        <ion-title>Lista de Rapports</ion-title>
+    </ion-navbar>
+    <ion-segment [(ngModel)]="segmentoRapports" (ionChange)="inicializarDatos()">
+      <ion-segment-button value="cliente">
+        Cliente
+      </ion-segment-button>
+      <ion-segment-button value="fecha">
+        Fecha
+      </ion-segment-button>
+    </ion-segment>
+  <div [ngSwitch]="segmentoRapports">
+    <div *ngSwitchCase="'cliente'">
+        <!--selector-clientes (seleccionar)="cargarRapport($event)"></!--selector-clientes>-->
+      <form>
+        <ion-item>
+          <ion-label for="cliente">Cliente</ion-label>
+          <ion-input type="text" class="form-control" id="cliente" required
+                     [(ngModel)]="numeroCliente"
+                     name="cliente" (focus)="seleccionarTexto($event)" (blur)="actualizarCliente()"></ion-input>
+        </ion-item>
+        <selector-direcciones-entrega cliente="{{clienteRapport.Cliente}}" seleccionado="{{clienteRapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
+        </form>
+    </div>
+    <div *ngSwitchCase="'fecha'">
+      <ion-item>
+        <ion-label>Fecha Rapport</ion-label>
+        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
+      </ion-item>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)">
+      <ion-icon name="contact" item-left></ion-icon>
+      <p>{{rapport.Cliente}}</p>
+      <div [ngSwitch]="segmentoRapports">
+        <div *ngSwitchCase="'fecha'">
+          <h2>{{rapport.Nombre}}</h2>
+          <h3>{{rapport.Direccion}}</h3>
+        </div>
+        <div *ngSwitchCase="'cliente'">
+          <h2>{{rapport.Fecha | date:'dd/MM/yy'}}</h2>
+          <h3>{{rapport.Usuario}}</h3>
+        </div>
+        <h3>{{rapport.Comentarios}}</h3>
+      </div>
+    </ion-item>
+  </ion-list>
+</ion-content>
+<ion-footer>
+  <ion-fab right bottom>
+    <button ion-fab (click)="annadirRapport()">
+      <ion-icon name="add"></ion-icon>
+    </button>
+  </ion-fab>
+</ion-footer>

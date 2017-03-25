@@ -1,10 +1,11 @@
-import { Component, ViewChild } from '@angular/core';
+﻿import { Component, ViewChild } from '@angular/core';
 import { Nav, Platform } from 'ionic-angular';
 import { StatusBar } from 'ionic-native';
 
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
 import { ProfilePage } from '../pages/profile/profile';
 import {Usuario} from '../models/Usuario';
 
@@ -29,6 +30,7 @@ export class MyApp {
             { title: 'Plantilla Venta', component: PlantillaVenta },
             { title: 'Pedidos Venta', component: ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente },
+            { title: 'Rapports', component: ListaRapports},
             { title: 'Usuario', component: ProfilePage }
         ];
 
@@ -45,7 +47,7 @@ export class MyApp {
             StatusBar.styleDefault();
 
 
-            // Actualizamos a la nueva versi�n
+            // Actualizamos a la nueva versión
             this.deploy.check().then((snapshotAvailable: boolean) => {
                 if (snapshotAvailable) {
                     this.deploy.download().then(() => {

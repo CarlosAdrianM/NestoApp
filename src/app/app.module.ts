@@ -3,6 +3,7 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
@@ -16,6 +17,7 @@ import { SelectorPlazosPago } from '../components/SelectorPlazosPago/SelectorPla
 import { SelectorVendedoresComponent } from '../components/SelectorVendedores/SelectorVendedores.component';
 import { ExtractoClienteService } from '../pages/ExtractoCliente/ExtractoCliente.service';
 import { ListaPedidosVentaService } from '../pages/ListaPedidosVenta/ListaPedidosVenta.service';
+import { ListaRapportsService } from '../pages/ListaRapports/ListaRapports.service';
 import { PedidoVentaService } from '../pages/PedidoVenta/PedidoVenta.service';
 import { PlantillaVentaService } from '../pages/PlantillaVenta/PlantillaVenta.service';
 import { UltimasVentasProductoClienteService } from '../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente.service';
@@ -36,6 +38,8 @@ import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
 import { FormsModule }   from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
+import { RapportComponent } from '../pages/Rapport/Rapport.component';
+import { RapportService } from '../pages/Rapport/Rapport.service';
 
 
 let storage = new Storage();
@@ -60,6 +64,7 @@ const cloudSettings: CloudSettings = {
     MyApp,
     ExtractoCliente,
     ListaPedidosVenta,
+    ListaRapports,
     PedidoVentaComponent,
     PlantillaVenta,
     ProfilePage,
@@ -71,7 +76,8 @@ const cloudSettings: CloudSettings = {
     SelectorPlantillaVentaDetalle,
     SelectorPlazosPago,
     SelectorVendedoresComponent,
-    LineaVentaComponent
+    LineaVentaComponent,
+    RapportComponent
   ],
   imports: [
       IonicModule.forRoot(MyApp),
@@ -85,12 +91,14 @@ const cloudSettings: CloudSettings = {
     MyApp,
     ExtractoCliente,
     ListaPedidosVenta,
+    ListaRapports,
     PedidoVentaComponent,
     PlantillaVenta,
     SelectorPlantillaVentaDetalle,
     ProfilePage,
     UltimasVentasProductoCliente,
-    LineaVentaComponent
+    LineaVentaComponent,
+    RapportComponent
   ],
   providers: [
       {   
@@ -101,6 +109,7 @@ const cloudSettings: CloudSettings = {
       {provide: ErrorHandler, useClass: IonicErrorHandler},
       ExtractoClienteService,
       ListaPedidosVentaService,
+      ListaRapportsService,
       Parametros,
       PedidoVentaService,
       PlantillaVentaService,
@@ -113,6 +122,7 @@ const cloudSettings: CloudSettings = {
       UltimasVentasProductoClienteService,
       Usuario,
       LineaVentaService,
+      RapportService
   ]
 })
 export class AppModule {}
