@@ -1,6 +1,9 @@
 ﻿import { Component } from '@angular/core';
 import { NavParams, AlertController, LoadingController } from 'ionic-angular';
 import { RapportService } from './Rapport.service';
+import { Usuario } from '../../models/Usuario';
+import { Configuracion } from '../../components/configuracion/configuracion';
+
 
 
 @Component({
@@ -12,7 +15,7 @@ export class RapportComponent {
     public errorMessage: string;
     public numeroCliente: string;
 
-    constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, private loadingCtrl: LoadingController) {
+    constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, private loadingCtrl: LoadingController, private usuario: Usuario) {
         this.rapport = navParams.get('rapport');
         this.numeroCliente = this.rapport.Cliente;
         /*
@@ -74,7 +77,7 @@ export class RapportComponent {
                             data => {
                                 let alert = this.alertCtrl.create({
                                     title: 'Creado',
-                                    subTitle: 'Rapport creado correctamente',
+                                    subTitle: 'Rapport guardado correctamente',
                                     buttons: ['Ok'],
                                 });
                                 alert.present();
@@ -84,7 +87,7 @@ export class RapportComponent {
                             error => {
                                 let alert = this.alertCtrl.create({
                                     title: 'Error',
-                                    subTitle: 'No se ha podido crear el rapport.\n' + error,
+                                    subTitle: 'No se ha podido guardar el rapport.\n' + error,
                                     buttons: ['Ok'],
                                 });
                                 alert.present();
@@ -115,6 +118,11 @@ export class RapportComponent {
 
     public seleccionarTexto(evento: any): void {
         evento.target.select();
+    }
+
+    public sePuedeModificar(): boolean {
+        let usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
+        return this.rapport && this.rapport.Usuario === usuarioActual;
     }
 
 }

@@ -32,7 +32,7 @@ import { IonicStorageModule } from '@ionic/storage'
 import { Storage } from '@ionic/storage'
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
-import { Http } from '@angular/http';
+import { Http, HttpModule } from '@angular/http';
 import { CloudSettings, CloudModule } from '@ionic/cloud-angular';
 import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
@@ -42,7 +42,7 @@ import { RapportComponent } from '../pages/Rapport/Rapport.component';
 import { RapportService } from '../pages/Rapport/Rapport.service';
 
 
-let storage = new Storage();
+let storage = new Storage(localStorage);
 
 export function getAuthHttp(http) {
     return new AuthHttp(new AuthConfig({
@@ -80,10 +80,11 @@ const cloudSettings: CloudSettings = {
     RapportComponent
   ],
   imports: [
+      BrowserModule,
+      HttpModule,
       IonicModule.forRoot(MyApp),
       CloudModule.forRoot(cloudSettings),
       IonicStorageModule.forRoot(),
-      BrowserModule,
       FormsModule
   ],
   bootstrap: [IonicApp],

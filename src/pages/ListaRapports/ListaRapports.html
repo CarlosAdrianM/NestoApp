@@ -5,7 +5,7 @@
         </button>
         <ion-title>Lista de Rapports</ion-title>
     </ion-navbar>
-    <ion-segment [(ngModel)]="segmentoRapports" (ionChange)="inicializarDatos()">
+    <ion-segment [(ngModel)]="segmentoRapports" (ionChange)="inicializarDatos(); cambiarSegmento();">
       <ion-segment-button value="cliente">
         Cliente
       </ion-segment-button>
@@ -16,15 +16,18 @@
   <div [ngSwitch]="segmentoRapports">
     <div *ngSwitchCase="'cliente'">
         <!--selector-clientes (seleccionar)="cargarRapport($event)"></!--selector-clientes>-->
-      <form>
+      <form (ngSubmit)="actualizarCliente()">
         <ion-item>
           <ion-label for="cliente">Cliente</ion-label>
-          <ion-input type="text" class="form-control" id="cliente" required
+          <ion-input #clienteInput type="submit" class="form-control" id="cliente" required
                      [(ngModel)]="numeroCliente"
-                     name="cliente" (focus)="seleccionarTexto($event)" (blur)="actualizarCliente()"></ion-input>
+                     name="cliente" (focus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
         </ion-item>
-        <selector-direcciones-entrega cliente="{{clienteRapport.Cliente}}" seleccionado="{{clienteRapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
-        </form>
+        <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport.Cliente}}" seleccionado="{{clienteRapport.Contacto}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
+        <button block [hidden]="true">
+          <ion-icon name="add"></ion-icon>Cargar
+        </button>
+      </form>
     </div>
     <div *ngSwitchCase="'fecha'">
       <ion-item>

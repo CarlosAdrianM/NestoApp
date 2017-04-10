@@ -18,9 +18,16 @@ export class RapportService {
         let headers: any = new Headers();
         headers.append('Content-Type', 'application/json');
 
-        return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
-            .map(res => <Response>res.json())
-            .catch(this.handleError);
+        if (rapport.Id == 0) {
+            return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
+                .map(res => <Response>res.json())
+                .catch(this.handleError);
+        } else {
+            return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers })
+                .map(res => <Response>res.json())
+                .catch(this.handleError);
+        }
+        
     }
 
     private _clientesUrl: string = Configuracion.API_URL + '/Clientes';

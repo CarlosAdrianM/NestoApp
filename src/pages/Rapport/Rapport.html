@@ -2,7 +2,7 @@
   <ion-navbar>
     <ion-title>Rapport</ion-title>
     <ion-buttons end>
-      <button ion-button (click)="modificarRapport()">
+      <button ion-button (click)="modificarRapport()" *ngIf="sePuedeModificar()">
         <ion-icon name="archive"></ion-icon>
       </button>
     </ion-buttons>
