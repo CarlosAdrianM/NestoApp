@@ -95,6 +95,9 @@ export abstract class SelectorBase {
     }
 
     public seleccionarTexto(evento: any): void {
-        evento.inputElement ? evento.inputElement.select() : evento.target.select();
+        if (evento == null || ((evento._searchbarInput == null || evento._searchbarInput.nativeElement == null) && evento.target == null)) {
+            return;
+        }
+        evento._searchbarInput && evento._searchbarInput.nativeElement ? evento._searchbarInput.nativeElement.select() : evento.target.select();
     }
 }
