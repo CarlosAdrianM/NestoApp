@@ -23,7 +23,7 @@
                      [(ngModel)]="numeroCliente"
                      name="cliente" (focus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
         </ion-item>
-        <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport.Cliente}}" seleccionado="{{clienteRapport.Contacto}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
+        <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport}}" seleccionado="{{contactoRapport}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
         <button block [hidden]="true">
           <ion-icon name="add"></ion-icon>Cargar
         </button>

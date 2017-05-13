@@ -20,8 +20,9 @@ export class ListaRapports extends SelectorBase {
     
     private hoy: Date = new Date();
     public fechaRapports: string = this.hoy.toISOString().slice(0, 10);
-    public clienteRapport: any;
-    public numeroCliente: string;
+    public clienteRapport: string;
+    public contactoRapport: string;
+    public numeroCliente: string = "";
     public mostrarDirecciones: boolean;
 
     constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController, loadingCtrl: LoadingController, private usuario: Usuario) {
@@ -30,17 +31,22 @@ export class ListaRapports extends SelectorBase {
         this.nav = nav;
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
-        this.clienteRapport = [];
-        this.clienteRapport.Cliente = "";
-        this.clienteRapport.Contacto = "0";
+        this.clienteRapport = "";
+        this.contactoRapport = "0";
     }
 
     public actualizarCliente(): void {
-        this.clienteRapport.Cliente = this.numeroCliente;
+        if (this.numeroCliente == null || this.numeroCliente.trim() == "") {
+            return;
+        }
+        this.clienteRapport = this.numeroCliente;
     }
 
     public seleccionarContacto(evento: any): void {
-        this.cargarDatosCliente(this.clienteRapport.Cliente, evento.contacto);
+        if (!this.clienteRapport) {
+            return;
+        }
+        this.cargarDatosCliente(this.clienteRapport, evento.contacto);
     }
 
     public cargarDatos(): void {
