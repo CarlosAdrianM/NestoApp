@@ -19,14 +19,22 @@ var ListaRapportsService = (function () {
         this.http = http;
         this.usuario = usuario;
     }
-    ListaRapportsService.prototype.cargarLista = function (fecha) {
+    ListaRapportsService.prototype.cargarListaFecha = function (fecha) {
         if (fecha.slice(-1) == "Z") {
             fecha = fecha.slice(0, -1); //si acaba en Z la quitamos
         }
         var params = new URLSearchParams();
-        //params.set('vendedor', this.usuario.vendedor);
-        params.set('vendedor', 'JM');
+        params.set('vendedor', this.usuario.vendedor);
         params.set('fecha', fecha);
+        return this.http.get(this._baseUrl, { search: params })
+            .map(function (res) { return res.json(); })
+            .catch(this.handleError);
+    };
+    ListaRapportsService.prototype.cargarListaCliente = function (cliente, contacto) {
+        var params = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('cliente', cliente);
+        params.set('contacto', contacto);
         return this.http.get(this._baseUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);

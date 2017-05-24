@@ -45,6 +45,7 @@ var ExtractoCliente = (function () {
                         _this.resumenDeuda.abogado += mov.importePendiente;
                     }
                 }
+                // mov.vencimientoMostrar = new Date(mov.vencimiento);
             }
             console.log(_this.resumenDeuda);
         }, function (error) { return _this.errorMessage = error; });

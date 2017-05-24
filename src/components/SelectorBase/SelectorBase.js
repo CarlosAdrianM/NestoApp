@@ -84,7 +84,10 @@ var SelectorBase = (function () {
         return this.datosFiltrados ? this.datosFiltrados.length : 0;
     };
     SelectorBase.prototype.seleccionarTexto = function (evento) {
-        evento.inputElement ? evento.inputElement.select() : evento.target.select();
+        if (evento == null || ((evento._searchbarInput == null || evento._searchbarInput.nativeElement == null) && evento.target == null)) {
+            return;
+        }
+        evento._searchbarInput && evento._searchbarInput.nativeElement ? evento._searchbarInput.nativeElement.select() : evento.target.select();
     };
     return SelectorBase;
 }());

@@ -8,18 +8,37 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { Injectable } from '@angular/core';
-import { Http, Headers } from '@angular/http';
+import { Http, Headers, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
+import { Usuario } from '../../models/Usuario';
 var RapportService = (function () {
-    function RapportService(http) {
+    function RapportService(http, usuario) {
+        this.usuario = usuario;
         this._baseUrl = Configuracion.API_URL + '/SeguimientosClientes';
+        this._clientesUrl = Configuracion.API_URL + '/Clientes';
         this.http = http;
     }
     RapportService.prototype.crearRapport = function (rapport) {
         var headers = new Headers();
         headers.append('Content-Type', 'application/json');
-        return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
+        if (rapport.Id == 0) {
+            return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
+                .map(function (res) { return res.json(); })
+                .catch(this.handleError);
+        }
+        else {
+            return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers })
+                .map(function (res) { return res.json(); })
+                .catch(this.handleError);
+        }
+    };
+    RapportService.prototype.getCliente = function (cliente, contacto) {
+        var params = new URLSearchParams();
+        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params.set('cliente', cliente);
+        params.set('contacto', contacto);
+        return this.http.get(this._clientesUrl, { search: params })
             .map(function (res) { return res.json(); })
             .catch(this.handleError);
     };
@@ -33,7 +52,7 @@ var RapportService = (function () {
 }());
 RapportService = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [Http])
+    __metadata("design:paramtypes", [Http, Usuario])
 ], RapportService);
 export { RapportService };
 //# sourceMappingURL=Rapport.service.js.map

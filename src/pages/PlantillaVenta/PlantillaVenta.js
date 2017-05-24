@@ -51,6 +51,7 @@ var PlantillaVenta = (function () {
     PlantillaVenta.prototype.ionViewDidLoad = function () {
         if (this.usuario != undefined && this.usuario.nombre != undefined) {
             console.log("El usuario es " + this.usuario.nombre);
+            //this.cargarParametros();
         }
         else {
             console.log("El usuario no está cargado");

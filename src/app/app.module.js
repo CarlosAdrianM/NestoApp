@@ -38,7 +38,7 @@ import { IonicStorageModule } from '@ionic/storage';
 import { Storage } from '@ionic/storage';
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
-import { Http } from '@angular/http';
+import { Http, HttpModule } from '@angular/http';
 import { CloudModule } from '@ionic/cloud-angular';
 import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
@@ -46,7 +46,7 @@ import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { RapportComponent } from '../pages/Rapport/Rapport.component';
 import { RapportService } from '../pages/Rapport/Rapport.service';
-var storage = new Storage();
+var storage = new Storage(localStorage);
 export function getAuthHttp(http) {
     return new AuthHttp(new AuthConfig({
         //        headerPrefix: "PELU_ESTETICA",
@@ -87,10 +87,11 @@ AppModule = __decorate([
             RapportComponent
         ],
         imports: [
+            BrowserModule,
+            HttpModule,
             IonicModule.forRoot(MyApp),
             CloudModule.forRoot(cloudSettings),
             IonicStorageModule.forRoot(),
-            BrowserModule,
             FormsModule
         ],
         bootstrap: [IonicApp],

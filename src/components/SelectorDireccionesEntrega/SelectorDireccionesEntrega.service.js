@@ -23,6 +23,8 @@ var SelectorDireccionesEntregaService = (function () {
         params.set('clienteDirecciones', cliente);
         return this.http.get(_baseUrl, { search: params })
             .map(function (res) { return res.json(); })
+            .publishReplay(1)
+            .refCount()
             .catch(this.handleError);
     };
     SelectorDireccionesEntregaService.prototype.handleError = function (error) {
