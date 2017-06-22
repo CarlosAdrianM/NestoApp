@@ -1,7 +1,7 @@
 ﻿import { Component, ViewChild } from '@angular/core';
 import { Nav, Platform } from 'ionic-angular';
-import { StatusBar } from 'ionic-native';
-
+import { StatusBar } from '@ionic-native/status-bar';
+import { SplashScreen } from '@ionic-native/splash-screen';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
@@ -13,7 +13,7 @@ import {Usuario} from '../models/Usuario';
 import { Deploy } from '@ionic/cloud-angular';
 
 @Component({
-  templateUrl: 'app.html'
+    templateUrl: 'app.html', 
 })
 export class MyApp {
     @ViewChild(Nav) nav: Nav;
@@ -22,7 +22,7 @@ export class MyApp {
 
     pages: Array<{ title: string, component: any }>;
 
-    constructor(public platform: Platform, public deploy: Deploy, public usuario: Usuario) {
+    constructor(public platform: Platform, public deploy: Deploy, public usuario: Usuario, private statusBar: StatusBar) {
         this.initializeApp();
 
         // used for an example of ngFor and navigation
@@ -44,7 +44,7 @@ export class MyApp {
         this.platform.ready().then(() => {
             // Okay, so the platform is ready and our plugins are available.
             // Here you can do any higher level native things you might need.
-            StatusBar.styleDefault();
+            this.statusBar.styleDefault();
 
 
             // Actualizamos a la nueva versión

@@ -40,7 +40,8 @@ import { FormsModule }   from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { RapportComponent } from '../pages/Rapport/Rapport.component';
 import { RapportService } from '../pages/Rapport/Rapport.service';
-
+import { StatusBar } from '@ionic-native/status-bar';
+import { SplashScreen } from '@ionic-native/splash-screen';
 
 let storage = new Storage(localStorage);
 
@@ -107,6 +108,8 @@ const cloudSettings: CloudSettings = {
         useFactory: getAuthHttp,
         deps: [Http],
       },
+      StatusBar,
+      SplashScreen,
       {provide: ErrorHandler, useClass: IonicErrorHandler},
       ExtractoClienteService,
       ListaPedidosVentaService,
