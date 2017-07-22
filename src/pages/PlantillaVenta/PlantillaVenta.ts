@@ -18,44 +18,23 @@ export class PlantillaVenta {
     private platform: Platform;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
-    //public opcionesSlides: any;
 
     constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController, private ref: ChangeDetectorRef) {
-
         this.usuario = usuario;
-        /*
-        this.opcionesSlides = {
-            allowSwipeToNext: false,
-            paginationHide: false,
-            onInit: (slides: any): any => {
-                this.slider = slides;
-            },
-            //onSlideChangeStart: (slides: any): void => this.avanzar(slides),
-        };
-        */
         this.nav = nav;
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
         this.servicio = servicio;
         this.parametros = parametros;
         this.platform = platform;
-
-        
-        
     }
 
-   @ViewChild(Slides) slider: Slides;
+    @ViewChild(Slides) slider: Slides;
+    @ViewChild('inputCliente') mySelectorCliente;
 
-/*
-   ngAfterViewInit() {
-     this.slider.freeMode = true;
-     this.slider.freeModeSticky = true;
-   }
-*/
     ionViewDidLoad() {
         if (this.usuario != undefined && this.usuario.nombre != undefined) {
             console.log("El usuario es " + this.usuario.nombre);
-            //this.cargarParametros();
         } else {
             console.log("El usuario no está cargado");
             this.nav.setRoot(ProfilePage);
@@ -67,9 +46,20 @@ export class PlantillaVenta {
         this.ref.detectChanges();
     }
 
+    /*
+    ionViewDidEnter() {
+        if (this.slider.getActiveIndex() === 0) {
+            this.mySelectorCliente.setFocus();
+        } else if (this.slider.getActiveIndex() === 1) {
+            setTimeout(() => {
+                this._selectorPlantillaVenta.setFocus();
+            }, 150);
+        }
+    }
+    */
+
 
     private nav: NavController;   
-    //public slider: any;
     public clienteSeleccionado: any;
     public productosResumen: any[];
     private _direccionSeleccionada: any;
@@ -130,13 +120,13 @@ export class PlantillaVenta {
         this.slider.lockSwipeToNext(false);
         this.siguientePantalla();
         this.clienteSeleccionado = cliente;
+        /*
+        setTimeout(() => {
+            this._selectorPlantillaVenta.setFocus();
+        }, 150);
+        */
     }
 
-    /*
-    public cargarResumen(productosResumen: any[]): void {
-        this.productosResumen = productosResumen;
-    }
-    */
     public avanzar(slides: any): void {
         console.log(slides.getActiveIndex());
         console.log(slides.getPreviousIndex());
@@ -144,9 +134,14 @@ export class PlantillaVenta {
             console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
             this.ref.detectChanges();
-        }/* else if (slides.activeIndex === 3 && slides.previousIndex === 2) {
-            
-        }*/
+        } /*else if (slides.getActiveIndex() === 0) {
+            this.mySelectorCliente.setFocus();
+        } else if (slides.getActiveIndex() === 1) {
+            setTimeout(() => {
+                this._selectorPlantillaVenta.setFocus();
+            }, 150);
+        }
+        */
     }
 
     public sePuedeAvanzar(): boolean {

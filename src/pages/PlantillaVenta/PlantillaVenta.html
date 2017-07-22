@@ -15,7 +15,7 @@
 <ion-content>
     <ion-slides (ionSlideWillChange)="avanzar($event)">
         <ion-slide>
-            <selector-clientes (seleccionar)="cargarProductos($event)"></selector-clientes>
+            <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
         </ion-slide>
         <ion-slide *ngIf="clienteSeleccionado">
             <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}"></selector-plantilla-venta>

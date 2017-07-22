@@ -19,9 +19,9 @@
       <form (ngSubmit)="actualizarCliente()">
         <ion-item>
           <ion-label for="cliente">Cliente</ion-label>
-          <ion-input #clienteInput type="submit" class="form-control" id="cliente" required
+          <ion-input #clienteInput class="form-control" id="cliente" required
                      [(ngModel)]="numeroCliente"
-                     name="cliente" (focus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
+                     name="cliente" (ionFocus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
         </ion-item>
         <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport}}" seleccionado="{{contactoRapport}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
         <button block [hidden]="true">

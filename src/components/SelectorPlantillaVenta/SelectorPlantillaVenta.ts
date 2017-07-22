@@ -1,4 +1,4 @@
-﻿import {Component, Input } from '@angular/core';
+﻿import {Component, Input, ViewChild } from '@angular/core';
 import {AlertController, LoadingController, NavController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
@@ -25,6 +25,20 @@ export class SelectorPlantillaVenta extends SelectorBase {
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
         this.nav = nav;
+    }
+
+    @ViewChild('filtro') myProductoSearchBar;
+
+    /*
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.myProductoSearchBar.setFocus();
+        }, 150);
+    }
+    */
+
+    public setFocus(): void {
+        //this.myProductoSearchBar.setFocus();
     }
 
     public cargarDatos(cliente: any): void {
@@ -55,11 +69,14 @@ export class SelectorPlantillaVenta extends SelectorBase {
             error => {
                 loading.dismiss();
                 this.errorMessage = <any>error;
+                //this.myProductoSearchBar.setFocus();
             },
             () => {
                 loading.dismiss();
+                //this.myProductoSearchBar.setFocus();
             }
         );
+        //this.myProductoSearchBar.setFocus();
     }
 
     public abrirDetalle(producto: any): void {
@@ -139,5 +156,4 @@ export class SelectorPlantillaVenta extends SelectorBase {
     set baseImponibleParaPortes(value: number) {
         this._baseImponibleParaPortes = value;
     }
-
 }

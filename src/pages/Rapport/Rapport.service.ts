@@ -2,13 +2,12 @@
 import { Http, Response, Headers, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
-import { Usuario } from '../../models/Usuario';
 
 @Injectable()
 export class RapportService {
     private http: Http;
 
-    constructor(http: Http, private usuario: Usuario) {
+    constructor(http: Http) {
         this.http = http;
     }
 

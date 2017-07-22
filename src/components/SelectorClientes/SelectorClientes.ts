@@ -1,4 +1,4 @@
-﻿import {Component, Injectable, Output, EventEmitter} from '@angular/core';
+﻿import {Component, Injectable, Output, EventEmitter, ViewChild} from '@angular/core';
 import {AlertController, LoadingController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
@@ -21,6 +21,20 @@ export class SelectorClientes extends SelectorBase {
         this.servicio = servicio;
         this.loadingCtrl = loadingCtrl;
         this.alertCtrl = alertCtrl;
+    }
+
+    @ViewChild('barra') myIonSearchBar;
+    /*
+    ngAfterViewInit()
+    {
+        setTimeout(() => {
+            this.myIonSearchBar.setFocus();
+        }, 150);
+    }
+    */
+
+    public setFocus(): void {
+        //this.myIonSearchBar.setFocus();
     }
 
     public cargarDatos(filtro: string): void {
@@ -54,10 +68,4 @@ export class SelectorClientes extends SelectorBase {
             }
         );
     }
-    /*
-    public seleccionarCliente(cliente: any): void {
-        this.seleccionar.emit(cliente);
-    }
-    */
-    
 }

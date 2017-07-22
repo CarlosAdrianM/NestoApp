@@ -185,7 +185,9 @@ export class SelectorPlantillaVentaDetalle {
     }
     
     public seleccionarTexto(evento: any): void {
-        evento.target.select();
+        var nativeInputEle = evento._native.nativeElement;
+        nativeInputEle.select();
+        //evento.target.select();
     }
 
     public abrirUltimasVentas(): void {

@@ -15,7 +15,7 @@
       <ion-label for="cliente">Cliente</ion-label>
       <ion-input type="text" class="form-control" id="cliente" required
                  [(ngModel)]="numeroCliente"
-                 name="cliente" (focus)="seleccionarTexto($event)" (blur)="leerClientePrincipal()"></ion-input>
+                 name="cliente" (ionFocus)="seleccionarTexto($event)" (ionBlur)="leerClientePrincipal()"></ion-input>
     </ion-item>
     <selector-direcciones-entrega cliente="{{rapport.Cliente}}" seleccionado="{{rapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
 
