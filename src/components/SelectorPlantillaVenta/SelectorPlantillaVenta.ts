@@ -2,7 +2,8 @@
 import {AlertController, LoadingController, NavController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import {SelectorBase} from '../SelectorBase/SelectorBase';
-import {SelectorPlantillaVentaDetalle} from './SelectorPlantillaVentaDetalle';
+import { SelectorPlantillaVentaDetalle } from './SelectorPlantillaVentaDetalle';
+import { Keyboard } from '@ionic-native/keyboard';
 
 @Component({
     selector: 'selector-plantilla-venta',
@@ -19,7 +20,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     @Input() public cliente: any;
 
-    constructor(servicio: SelectorPlantillaVentaService, alertCtrl: AlertController, loadingCtrl: LoadingController, nav: NavController) {
+    constructor(servicio: SelectorPlantillaVentaService, alertCtrl: AlertController, loadingCtrl: LoadingController, nav: NavController, private keyboard: Keyboard) {
         super();
         this.servicio = servicio;
         this.alertCtrl = alertCtrl;
@@ -31,14 +32,15 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     /*
     ngAfterViewInit() {
-        setTimeout(() => {
-            this.myProductoSearchBar.setFocus();
-        }, 150);
+        
     }
     */
 
     public setFocus(): void {
-        //this.myProductoSearchBar.setFocus();
+        setTimeout(() => {
+            this.myProductoSearchBar.setFocus();
+            this.keyboard.show();
+        }, 1500);
     }
 
     public cargarDatos(cliente: any): void {
@@ -73,7 +75,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
             },
             () => {
                 loading.dismiss();
-                //this.myProductoSearchBar.setFocus();
+                this.setFocus();
             }
         );
         //this.myProductoSearchBar.setFocus();

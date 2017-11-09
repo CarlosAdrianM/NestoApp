@@ -98,6 +98,8 @@ export abstract class SelectorBase {
         if (evento == null || ((evento._searchbarInput == null || evento._searchbarInput.nativeElement == null) && evento.target == null)) {
             return;
         }
-        evento._searchbarInput && evento._searchbarInput.nativeElement ? evento._searchbarInput.nativeElement.select() : evento.target.select();
+        setTimeout(() => {
+            evento._searchbarInput && evento._searchbarInput.nativeElement ? evento._searchbarInput.nativeElement.select() : evento.target.select();
+        }, 0);
     }
 }

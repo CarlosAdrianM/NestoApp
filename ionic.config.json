@@ -1,5 +1,8 @@
 {
   "name": "NestoApp",
   "app_id": "0eb19c2c",
-  "type": "ionic-angular"
+  "type": "ionic-angular",
+  "integrations": {
+    "cordova": {}
+  }
 }

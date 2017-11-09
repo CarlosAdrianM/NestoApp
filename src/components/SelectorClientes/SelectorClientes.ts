@@ -1,7 +1,8 @@
 ﻿import {Component, Injectable, Output, EventEmitter, ViewChild} from '@angular/core';
 import {AlertController, LoadingController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
-import {SelectorBase} from '../SelectorBase/SelectorBase';
+import { SelectorBase } from '../SelectorBase/SelectorBase';
+import { Keyboard } from '@ionic-native/keyboard';
 
 @Component({
     selector: 'selector-clientes',
@@ -16,7 +17,7 @@ export class SelectorClientes extends SelectorBase {
     private loadingCtrl: LoadingController;
     private alertCtrl: AlertController;
 
-    constructor(servicio: SelectorClientesService, loadingCtrl: LoadingController, alertCtrl: AlertController) {
+    constructor(servicio: SelectorClientesService, loadingCtrl: LoadingController, alertCtrl: AlertController, private keyboard: Keyboard) {
         super();
         this.servicio = servicio;
         this.loadingCtrl = loadingCtrl;
@@ -24,17 +25,18 @@ export class SelectorClientes extends SelectorBase {
     }
 
     @ViewChild('barra') myIonSearchBar;
-    /*
+    
     ngAfterViewInit()
     {
-        setTimeout(() => {
-            this.myIonSearchBar.setFocus();
-        }, 150);
+        this.setFocus();
     }
-    */
+    
 
     public setFocus(): void {
-        //this.myIonSearchBar.setFocus();
+        setTimeout(() => {
+            this.myIonSearchBar.setFocus();
+            this.keyboard.show();
+        }, 0);
     }
 
     public cargarDatos(filtro: string): void {

@@ -42,6 +42,7 @@ import { RapportComponent } from '../pages/Rapport/Rapport.component';
 import { RapportService } from '../pages/Rapport/Rapport.service';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
+import { Keyboard } from '@ionic-native/keyboard';
 
 let storage = new Storage(localStorage);
 
@@ -126,7 +127,8 @@ const cloudSettings: CloudSettings = {
       UltimasVentasProductoClienteService,
       Usuario,
       LineaVentaService,
-      RapportService
+      RapportService,
+      Keyboard
   ]
 })
 export class AppModule {}

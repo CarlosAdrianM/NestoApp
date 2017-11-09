@@ -46,17 +46,19 @@ export class PlantillaVenta {
         this.ref.detectChanges();
     }
 
-    /*
+    
     ionViewDidEnter() {
         if (this.slider.getActiveIndex() === 0) {
-            this.mySelectorCliente.setFocus();
+            setTimeout(() => {
+                this.mySelectorCliente.setFocus();
+            }, 0);
         } else if (this.slider.getActiveIndex() === 1) {
             setTimeout(() => {
                 this._selectorPlantillaVenta.setFocus();
-            }, 150);
+            }, 0);
         }
     }
-    */
+    
 
 
     private nav: NavController;   
