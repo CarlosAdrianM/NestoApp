@@ -1,4 +1,4 @@
-﻿import { NgModule, ErrorHandler } from '@angular/core';
+import { NgModule, ErrorHandler } from '@angular/core';
 import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
@@ -33,7 +33,6 @@ import { Storage } from '@ionic/storage'
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
 import { Http, HttpModule } from '@angular/http';
-import { CloudSettings, CloudModule } from '@ionic/cloud-angular';
 import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
 import { FormsModule }   from '@angular/forms';
@@ -54,12 +53,13 @@ export function getAuthHttp(http) {
         tokenGetter: (() => storage.get('id_token')),
     }), http);
 }
-
+/*
 const cloudSettings: CloudSettings = {
     'core': {
         'app_id': '0eb19c2c'
     }
 };
+*/
 
 @NgModule({
   declarations: [
@@ -85,7 +85,7 @@ const cloudSettings: CloudSettings = {
       BrowserModule,
       HttpModule,
       IonicModule.forRoot(MyApp),
-      CloudModule.forRoot(cloudSettings),
+      //CloudModule.forRoot(cloudSettings),
       IonicStorageModule.forRoot(),
       FormsModule
   ],
