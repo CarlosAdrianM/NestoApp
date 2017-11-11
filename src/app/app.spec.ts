@@ -10,10 +10,6 @@ import { StatusBar } from '@ionic-native/status-bar';
 let comp: MyApp;
 let fixture: ComponentFixture<MyApp>;
 
-export function provideDeploy(): Deploy {
-    return null;
-}
-
 describe('Component: Root Component', () => {
  
     beforeEach(async(() => {

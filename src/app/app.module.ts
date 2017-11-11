@@ -43,23 +43,16 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { Keyboard } from '@ionic-native/keyboard';
 
-let storage = new Storage(localStorage);
+let storage = new Storage({});
 
 export function getAuthHttp(http) {
     return new AuthHttp(new AuthConfig({
 //        headerPrefix: "PELU_ESTETICA",
         noJwtError: true,
         globalHeaders: [{ 'Accept': 'application/json' }],
-        tokenGetter: (() => storage.get('id_token')),
+        tokenGetter: (() => storage.get('id_token').then((id_token: string) => id_token)),
     }), http);
 }
-/*
-const cloudSettings: CloudSettings = {
-    'core': {
-        'app_id': '0eb19c2c'
-    }
-};
-*/
 
 @NgModule({
   declarations: [
@@ -85,7 +78,6 @@ const cloudSettings: CloudSettings = {
       BrowserModule,
       HttpModule,
       IonicModule.forRoot(MyApp),
-      //CloudModule.forRoot(cloudSettings),
       IonicStorageModule.forRoot(),
       FormsModule
   ],
