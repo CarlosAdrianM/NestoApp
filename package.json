@@ -44,7 +44,7 @@
     "@types/jasmine": "^2.5.47",
     "@types/node": "^7.0.22",
     "codecov": "3.0.0",
-    "ionic": "3.18.0",
+    "ionic": "3.19.0",
     "jasmine-core": "^2.6.2",
     "jasmine-spec-reporter": "^4.1.0",
     "karma": "^1.7.0",
@@ -70,5 +70,5 @@
     "url": "https://github.com/CarlosAdrianM/NestoApp.git"
   },
   "license": "MIT",
-  "version": "1.8.0"
+  "version": "1.8.1"
 }

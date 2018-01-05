@@ -9,6 +9,10 @@ import {ListaPedidosVentaService} from './ListaPedidosVenta.service';
 import {PedidoVentaComponent} from '../PedidoVenta/PedidoVenta.component';
 import {SelectorBase} from '../../components/SelectorBase/SelectorBase';
 
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
+
+registerLocaleData(localeEs);
 
 @Component({
     templateUrl: 'ListaPedidosVenta.html',

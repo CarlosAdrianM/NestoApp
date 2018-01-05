@@ -1,4 +1,4 @@
-﻿import {NavController, AlertController, LoadingController, Platform, Events, Slides} from 'ionic-angular';
+import {NavController, AlertController, LoadingController, Platform, Events, Slides} from 'ionic-angular';
 import {Component, ViewChild, ChangeDetectorRef} from '@angular/core';
 import {SelectorClientes} from '../../components/SelectorClientes/SelectorClientes';
 import {SelectorPlantillaVenta} from '../../components/SelectorPlantillaVenta/SelectorPlantillaVenta';
@@ -252,7 +252,7 @@ export class PlantillaVenta {
             error => {
                 let alert = this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido crear el pedido',
+                    subTitle: 'No se ha podido crear el pedido:\n' + error.ExceptionMessage,
                     buttons: ['Ok'],
                 });
                 alert.present();

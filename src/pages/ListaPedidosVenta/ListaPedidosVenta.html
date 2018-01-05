@@ -13,7 +13,7 @@
         <ion-item *ngFor="let pedido of datosFiltrados"  (click)="abrirPedido(pedido)">
             <h2>{{pedido.nombre}}</h2>
             <h3>{{pedido.direccion}}</h3>
-            <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR':true:'1.2-2'}})</p>
+            <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR':'es-ES'}})</p>
             <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
             <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
             <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
