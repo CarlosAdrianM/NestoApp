@@ -4,7 +4,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
-import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.component';
 import { ProfilePage } from '../pages/profile/profile';
 import {Usuario} from '../models/Usuario';
 

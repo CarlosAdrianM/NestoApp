@@ -3,7 +3,7 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
 import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta';
-import { ListaRapports } from '../pages/ListaRapports/ListaRapports.Component';
+import { ListaRapports } from '../pages/ListaRapports/ListaRapports.component';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ProfilePage } from '../pages/profile/profile';
