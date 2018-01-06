@@ -1,14 +1,15 @@
-﻿import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import {NavController, NavParams, AlertController, ToastController} from 'ionic-angular';
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
+import { Keyboard } from '@ionic-native/keyboard';
 
 @Component({
     templateUrl: 'SelectorPlantillaVentaDetalle.html',
 })
 export class SelectorPlantillaVentaDetalle {
 
-    constructor(servicio: SelectorPlantillaVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, toastCtrl: ToastController) {
+  constructor(servicio: SelectorPlantillaVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, toastCtrl: ToastController, private keyboard: Keyboard) {
         this.nav = nav;
         this.navParams = navParams;
         this.producto = navParams.get('producto');
@@ -28,6 +29,20 @@ export class SelectorPlantillaVentaDetalle {
         } 
         this.actualizarDescuento(this.producto.descuento * 100);
 
+    }
+
+    @ViewChild('txtCantidad') myTxtCantidad;
+
+    ngAfterViewInit() {
+      this.setFocus();
+    }
+
+
+    public setFocus(): void {
+      setTimeout(() => {
+        this.myTxtCantidad.setFocus();
+        this.keyboard.show();
+      }, 400);
     }
 
 

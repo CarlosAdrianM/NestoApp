@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<widget id="com.ionicframework.nestoapp958858" version="1.8.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.ionicframework.nestoapp958858" version="1.8.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <name>Nesto</name>
   <description>Aplicación móvil para acceder a Nesto </description>
   <author email="nuevavision@nuevavision.es" href="http://www.nuevavision.es/">Grupo Nueva Visión</author>
@@ -53,17 +53,13 @@
   <allow-navigation href="http://192.168.1.38:8100" />
   <vs:toolsetVersion xmlns:vs="http://schemas.microsoft.com/appx/2014/htmlapps">6.3.1</vs:toolsetVersion>
   <engine name="android" spec="5.2.1" />
-  <engine name="ios" spec="4.2.0" />
-  <engine name="windows" spec="4.4.2" />
   <plugin name="ionic-plugin-deploy" spec="~0.6.5" />
   <plugin name="cordova-plugin-splashscreen" spec="~4.0.0" />
   <plugin name="ionic-plugin-keyboard" spec="~2.2.1" />
+  <plugin name="cordova-plugin-add-swift-support" spec="~1.7.0" />
   <plugin name="cordova-plugin-ionic" spec="~2.0.3">
     <variable name="APP_ID" value="4652a4e8" />
     <variable name="CHANNEL_NAME" value="Production" />
-    <variable name="UPDATE_METHOD" value="auto" />
-    <variable name="UPDATE_API" value="https://api.ionicjs.com" />
-    <variable name="MAX_STORE" value="2" />
+    <variable name="UPDATE_METHOD" value="background" />
   </plugin>
-  <plugin name="cordova-plugin-add-swift-support" spec="~1.7.0" />
 </widget>

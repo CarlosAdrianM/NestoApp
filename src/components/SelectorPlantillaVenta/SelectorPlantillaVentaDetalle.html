@@ -1,4 +1,4 @@
-﻿<ion-header>
+<ion-header>
     <ion-navbar>
         <!--button ion-button menuToggle>
             <ion-icon name="menu"></ion-icon>
@@ -23,7 +23,7 @@
                     <ion-col width-50>
                         <ion-item>
                             <ion-label [color]="producto.colorStock">Cantidad</ion-label>
-                            <ion-input type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                            <ion-input #txtCantidad type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                         </ion-item>
                     </ion-col>
                     <ion-col width-50>
