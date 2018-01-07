@@ -1,4 +1,4 @@
-﻿import {Component} from '@angular/core';
+import {Component} from '@angular/core';
 import {NavController, NavParams, AlertController, LoadingController} from 'ionic-angular';
 import {PedidoVentaService} from './PedidoVenta.service';
 import {LineaVentaComponent} from '../LineaVenta/LineaVenta.component';
@@ -49,9 +49,15 @@ export class PedidoVentaComponent {
                 this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
             },
             error => {
+                let textoError = 'No se ha podido cargar el pedido de la empresa ' + empresa + ".\n" + error.ExceptionMessage;
+                let innerException = error.InnerException;
+                while (innerException != null) {
+                  textoError += '\n' + innerException.ExceptionMessage;
+                  innerException = innerException.InnerException;
+                }
                 let alert = this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido cargar el pedido de la empresa ' + empresa,
+                    subTitle: textoError,
                     buttons: ['Ok'],
                 });
                 alert.present();
@@ -113,9 +119,15 @@ export class PedidoVentaComponent {
                                 // this.reinicializar();
                             },
                             error => {
+                              let textoError = 'No se ha podido modificar el pedido.\n' + error.ExceptionMessage;
+                                let innerException = error.InnerException;
+                                while (innerException != null) {
+                                  textoError += '\n' + innerException.ExceptionMessage;
+                                  innerException = innerException.InnerException;
+                                }
                                 let alert = this.alertCtrl.create({
                                     title: 'Error',
-                                    subTitle: 'No se ha podido modificar el pedido.\n' + error,
+                                    subTitle: textoError,
                                     buttons: ['Ok'],
                                 });
                                 alert.present();

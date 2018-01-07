@@ -1,4 +1,4 @@
-﻿import {Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Http, Response, URLSearchParams, Headers} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
@@ -28,7 +28,6 @@ export class PedidoVentaService {
     public modificarPedido(pedido: any): Observable<any> {
         let headers: any = new Headers();
         headers.append('Content-Type', 'application/json');
-
         let pedidoJson: string = JSON.stringify(pedido);
 
         return this.http.put(this._baseUrl, pedidoJson, { headers: headers })
@@ -40,7 +39,7 @@ export class PedidoVentaService {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Observable.throw(error.message || 'Server error');
+        return Observable.throw(error.json() || 'Server error');
     }
 
 }
