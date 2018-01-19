@@ -1,5 +1,5 @@
 ﻿import {Component} from '@angular/core';
-import {LoadingController, NavController} from 'ionic-angular';
+import {LoadingController, NavController, AlertController} from 'ionic-angular';
 import {Storage} from '@ionic/storage';
 import {Http, Headers} from '@angular/http';
 //import {JwtHelper} from 'angular2-jwt';
@@ -8,6 +8,7 @@ import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
+import { FCM } from '@ionic-native/fcm';
 
 @Component({
     templateUrl: 'profile.html',
@@ -31,7 +32,7 @@ export class ProfilePage {
     private nav: NavController;
     private loadingCtrl: LoadingController;
 
-    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, private parametros: Parametros) {
+    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, private parametros: Parametros, private fcm: FCM, private alertCtrl: AlertController) {
         // let self: any = this;
         this.http = http;
         this.auth = new AuthService();
@@ -39,21 +40,7 @@ export class ProfilePage {
         this.loadingCtrl = loadingCtrl;
         this.usuario = usuario;
         this.local = local;
-        /*
-        this.local.get('profile').then(profile => {
-            self.usuario.nombre = JSON.parse(profile);
-        }).catch(error => {
-            console.log(error);
-        });
-        */
-        //let local: Storage = new Storage();
-
-
-        
-    
-        
     }
-
     
     ionViewDidEnter() {
         if(this.usuario && !this.usuario.nombre) {
@@ -67,7 +54,6 @@ export class ProfilePage {
             });
         }
     }
-    
 
     public login(credentials: any): void {
         let loading: any = this.loadingCtrl.create({
@@ -154,5 +140,18 @@ export class ProfilePage {
             }
         );
 
+    }
+
+    public getToken() {
+        this.fcm.getToken().then(token => {
+            //backend.registerToken(token);
+            let alert = this.alertCtrl.create({
+                title: 'Profile',
+                subTitle: `Obtained token: ${token}`,
+                buttons: ['Ok'],
+              });
+              alert.present();
+              console.log(`Obtained token: ${token}`);
+          })    
     }
 }

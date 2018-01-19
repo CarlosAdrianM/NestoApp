@@ -42,6 +42,8 @@ import { RapportService } from '../pages/Rapport/Rapport.service';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { Keyboard } from '@ionic-native/keyboard';
+import { FCM } from '@ionic-native/fcm';
+
 
 let storage = new Storage({});
 
@@ -120,7 +122,8 @@ export function getAuthHttp(http) {
       Usuario,
       LineaVentaService,
       RapportService,
-      Keyboard
+      Keyboard,
+      FCM
   ]
 })
 export class AppModule {}
