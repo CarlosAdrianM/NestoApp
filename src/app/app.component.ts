@@ -6,10 +6,11 @@ import { ListaPedidosVenta } from '../pages/ListaPedidosVenta/ListaPedidosVenta'
 import { PlantillaVenta } from '../pages/PlantillaVenta/PlantillaVenta';
 import { ListaRapports } from '../pages/ListaRapports/ListaRapports.component';
 import { ProfilePage } from '../pages/profile/profile';
-import {Usuario} from '../models/Usuario';
+import { Usuario } from '../models/Usuario';
 import { FCM } from '@ionic-native/fcm';
 import { NavController } from 'ionic-angular/navigation/nav-controller';
-import {PedidoVentaComponent} from '../pages/PedidoVenta/PedidoVenta.component';
+import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
+import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
 
 @Component({
     templateUrl: 'app.html', 
@@ -29,7 +30,8 @@ export class MyApp {
             { title: 'Plantilla Venta', component: PlantillaVenta },
             { title: 'Pedidos Venta', component: ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente },
-            { title: 'Rapports', component: ListaRapports},
+            { title: 'Rapports', component: ListaRapports },
+            { title: 'Comisiones', component: ComisionesComponent },
             { title: 'Usuario', component: ProfilePage }
         ];
 
@@ -45,7 +47,7 @@ export class MyApp {
             // Okay, so the platform is ready and our plugins are available.
             // Here you can do any higher level native things you might need.
           this.statusBar.styleDefault();
-
+          
           this.fcm.onTokenRefresh().subscribe(token => {
             alert('token refreshed: ' + token);
           });

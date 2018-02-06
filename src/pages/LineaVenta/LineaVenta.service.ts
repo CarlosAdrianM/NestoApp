@@ -1,4 +1,4 @@
-﻿import {Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Http, Response, URLSearchParams} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Configuracion} from '../../components/configuracion/configuracion';
@@ -25,6 +25,6 @@ export class LineaVentaService {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Observable.throw(error.json().error || 'Server error');
+        return Observable.throw(error.json() || 'Server error');
     }
 }

@@ -1,4 +1,4 @@
-﻿<ion-header>
+<ion-header>
     <ion-navbar>
         <ion-title>Pedido Venta</ion-title>
         <ion-buttons end>
@@ -65,9 +65,9 @@
                     <ion-row>
                         <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
                         <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
-                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR':true:'1.2-2'}}</p></ion-col>
+                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR'}}</p></ion-col>
                         <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
-                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR':true:'1.2-2'}}</p></ion-col>
+                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR'}}</p></ion-col>
                     </ion-row>
                     <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
                     <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>

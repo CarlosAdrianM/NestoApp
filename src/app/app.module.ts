@@ -1,4 +1,4 @@
-import { NgModule, ErrorHandler } from '@angular/core';
+import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
 import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { ExtractoCliente } from '../pages/ExtractoCliente/ExtractoCliente';
@@ -43,6 +43,10 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { Keyboard } from '@ionic-native/keyboard';
 import { FCM } from '@ionic-native/fcm';
+import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
+import { ComisionesService } from '../pages/Comisiones/Comisiones.service';
+import { ComisionesDetalleComponent } from '../pages/ComisionesDetalle/ComisionesDetalle.component';
+import { ComisionesDetalleService } from '../pages/ComisionesDetalle/ComisionesDetalle.service';
 
 
 let storage = new Storage({});
@@ -74,7 +78,9 @@ export function getAuthHttp(http) {
     SelectorPlazosPago,
     SelectorVendedoresComponent,
     LineaVentaComponent,
-    RapportComponent
+    RapportComponent,
+    ComisionesComponent,
+    ComisionesDetalleComponent
   ],
   imports: [
       BrowserModule,
@@ -95,7 +101,9 @@ export function getAuthHttp(http) {
     ProfilePage,
     UltimasVentasProductoCliente,
     LineaVentaComponent,
-    RapportComponent
+    RapportComponent,
+    ComisionesComponent,
+    ComisionesDetalleComponent
   ],
   providers: [
       {   
@@ -105,7 +113,8 @@ export function getAuthHttp(http) {
       },
       StatusBar,
       SplashScreen,
-      {provide: ErrorHandler, useClass: IonicErrorHandler},
+      { provide: ErrorHandler, useClass: IonicErrorHandler },
+      { provide: LOCALE_ID, useValue: 'es-ES' },
       ExtractoClienteService,
       ListaPedidosVentaService,
       ListaRapportsService,
@@ -123,7 +132,9 @@ export function getAuthHttp(http) {
       LineaVentaService,
       RapportService,
       Keyboard,
-      FCM
+      FCM,
+      ComisionesService,
+      ComisionesDetalleService
   ]
 })
 export class AppModule {}

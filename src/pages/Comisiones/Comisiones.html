@@ -1,0 +1,84 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Comisiones</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content>
+  <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+  <button ion-button block (click)="doCheckbox()">{{nombreMesSeleccionado}}</button>
+  <ion-item>
+    <ion-label>Incluir Fin de Mes</ion-label>
+    <ion-toggle [(ngModel)]="incluirAlbaranes" (ionChange)="cargarResumen()" disabled="{{deshabilitarIncluirAlbaranes}}"></ion-toggle>
+  </ion-item>
+  <ion-list *ngIf="resumen">
+    <ion-item-divider color="light">General</ion-item-divider>
+    <ion-item>
+      <ion-label>Venta sin Unión Láser</ion-label>
+      <p item-right (click)="abrirDetalle('GeneralVenta')">{{resumen.GeneralVenta | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Proyección Año</ion-label>
+      <p item-right>{{resumen.GeneralProyeccion | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Tipo</ion-label>
+      <p item-right>{{resumen.GeneralTipo | percent:'1.2-2'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Comisión</ion-label>
+      <p item-right>{{resumen.GeneralComision | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Falta para siguiente salto</ion-label>
+      <p item-right>{{resumen.GeneralFaltaParaSalto | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item-divider color="light">Unión Láser</ion-item-divider>
+    <ion-item>
+      <ion-label>Venta Unión Láser</ion-label>
+      <p item-right (click)="abrirDetalle('UnionLaserVenta')">{{resumen.UnionLaserVenta | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Tipo</ion-label>
+      <p item-right>{{resumen.UnionLaserTipo | percent:'1.2-2'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Comisión</ion-label>
+      <p item-right>{{resumen.UnionLaserComision | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item-divider color="light">Eva Visnú</ion-item-divider>
+    <ion-item>
+      <ion-label>Venta Eva Visnú</ion-label>
+      <p item-right (click)="abrirDetalle('EvaVisnuVenta')">{{resumen.EvaVisnuVenta | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Tipo Extra</ion-label>
+      <p item-right>{{resumen.EvaVisnuTipo | percent:'1.2-2'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Comisión Extra</ion-label>
+      <p item-right>{{resumen.EvaVisnuComision | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item-divider color="light">Otros Aparatos</ion-item-divider>
+    <ion-item>
+      <ion-label>Venta Otros Aparatos</ion-label>
+      <p item-right (click)="abrirDetalle('OtrosAparatosVenta')">{{resumen.OtrosAparatosVenta | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Tipo</ion-label>
+      <p item-right>{{resumen.OtrosAparatosTipo | percent:'1.2-2'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Comisión</ion-label>
+      <p item-right>{{resumen.OtrosAparatosComision | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item-divider color="light">Total</ion-item-divider>
+    <ion-item>
+      <ion-label><strong>Total Comisiones</strong></ion-label>
+      <p item-right><strong>{{resumen.TotalComisiones | currency:'EUR'}}</strong></p>
+    </ion-item>
+  </ion-list>
+</ion-content>
