@@ -69,8 +69,11 @@ export class ComisionesComponent {
       );
   }
 
-  abrirDetalle(tipoDetalle: string) {
-    this.nav.push(ComisionesDetalleComponent, { tipoDetalle: tipoDetalle, anno: this.annoSeleccionado, mes: this.mesSeleccionado, incluirAlbaranes: this.incluirAlbaranes });
+  abrirDetalle(etiqueta: string) {
+    this.nav.push(ComisionesDetalleComponent, {
+      vendedor: this.vendedorSeleccionado, anno: this.annoSeleccionado, mes: this.mesSeleccionado+1, 
+      incluirAlbaranes: this.incluirAlbaranes, etiqueta: etiqueta 
+    });
   }
 
   doCheckbox() {

@@ -1,79 +1,30 @@
 import { Injectable } from '@angular/core';
+import { Http, Response, URLSearchParams } from '@angular/http';
+import { Observable } from 'rxjs/Rx';
+import { Configuracion } from '../../components/configuracion/configuracion';
 
 @Injectable()
 export class ComisionesDetalleService {
-  public cargarDetalle(tipoDetalle: string, anno: number, mes: number, incluirAlbaranes: boolean): any {
-    return [
-      {
-        "Empresa": "1",
-        "Pedido": 676689,
-        "Nombre": "EL EDÉN ALCOBENDAS",
-        "Direccion": "C/ SEGOVIA, 1 - LOCAL",
-        "Fecha": "2018-01-15T09:03:01+0900",
-        "Importe": 123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676686,
-        "Nombre": "EL EDÉN LAS TABLAS - DISTRITO TELEFÓNICA",
-        "Direccion": "RONDA DE LA COMUNICACIÓN, 22 - JUNTO A FARMACIA",
-        "Fecha": "2018-01-16T09:03:01+0900",
-        "Importe": 1123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676096,
-        "Nombre": "EL EDÉN TOLEDO",
-        "Direccion": "VIA PRINCIPAL, 1",
-        "Fecha": "2018-01-17T09:03:01+0900",
-        "Importe": 113.45
-      }, {
-        "Empresa": "1",
-        "Pedido": 676689,
-        "Nombre": "EL EDÉN ALCOBENDAS",
-        "Direccion": "C/ SEGOVIA, 1 - LOCAL",
-        "Fecha": "2018-01-15T09:03:01+0900",
-        "Importe": 123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676686,
-        "Nombre": "EL EDÉN LAS TABLAS - DISTRITO TELEFÓNICA",
-        "Direccion": "RONDA DE LA COMUNICACIÓN, 22 - JUNTO A FARMACIA",
-        "Fecha": "2018-01-16T09:03:01+0900",
-        "Importe": 1123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676096,
-        "Nombre": "EL EDÉN TOLEDO",
-        "Direccion": "VIA PRINCIPAL, 1",
-        "Fecha": "2018-01-17T09:03:01+0900",
-        "Importe": 113.45
-      }, {
-        "Empresa": "1",
-        "Pedido": 676689,
-        "Nombre": "EL EDÉN ALCOBENDAS",
-        "Direccion": "C/ SEGOVIA, 1 - LOCAL",
-        "Fecha": "2018-01-15T09:03:01+0900",
-        "Importe": 123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676686,
-        "Nombre": "EL EDÉN LAS TABLAS - DISTRITO TELEFÓNICA",
-        "Direccion": "RONDA DE LA COMUNICACIÓN, 22 - JUNTO A FARMACIA",
-        "Fecha": "2018-01-16T09:03:01+0900",
-        "Importe": 1123.45
-      },
-      {
-        "Empresa": "1",
-        "Pedido": 676096,
-        "Nombre": "EL EDÉN TOLEDO",
-        "Direccion": "VIA PRINCIPAL, 1",
-        "Fecha": "2018-01-17T09:03:01+0900",
-        "Importe": 113.45
-      }
-    ]
+  private _baseUrl: string = Configuracion.API_URL + '/ComisionAnualDetalles';
+
+  constructor(private http: Http) { }
+
+  public cargarDetalle(vendedor: string, anno: number, mes: number, incluirAlbaranes: boolean, etiqueta: string): Observable<any> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('vendedor', vendedor);
+    params.set('mes', mes.toString());
+    params.set('anno', anno.toString());
+    params.set('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
+    params.set('etiqueta', etiqueta);
+
+    return this.http.get(this._baseUrl, { search: params })
+      .map(res => <any[]>res.json())
+      .catch(this.handleError);
   }
+    private handleError(error: Response): Observable<any> {
+      // in a real world app, we may send the error to some remote logging infrastructure
+      // instead of just logging it to the console
+      console.error(error);
+      return Observable.throw(error.json() || 'Server error');
+    }
 }
