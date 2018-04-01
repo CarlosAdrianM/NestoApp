@@ -42,6 +42,8 @@ export class ComisionesComponent {
     if (!this.vendedorSeleccionado) {
       return;
     }
+    //this.resumen = this.servicio.cargarPrueba();
+    
     let loading: any = this.loadingCtrl.create({
       content: 'Cargando Comisiones...',
     });
@@ -66,9 +68,9 @@ export class ComisionesComponent {
       () => {
         loading.dismiss();
       }
-      );
+    );
   }
-
+  
   abrirDetalle(etiqueta: string) {
     this.nav.push(ComisionesDetalleComponent, {
       vendedor: this.vendedorSeleccionado, anno: this.annoSeleccionado, mes: this.mesSeleccionado+1, 
