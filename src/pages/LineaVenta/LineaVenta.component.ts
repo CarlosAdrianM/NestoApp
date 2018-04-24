@@ -1,4 +1,4 @@
-﻿import {Component} from '@angular/core';
+import {Component} from '@angular/core';
 import {NavParams, AlertController} from 'ionic-angular';
 import {LineaVenta} from './LineaVenta';
 import { LineaVentaService } from './LineaVenta.service';
@@ -31,7 +31,7 @@ export class LineaVentaComponent {
     }
 
     public cambiarProducto(evento): void {
-        let nuevoProducto: string = evento.currentTarget.value;
+        let nuevoProducto: string = evento.value;
         if (this.linea.producto == nuevoProducto) {
             return;
         }
@@ -63,7 +63,8 @@ export class LineaVentaComponent {
     }
 
     public seleccionarTexto(evento: any): void {
-        evento.target.select();
+      var nativeInputEle = evento._native.nativeElement;
+      nativeInputEle.select();
     }
 
 }
