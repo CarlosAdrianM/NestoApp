@@ -11,6 +11,7 @@ import { FCM } from '@ionic-native/fcm';
 import { NavController } from 'ionic-angular/navigation/nav-controller';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
+import { ProductoComponent } from '../pages/Producto/Producto.component';
 
 @Component({
     templateUrl: 'app.html', 
@@ -31,7 +32,8 @@ export class MyApp {
             { title: 'Pedidos Venta', component: ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente },
             { title: 'Rapports', component: ListaRapports },
-            { title: 'Comisiones', component: ComisionesComponent },
+          { title: 'Comisiones', component: ComisionesComponent },
+          { title: 'Productos', component: ProductoComponent },
             { title: 'Usuario', component: ProfilePage }
         ];
 

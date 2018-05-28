@@ -47,7 +47,8 @@ import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
 import { ComisionesService } from '../pages/Comisiones/Comisiones.service';
 import { ComisionesDetalleComponent } from '../pages/ComisionesDetalle/ComisionesDetalle.component';
 import { ComisionesDetalleService } from '../pages/ComisionesDetalle/ComisionesDetalle.service';
-
+import { ProductoComponent } from '../pages/Producto/Producto.component';
+import { ProductoService } from '../pages/Producto/Producto.service';
 
 let storage = new Storage({});
 
@@ -80,7 +81,8 @@ export function getAuthHttp(http) {
     LineaVentaComponent,
     RapportComponent,
     ComisionesComponent,
-    ComisionesDetalleComponent
+    ComisionesDetalleComponent,
+    ProductoComponent
   ],
   imports: [
       BrowserModule,
@@ -103,7 +105,8 @@ export function getAuthHttp(http) {
     LineaVentaComponent,
     RapportComponent,
     ComisionesComponent,
-    ComisionesDetalleComponent
+    ComisionesDetalleComponent,
+    ProductoComponent
   ],
   providers: [
       {   
@@ -134,7 +137,8 @@ export function getAuthHttp(http) {
       Keyboard,
       FCM,
       ComisionesService,
-      ComisionesDetalleService
+    ComisionesDetalleService,
+    ProductoService
   ]
 })
 export class AppModule {}
