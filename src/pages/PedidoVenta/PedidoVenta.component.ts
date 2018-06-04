@@ -5,7 +5,7 @@ import {LineaVentaComponent} from '../LineaVenta/LineaVenta.component';
 import {LineaVenta} from '../LineaVenta/LineaVenta';
 import { PedidoVenta } from './PedidoVenta';
 import {Configuracion} from '../../components/configuracion/configuracion';
-import {Usuario} from '../../models/Usuario';
+import { Usuario } from '../../models/Usuario';
 
 
 @Component({
@@ -153,7 +153,6 @@ export class PedidoVentaComponent {
 
         
     }
-
 
     public cadenaFecha(cadena: string): Date {
         return new Date(cadena);

@@ -3,6 +3,7 @@ import {NavController, NavParams, AlertController, ToastController} from 'ionic-
 import {SelectorPlantillaVentaService} from './SelectorPlantillaVenta.service';
 import { UltimasVentasProductoCliente } from '../../pages/UltimasVentasProductoCliente/UltimasVentasProductoCliente';
 import { Keyboard } from '@ionic-native/keyboard';
+import { ProductoComponent } from '../../pages/Producto/Producto.component';
 
 @Component({
     templateUrl: 'SelectorPlantillaVentaDetalle.html',
@@ -231,5 +232,10 @@ export class SelectorPlantillaVentaDetalle {
         });
         alert.present();
     }
+
+    public abrirProducto(): void {
+      this.nav.push(ProductoComponent, { empresa: "1", producto: this.producto.producto });
+    }
+
 
 }

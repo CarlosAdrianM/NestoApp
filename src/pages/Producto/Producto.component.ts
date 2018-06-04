@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductoService } from './Producto.service';
-import { LoadingController, AlertController } from 'ionic-angular';
+import { LoadingController, AlertController, NavParams } from 'ionic-angular';
 
 @Component({
   templateUrl: 'Producto.html',
@@ -10,7 +10,11 @@ export class ProductoComponent {
   public producto: any;
 
   constructor(private servicio: ProductoService, 
-    public loadingCtrl: LoadingController, public alertCtrl: AlertController) { }
+    public loadingCtrl: LoadingController, public alertCtrl: AlertController, private navParams: NavParams) {
+    if (navParams.get('producto')) {
+      this.productoActual = navParams.get('producto');
+    }
+  }
 
   ngOnInit() {
     this.cargar();
@@ -18,7 +22,7 @@ export class ProductoComponent {
 
   cargar() {
     let loading: any = this.loadingCtrl.create({
-      content: 'Cargando Comisiones...',
+      content: 'Cargando Producto...',
     });
     loading.present();
     this.servicio.cargar("1", this.productoActual, true)

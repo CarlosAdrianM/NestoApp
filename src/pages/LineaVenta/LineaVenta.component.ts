@@ -1,7 +1,9 @@
 import {Component} from '@angular/core';
-import {NavParams, AlertController} from 'ionic-angular';
+import { NavParams, NavController, AlertController} from 'ionic-angular';
 import {LineaVenta} from './LineaVenta';
 import { LineaVentaService } from './LineaVenta.service';
+import { ProductoComponent } from '../Producto/Producto.component';
+
 
 
 @Component({
@@ -13,7 +15,7 @@ export class LineaVentaComponent {
     public errorMessage: string;
     private descuentoCadena: string;
 
-    constructor(navParams: NavParams, private servicio: LineaVentaService, private alertCtrl: AlertController) {
+  constructor(navParams: NavParams, private servicio: LineaVentaService, private alertCtrl: AlertController, private nav: NavController) {
         this.linea = navParams.get('linea');
         this.actualizarDescuento(this.linea.descuento * 100);
     }
@@ -60,6 +62,10 @@ export class LineaVentaComponent {
                 // loading.dismiss();
             }
         );
+    }
+
+    public abrirProducto(): void {
+      this.nav.push(ProductoComponent, { empresa: "1", producto: this.linea.producto });
     }
 
     public seleccionarTexto(evento: any): void {

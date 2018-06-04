@@ -1,17 +1,22 @@
-﻿<ion-header>
-    <ion-navbar>
-        <ion-title>Línea Venta</ion-title>
-    </ion-navbar>
+<ion-header>
+  <ion-navbar>
+    <ion-title>Línea Venta</ion-title>
+    <ion-buttons end>
+      <button ion-button (click)="abrirProducto()">
+        <ion-icon name="open"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-navbar>
 </ion-header>
 
 <ion-content>
     <form>
-        <ion-item>
-            <ion-label for="producto">Producto</ion-label>
-            <ion-input type="text" class="form-control" id="producto" required disabled="{{linea.estado > 1 || linea.picking > 0}}"
-                       (ionBlur)="cambiarProducto($event)" [ngModel]="linea.producto" 
-                       name="producto" (ionFocus)="seleccionarTexto($event)"></ion-input>
-        </ion-item>
+      <ion-item>
+        <ion-label for="producto">Producto</ion-label>
+        <ion-input type="text" class="form-control" id="producto" required disabled="{{linea.estado > 1 || linea.picking > 0}}"
+                   (ionBlur)="cambiarProducto($event)" [ngModel]="linea.producto"
+                   name="producto" (ionFocus)="seleccionarTexto($event)" (press)="abrirProducto()"></ion-input>
+      </ion-item>
         <ion-item>
             <ion-label for="texto">Texto</ion-label>
             <ion-input type="text" class="form-control" id="texto" disabled="{{linea.estado > 2}}"
