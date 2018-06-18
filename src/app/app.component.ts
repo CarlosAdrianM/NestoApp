@@ -12,6 +12,7 @@ import { NavController } from 'ionic-angular/navigation/nav-controller';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
 import { ProductoComponent } from '../pages/Producto/Producto.component';
+import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.component';
 
 @Component({
     templateUrl: 'app.html', 
@@ -33,7 +34,7 @@ export class MyApp {
             { title: 'Extracto Cliente', component: ExtractoCliente },
             { title: 'Rapports', component: ListaRapports },
           { title: 'Comisiones', component: ComisionesComponent },
-          { title: 'Productos', component: ProductoComponent },
+          { title: 'Productos', component: ListaProductosComponent },
             { title: 'Usuario', component: ProfilePage }
         ];
 

@@ -55,7 +55,7 @@
         <ion-label>Pendientes de Recibir</ion-label>
         <p item-right>{{stock.PendienteRecibir}}</p>
       </ion-item>
-      <ion-item  *ngIf="stock.FechaEstimadaRecepcion < '9999-12-31T23:59:59'">
+      <ion-item *ngIf="stock.FechaEstimadaRecepcion < '9999-12-31T23:59:59'">
         <ion-label>Fecha Estimada de Recepción</ion-label>
         <p item-right>{{stock.FechaEstimadaRecepcion | date:'shortDate'}}</p>
       </ion-item>
@@ -68,5 +68,8 @@
         <p item-right>{{stock.CantidadDisponible}}</p>
       </ion-item>
     </ion-list>
+    <div text-center>
+      <img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" />
+    </div>
   </div>
 </ion-content>

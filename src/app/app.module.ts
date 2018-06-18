@@ -49,6 +49,9 @@ import { ComisionesDetalleComponent } from '../pages/ComisionesDetalle/Comisione
 import { ComisionesDetalleService } from '../pages/ComisionesDetalle/ComisionesDetalle.service';
 import { ProductoComponent } from '../pages/Producto/Producto.component';
 import { ProductoService } from '../pages/Producto/Producto.service';
+import { SelectorProductosComponent } from '../components/SelectorProductos/SelectorProductos.component';
+import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.component';
+import { SelectorProductosService } from '../components/SelectorProductos/SelectorProductos.service';
 
 let storage = new Storage({});
 
@@ -82,7 +85,9 @@ export function getAuthHttp(http) {
     RapportComponent,
     ComisionesComponent,
     ComisionesDetalleComponent,
-    ProductoComponent
+    ProductoComponent,
+    ListaProductosComponent,
+    SelectorProductosComponent
   ],
   imports: [
       BrowserModule,
@@ -106,7 +111,9 @@ export function getAuthHttp(http) {
     RapportComponent,
     ComisionesComponent,
     ComisionesDetalleComponent,
-    ProductoComponent
+    ProductoComponent,
+    ListaProductosComponent,
+    SelectorProductosComponent
   ],
   providers: [
       {   
@@ -138,7 +145,8 @@ export function getAuthHttp(http) {
       FCM,
       ComisionesService,
     ComisionesDetalleService,
-    ProductoService
+    ProductoService,
+    SelectorProductosService
   ]
 })
 export class AppModule {}
