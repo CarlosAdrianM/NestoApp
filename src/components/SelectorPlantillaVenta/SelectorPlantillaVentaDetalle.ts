@@ -113,9 +113,6 @@ export class SelectorPlantillaVentaDetalle {
             }
         );
 
-        console.log("Comprobamos las condiciones precio");
-        this.comprobarCondicionesPrecio();
-
         this.seleccionarColorStock(producto);
     }
 
@@ -123,51 +120,6 @@ export class SelectorPlantillaVentaDetalle {
         // Esto lo hacemos porque guarda el precio como string y da error
         this.producto.precio = +this.producto.precio;
         this.producto.precioEstaModificado = true;
-        console.log("Actualizamos precio y comprobamos las condiciones precio");
-        this.comprobarCondicionesPrecio();
-    }
-
-    private comprobarCondicionesPrecio(): void {
-        if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
-            console.log("No hay cantidad al comprobar las condiciones precio");
-            return;
-        }
-        this.servicio.comprobarCondicionesPrecio(this.producto).subscribe(
-            data => {
-                if (data.motivo && data.motivo !== '') {
-                    console.log("Hay data motivo al comprobar las condiciones precio");
-                    if(this.producto.precio !== data.precio) {
-                        this.producto.precio = data.precio;
-                        this.producto.precioEstaModificado = false;
-                        console.log("Uno");
-                    }
-                    if (this.producto.aplicarDescuento !== data.aplicarDescuento) {
-                        this.producto.aplicarDescuento = data.aplicarDescuento;
-                        console.log("Dos");
-                    }
-                    if (this.producto.cantidadOferta !== 0) {
-                        this.producto.cantidadOferta = 0;
-                        this.seleccionarColorStock(this.producto);
-                        this.producto.aplicarDescuento = this.producto.aplicarDescuentoFicha;
-                        console.log("tres");
-                    }
-                    if (this.producto.descuento !== data.descuento) {
-                        this.producto.descuento = data.descuento;
-                        this.actualizarDescuento(this.producto.descuento * 100);
-                        console.log("Cuatro");
-                    }
-                    let toast = this.toastCtrl.create({
-                        message: data.motivo,
-                        duration: 3000
-                    });
-                    toast.present();
-                }
-            },
-            error => {
-                this.errorMessage = <any>error;
-                console.log("Error: " + error);
-            }
-        )
     }
 
     private seleccionarColorStock(producto: any): void {
@@ -196,8 +148,6 @@ export class SelectorPlantillaVentaDetalle {
     public actualizarDescuento(descuento: number): void {
         this.producto.descuento = descuento / 100;
         this.descuentoMostrar = descuento + '%';
-        console.log("Actualizamos descuento y comprobamos las condiciones precio");
-        this.comprobarCondicionesPrecio();
     }
     
     public seleccionarTexto(evento: any): void {
