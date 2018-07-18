@@ -82,6 +82,7 @@ export class PlantillaVenta {
     private iva: string;
     private formaPago: any;
     private plazosPago: any;
+    public esPresupuesto: boolean = false;
 
     @ViewChild(SelectorPlantillaVenta)
     public _selectorPlantillaVenta: SelectorPlantillaVenta;
@@ -187,6 +188,7 @@ export class PlantillaVenta {
             'noComisiona': this.direccionSeleccionada.noComisiona,
             'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
             'servirJunto': this.direccionSeleccionada.servirJunto,
+            'EsPresupuesto': this.esPresupuesto,
             'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
             'LineasPedido': [],
         };
@@ -199,7 +201,7 @@ export class PlantillaVenta {
         for (let linea of this.productosResumen) {
             ofertaLinea = linea.cantidadOferta ? ++ultimaOferta : 0;
             nuevaLinea = {
-                'estado': 1, // ojo, de parámetro. ¿Pongo 0 para tener que validar?
+                'estado': this.esPresupuesto ? -3 : 1, // ojo, de parámetro. ¿Pongo 0 para tener que validar?
                 'tipoLinea': 1, // Producto
                 'producto': linea.producto,
                 'texto': linea.texto,

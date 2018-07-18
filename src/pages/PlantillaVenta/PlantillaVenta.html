@@ -1,4 +1,4 @@
-﻿<ion-header>
+<ion-header>
     <ion-navbar>
         <button ion-button menuToggle>
             <ion-icon name="menu"></ion-icon>
@@ -96,6 +96,10 @@
                 </ion-item>
                 <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
                 <selector-plazos-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+                <ion-item>
+                  <ion-label>Crear como presupuesto</ion-label>
+                  <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>
+                </ion-item>
                 <button ion-button block (click)="crearPedido()">Crear Pedido</button>
             </ion-content>
         </ion-slide>
