@@ -23,7 +23,7 @@
     "@angular/platform-browser-dynamic": "5.0.0",
     "@angular/tsc-wrapped": "^4.4.6",
     "@ionic-native/core": "^4.3.1",
-    "@ionic-native/fcm": "^4.5.2",
+    "@ionic-native/fcm": "4.15.0",
     "@ionic-native/keyboard": "^4.3.1",
     "@ionic-native/splash-screen": "^4.3.1",
     "@ionic-native/status-bar": "^4.3.1",
@@ -41,12 +41,11 @@
     "ionic_source_map": "source-map"
   },
   "devDependencies": {
-    "@angular/cli": "^1.0.0-beta.28.3",
-    "@ionic/app-scripts": "^3.1.0",
+    "@angular/cli": "1.7.4",
+    "@ionic/app-scripts": "3.2.0",
     "@types/jasmine": "^2.5.47",
     "@types/node": "^7.0.22",
     "codecov": "3.0.0",
-    "ionic": "3.20.0",
     "jasmine-core": "^2.6.2",
     "jasmine-spec-reporter": "^4.1.0",
     "karma": "^1.7.0",
@@ -64,8 +63,7 @@
     "cordova-plugin-console",
     "cordova-plugin-whitelist",
     "cordova-plugin-splashscreen",
-    "cordova-plugin-statusbar",
-    "cordova-plugin-ionic"
+    "cordova-plugin-statusbar"
   ],
   "cordovaPlatforms": [],
   "repository": {
