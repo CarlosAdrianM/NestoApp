@@ -54,7 +54,7 @@
                 </ion-list>
             </ion-content>
         </ion-slide>
-        <ion-slide *ngIf="clienteSeleccionado" scrollY="true">
+        <ion-slide *ngIf="clienteSeleccionado" style="overflow-y:scroll">
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
             <ion-content>
                 <ion-list *ngIf="direccionSeleccionada">
