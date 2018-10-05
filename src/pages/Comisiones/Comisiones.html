@@ -32,6 +32,12 @@
     </ion-list>
     <ion-item-divider color="light">Total</ion-item-divider>
     <ion-item>
+      <ion-range min="{{resumen.GeneralInicioTramo}}" max="{{resumen.GeneralFinalTramo}}" color="{{colorRango(resumen.GeneralBajaSaltoMesSiguiente)}}" [(ngModel)]="resumen.GeneralProyeccion">
+        <ion-label range-left>{{resumen.GeneralInicioTramo | currency:'EUR'}}</ion-label>
+        <ion-label range-right>{{resumen.GeneralFinalTramo | currency:'EUR'}}</ion-label>
+      </ion-range>
+    </ion-item>
+    <ion-item>
       <ion-label>Proyección Año</ion-label>
       <p item-right>{{resumen.GeneralProyeccion | currency:'EUR'}}</p>
     </ion-item>

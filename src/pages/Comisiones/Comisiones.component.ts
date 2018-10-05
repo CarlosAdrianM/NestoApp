@@ -191,5 +191,9 @@ export class ComisionesComponent {
       this.testCheckboxOpen = true;
     });
   }
-  
+
+  colorRango(rojo: boolean): string {
+    return rojo ? 'danger' : 'secondary';
+  }
+
 }
