@@ -3,6 +3,7 @@
   <PropertyGroup>
     <ReferenceCachePath>C:\Users\Usuario\AppData\Local\Temp\NestoApp_refcache</ReferenceCachePath>
     <ToolsVersionPromptShown>0.0</ToolsVersionPromptShown>
+    <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Android'">
     <DebuggerFlavor>AndroidEmulator</DebuggerFlavor>

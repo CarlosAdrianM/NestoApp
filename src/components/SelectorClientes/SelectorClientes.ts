@@ -1,4 +1,4 @@
-﻿import {Component, Injectable, Output, EventEmitter, ViewChild} from '@angular/core';
+import {Component, Injectable, Output, EventEmitter, ViewChild} from '@angular/core';
 import {AlertController, LoadingController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
