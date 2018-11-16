@@ -14,6 +14,7 @@ export class RapportComponent {
     public rapport: any;
     public errorMessage: string;
     public numeroCliente: string;
+    modificando: boolean = false;
 
     constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, private loadingCtrl: LoadingController, private usuario: Usuario) {
         this.rapport = navParams.get('rapport');
@@ -66,6 +67,7 @@ export class RapportComponent {
                 {
                     text: 'Sí',
                     handler: () => {
+                        this.modificando = true;
                         // Hay que guardar el pedido original en alguna parte
                         let loading: any = this.loadingCtrl.create({
                             content: 'Guardando Rapport...',
@@ -83,6 +85,7 @@ export class RapportComponent {
                                 alert.present();
                                 loading.dismiss();
                                 // this.reinicializar();
+                                this.modificando = false;
                             },
                             error => {
                                 let alert = this.alertCtrl.create({
@@ -92,6 +95,7 @@ export class RapportComponent {
                                 });
                                 alert.present();
                                 loading.dismiss();
+                                this.modificando = false;
                             },
                             () => {
                                 //loading.dismiss();
@@ -122,7 +126,7 @@ export class RapportComponent {
 
     public sePuedeModificar(): boolean {
         let usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
-        return this.rapport && this.rapport.Usuario === usuarioActual;
+        return !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
     }
 
 }
