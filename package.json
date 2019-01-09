@@ -50,7 +50,6 @@
     "ionic_source_map": "source-map"
   },
   "devDependencies": {
-    "@angular/cli": "^1.0.0-beta.28.3",
     "@ionic/app-scripts": "^3.1.0",
     "@types/jasmine": "^2.5.47",
     "@types/node": "^7.0.22",
