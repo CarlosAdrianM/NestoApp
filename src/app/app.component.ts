@@ -8,7 +8,6 @@ import { ListaRapports } from '../pages/ListaRapports/ListaRapports.component';
 import { ProfilePage } from '../pages/profile/profile';
 import { Usuario } from '../models/Usuario';
 import { FCM } from '@ionic-native/fcm';
-import { NavController } from 'ionic-angular/navigation/nav-controller';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
 import { ProductoComponent } from '../pages/Producto/Producto.component';
