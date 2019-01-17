@@ -1,0 +1,30 @@
+import { NavController, NavParams, AlertController, LoadingController } from 'ionic-angular';
+import { ComisionesService } from './Comisiones.service';
+import { Usuario } from '../../models/Usuario';
+export declare class ComisionesComponent {
+    private servicio;
+    private nav;
+    private navParams;
+    alertCtrl: AlertController;
+    loadingCtrl: LoadingController;
+    private usuario;
+    resumen: any;
+    private hoy;
+    private mesActual;
+    private mesSeleccionado;
+    private annoActual;
+    private annoSeleccionado;
+    nombreMesSeleccionado: string;
+    testCheckboxOpen: boolean;
+    testCheckboxResult: any;
+    incluirAlbaranes: boolean;
+    deshabilitarIncluirAlbaranes: boolean;
+    vendedorSeleccionado: string;
+    constructor(servicio: ComisionesService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController, usuario: Usuario);
+    ngOnInit(): void;
+    seleccionarVendedor(vendedor: string): void;
+    cargarResumen(): void;
+    abrirDetalle(etiqueta: string): void;
+    doCheckbox(): void;
+    colorRango(rojo: boolean): string;
+}

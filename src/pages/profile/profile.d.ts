@@ -1,0 +1,32 @@
+import { LoadingController, NavController, AlertController } from 'ionic-angular';
+import { Storage } from '@ionic/storage';
+import { Http } from '@angular/http';
+import { AuthService } from '../../services/auth/auth';
+import 'rxjs/add/operator/map';
+import { Usuario } from '../../models/Usuario';
+import { Parametros } from '../../services/Parametros.service';
+import { FCM } from '@ionic-native/fcm';
+export declare class ProfilePage {
+    private parametros;
+    private fcm;
+    private alertCtrl;
+    private LOGIN_URL;
+    private SIGNUP_URL;
+    auth: AuthService;
+    authType: string;
+    private contentHeader;
+    error: string;
+    private local;
+    private http;
+    usuario: Usuario;
+    private nav;
+    private loadingCtrl;
+    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, parametros: Parametros, fcm: FCM, alertCtrl: AlertController);
+    ionViewDidEnter(): void;
+    login(credentials: any): void;
+    signup(credentials: any): void;
+    logout(): void;
+    private authSuccess;
+    private cargarParametros;
+    getToken(): void;
+}

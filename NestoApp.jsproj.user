@@ -6,7 +6,7 @@
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Android'">
-    <DebuggerFlavor>AndroidEmulator</DebuggerFlavor>
+    <DebuggerFlavor>SimulateGalaxyS5</DebuggerFlavor>
     <AndroidEmulatorID>AndroidDevice;Dispositivo</AndroidEmulatorID>
   </PropertyGroup>
 </Project>
