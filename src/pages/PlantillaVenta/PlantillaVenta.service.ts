@@ -21,6 +21,16 @@ export class PlantillaVentaService {
             .map(res => <Response>res.json())
             .catch(this.handleError);
     }
+
+    public sePuedeServirPorGlovo(pedido: any): Observable<any> {
+        let headers: any = new Headers();
+        headers.append('Content-Type', 'application/json');
+
+        return this.http.post(this._baseUrl+"/SePuedeServirPorAgencia", JSON.stringify(pedido), { headers: headers })
+            .map(res => <Response>res.json())
+            .catch(this.handleError);
+    }
+
     private handleError(error: Response): Observable<any> {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console

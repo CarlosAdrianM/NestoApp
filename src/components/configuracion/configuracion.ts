@@ -1,5 +1,5 @@
 ﻿export class Configuracion {
-    public static URL_SERVIDOR: string = 'http://api.nuevavision.es';
+    public static URL_SERVIDOR: string = 'https://api.nuevavision.es';
     // public static URL_SERVIDOR: string = 'http://localhost:53364';
     public static API_URL: string = Configuracion.URL_SERVIDOR + '/api';
     public static EMPRESA_POR_DEFECTO: string = '1';

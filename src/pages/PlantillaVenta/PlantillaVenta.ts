@@ -7,6 +7,7 @@ import {PlantillaVentaService} from './PlantillaVenta.service';
 import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
     templateUrl: 'PlantillaVenta.html',
@@ -83,6 +84,10 @@ export class PlantillaVenta {
     private formaPago: any;
     private plazosPago: any;
     public esPresupuesto: boolean = false;
+    public respuestaGlovo: any;
+    public sePuedeServirPorGlovo: boolean = false;
+    public direccionFormateada: string;
+    private costeGlovo: number;
 
     @ViewChild(SelectorPlantillaVenta)
     public _selectorPlantillaVenta: SelectorPlantillaVenta;
@@ -137,9 +142,31 @@ export class PlantillaVenta {
             console.log("Resumen");
             this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
             this.ref.detectChanges();
-        } /*else if (slides.getActiveIndex() === 0) {
-            this.mySelectorCliente.setFocus();
-        } else if (slides.getActiveIndex() === 1) {
+        } else if (slides.getActiveIndex() === 4 && slides.getPreviousIndex() === 3) {
+            console.log("Finalizar");
+            var pedido = this.prepararPedido();
+            this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
+                data => {
+                    this.respuestaGlovo = data;
+                    if (this.respuestaGlovo) {
+                        console.log(this.respuestaGlovo);
+                        this.sePuedeServirPorGlovo = true;
+                        this.costeGlovo = this.respuestaGlovo.Coste;
+                        this.direccionFormateada= this.respuestaGlovo.DireccionFormateada;
+                    }
+                },
+                error => {
+                    let alert = this.alertCtrl.create({
+                        title: 'Error',
+                        subTitle: 'No se ha podido comprobar si se puede servir por Glovo:\n' + error.ExceptionMessage,
+                        buttons: ['Ok'],
+                    });
+                    alert.present();
+                },
+                () => {
+                }
+            );
+        } /*else if (slides.getActiveIndex() === 1) {
             setTimeout(() => {
                 this._selectorPlantillaVenta.setFocus();
             }, 150);

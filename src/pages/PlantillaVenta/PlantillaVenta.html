@@ -100,6 +100,9 @@
                   <ion-label>Crear como presupuesto</ion-label>
                   <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>
                 </ion-item>
+                <ion-item *ngIf="sePuedeServirPorGlovo">
+                    <p>Se puede servir</p>
+                </ion-item>
                 <button ion-button block (click)="crearPedido()">Crear Pedido</button>
             </ion-content>
         </ion-slide>
