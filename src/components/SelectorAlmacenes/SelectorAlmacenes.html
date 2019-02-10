@@ -1,0 +1,6 @@
+<ion-item>
+    <ion-label>Almacén</ion-label>
+    <ion-select [(ngModel)]="seleccionado" (ionChange)="seleccionarDato(seleccionado)">
+        <ion-option *ngFor="let almacen of datosFiltrados" value="{{almacen.almacen}}" checked="almacen.almacen===seleccionado">{{almacen.descripcion}}</ion-option>
+    </ion-select>
+</ion-item>

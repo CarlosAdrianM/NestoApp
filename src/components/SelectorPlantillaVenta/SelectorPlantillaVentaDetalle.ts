@@ -15,13 +15,14 @@ export class SelectorPlantillaVentaDetalle {
         this.navParams = navParams;
         this.producto = navParams.get('producto');
         this.cliente = navParams.get('cliente');
+        this.almacen = navParams.get("almacen");
         this.servicio = servicio;
         this.alertCtrl = alertCtrl;
         this.toastCtrl = toastCtrl;
 
         if (!this.producto.stockActualizado) {
-            console.log("comprobar Si existe el producto");
-            this.comprobarSiExisteElProducto(this.producto);
+            console.log("comprobar si existe el producto");
+            this.comprobarSiExisteElProducto(this.producto, this.almacen);
         }
         // this.actualizarDescuento(this.producto.descuento * 100); // aquí se inicializaría con el descuento del cliente * 100
         if (this.producto.cantidad === 0 && this.producto.cantidadOferta === 0) {
@@ -56,9 +57,10 @@ export class SelectorPlantillaVentaDetalle {
     public descuentoMostrar: string;
     private alertCtrl: AlertController;
     private toastCtrl: ToastController;
+    public almacen: any;
 
-    private comprobarSiExisteElProducto(producto: any): void {
-        this.servicio.cargarStockProducto(this.producto).subscribe(
+    private comprobarSiExisteElProducto(producto: any, almacen: any): void {
+        this.servicio.cargarStockProducto(this.producto, almacen).subscribe(
             data => {
                 producto.stockActualizado = true;
                 producto.stock = data.stock;

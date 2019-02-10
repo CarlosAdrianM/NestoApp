@@ -52,6 +52,8 @@ import { ProductoService } from '../pages/Producto/Producto.service';
 import { SelectorProductosComponent } from '../components/SelectorProductos/SelectorProductos.component';
 import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.component';
 import { SelectorProductosService } from '../components/SelectorProductos/SelectorProductos.service';
+import { SelectorAlmacenesComponent } from '../components/SelectorAlmacenes/SelectorAlmacenes.component';
+import { SelectorAlmacenesService } from '../components/SelectorAlmacenes/SelectorAlmacenes.service';
 
 let storage = new Storage({});
 
@@ -87,7 +89,8 @@ export function getAuthHttp(http) {
     ComisionesDetalleComponent,
     ProductoComponent,
     ListaProductosComponent,
-    SelectorProductosComponent
+    SelectorProductosComponent,
+    SelectorAlmacenesComponent
   ],
   imports: [
       BrowserModule,
@@ -113,7 +116,8 @@ export function getAuthHttp(http) {
     ComisionesDetalleComponent,
     ProductoComponent,
     ListaProductosComponent,
-    SelectorProductosComponent
+    SelectorProductosComponent,
+    SelectorAlmacenesComponent
   ],
   providers: [
       {   
@@ -146,7 +150,8 @@ export function getAuthHttp(http) {
       ComisionesService,
     ComisionesDetalleService,
     ProductoService,
-    SelectorProductosService
+    SelectorProductosService,
+    SelectorAlmacenesService
   ]
 })
 export class AppModule {}

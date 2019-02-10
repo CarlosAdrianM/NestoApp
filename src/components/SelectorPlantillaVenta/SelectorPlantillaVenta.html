@@ -1,7 +1,7 @@
 <ion-searchbar #filtro placeholder="Introduzca algún dato del producto" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
 <ion-content>
     <ion-list>
-      <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto)" [color]="producto.estado == 0 ? '' : 'light'">
+      <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="producto.estado == 0 ? '' : 'light'">
         <h2>{{producto.texto}}</h2>
         <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
         <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>

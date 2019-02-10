@@ -28,6 +28,7 @@ export class PlantillaVenta {
         this.servicio = servicio;
         this.parametros = parametros;
         this.platform = platform;
+        this.almacen = this.usuario.almacen;
     }
 
     @ViewChild(Slides) slider: Slides;
@@ -87,7 +88,9 @@ export class PlantillaVenta {
     public respuestaGlovo: any;
     public sePuedeServirPorGlovo: boolean = false;
     public direccionFormateada: string;
-    private costeGlovo: number;
+    public costeGlovo: number;
+    public servirPorGlovo: boolean;
+    private almacen: any;
 
     @ViewChild(SelectorPlantillaVenta)
     public _selectorPlantillaVenta: SelectorPlantillaVenta;
@@ -153,6 +156,10 @@ export class PlantillaVenta {
                         this.sePuedeServirPorGlovo = true;
                         this.costeGlovo = this.respuestaGlovo.Coste;
                         this.direccionFormateada= this.respuestaGlovo.DireccionFormateada;
+                    } else {
+                        this.sePuedeServirPorGlovo = false;
+                        this.costeGlovo = 0;
+                        this.direccionFormateada = "";
                     }
                 },
                 error => {
@@ -207,7 +214,7 @@ export class PlantillaVenta {
             'comentarios': this.direccionSeleccionada.comentarioRuta,
             'comentarioPicking': this.clienteSeleccionado.comentarioPicking ? this.clienteSeleccionado.comentarioPicking.trim() : null,
             'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
-            'ruta': this.direccionSeleccionada.ruta,
+            'ruta': this.servirPorGlovo ? "GLV" : this.direccionSeleccionada.ruta,
             'serie': 'NV', // calcular
             'ccc': this.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
             'origen': this.clienteSeleccionado.empresa.trim(),
@@ -239,7 +246,7 @@ export class PlantillaVenta {
                 'aplicarDescuento': linea.aplicarDescuento,
                 'vistoBueno': 0, // calcular
                 'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
-                'almacen': this.usuario.almacen,
+                'almacen': this.almacen,
                 'iva': linea.iva,
                 'delegacion': this.usuario.delegacion,
                 'formaVenta': this.usuario.formaVenta,

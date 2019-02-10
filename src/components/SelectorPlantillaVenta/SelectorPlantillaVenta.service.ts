@@ -22,11 +22,11 @@ export class SelectorPlantillaVentaService {
             .catch(this.handleError);
     }
 
-    public cargarStockProducto(producto: any): Observable<any> {
+    public cargarStockProducto(producto: any, almacen: any): Observable<any> {
         let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/CargarStocks';
         let params: URLSearchParams = new URLSearchParams();
         params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
-        params.set('almacen', Configuracion.ALMACEN_POR_DEFECTO);
+        params.set('almacen', almacen);
         params.set('productoStock', producto.producto);
 
         return this.http.get(_baseUrl, { search: params })

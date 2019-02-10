@@ -19,6 +19,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
     private nav: NavController;
 
     @Input() public cliente: any;
+    @Input() public almacen: any;
 
     constructor(servicio: SelectorPlantillaVentaService, alertCtrl: AlertController, loadingCtrl: LoadingController, nav: NavController, private keyboard: Keyboard) {
         super();
@@ -81,12 +82,12 @@ export class SelectorPlantillaVenta extends SelectorBase {
         //this.myProductoSearchBar.setFocus();
     }
 
-    public abrirDetalle(producto: any): void {
+    public abrirDetalle(producto: any, almacen: any): void {
         if (this.agregarDato(producto)) {
             console.log("Agregado dato");
             producto.aplicarDescuentoFicha = producto.aplicarDescuento;
         }
-        this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente });
+        this.nav.push(SelectorPlantillaVentaDetalle, { producto: producto, cliente: this.cliente, almacen: almacen });
     }
 
     public cargarResumen(): any[] {

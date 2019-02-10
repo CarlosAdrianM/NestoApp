@@ -64,7 +64,8 @@
     "ts-node": "^3.3.0",
     "tslint": "^5.8.0",
     "tslint-eslint-rules": "^4.1.1",
-    "typescript": "2.6.1"
+    "typescript": "2.6.1",
+    "ws": "3.3.2"
   },
   "cordovaPlugins": [
     "cordova-plugin-device",
