@@ -54,6 +54,7 @@ import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.
 import { SelectorProductosService } from '../components/SelectorProductos/SelectorProductos.service';
 import { SelectorAlmacenesComponent } from '../components/SelectorAlmacenes/SelectorAlmacenes.component';
 import { SelectorAlmacenesService } from '../components/SelectorAlmacenes/SelectorAlmacenes.service';
+import { IonicImageViewerModule } from 'ionic-img-viewer';
 
 let storage = new Storage({});
 
@@ -97,7 +98,8 @@ export function getAuthHttp(http) {
       HttpModule,
       IonicModule.forRoot(MyApp),
       IonicStorageModule.forRoot(),
-      FormsModule
+      FormsModule,
+      IonicImageViewerModule
   ],
   bootstrap: [IonicApp],
   entryComponents: [
