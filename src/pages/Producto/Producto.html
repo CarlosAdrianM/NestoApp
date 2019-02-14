@@ -69,7 +69,7 @@
       </ion-item>
     </ion-list>
     <div text-center>
-      <img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" />
+      <img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" (click)="abrirFoto(producto.UrlFoto)" />
     </div>
   </div>
 </ion-content>

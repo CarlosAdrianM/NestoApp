@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductoService } from './Producto.service';
 import { LoadingController, AlertController, NavParams } from 'ionic-angular';
+import { PhotoViewer, PhotoViewerOptions } from '@ionic-native/photo-viewer/ngx';
+
 
 @Component({
   templateUrl: 'Producto.html',
@@ -10,7 +12,8 @@ export class ProductoComponent {
   public producto: any;
 
   constructor(private servicio: ProductoService, 
-    public loadingCtrl: LoadingController, public alertCtrl: AlertController, private navParams: NavParams) {
+    public loadingCtrl: LoadingController, public alertCtrl: AlertController, 
+    private navParams: NavParams, private photoViewer: PhotoViewer) {
     if (navParams.get('producto')) {
       this.productoActual = navParams.get('producto');
     }
@@ -51,5 +54,9 @@ export class ProductoComponent {
   public seleccionarTexto(evento: any): void {
     var nativeInputEle = evento._native.nativeElement;
     nativeInputEle.select();
+  }
+
+  abrirFoto(url: string): void {
+    this.photoViewer.show(url);
   }
 }

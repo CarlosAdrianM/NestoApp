@@ -59,4 +59,5 @@
     <plugin name="ionic-plugin-keyboard" spec="~2.2.1" />
     <plugin name="cordova-plugin-add-swift-support" spec="^1.7.2" />
     <plugin name="cordova-plugin-fcm" spec="^2.1.2" />
+    <plugin name="com-sarriaroman-photoviewer" spec="^1.2.0" />
 </widget>
