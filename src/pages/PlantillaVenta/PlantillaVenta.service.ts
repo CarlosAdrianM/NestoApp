@@ -1,33 +1,29 @@
 import {Injectable} from '@angular/core';
-import {Http, Response, Headers} from '@angular/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
 
 @Injectable()
 export class PlantillaVentaService {
-    private http: Http;
-    constructor(http: Http) {
-        this.http = http;
-    }
+
+    constructor(private http: HttpClient) {    }
 
     private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
     public crearPedido(pedido: any): Observable<any> {
-        let headers: any = new Headers();
-        headers.append('Content-Type', 'application/json');
+        let headers: any = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
 
         return this.http.post(this._baseUrl, JSON.stringify(pedido), { headers: headers })
-            .map(res => <Response>res.json())
             .catch(this.handleError);
     }
 
     public sePuedeServirPorGlovo(pedido: any): Observable<any> {
-        let headers: any = new Headers();
-        headers.append('Content-Type', 'application/json');
+        let headers: any = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
 
         return this.http.post(this._baseUrl+"/SePuedeServirPorAgencia", JSON.stringify(pedido), { headers: headers })
-            .map(res => <Response>res.json())
             .catch(this.handleError);
     }
 

@@ -121,7 +121,9 @@ export class RapportComponent {
     }
 
     public seleccionarTexto(evento: any): void {
-        evento.target.select();
+        //evento.target.select();
+        const eventTarget = evento._native.nativeElement;
+        eventTarget.select();
     }
 
     public sePuedeModificar(): boolean {

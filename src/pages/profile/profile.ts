@@ -1,7 +1,7 @@
 ﻿import {Component} from '@angular/core';
 import {LoadingController, NavController, AlertController} from 'ionic-angular';
 import {Storage} from '@ionic/storage';
-import {Http, Headers} from '@angular/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 //import {JwtHelper} from 'angular2-jwt';
 import {AuthService} from '../../services/auth/auth';
 import 'rxjs/add/operator/map';
@@ -21,18 +21,18 @@ export class ProfilePage {
     // When the page loads, we want the Login segment to be selected
     public authType: string = 'login';
     // We need to set the content type for the server
-    private contentHeader: Headers = new Headers({
+    private contentHeader: HttpHeaders = new HttpHeaders({
         'Content-Type': 'application/x-www-form-urlencoded',
     });
     public error: string;
     //private jwtHelper: JwtHelper = new JwtHelper();
     private local: Storage;
-    private http: Http;
+    private http: HttpClient;
     public usuario: Usuario;
     private nav: NavController;
     private loadingCtrl: LoadingController;
 
-    constructor(http: Http, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, private parametros: Parametros, private fcm: FCM, private alertCtrl: AlertController) {
+    constructor(http: HttpClient, usuario: Usuario, nav: NavController, loadingCtrl: LoadingController, local: Storage, private parametros: Parametros, private fcm: FCM, private alertCtrl: AlertController) {
         // let self: any = this;
         this.http = http;
         this.auth = new AuthService();
@@ -71,11 +71,11 @@ export class ProfilePage {
             {
                 headers: this.contentHeader,
             })
-            .map(res =><any>res.json())
             .subscribe(
             data => {
                 this.usuario.nombre = credentials.username;
-                this.authSuccess(data.access_token);
+                let datos: any = data;
+                this.authSuccess(datos.access_token);
                 this.cargarParametros();
             },
             err => {
@@ -90,9 +90,11 @@ export class ProfilePage {
 
     public signup(credentials: any): void {
         this.http.post(this.SIGNUP_URL, JSON.stringify(credentials), { headers: this.contentHeader })
-            .map(res =><any>res.json())
             .subscribe(
-            data => this.authSuccess(data.id_token),
+            data => {
+                let datos: any = data;
+                this.authSuccess(datos.id_token);
+            },
             err => this.error = err
         );
     }

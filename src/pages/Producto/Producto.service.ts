@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Response, URLSearchParams } from '@angular/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
 
@@ -7,16 +7,15 @@ import { Configuracion } from '../../components/configuracion/configuracion';
 export class ProductoService {
   private _baseUrl: string = Configuracion.API_URL + '/Productos';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
   public cargar(empresa: string, id: string, fichaCompleta: boolean): Observable<any> {
-    let params: URLSearchParams = new URLSearchParams();
-    params.set('empresa', empresa);
-    params.set('id', id);
-    params.set('fichaCompleta', fichaCompleta.toString());
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('id', id);
+    params = params.append('fichaCompleta', fichaCompleta.toString());
 
-    return this.http.get(this._baseUrl, { search: params })
-      .map(res => <any[]>res.json())
+    return this.http.get(this._baseUrl, { params: params })
       .catch(this.handleError);
   }
 

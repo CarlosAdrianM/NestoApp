@@ -1,35 +1,28 @@
 ﻿import {Injectable} from '@angular/core';
-import {Http, Response, URLSearchParams} from '@angular/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs/Rx';
 import {Configuracion} from '../../components/configuracion/configuracion';
-import {Usuario} from '../../models/Usuario';
 
 @Injectable()
 export class SelectorFormasPagoService {
-    private http: Http;
-    private usuario: Usuario;
-
-    constructor(http: Http, usuario: Usuario) {
-        this.http = http;
-        this.usuario = usuario;
-    }
+    constructor(private http: HttpClient) {    }
 
     private _baseUrl: string = Configuracion.API_URL + '/FormasPago';
 
     public getFormasPago(cliente: any): Observable<any[]> {
-        let params: URLSearchParams = new URLSearchParams();
-        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        let params: HttpParams = new HttpParams();
+        params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
         if (cliente) {
-            params.set('cliente', cliente);
+            params = params.append('cliente', cliente);
         }
-        return this.http.get(this._baseUrl, { search: params })
-            .map(res => <any[]>res.json())
+        return this.http.get(this._baseUrl, { params: params })
             .catch(this.handleError);
     }
     private handleError(error: Response): Observable<any> {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Observable.throw(error.json().error || 'Server error');
+        let errores: any = error;
+        return Observable.throw(errores.json().error || 'Server error');
     }
 }

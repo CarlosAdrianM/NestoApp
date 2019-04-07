@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Http, Response, URLSearchParams, Headers} from '@angular/http';
+import {HttpClient, HttpResponse, HttpParams, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
@@ -8,30 +8,27 @@ import { PedidoVenta } from '../PedidoVenta/PedidoVenta';
 
 @Injectable()
 export class PedidoVentaService {
-    private http: Http;
-    constructor(http: Http) {
-        this.http = http;
-    }
+
+    constructor(private http: HttpClient) {    }
 
     private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
     public cargarPedido(empresa: string, numero: number): Observable<PedidoVenta> {
-        let params: URLSearchParams = new URLSearchParams();
-        params.set('empresa', empresa);
-        params.set('numero', numero.toString());
+        let params: HttpParams = new HttpParams();
+        params = params.append('empresa', empresa);
+        params = params.append('numero', numero.toString());
 
-        return this.http.get(this._baseUrl, { search: params })
-            .map(res => res.json())
+        return this.http.get(this._baseUrl, { params: params })
             .catch(this.handleError);
     }
 
     public modificarPedido(pedido: any): Observable<any> {
-        let headers: any = new Headers();
-        headers.append('Content-Type', 'application/json');
+        let headers: any = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
         let pedidoJson: string = JSON.stringify(pedido);
 
         return this.http.put(this._baseUrl, pedidoJson, { headers: headers })
-            .map(res => <Response>res)
+            //.map(res => <Response>res)
             .catch(this.handleError);
     }
 

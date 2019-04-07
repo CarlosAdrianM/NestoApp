@@ -19,7 +19,7 @@ export class SelectorDireccionesEntrega extends SelectorBase {
 
     // @Input() 
     public cliente: any;
-    public seleccionado: string = "0";
+    public seleccionado: string;
 
     constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController) {
         super();

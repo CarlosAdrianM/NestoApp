@@ -129,6 +129,10 @@ export class ListaRapports extends SelectorBase {
         rapport.TipoCentro = 0; // No se sabe
         rapport.Estado = 0; // Vigente
         this.abrirRapport(rapport);
+        if (!this.datosFiltrados) {
+            this.datosFiltrados = [];
+        }
+        this.datosFiltrados.push(rapport);
     }
 
     ionViewDidLoad() {

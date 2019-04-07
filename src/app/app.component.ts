@@ -12,6 +12,7 @@ import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component
 import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
 import { ProductoComponent } from '../pages/Producto/Producto.component';
 import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.component';
+import { ClienteComponent } from '../pages/Cliente/Cliente.component';
 
 @Component({
     templateUrl: 'app.html', 
@@ -34,6 +35,7 @@ export class MyApp {
             { title: 'Rapports', component: ListaRapports },
           { title: 'Comisiones', component: ComisionesComponent },
           { title: 'Productos', component: ListaProductosComponent },
+          //{ title: 'Clientes', component: ClienteComponent },
             { title: 'Usuario', component: ProfilePage }
         ];
 

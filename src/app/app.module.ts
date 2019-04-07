@@ -32,7 +32,7 @@ import { IonicStorageModule } from '@ionic/storage'
 import { Storage } from '@ionic/storage'
 import { Parametros } from '../services/Parametros.service';
 import { AuthHttp, AuthConfig } from 'angular2-jwt';
-import { Http, HttpModule } from '@angular/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { LineaVentaComponent } from '../pages/LineaVenta/LineaVenta.component';
 import { LineaVentaService } from '../pages/LineaVenta/LineaVenta.service';
 import { FormsModule }   from '@angular/forms';
@@ -55,6 +55,8 @@ import { SelectorProductosService } from '../components/SelectorProductos/Select
 import { SelectorAlmacenesComponent } from '../components/SelectorAlmacenes/SelectorAlmacenes.component';
 import { SelectorAlmacenesService } from '../components/SelectorAlmacenes/SelectorAlmacenes.service';
 import { IonicImageViewerModule } from 'ionic-img-viewer';
+import { ClienteComponent } from  '../pages/Cliente/Cliente.component';
+import { ClienteService} from  '../pages/Cliente/Cliente.service';
 
 let storage = new Storage({});
 
@@ -91,11 +93,12 @@ export function getAuthHttp(http) {
     ProductoComponent,
     ListaProductosComponent,
     SelectorProductosComponent,
-    SelectorAlmacenesComponent
+    SelectorAlmacenesComponent,
+    ClienteComponent
   ],
   imports: [
       BrowserModule,
-      HttpModule,
+      HttpClientModule,
       IonicModule.forRoot(MyApp),
       IonicStorageModule.forRoot(),
       FormsModule,
@@ -119,13 +122,14 @@ export function getAuthHttp(http) {
     ProductoComponent,
     ListaProductosComponent,
     SelectorProductosComponent,
-    SelectorAlmacenesComponent
+    SelectorAlmacenesComponent,
+    ClienteComponent
   ],
   providers: [
       {   
         provide: AuthHttp,
         useFactory: getAuthHttp,
-        deps: [Http],
+        deps: [HttpClient],
       },
       StatusBar,
       SplashScreen,
@@ -153,7 +157,8 @@ export function getAuthHttp(http) {
     ComisionesDetalleService,
     ProductoService,
     SelectorProductosService,
-    SelectorAlmacenesService
+    SelectorAlmacenesService,
+    ClienteService
   ]
 })
 export class AppModule {}

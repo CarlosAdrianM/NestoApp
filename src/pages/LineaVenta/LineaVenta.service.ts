@@ -1,24 +1,22 @@
 import {Injectable} from '@angular/core';
-import {Http, Response, URLSearchParams} from '@angular/http';
+import {HttpClient, HttpResponse, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs/Rx';
 import {Configuracion} from '../../components/configuracion/configuracion';
 
 @Injectable()
 export class LineaVentaService {
-    private http: Http;
-
-    constructor(http: Http) {
+    
+    constructor(private http: HttpClient) {
         this.http = http;
     }
 
     private _baseUrl: string = Configuracion.API_URL + '/Productos';
 
     public getProducto(producto: any): Observable<any> {
-        let params: URLSearchParams = new URLSearchParams();
-        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
-        params.set('id', producto);
-        return this.http.get(this._baseUrl, { search: params })
-            .map(res => <any[]>res.json())
+        let params: HttpParams = new HttpParams();
+        params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params = params.append('id', producto);
+        return this.http.get(this._baseUrl, { params })
             .catch(this.handleError);
     }
     private handleError(error: Response): Observable<any> {

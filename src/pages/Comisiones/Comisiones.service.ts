@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, Response, URLSearchParams } from '@angular/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
 
@@ -7,17 +7,16 @@ import { Configuracion } from '../../components/configuracion/configuracion';
 export class ComisionesService {
   private _baseUrl: string = Configuracion.API_URL + '/Comisiones';
 
-  constructor(private http: Http) { }
+  constructor(private http: HttpClient) { }
 
   public cargarResumen(vendedor: string, mes: number, anno: number, incluirAlbaranes: boolean): Observable<any> {
-    let params: URLSearchParams = new URLSearchParams();
-    params.set('vendedor', vendedor);
-    params.set('mes', mes.toString());
-    params.set('anno', anno.toString());
-    params.set('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
+    let params: HttpParams = new HttpParams();
+    params = params.append('vendedor', vendedor);
+    params = params.append('mes', mes.toString());
+    params = params.append('anno', anno.toString());
+    params = params.append('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
 
-    return this.http.get(this._baseUrl, { search: params })
-      .map(res => <any[]>res.json())
+    return this.http.get(this._baseUrl, { params })
       .catch(this.handleError);
   }
 

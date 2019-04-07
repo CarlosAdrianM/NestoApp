@@ -1,29 +1,24 @@
 ﻿import { Injectable } from '@angular/core';
-import { Http, Response, Headers, URLSearchParams } from '@angular/http';
+import { HttpClient, HttpResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
 
 @Injectable()
 export class RapportService {
-    private http: Http;
 
-    constructor(http: Http) {
-        this.http = http;
-    }
+    constructor(private http: HttpClient) {    }
 
     private _baseUrl: string = Configuracion.API_URL + '/SeguimientosClientes';
 
     public crearRapport(rapport: any): Observable<any> {
-        let headers: any = new Headers();
-        headers.append('Content-Type', 'application/json');
+        let headers: any = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
 
         if (rapport.Id == 0) {
             return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
-                .map(res => <Response>res.json())
                 .catch(this.handleError);
         } else {
             return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers })
-                .map(res => <Response>res.json())
                 .catch(this.handleError);
         }
         
@@ -32,13 +27,12 @@ export class RapportService {
     private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
 
     public getCliente(cliente: string, contacto: string): Observable<any> {
-        let params: URLSearchParams = new URLSearchParams();
-        params.set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
-        params.set('cliente', cliente);
-        params.set('contacto', contacto);
+        let params: HttpParams = new HttpParams();
+        params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params = params.append('cliente', cliente);
+        params = params.append('contacto', contacto);
 
-        return this.http.get(this._clientesUrl, { search: params })
-            .map(res => <any[]>res.json())
+        return this.http.get(this._clientesUrl, { params: params })
             .catch(this.handleError);
 
     }
@@ -46,6 +40,7 @@ export class RapportService {
         // in a real world app, we may send the error to some remote logging infrastructure
         // instead of just logging it to the console
         console.error(error);
-        return Observable.throw(error.json().error || 'Server error');
+        let errores: any = error;
+        return Observable.throw(errores.json().error || 'Server error');
     }
 }
