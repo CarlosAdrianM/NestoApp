@@ -21,7 +21,11 @@ export class ListaRapportsService {
             fecha = fecha.slice(0, -1); //si acaba en Z la quitamos
         }
         let params: HttpParams = new HttpParams();
-        params = params.append('vendedor', this.usuario.vendedor);
+        if (this.usuario.vendedor) {
+            params = params.append('vendedor', this.usuario.vendedor);
+        } else {
+            params = params.append('vendedor','');
+        }
         params = params.append('fecha', fecha);
 
         return this.http.get(this._baseUrl, { params })

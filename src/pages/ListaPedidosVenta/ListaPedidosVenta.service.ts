@@ -18,7 +18,9 @@ export class ListaPedidosVentaService {
     
     public cargarLista(): Observable<any> {
         let params: HttpParams = new HttpParams();
-        params = params.append('vendedor', this.usuario.vendedor);
+        if (this.usuario.vendedor) {
+            params = params.append('vendedor', this.usuario.vendedor);
+        }
 
         return this.http.get(this._baseUrl, { params })
             .catch(this.handleError);

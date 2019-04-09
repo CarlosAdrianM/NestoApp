@@ -33,9 +33,9 @@ export class MyApp {
             { title: 'Pedidos Venta', component: ListaPedidosVenta },
             { title: 'Extracto Cliente', component: ExtractoCliente },
             { title: 'Rapports', component: ListaRapports },
-          { title: 'Comisiones', component: ComisionesComponent },
-          { title: 'Productos', component: ListaProductosComponent },
-          //{ title: 'Clientes', component: ClienteComponent },
+            { title: 'Comisiones', component: ComisionesComponent },
+            { title: 'Productos', component: ListaProductosComponent },
+            //{ title: 'Clientes', component: ClienteComponent },
             { title: 'Usuario', component: ProfilePage }
         ];
 
