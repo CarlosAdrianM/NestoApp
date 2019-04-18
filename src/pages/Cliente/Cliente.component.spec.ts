@@ -234,27 +234,32 @@ describe('Page: Cliente', () => {
         expect(inputEl).toBeDefined();
 
         tick();
-        inputEl.nativeElement.value = 'ES12 1212 1212 1212 1212 1212';
-        inputEl.triggerEventHandler('input', null);
-        inputEl.nativeElement.dispatchEvent(new Event('input'));
+        const hostElement = fixture.nativeElement;
+        const ibanInput = hostElement.querySelector('ion-input');
+        ibanInput.value = 'ES12 1212 1212 1212 1212 1212';
+        ibanInput.dispatchEvent(newEvent('input'));
         tick();
         fixture.detectChanges();
         //expect(comp.cliente.iban).toBe("ES12 1212 1212 1212 1212 1212");
-        
-        
         
         var respuestaPago = {
             ibanValido: false,
             ibanFormateado: "ES1234567890123456789012"
         }
         spyOn(service, "validarDatosPago" ).and.returnValue(of(respuestaPago));
-        let botonSiguiente = fixture.nativeElement.querySelectorAll('button')[3];
-        expect(botonSiguiente.textContent).toBe('Ir a Datos de Contacto >');
-        botonSiguiente.dispatchEvent(new Event('click'));
+        //let botonSiguiente = fixture.nativeElement.querySelectorAll('button')[3];
+        //expect(botonSiguiente.textContent).toBe('Ir a Datos de Contacto >');
+        //botonSiguiente.dispatchEvent(new Event('click'));
         tick();
         fixture.detectChanges();
-        //expect(service.validarDatosPago).toHaveBeenCalled();
-        expect(comp.slideActual).toBe(comp.DATOS_PAGO);
+        expect(service.validarDatosPago).toHaveBeenCalled();
+        //expect(comp.slideActual).toBe(comp.DATOS_PAGO);
         
     }))
+
+    function newEvent(eventName: string, bubbles = false, cancelable = false) {
+        let evt = document.createEvent('CustomEvent');  // MUST be 'CustomEvent'
+        evt.initCustomEvent(eventName, bubbles, cancelable, null);
+        return evt;
+    }
 });

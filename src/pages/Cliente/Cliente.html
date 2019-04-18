@@ -85,7 +85,7 @@
             <selector-formas-pago seleccionado="{{cliente.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
             <ion-item *ngIf="cliente.formaPago == 'RCB'">
                 <ion-label>IBAN</ion-label>
-                <ion-input #iban [(ngModel)]="cliente.iban"></ion-input>
+                <ion-input #iban [(ngModel)]="cliente.iban" (ionBlur)="validarDatosPago()"></ion-input>
             </ion-item>
             <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
         </ion-card-content>
