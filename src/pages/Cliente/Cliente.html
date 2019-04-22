@@ -17,7 +17,11 @@
                 <ion-label>NIF</ion-label>
                 <ion-input type="text" [(ngModel)]="cliente.nif" name="nif" autofocus></ion-input>
             </ion-item>
-            <button ion-button block (click)="goToDatosGenerales()">Siguiente</button>
+            <ion-item>
+                <ion-label floating>Nombre</ion-label>
+                <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre"></ion-input>
+            </ion-item>
+        <button ion-button block (click)="goToDatosGenerales()">Siguiente</button>
         </ion-card-content>
     </ion-card>
     
@@ -31,10 +35,6 @@
                 Creando Contacto (ya existe el cliente)
             </ion-card-title>
             <ion-list>
-                <ion-item>
-                    <ion-label floating>Nombre</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre"></ion-input>
-                </ion-item>
                 <ion-item>
                     <ion-label floating>Dirección</ion-label>
                     <ion-input type="text" [(ngModel)]="cliente.direccion" name="direccion"></ion-input>
@@ -70,7 +70,8 @@
                     <p>{{cliente.direccion}}</p>
                     <p><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                     <p></p>
-                    <p><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
+                    <p *ngIf="cliente && cliente.telefono"><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
+                    <p>CIF/NIF: {{cliente.nif}}</p>
                 </ion-card-content>
             </ion-card>
             

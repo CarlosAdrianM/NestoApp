@@ -70,11 +70,13 @@ describe('Page: Cliente', () => {
 
     it('si el nif sí es valido sí permite pasar de slide', () => {
         var respuesta: any =  {
-            nifValidado: true
+            nifValidado: true,
+            nifFormateado: 'A12123123'
         };
         spyOn(service, 'validarNif').and.returnValue(of(respuesta));
         comp.goToDatosGenerales();
         expect(comp.slideActual).toBe(comp.DATOS_GENERALES);
+        expect(comp.cliente.nif).toBe('A12123123');
     });
 
     it('si el cliente existe muestra el aviso de dirección de entrega', fakeAsync(() => {
@@ -206,7 +208,7 @@ describe('Page: Cliente', () => {
         expect(botones[1].textContent).toBe('Ir a Datos de Pago >');
     })
 
-    it('should be un input para el IBAN en datos comisiones', fakeAsync (() => {
+    it('should be un input para el IBAN en datos pago', fakeAsync (() => {
         comp.goToDatosPago();
         fixture.detectChanges();
         let inputEl = fixture.nativeElement.querySelectorAll('ion-input')[0];
@@ -224,6 +226,13 @@ describe('Page: Cliente', () => {
     }))
 
     it('si el IBAN es incorrecto no se puede avanzar', fakeAsync (() => {
+        var respuestaPago: any = {
+            datosPagoValidos: true,
+            ibanValido: false,
+            ibanFormateado: "ES12 3456 7890 1234 5678 9013"
+        }
+        spyOn(service, "validarDatosPago" ).and.returnValue(of(respuestaPago));
+
         comp.goToDatosPago();
         fixture.detectChanges();
         let inputEl = fixture.debugElement.query(By.css('ion-input'));
@@ -234,32 +243,57 @@ describe('Page: Cliente', () => {
         expect(inputEl).toBeDefined();
 
         tick();
-        const hostElement = fixture.nativeElement;
-        const ibanInput = hostElement.querySelector('ion-input');
-        ibanInput.value = 'ES12 1212 1212 1212 1212 1212';
-        ibanInput.dispatchEvent(newEvent('input'));
+        let ibanInput = fixture.debugElement.query(By.css('ion-input'));
+        ibanInput.componentInstance.ionBlur.emit();
         tick();
         fixture.detectChanges();
-        //expect(comp.cliente.iban).toBe("ES12 1212 1212 1212 1212 1212");
+        expect(comp.cliente.iban).toBe("ES12 3456 7890 1234 5678 9013");
         
-        var respuestaPago = {
-            ibanValido: false,
-            ibanFormateado: "ES1234567890123456789012"
-        }
-        spyOn(service, "validarDatosPago" ).and.returnValue(of(respuestaPago));
-        //let botonSiguiente = fixture.nativeElement.querySelectorAll('button')[3];
-        //expect(botonSiguiente.textContent).toBe('Ir a Datos de Contacto >');
-        //botonSiguiente.dispatchEvent(new Event('click'));
+        /*
+        let botonSiguiente = fixture.nativeElement.querySelectorAll('button')[3];
+        expect(botonSiguiente.textContent).toBe('Ir a Datos de Contacto >');
+        botonSiguiente.dispatchEvent(new Event('click'));
+        */
+       comp.goToDatosContacto();
         tick();
         fixture.detectChanges();
         expect(service.validarDatosPago).toHaveBeenCalled();
-        //expect(comp.slideActual).toBe(comp.DATOS_PAGO);
-        
+        expect(comp.slideActual).toBe(comp.DATOS_PAGO);
     }))
 
-    function newEvent(eventName: string, bubbles = false, cancelable = false) {
-        let evt = document.createEvent('CustomEvent');  // MUST be 'CustomEvent'
-        evt.initCustomEvent(eventName, bubbles, cancelable, null);
-        return evt;
-    }
+    it('si el IBAN es correcto sí se puede avanzar', fakeAsync (() => {
+        var respuestaPago: any = {
+            datosPagoValidos: true,
+            ibanValido: true,
+            ibanFormateado: "ES12 3456 7890 1234 5678 9013"
+        }
+        spyOn(service, "validarDatosPago" ).and.returnValue(of(respuestaPago));
+
+        comp.goToDatosPago();
+        fixture.detectChanges();
+        let inputEl = fixture.debugElement.query(By.css('ion-input'));
+        expect(inputEl).toBeNull();
+        comp.cliente.formaPago = "RCB";
+        fixture.detectChanges();
+        inputEl = fixture.debugElement.query(By.css('ion-input'));
+        expect(inputEl).toBeDefined();
+
+        tick();
+        let ibanInput = fixture.debugElement.query(By.css('ion-input'));
+        ibanInput.componentInstance.ionBlur.emit();
+        tick();
+        fixture.detectChanges();
+        expect(comp.cliente.iban).toBe("ES12 3456 7890 1234 5678 9013");
+        
+        /*
+        let botonSiguiente = fixture.debugElement.queryAll(By.css('button'))[3];
+        expect(botonSiguiente.nativeElement.textContent).toBe('Ir a Datos de Contacto >');
+        botonSiguiente.nativeElement.click();
+        */
+       comp.goToDatosContacto();
+        tick();
+        fixture.detectChanges();
+        expect(service.validarDatosPago).toHaveBeenCalled();
+        expect(comp.slideActual).toBe(comp.DATOS_CONTACTO);
+    }))
 });

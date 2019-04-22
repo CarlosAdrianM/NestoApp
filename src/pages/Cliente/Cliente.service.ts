@@ -9,10 +9,12 @@ export class ClienteService {
 
   constructor() { }
 
-  public validarNif(nif: string): Observable<any> {
+  public validarNif(nif: string, nombre: string): Observable<any> {
     var respuesta: any =  {
         nifValidado: true,
-        existeElCliente: true
+        existeElCliente: false,
+        nifFormateado: 'B12345678',
+        nombreFormateado: 'EMPRESA, S.L.'
     };
     return Observable.of(respuesta);
   }
@@ -34,8 +36,8 @@ export class ClienteService {
   validarDatosPago(datosPago: any): Observable<any> {
     var respuesta: any = {
         datosPagoValidos: true,
-        ibanValido: false,
-        ibanFormateado: "ES1234567890123456789012"
+        ibanValido: true,
+        ibanFormateado: "ES1234567890123456789014"
     }
     return of(respuesta);
   }

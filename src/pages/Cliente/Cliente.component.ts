@@ -60,6 +60,8 @@ export class ClienteComponent {
         iban: ""
     };
 
+    datosPagoValidados: boolean = false;
+
     annadirPersonaContacto() {
         var persona = {};
         this.cliente.personasContacto.push(persona);
@@ -72,6 +74,7 @@ export class ClienteComponent {
             plazosPago: this.cliente.plazosPago
         }
         this.servicio.validarDatosPago(datosPago).subscribe( data => {
+            this.datosPagoValidados = data.ibanValido && data.datosPagoValidos;
             if (data.datosPagoValidos) {
                 this.cliente.iban = data.ibanFormateado;
             }
@@ -79,9 +82,11 @@ export class ClienteComponent {
     }
 
     goToDatosGenerales() {
-        this.servicio.validarNif(this.cliente.nif).subscribe(
+        this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
             data => {
                 if (data.nifValidado) {
+                    this.cliente.nif = data.nifFormateado;
+                    this.cliente.nombre = data.nombreFormateado;
                     this.cliente.esContacto = data.existeElCliente;
                     this.slideActual = this.DATOS_GENERALES;
                 }
@@ -111,7 +116,9 @@ export class ClienteComponent {
     }
 
     goToDatosContacto() {
-        this.slideActual = this.DATOS_CONTACTO;
+        if (this.datosPagoValidados || this.cliente.formaPago != 'RCB') {
+            this.slideActual = this.DATOS_CONTACTO;
+        }
     }
 
     seleccionarFormaPago(event: any) {
