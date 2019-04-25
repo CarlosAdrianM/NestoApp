@@ -34,8 +34,9 @@ Telefono
 DireccionesDeEntrega -> crear de nuevo como otro cliente
 
 */
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { ClienteService } from './Cliente.service';
+import { TextInput } from 'ionic-angular';
 
 @Component({
     templateUrl: 'Cliente.html',
@@ -49,7 +50,12 @@ export class ClienteComponent {
 
     constructor(private servicio: ClienteService){}
 
-    @ViewChild('iban') inputIban ;
+    @ViewChild('iban') inputIban;
+    @ViewChild('nif') inputNif;
+    private inputDireccion: TextInput;
+    @ViewChild('direccion') set direccionProp(direccionProp:TextInput) {
+        this.inputDireccion = direccionProp;
+    };
 
     slideActual: number = 0;
 
@@ -61,10 +67,23 @@ export class ClienteComponent {
     };
 
     datosPagoValidados: boolean = false;
+    
+    mensajeDatosFiscales: string = "";
+
+    ngAfterViewInit() {
+        setTimeout(()=>{
+            this.inputNif.setFocus();
+        },500)
+    }
 
     annadirPersonaContacto() {
         var persona = {};
         this.cliente.personasContacto.push(persona);
+    }
+
+    borrarPersonaContacto(persona: any) {
+        var index = this.cliente.personasContacto.indexOf(persona);
+        if (index !== -1) this.cliente.personasContacto.splice(index, 1);
     }
 
     validarDatosPago() {
@@ -81,17 +100,37 @@ export class ClienteComponent {
         })
     }
 
+    nombreDisabled(): boolean {
+        return !this.cliente.nifValidado && this.cliente.nif 
+            && '0123456789YX'.indexOf(this.cliente.nif.toUpperCase().trim()[0]) == -1;
+    }
+    
     goToDatosGenerales() {
-        this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
-            data => {
-                if (data.nifValidado) {
+        if (this.cliente.nifValidado) {
+            this.slideActual = this.DATOS_GENERALES;
+            setTimeout(()=>{
+                this.inputDireccion._native.nativeElement.focus();
+            },500);
+        } else {
+            this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
+                data => {
                     this.cliente.nif = data.nifFormateado;
                     this.cliente.nombre = data.nombreFormateado;
                     this.cliente.esContacto = data.existeElCliente;
-                    this.slideActual = this.DATOS_GENERALES;
+                    this.cliente.nifValidado = data.nifValidado;
+                    
+                    if (data.nifValidado) {
+                        this.slideActual = this.DATOS_GENERALES;
+                        setTimeout(()=>{
+                            this.inputDireccion._native.nativeElement.focus();
+                        },500);
+                        this.mensajeDatosFiscales = "El NIF ya está validado, pero puede modificar el nombre manualmente";
+                    } else {
+                        this.mensajeDatosFiscales = "Error en el nombre o NIF, debe corregirlo para poder continuar";
+                    }
                 }
-            }
-        )
+            )    
+        }
     }
 
     goToDatosComisiones() {

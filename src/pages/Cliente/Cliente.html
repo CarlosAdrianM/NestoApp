@@ -15,12 +15,15 @@
         <ion-card-content>
             <ion-item>
                 <ion-label>NIF</ion-label>
-                <ion-input type="text" [(ngModel)]="cliente.nif" name="nif" autofocus></ion-input>
+                <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif"></ion-input>
             </ion-item>
-            <ion-item>
+            <ion-item *ngIf="!nombreDisabled()">
                 <ion-label floating>Nombre</ion-label>
                 <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre"></ion-input>
             </ion-item>
+            <ion-label *ngIf="mensajeDatosFiscales" color="danger" text-wrap>
+            {{mensajeDatosFiscales}}
+            </ion-label>
         <button ion-button block (click)="goToDatosGenerales()">Siguiente</button>
         </ion-card-content>
     </ion-card>
@@ -37,7 +40,7 @@
             <ion-list>
                 <ion-item>
                     <ion-label floating>Dirección</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.direccion" name="direccion"></ion-input>
+                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccion" name="direccion"></ion-input>
                 </ion-item>
                 <ion-item>
                     <ion-label floating>Código Postal</ion-label>
@@ -66,11 +69,11 @@
             </ion-item>
             <ion-card *ngIf="slideActual == DATOS_COMISIONES">
                 <ion-card-content>
-                    <p><strong>{{cliente.nombre}}</strong></p>
-                    <p>{{cliente.direccion}}</p>
-                    <p><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
+                    <p (click)="slideActual = DATOS_FISCALES"><strong>{{cliente.nombre}}</strong></p>
+                    <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}</p>
+                    <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                     <p></p>
-                    <p *ngIf="cliente && cliente.telefono"><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
+                    <p *ngIf="cliente && cliente.telefono" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
                     <p>CIF/NIF: {{cliente.nif}}</p>
                 </ion-card-content>
             </ion-card>
@@ -94,22 +97,29 @@
         <button ion-button block (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</button>
     </ion-card>
 
-    <div *ngIf="slideActual == DATOS_CONTACTO">
-        <h2>Datos de Contacto</h2>
-        <button ion-button block (click)="annadirPersonaContacto()">Añadir Persona de Contacto</button>
-        <p>{{cliente | json}}</p>
-        <ion-scroll scrollY="true">
-            <ion-card *ngFor="let persona of cliente.personasContacto">
-                <ion-item>
-                    <ion-label>Nombre</ion-label>
-                    <ion-input type="text" [(ngModel)]="persona.nombre" name="nombre"></ion-input>
-                </ion-item>
-                <ion-item>
-                    <ion-label>Correo-e</ion-label>
-                    <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
-                </ion-item>
-            </ion-card>
-        </ion-scroll>
-    </div>
+    <ion-card *ngIf="slideActual == DATOS_CONTACTO">
+        <ion-card-header>Datos de Contacto</ion-card-header>
+        <ion-card-content>
+            <button ion-button block (click)="annadirPersonaContacto()">Añadir Persona de Contacto</button>
+            <p>{{cliente | json}}</p>
+            
+                <ion-card *ngFor="let persona of cliente.personasContacto">
+                    <ion-fab right>
+                        <button ion-fab mini (click)="borrarPersonaContacto(persona)"><ion-icon name="trash"></ion-icon></button>
+                    </ion-fab>
+                    <ion-item>
+                        <ion-label>Nombre</ion-label>
+                        <ion-input type="text" [(ngModel)]="persona.nombre" name="nombre"></ion-input>
+                    </ion-item>
+                    <ion-item>
+                        <ion-label>Correo-e</ion-label>
+                        <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
+                    </ion-item>
+                </ion-card>
+            
+        </ion-card-content>
+        <button ion-button block (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</button>
+        <button ion-button block (click)="slideActual = DATOS_PAGO">FINALIZAR</button>
+    </ion-card>
 
 </ion-content>  
