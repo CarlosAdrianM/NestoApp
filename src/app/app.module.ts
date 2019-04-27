@@ -57,6 +57,8 @@ import { SelectorAlmacenesService } from '../components/SelectorAlmacenes/Select
 import { IonicImageViewerModule } from 'ionic-img-viewer';
 import { ClienteComponent } from  '../pages/Cliente/Cliente.component';
 import { ClienteService} from  '../pages/Cliente/Cliente.service';
+import { Geolocation } from  '@ionic-native/geolocation';
+import { NativeGeocoder } from '@ionic-native/native-geocoder';
 
 let storage = new Storage({});
 
@@ -158,7 +160,9 @@ export function getAuthHttp(http) {
     ProductoService,
     SelectorProductosService,
     SelectorAlmacenesService,
-    ClienteService
+    ClienteService,
+    Geolocation,
+    NativeGeocoder
   ]
 })
 export class AppModule {}

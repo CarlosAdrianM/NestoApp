@@ -13,7 +13,7 @@
             Datos Identificación Fiscal
         </ion-card-header>
         <ion-card-content>
-            <ion-item>
+            <ion-item *ngIf="!cliente.nifValidado || cliente.nif">
                 <ion-label>NIF</ion-label>
                 <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif"></ion-input>
             </ion-item>
@@ -24,7 +24,7 @@
             <ion-label *ngIf="mensajeDatosFiscales" color="danger" text-wrap>
             {{mensajeDatosFiscales}}
             </ion-label>
-        <button ion-button block (click)="goToDatosGenerales()">Siguiente</button>
+        <button ion-button block [disabled]="!cliente.nif && !cliente.nombre" (click)="goToDatosGenerales()">Siguiente</button>
         </ion-card-content>
     </ion-card>
     
@@ -46,6 +46,14 @@
                     <ion-label floating>Código Postal</ion-label>
                     <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal"></ion-input>
                 </ion-item>
+                <ion-item *ngIf="cliente.direccionValidada">
+                    <ion-label floating>Población</ion-label>
+                    <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion"></ion-input>
+                </ion-item>
+                <ion-item *ngIf="cliente.direccionValidada">
+                    <ion-label floating>Provincia</ion-label>
+                    <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia"></ion-input>
+                </ion-item>
                 <ion-item>
                     <ion-label floating>Teléfono</ion-label>
                     <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono"></ion-input>
@@ -62,10 +70,12 @@
             <ion-item>
                 <ion-label>¿Tiene Estética?</ion-label>
                 <ion-toggle [(ngModel)]="cliente.estetica"></ion-toggle>
+                <ion-label color="secondary" *ngIf="cliente.estetica">({{cliente.vendedorEstetica}})</ion-label>
             </ion-item>
             <ion-item>
                 <ion-label>¿Tiene Peluquería?</ion-label>
                 <ion-toggle [(ngModel)]="cliente.peluqueria"></ion-toggle>
+                <ion-label color="secondary" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria}})</ion-label>
             </ion-item>
             <ion-card *ngIf="slideActual == DATOS_COMISIONES">
                 <ion-card-content>
@@ -74,12 +84,12 @@
                     <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                     <p></p>
                     <p *ngIf="cliente && cliente.telefono" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
-                    <p>CIF/NIF: {{cliente.nif}}</p>
+                    <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
                 </ion-card-content>
             </ion-card>
             
             <button ion-button block (click)="slideActual = DATOS_GENERALES">&lt; Volver a Datos Generales</button>
-            <button ion-button block (click)="goToDatosPago()">Ir a Datos de Pago &gt;</button>
+            <button ion-button block [disabled]="!cliente.estetica && !cliente.peluqueria" (click)="goToDatosPago()">Ir a Datos de Pago &gt;</button>
         </ion-card-content>
     </ion-card>
 
@@ -89,19 +99,19 @@
             <selector-formas-pago seleccionado="{{cliente.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
             <ion-item *ngIf="cliente.formaPago == 'RCB'">
                 <ion-label>IBAN</ion-label>
-                <ion-input #iban [(ngModel)]="cliente.iban" (ionBlur)="validarDatosPago()"></ion-input>
+                <ion-input #iban [(ngModel)]="cliente.iban"></ion-input>
             </ion-item>
             <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
         </ion-card-content>
         <button ion-button block (click)="slideActual = DATOS_COMISIONES">&lt; Volver a Datos de Comisiones</button>
-        <button ion-button block (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</button>
+        <button ion-button block [disabled]="cliente.formaPago=='RCB' && cliente.iban.length < 24" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</button>
     </ion-card>
 
     <ion-card *ngIf="slideActual == DATOS_CONTACTO">
         <ion-card-header>Datos de Contacto</ion-card-header>
         <ion-card-content>
             <button ion-button block (click)="annadirPersonaContacto()">Añadir Persona de Contacto</button>
-            <p>{{cliente | json}}</p>
+            <!--p>{{cliente | json}}</p-->
             
                 <ion-card *ngFor="let persona of cliente.personasContacto">
                     <ion-fab right>
@@ -119,7 +129,7 @@
             
         </ion-card-content>
         <button ion-button block (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</button>
-        <button ion-button block (click)="slideActual = DATOS_PAGO">FINALIZAR</button>
+        <button ion-button block [disabled]="true" (click)="slideActual = DATOS_PAGO">FINALIZAR</button>
     </ion-card>
 
 </ion-content>  

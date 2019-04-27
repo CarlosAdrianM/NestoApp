@@ -1,42 +1,31 @@
 /*
-CIF_NIF -> comprobar si existe
-¿Es cliente nuevo dirección de entrega de uno ya existente?
-Si no lo tenemos -> Estado 5
 Dependiendo del vendedor, estado 0 o 9
 Si es dirección de entrega, estado 7
 
 Datos generales:
 Nombre (formatear con la forma juridica del CIF)
-Direccion (formatear con C/, AV. etc...)
 CodigoPostal -> SelectorCodigosPostales
 Telefono -> comprobar si es otro cliente
 
 Comisiones:
 Si es dirección de entrega, copiar las del cliente principal
-Checkbox: ¿tiene estética?
-Checkbox: ¿tiene peluquería?
-Vendedor / VendedorPeluquería -> Auto. ¿Pueden Cambiar?
 
 Pago: 
 Si es dirección de entrega, por defecto copiar las del cliente principal
-Forma de pago -> si es recibo, pedir CCC
 CCC -> lo validamos en la api, solo mandamos cadena sin formatear
 Mandato -> foto, creamos PDF
 Plazos de Pago -> si tiene CCC se puede solicitar autorización para poner 30 días.
 
 Personas de contacto:
-Nombre
 Cargo -> ¿Selector Cargos? ¿Constante?
-Email
 Telefono
-
-
-DireccionesDeEntrega -> crear de nuevo como otro cliente
-
 */
 import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { ClienteService } from './Cliente.service';
-import { TextInput } from 'ionic-angular';
+import { TextInput, AlertController } from 'ionic-angular';
+import { NativeGeocoder, NativeGeocoderReverseResult, NativeGeocoderOptions } from '@ionic-native/native-geocoder';
+import { Geolocation } from '@ionic-native/geolocation';
+
 
 @Component({
     templateUrl: 'Cliente.html',
@@ -48,7 +37,14 @@ export class ClienteComponent {
     DATOS_PAGO: number = 3;
     DATOS_CONTACTO : number = 4;
 
-    constructor(private servicio: ClienteService){}
+    constructor(
+        private servicio: ClienteService, 
+        private alertCtrl: AlertController,
+        private geolocation: Geolocation,
+        private nativeGeocoder: NativeGeocoder
+    ){
+        this.getGeolocation();
+    }
 
     @ViewChild('iban') inputIban;
     @ViewChild('nif') inputNif;
@@ -70,6 +66,16 @@ export class ClienteComponent {
     
     mensajeDatosFiscales: string = "";
 
+    // Variables de geolocalización
+    geoLatitude: number;
+    geoLongitude: number;
+    geoAccuracy:number;
+    //geoAddress: string;
+    geoencoderOptions: NativeGeocoderOptions = {
+      useLocale: true,
+      maxResults: 5
+    };
+
     ngAfterViewInit() {
         setTimeout(()=>{
             this.inputNif.setFocus();
@@ -86,20 +92,6 @@ export class ClienteComponent {
         if (index !== -1) this.cliente.personasContacto.splice(index, 1);
     }
 
-    validarDatosPago() {
-        var datosPago: any = {
-            formaPago: this.cliente.formaPago,
-            ibanBruto: this.cliente.iban,
-            plazosPago: this.cliente.plazosPago
-        }
-        this.servicio.validarDatosPago(datosPago).subscribe( data => {
-            this.datosPagoValidados = data.ibanValido && data.datosPagoValidos;
-            if (data.datosPagoValidos) {
-                this.cliente.iban = data.ibanFormateado;
-            }
-        })
-    }
-
     nombreDisabled(): boolean {
         return !this.cliente.nifValidado && this.cliente.nif 
             && '0123456789YX'.indexOf(this.cliente.nif.toUpperCase().trim()[0]) == -1;
@@ -107,45 +99,78 @@ export class ClienteComponent {
     
     goToDatosGenerales() {
         if (this.cliente.nifValidado) {
-            this.slideActual = this.DATOS_GENERALES;
-            setTimeout(()=>{
-                this.inputDireccion._native.nativeElement.focus();
-            },500);
+            this.pasarADatosGenerales();
         } else {
+            if (!this.cliente.nif) {
+                this.cliente.estado = 5;
+                this.cliente.nifValidado;
+                this.pasarADatosGenerales();
+                return;
+            }
+            if (this.nombreDisabled()) {
+                this.cliente.nombre=undefined;
+            }
             this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
                 data => {
-                    this.cliente.nif = data.nifFormateado;
+                    if (data.nifFormateado != "UNDEFINED") {
+                        this.cliente.nif = data.nifFormateado;
+                    }
                     this.cliente.nombre = data.nombreFormateado;
                     this.cliente.esContacto = data.existeElCliente;
                     this.cliente.nifValidado = data.nifValidado;
                     
                     if (data.nifValidado) {
-                        this.slideActual = this.DATOS_GENERALES;
-                        setTimeout(()=>{
-                            this.inputDireccion._native.nativeElement.focus();
-                        },500);
-                        this.mensajeDatosFiscales = "El NIF ya está validado, pero puede modificar el nombre manualmente";
+                        this.pasarADatosGenerales();
+                        this.mensajeDatosFiscales = "El NIF ya está validado, pero todavía puede modificar el nombre manualmente";
                     } else {
                         this.mensajeDatosFiscales = "Error en el nombre o NIF, debe corregirlo para poder continuar";
                     }
+                },
+                error => {
+                    let alert = this.alertCtrl.create({
+                        title: 'Error',
+                        subTitle: 'No se ha podido validar el NIF:\n' + error.exceptionMessage,
+                        buttons: ['Ok'],
+                    });
+                    alert.present();
                 }
             )    
         }
     }
 
+    private pasarADatosGenerales() {
+        this.slideActual = this.DATOS_GENERALES;
+        setTimeout(() => {
+            this.inputDireccion._native.nativeElement.focus();
+        }, 500);
+    }
+
     goToDatosComisiones() {
+        if (this.cliente.direccionValidada) {
+            this.slideActual = this.DATOS_COMISIONES;
+        }
         this.servicio.validarDatosGenerales(this.cliente).subscribe(
             data => {
-                if (!data.hayErrores) {
-                    this.cliente.nombre = data.nombre;
-                    this.cliente.direccion = data.direccion;
+                if (!this.cliente.direccionValidada) {
+                    this.cliente.direccion = data.direccionFormateada;
                     this.cliente.poblacion = data.poblacion;
                     this.cliente.provincia = data.provincia;
                     this.cliente.telefono = data.telefono;
                     this.cliente.vendedorEstetica = data.vendedorEstetica;
                     this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
+                }
+                if (!data.hayErrores) {
+                    this.cliente.direccionValidada = true;
                     this.slideActual = this.DATOS_COMISIONES;
                 }
+            },
+            error => {
+                let alert = this.alertCtrl.create({
+                    title: 'Error',
+                    subTitle: 'No se ha podido validar la dirección:\n' + error.exceptionMessage,
+                    buttons: ['Ok'],
+                });
+                alert.present();
             }
         )
     }
@@ -155,9 +180,40 @@ export class ClienteComponent {
     }
 
     goToDatosContacto() {
-        if (this.datosPagoValidados || this.cliente.formaPago != 'RCB') {
-            this.slideActual = this.DATOS_CONTACTO;
+        var datosPago: any = {
+            formaPago: this.cliente.formaPago,
+            ibanBruto: this.cliente.iban,
+            plazosPago: this.cliente.plazosPago
         }
+        this.servicio.validarDatosPago(datosPago).subscribe( 
+        data => {
+            this.cliente.iban = data.ibanFormateado;
+            if (data.datosPagoValidos) {
+                this.slideActual = this.DATOS_CONTACTO;
+            } else if (!data.ibanValido) {
+                let alert = this.alertCtrl.create({
+                    title: 'Error',
+                    subTitle: 'IBAN no válido',
+                    buttons: ['Ok'],
+                });
+                alert.present();
+            } else {
+                let alert = this.alertCtrl.create({
+                    title: 'Error',
+                    subTitle: 'Error en los datos de pago',
+                    buttons: ['Ok'],
+                });
+                alert.present();
+            }
+        },
+        error => {
+            let alert = this.alertCtrl.create({
+                title: 'Error',
+                subTitle: 'Error en la validación del IBAN:\n' + error.exceptionMessage,
+                buttons: ['Ok'],
+            });
+            alert.present();
+        })
     }
 
     seleccionarFormaPago(event: any) {
@@ -168,4 +224,30 @@ export class ClienteComponent {
             }, 500);
         }
     }
+
+    // Funciones de geolocalización
+    //Get current coordinates of device
+    getGeolocation(){
+        this.geolocation.getCurrentPosition().then((resp) => {
+        this.geoLatitude = resp.coords.latitude;
+        this.geoLongitude = resp.coords.longitude; 
+        this.geoAccuracy = resp.coords.accuracy; 
+        this.getGeoencoder(this.geoLatitude,this.geoLongitude);
+        }).catch((error) => {
+        //alert('Error getting location'+ JSON.stringify(error));
+        });
+    }
+
+    //geocoder method to fetch address from coordinates passed as arguments
+    getGeoencoder(latitude,longitude){
+        this.nativeGeocoder.reverseGeocode(latitude, longitude, this.geoencoderOptions)
+        .then((result: NativeGeocoderReverseResult[]) => {
+            this.cliente.codigoPostal = result[0].postalCode;
+            this.cliente.direccion = (result[0].thoroughfare || "") +
+                 " " +(result[0].subThoroughfare || "")
+        })
+        .catch((error: any) => {
+            //alert('Error getting location'+ JSON.stringify(error));
+        });
+    }        
 }  
