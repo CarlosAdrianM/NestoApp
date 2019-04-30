@@ -25,6 +25,8 @@ import { ClienteService } from './Cliente.service';
 import { TextInput, AlertController } from 'ionic-angular';
 import { NativeGeocoder, NativeGeocoderReverseResult, NativeGeocoderOptions } from '@ionic-native/native-geocoder';
 import { Geolocation } from '@ionic-native/geolocation';
+import { Configuracion } from '../../components/configuracion/configuracion';
+import { Usuario } from '../../models/Usuario';
 
 
 @Component({
@@ -41,9 +43,11 @@ export class ClienteComponent {
         private servicio: ClienteService, 
         private alertCtrl: AlertController,
         private geolocation: Geolocation,
-        private nativeGeocoder: NativeGeocoder
+        private nativeGeocoder: NativeGeocoder,
+        private usuario: Usuario
     ){
         this.getGeolocation();
+        this.annadirPersonaContacto();
     }
 
     @ViewChild('iban') inputIban;
@@ -59,7 +63,8 @@ export class ClienteComponent {
         formaPago: "EFC",
         plazosPago: "CONTADO",
         personasContacto : [],
-        iban: ""
+        iban: "",
+        usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
     };
 
     datosPagoValidados: boolean = false;
@@ -100,42 +105,46 @@ export class ClienteComponent {
     goToDatosGenerales() {
         if (this.cliente.nifValidado) {
             this.pasarADatosGenerales();
-        } else {
-            if (!this.cliente.nif) {
-                this.cliente.estado = 5;
-                this.cliente.nifValidado;
-                this.pasarADatosGenerales();
-                return;
-            }
-            if (this.nombreDisabled()) {
-                this.cliente.nombre=undefined;
-            }
-            this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
-                data => {
-                    if (data.nifFormateado != "UNDEFINED") {
-                        this.cliente.nif = data.nifFormateado;
-                    }
-                    this.cliente.nombre = data.nombreFormateado;
-                    this.cliente.esContacto = data.existeElCliente;
-                    this.cliente.nifValidado = data.nifValidado;
-                    
-                    if (data.nifValidado) {
-                        this.pasarADatosGenerales();
-                        this.mensajeDatosFiscales = "El NIF ya está validado, pero todavía puede modificar el nombre manualmente";
-                    } else {
-                        this.mensajeDatosFiscales = "Error en el nombre o NIF, debe corregirlo para poder continuar";
-                    }
-                },
-                error => {
-                    let alert = this.alertCtrl.create({
-                        title: 'Error',
-                        subTitle: 'No se ha podido validar el NIF:\n' + error.exceptionMessage,
-                        buttons: ['Ok'],
-                    });
-                    alert.present();
-                }
-            )    
+            return;
+        };
+        if (!this.cliente.nif) {
+            this.cliente.estado = 5;
+            this.cliente.nifValidado;
+            this.pasarADatosGenerales();
+            return;
         }
+        if (this.nombreDisabled()) {
+            this.cliente.nombre=undefined;
+        }
+        this.servicio.validarNif(this.cliente.nif, this.cliente.nombre).subscribe(
+            data => {
+                if (data.nifFormateado != "UNDEFINED") {
+                    this.cliente.nif = data.nifFormateado;
+                }
+                this.cliente.nombre = data.nombreFormateado;
+                this.cliente.esContacto = data.existeElCliente;
+                if (data.existeElCliente) {
+                    this.cliente.cliente = data.numeroCliente;
+                }
+                this.cliente.estado = data.estadoCliente;
+                this.cliente.nifValidado = data.nifValidado;
+                
+                if (data.nifValidado) {
+                    this.pasarADatosGenerales();
+                    this.mensajeDatosFiscales = "El NIF ya está validado, pero todavía puede modificar el nombre manualmente";
+                } else {
+                    this.mensajeDatosFiscales = "Error en el nombre o NIF, debe corregirlo para poder continuar";
+                }
+            },
+            error => {
+                let alert = this.alertCtrl.create({
+                    title: 'Error',
+                    subTitle: 'No se ha podido validar el NIF:\n' + error.exceptionMessage,
+                    buttons: ['Ok'],
+                });
+                alert.present();
+            }
+        )    
     }
 
     private pasarADatosGenerales() {
@@ -148,6 +157,7 @@ export class ClienteComponent {
     goToDatosComisiones() {
         if (this.cliente.direccionValidada) {
             this.slideActual = this.DATOS_COMISIONES;
+            return;
         }
         this.servicio.validarDatosGenerales(this.cliente).subscribe(
             data => {
@@ -155,7 +165,8 @@ export class ClienteComponent {
                     this.cliente.direccion = data.direccionFormateada;
                     this.cliente.poblacion = data.poblacion;
                     this.cliente.provincia = data.provincia;
-                    this.cliente.telefono = data.telefono;
+                    this.cliente.ruta = data.ruta;
+                    this.cliente.telefono = data.telefonoFormateado;
                     this.cliente.vendedorEstetica = data.vendedorEstetica;
                     this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
                 }
@@ -216,6 +227,38 @@ export class ClienteComponent {
         })
     }
 
+    crearCliente() {
+        this.servicio.crearCliente(this.cliente).subscribe(
+            data => {
+                let alert = this.alertCtrl.create({
+                    title: 'Cliente',
+                    subTitle: 'Se ha creado correctamente el cliente: ' 
+                    + data.Nº_Cliente + '/'+data.Contacto,
+                    buttons: ['Ok'],
+                });
+                alert.present();
+                this.cliente = {
+                    formaPago: "EFC",
+                    plazosPago: "CONTADO",
+                    personasContacto : [],
+                    iban: "",
+                    usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+                };
+                this.mensajeDatosFiscales = "";
+                this.slideActual = this.DATOS_FISCALES;
+                
+            },
+            error => {
+                let alert = this.alertCtrl.create({
+                    title: 'Error',
+                    subTitle: 'No se ha podido crear el cliente:\n' + error.exceptionMessage,
+                    buttons: ['Ok'],
+                });
+                alert.present();
+            }
+        )
+    }
+
     seleccionarFormaPago(event: any) {
         this.cliente.formaPago = event;
         if (this.cliente.formaPago == "RCB") {
@@ -234,7 +277,7 @@ export class ClienteComponent {
         this.geoAccuracy = resp.coords.accuracy; 
         this.getGeoencoder(this.geoLatitude,this.geoLongitude);
         }).catch((error) => {
-        //alert('Error getting location'+ JSON.stringify(error));
+            console.log('Error getting location'+ JSON.stringify(error));
         });
     }
 
@@ -247,7 +290,7 @@ export class ClienteComponent {
                  " " +(result[0].subThoroughfare || "")
         })
         .catch((error: any) => {
-            //alert('Error getting location'+ JSON.stringify(error));
+            console.log('Error getting location'+ JSON.stringify(error));
         });
     }        
 }  

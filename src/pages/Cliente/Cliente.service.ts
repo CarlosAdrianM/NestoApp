@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 import { of } from 'rxjs/observable/of';
 import { Configuracion } from '../../components/configuracion/configuracion';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 @Injectable()
 export class ClienteService {
+    
   private _baseUrl: string = Configuracion.API_URL + '/Clientes';
 
   constructor(private http: HttpClient) { }
@@ -40,6 +41,14 @@ export class ClienteService {
     params = params.append('iban', datosPago.ibanBruto);
 
     return this.http.get(urlLlamada, { params: params })
+        .catch(this.handleError);
+  }
+
+  public crearCliente(cliente: any): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    return this.http.post(this._baseUrl, JSON.stringify(cliente), { headers: headers })
         .catch(this.handleError);
   }
 

@@ -75,7 +75,7 @@
             <ion-item>
                 <ion-label>¿Tiene Peluquería?</ion-label>
                 <ion-toggle [(ngModel)]="cliente.peluqueria"></ion-toggle>
-                <ion-label color="secondary" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria}})</ion-label>
+                <ion-label color="secondary" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</ion-label>
             </ion-item>
             <ion-card *ngIf="slideActual == DATOS_COMISIONES">
                 <ion-card-content>
@@ -111,7 +111,7 @@
         <ion-card-header>Datos de Contacto</ion-card-header>
         <ion-card-content>
             <button ion-button block (click)="annadirPersonaContacto()">Añadir Persona de Contacto</button>
-            <!--p>{{cliente | json}}</p-->
+            <!--textarea rows="15">{{cliente | json}}</textarea-->
             
                 <ion-card *ngFor="let persona of cliente.personasContacto">
                     <ion-fab right>
@@ -126,10 +126,13 @@
                         <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
                     </ion-item>
                 </ion-card>
+                <ion-fab bottom right>
+                    <button ion-fab mini (click)="annadirPersonaContacto()"><ion-icon name="add"></ion-icon></button>
+                </ion-fab>
             
         </ion-card-content>
         <button ion-button block (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</button>
-        <button ion-button block [disabled]="true" (click)="slideActual = DATOS_PAGO">FINALIZAR</button>
+        <button ion-button block (click)="crearCliente()">FINALIZAR</button>
     </ion-card>
 
 </ion-content>  
