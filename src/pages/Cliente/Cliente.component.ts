@@ -155,6 +155,9 @@ export class ClienteComponent {
     }
 
     goToDatosComisiones() {
+        if (this.cliente.telefono == 'undefined') {
+            this.cliente.telefono = '';
+        }
         if (this.cliente.direccionValidada) {
             this.slideActual = this.DATOS_COMISIONES;
             return;
@@ -293,4 +296,10 @@ export class ClienteComponent {
             console.log('Error getting location'+ JSON.stringify(error));
         });
     }        
+
+    public seleccionarTexto(evento: any): void {
+        var nativeInputEle = evento._native.nativeElement;
+        nativeInputEle.select();
+        //evento.target.select();
+    }
 }  

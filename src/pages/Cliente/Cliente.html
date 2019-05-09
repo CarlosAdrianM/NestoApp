@@ -15,11 +15,11 @@
         <ion-card-content>
             <ion-item *ngIf="!cliente.nifValidado || cliente.nif">
                 <ion-label>NIF</ion-label>
-                <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif"></ion-input>
+                <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
             </ion-item>
             <ion-item *ngIf="!nombreDisabled()">
                 <ion-label floating>Nombre</ion-label>
-                <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre"></ion-input>
+                <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
             </ion-item>
             <ion-label *ngIf="mensajeDatosFiscales" color="danger" text-wrap>
             {{mensajeDatosFiscales}}
@@ -40,23 +40,23 @@
             <ion-list>
                 <ion-item>
                     <ion-label floating>Dirección</ion-label>
-                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccion" name="direccion"></ion-input>
+                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccion" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
                 <ion-item>
                     <ion-label floating>Código Postal</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal"></ion-input>
+                    <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
                 <ion-item *ngIf="cliente.direccionValidada">
                     <ion-label floating>Población</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion"></ion-input>
+                    <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
                 <ion-item *ngIf="cliente.direccionValidada">
                     <ion-label floating>Provincia</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia"></ion-input>
+                    <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
                 <ion-item>
                     <ion-label floating>Teléfono</ion-label>
-                    <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono"></ion-input>
+                    <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
             </ion-list>
             <button ion-button block (click)="slideActual = DATOS_FISCALES">&lt; Volver a Datos Fiscales</button>
@@ -83,7 +83,8 @@
                     <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}</p>
                     <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                     <p></p>
-                    <p *ngIf="cliente && cliente.telefono" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon>{{cliente.telefono}}</p>
+                    <p *ngIf="cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!=''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
+                    <p *ngIf="!(cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
                     <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
                 </ion-card-content>
             </ion-card>
