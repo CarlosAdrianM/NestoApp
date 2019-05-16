@@ -139,7 +139,7 @@ export class ClienteComponent {
             error => {
                 let alert = this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido validar el NIF:\n' + error.exceptionMessage,
+                    subTitle: 'No se ha podido validar el NIF:\n' + error.ExceptionMessage,
                     buttons: ['Ok'],
                 });
                 alert.present();
@@ -181,7 +181,7 @@ export class ClienteComponent {
             error => {
                 let alert = this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido validar la dirección:\n' + error.exceptionMessage,
+                    subTitle: 'No se ha podido validar la dirección:\n' + error.ExceptionMessage,
                     buttons: ['Ok'],
                 });
                 alert.present();
@@ -223,7 +223,7 @@ export class ClienteComponent {
         error => {
             let alert = this.alertCtrl.create({
                 title: 'Error',
-                subTitle: 'Error en la validación del IBAN:\n' + error.exceptionMessage,
+                subTitle: 'Error en la validación del IBAN:\n' + error.ExceptionMessage,
                 buttons: ['Ok'],
             });
             alert.present();
@@ -254,7 +254,7 @@ export class ClienteComponent {
             error => {
                 let alert = this.alertCtrl.create({
                     title: 'Error',
-                    subTitle: 'No se ha podido crear el cliente:\n' + error.exceptionMessage,
+                    subTitle: 'No se ha podido crear el cliente:\n' + error.ExceptionMessage,
                     buttons: ['Ok'],
                 });
                 alert.present();

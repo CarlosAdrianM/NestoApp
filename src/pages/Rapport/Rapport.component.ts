@@ -90,7 +90,7 @@ export class RapportComponent {
                             error => {
                                 let alert = this.alertCtrl.create({
                                     title: 'Error',
-                                    subTitle: 'No se ha podido guardar el rapport.\n' + error,
+                                    subTitle: 'No se ha podido guardar el rapport.\n' + error.ExceptionMessage,
                                     buttons: ['Ok'],
                                 });
                                 alert.present();
