@@ -44,6 +44,20 @@ export class RapportComponent {
                     this.rapport.Cliente = data.cliente;
                     this.rapport.Contacto = data.contacto;
                     this.rapport.Direccion = data.direccion;
+                    let vendedorEstetica = data.vendedor.trim();
+                    let vendedorPeluqueria = "";
+                    if (data.VendedoresGrupoProducto && data.VendedoresGrupoProducto[0]) {
+                        vendedorPeluqueria = data.VendedoresGrupoProducto[0].vendedor.trim();
+                    }
+                    if (vendedorEstetica != Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria == Configuracion.VENDEDOR_GENERAL) {
+                        this.rapport.TipoCentro = 1; // Solo estética
+                    } else if (vendedorEstetica == Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
+                        this.rapport.TipoCentro = 2; // Solo peluquería
+                    } else if (vendedorEstetica != Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
+                        this.rapport.TipoCentro = 3; // Estética y peluquería
+                    } else {
+                        this.rapport.TipoCentro = 0; // No sabemos qué es
+                    }
                 }
             },
             error => {

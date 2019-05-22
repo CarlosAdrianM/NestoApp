@@ -166,13 +166,26 @@ export class ComisionesComponent {
       checked: this.mesSeleccionado == 11
     });
 
+    let fechaNombreMes: Date = new Date(this.annoActual -1, this.mesActual);
+    let etiquetaAnnoAnterior = fechaNombreMes.toLocaleDateString('es-ES', { month: 'long' }) + " " + (this.annoActual- 1);
+    etiquetaAnnoAnterior = etiquetaAnnoAnterior.charAt(0).toUpperCase() + etiquetaAnnoAnterior.slice(1);
+    alert.addInput({
+      type: 'radio',
+      label: etiquetaAnnoAnterior,
+      value: '12',
+      checked: this.mesSeleccionado == 12
+    });
+
 
     alert.addButton('Cancelar');
     alert.addButton({
       text: 'OK',
       handler: data => {
         this.mesSeleccionado = +data;
-        if (this.mesSeleccionado <= this.mesActual) {
+        if (this.mesSeleccionado == 12) {
+          this.mesSeleccionado = this.mesActual;
+          this.annoSeleccionado = this.annoActual -1;
+        } else if (this.mesSeleccionado <= this.mesActual) {
           this.annoSeleccionado = this.annoActual
         } else {
           this.annoSeleccionado = this.annoActual - 1;

@@ -4,4 +4,5 @@
     public static EMPRESA_POR_DEFECTO: string = '1';
     public static ALMACEN_POR_DEFECTO: string = 'ALG';
     public static NOMBRE_DOMINIO: string = 'NUEVAVISION';
+    public static VENDEDOR_GENERAL: string = "NV";
 }
