@@ -254,6 +254,7 @@ export class PlantillaVenta {
             };
             pedido.LineasPedido.push(nuevaLinea);
 
+            linea.cantidadOferta = +linea.cantidadOferta;
             if (linea.cantidadOferta) {
                 lineaPedidoOferta = Object.assign({}, nuevaLinea);
                 lineaPedidoOferta.cantidad = linea.cantidadOferta;
