@@ -9,12 +9,13 @@ export class ComisionesService {
 
   constructor(private http: HttpClient) { }
 
-  public cargarResumen(vendedor: string, mes: number, anno: number, incluirAlbaranes: boolean): Observable<any> {
+  public cargarResumen(vendedor: string, mes: number, anno: number, incluirAlbaranes: boolean, incluirPicking: boolean): Observable<any> {
     let params: HttpParams = new HttpParams();
     params = params.append('vendedor', vendedor);
     params = params.append('mes', mes.toString());
     params = params.append('anno', anno.toString());
     params = params.append('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
+    params = params.append('incluirPicking', incluirPicking ? 'true' : 'false');
 
     return this.http.get(this._baseUrl, { params })
       .catch(this.handleError);

@@ -19,6 +19,7 @@ export class ComisionesComponent {
   testCheckboxOpen: boolean;
   testCheckboxResult;
   public incluirAlbaranes: boolean = true;
+  public incluirPicking: boolean = false;
   public deshabilitarIncluirAlbaranes: boolean = false;
   public vendedorSeleccionado: string;
   
@@ -48,7 +49,7 @@ export class ComisionesComponent {
       content: 'Cargando Comisiones...',
     });
     loading.present();
-    this.servicio.cargarResumen(this.vendedorSeleccionado, this.mesSeleccionado + 1, this.annoSeleccionado, this.incluirAlbaranes)
+    this.servicio.cargarResumen(this.vendedorSeleccionado, this.mesSeleccionado + 1, this.annoSeleccionado, this.incluirAlbaranes, this.incluirPicking)
       .subscribe(
       data => {
         if (data.length === 0) {
@@ -193,6 +194,7 @@ export class ComisionesComponent {
         this.deshabilitarIncluirAlbaranes = this.mesActual != this.mesSeleccionado;
         let fechaNombreMes: Date = new Date(this.annoSeleccionado, this.mesSeleccionado);
         this.nombreMesSeleccionado = fechaNombreMes.toLocaleDateString('es-ES', { month: 'long' }) + " " + this.annoSeleccionado;
+        this.incluirPicking = this.incluirPicking && !this.deshabilitarIncluirAlbaranes;
         if (this.incluirAlbaranes == this.deshabilitarIncluirAlbaranes) {
           this.incluirAlbaranes = !this.deshabilitarIncluirAlbaranes;
         } else {
