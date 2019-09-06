@@ -55,4 +55,10 @@ export class ExtractoCliente {
         );
     }
 
+    public descargarFactura(movimiento: any): void {
+        this.servicio.descargarFactura(movimiento.empresa, movimiento.documento);
+    }
+
+    
+
 }

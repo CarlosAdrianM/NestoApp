@@ -15,7 +15,8 @@
         <ion-item *ngFor="let mov of movimientosDeuda">
             <h3>{{mov.vencimiento | date: 'dd/MM/yy'}}</h3>
             <p>{{mov.concepto}}</p>
-            <p>{{mov.importePendiente | currency:'EUR':true:'1.2-2' }}</p>
+            <p>{{mov.importePendiente | currency:'EUR' }}</p>
+            <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
         </ion-item>
     </ion-list>
 
@@ -27,19 +28,19 @@
         <ion-card-content>
             <ion-row *ngIf="resumenDeuda.vencida">
                 <ion-col>Total Vencida</ion-col>
-                <ion-col>{{resumenDeuda.vencida | currency:'EUR':true:'1.2-2'}}</ion-col>
+                <ion-col>{{resumenDeuda.vencida | currency:'EUR'}}</ion-col>
             </ion-row>
             <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.impagados">
                 <ion-col>Total Impagados</ion-col>
-                <ion-col>{{resumenDeuda.impagados | currency:'EUR':true:'1.2-2'}}</ion-col>
+                <ion-col>{{resumenDeuda.impagados | currency:'EUR'}}</ion-col>
             </ion-row>
             <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.abogado">
                 <ion-col>Total Abogado</ion-col>
-                <ion-col>{{resumenDeuda.abogado | currency:'EUR':true:'1.2-2'}}</ion-col>
+                <ion-col>{{resumenDeuda.abogado | currency:'EUR'}}</ion-col>
             </ion-row>
             <ion-row>
                 <ion-col><strong>TOTAL</strong></ion-col>
-                <ion-col><strong>{{resumenDeuda.total | currency:'EUR':true:'1.2-2'}}</strong></ion-col>
+                <ion-col><strong>{{resumenDeuda.total | currency:'EUR'}}</strong></ion-col>
             </ion-row>
         </ion-card-content>
 

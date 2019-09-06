@@ -29,6 +29,8 @@
     "@angular/tsc-wrapped": "^4.4.6",
     "@ionic-native/core": "^4.3.1",
     "@ionic-native/fcm": "^4.5.2",
+    "@ionic-native/file": "^4.20.0",
+    "@ionic-native/file-transfer": "^4.20.0",
     "@ionic-native/geolocation": "^4.20.0",
     "@ionic-native/keyboard": "^4.3.1",
     "@ionic-native/native-geocoder": "^4.20.0",
@@ -129,7 +131,9 @@
         "UPDATE_API": "https://api.ionicjs.com",
         "MAX_STORE": "2",
         "MIN_BACKGROUND_DURATION": "30"
-      }
+      },
+      "cordova-plugin-file-transfer": {},
+      "cordova-plugin-file": {}
     }
   }
 }

@@ -59,6 +59,8 @@ import { ClienteComponent } from  '../pages/Cliente/Cliente.component';
 import { ClienteService} from  '../pages/Cliente/Cliente.service';
 import { Geolocation } from  '@ionic-native/geolocation';
 import { NativeGeocoder } from '@ionic-native/native-geocoder';
+import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
+import { File } from '@ionic-native/file';
 
 let storage = new Storage({});
 
@@ -162,7 +164,10 @@ export function getAuthHttp(http) {
     SelectorAlmacenesService,
     ClienteService,
     Geolocation,
-    NativeGeocoder
+    NativeGeocoder,
+    FileTransfer,
+    File,
+    FileTransferObject
   ]
 })
 export class AppModule {}
