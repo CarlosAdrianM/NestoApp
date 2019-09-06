@@ -5,11 +5,15 @@ import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import { FileTransferObject, FileTransfer } from '@ionic-native/file-transfer';
 import { File } from '@ionic-native/file';
+import { FileOpener } from '@ionic-native/file-opener';
 
 @Injectable()
 export class ExtractoClienteService {
 
-    constructor(private http: HttpClient, private transfer: FileTransfer, private file: File) {
+    constructor(private http: HttpClient, 
+        private transfer: FileTransfer, 
+        private file: File,
+        private fileOpener: FileOpener) {
         this.http = http;
     }
 
@@ -35,7 +39,9 @@ export class ExtractoClienteService {
        const filetransfer: FileTransferObject = this.transfer.create(); 
        const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim(); 
        filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf').then((entry) => {
-           alert('Factura descargada: ' + entry.toURL());
+           this.fileOpener.open(entry.toURL(), 'application/pdf')
+            .then(() => console.log('File is opened'))
+            .catch(e => console.log('Error opening file', e));
        }, (error) => {
            alert(error);
        });

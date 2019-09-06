@@ -61,6 +61,7 @@ import { Geolocation } from  '@ionic-native/geolocation';
 import { NativeGeocoder } from '@ionic-native/native-geocoder';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
 import { File } from '@ionic-native/file';
+import { FileOpener } from '@ionic-native/file-opener';
 
 let storage = new Storage({});
 
@@ -167,7 +168,8 @@ export function getAuthHttp(http) {
     NativeGeocoder,
     FileTransfer,
     File,
-    FileTransferObject
+    FileTransferObject,
+    FileOpener
   ]
 })
 export class AppModule {}
