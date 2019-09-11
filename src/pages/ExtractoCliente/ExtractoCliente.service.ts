@@ -48,7 +48,7 @@ export class ExtractoClienteService {
        const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim(); 
        filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf').then((entry) => {
             alert("Factura descargada: \n"+entry.toURL());
-            this.fileOpener.open(entry.toURL(), 'application/pdf')
+            this.fileOpener.open(entry.toInternalURL(), 'application/pdf')
             .then(() => console.log('File is opened'))
             .catch(e => console.log('Error opening file', e));
        }, (error) => {
