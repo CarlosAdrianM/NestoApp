@@ -7,41 +7,69 @@
     </ion-navbar>
 </ion-header>
 
+
 <ion-content>
-    <selector-clientes *ngIf="mostrarClientes" (seleccionar)="cargarDeuda($event)"></selector-clientes>
 
-    <ion-list>
-        <ion-item *ngFor="let mov of movimientosDeuda">
-            <h3>{{mov.vencimiento | date: 'dd/MM/yy'}}</h3>
-            <p>{{mov.concepto}}</p>
-            <p>{{mov.importePendiente | currency:'EUR' }}</p>
-            <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
-        </ion-item>
-    </ion-list>
+    <div padding *ngIf="!mostrarClientes">
+        <ion-segment [(ngModel)]="tipoMovimientos" (ionChange)="onSegmentChange()">
+            <ion-segment-button value="deuda">
+            Deuda
+            </ion-segment-button>
+            <ion-segment-button value="facturas">
+            Facturas
+            </ion-segment-button>
+        </ion-segment>
+    </div>
+    
+    
+    <selector-clientes *ngIf="mostrarClientes" (seleccionar)="clienteSeleccionado=$event;onSegmentChange();"></selector-clientes>
+    <ion-scroll scrollY="true">
+    <div [ngSwitch]="tipoMovimientos">
+        <ion-list *ngSwitchCase="'deuda'">
+            <ion-item *ngFor="let mov of movimientosDeuda">
+                <h3>{{mov.vencimiento | date: 'dd/MM/yy'}}</h3>
+                <p>{{mov.concepto}}</p>
+                <p>{{mov.importePendiente | currency:'EUR' }}</p>
+                <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
+            </ion-item>
+                
+            <ion-card *ngIf="!mostrarClientes">
+                <ion-card-header>
+                    Resumen de movimientos
+                </ion-card-header>
+        
+                <ion-card-content>
+                    <ion-row *ngIf="resumenDeuda.vencida">
+                        <ion-col>Total Vencida</ion-col>
+                        <ion-col>{{resumenDeuda.vencida | currency:'EUR'}}</ion-col>
+                    </ion-row>
+                    <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.impagados">
+                        <ion-col>Total Impagados</ion-col>
+                        <ion-col>{{resumenDeuda.impagados | currency:'EUR'}}</ion-col>
+                    </ion-row>
+                    <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.abogado">
+                        <ion-col>Total Abogado</ion-col>
+                        <ion-col>{{resumenDeuda.abogado | currency:'EUR'}}</ion-col>
+                    </ion-row>
+                    <ion-row>
+                        <ion-col><strong>TOTAL</strong></ion-col>
+                        <ion-col><strong>{{resumenDeuda.total | currency:'EUR'}}</strong></ion-col>
+                    </ion-row>
+                </ion-card-content>
+        
+            </ion-card>            
+        </ion-list>
+    
+        <ion-list *ngSwitchCase="'facturas'">
+            <ion-item *ngFor="let mov of movimientosDeuda">
+                <h3>{{mov.fecha | date: 'dd/MM/yy'}}</h3>
+                <p>{{mov.concepto}}</p>
+                <p>{{mov.importe | currency:'EUR' }}</p>
+                <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
+            </ion-item>
+        </ion-list>    
 
-    <ion-card *ngIf="!mostrarClientes">
-        <ion-card-header>
-            Resumen de movimientos
-        </ion-card-header>
 
-        <ion-card-content>
-            <ion-row *ngIf="resumenDeuda.vencida">
-                <ion-col>Total Vencida</ion-col>
-                <ion-col>{{resumenDeuda.vencida | currency:'EUR'}}</ion-col>
-            </ion-row>
-            <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.impagados">
-                <ion-col>Total Impagados</ion-col>
-                <ion-col>{{resumenDeuda.impagados | currency:'EUR'}}</ion-col>
-            </ion-row>
-            <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.abogado">
-                <ion-col>Total Abogado</ion-col>
-                <ion-col>{{resumenDeuda.abogado | currency:'EUR'}}</ion-col>
-            </ion-row>
-            <ion-row>
-                <ion-col><strong>TOTAL</strong></ion-col>
-                <ion-col><strong>{{resumenDeuda.total | currency:'EUR'}}</strong></ion-col>
-            </ion-row>
-        </ion-card-content>
-
-    </ion-card>
+    </div>
+    </ion-scroll>
 </ion-content>

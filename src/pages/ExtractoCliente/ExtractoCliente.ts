@@ -14,7 +14,21 @@ export class ExtractoCliente {
     public movimientosDeuda: any[];
     private errorMessage: string;
     public resumenDeuda: any = {};
+    public tipoMovimientos: string = "deuda";
+    public clienteSeleccionado: any;
     private hoy: Date;
+
+    public onSegmentChange(): void {
+        if (!this.clienteSeleccionado || this.clienteSeleccionado.cliente == "") {
+            return;
+        }
+        if (this.tipoMovimientos == "deuda") {
+            this.cargarDeuda(this.clienteSeleccionado);
+        }
+        if (this.tipoMovimientos == "facturas") {
+            this.cargarFacturas(this.clienteSeleccionado);
+        }
+    }
 
     public cargarDeuda(cliente: any): void {
         this.mostrarClientes = false;
@@ -46,10 +60,24 @@ export class ExtractoCliente {
                             this.resumenDeuda.abogado += mov.importePendiente;
                         }
                     }
-                    // mov.vencimientoMostrar = new Date(mov.vencimiento);
                 }
 
                 console.log(this.resumenDeuda);
+            },
+            error => this.errorMessage = <any>error
+        );
+    }
+
+    public cargarFacturas(cliente: any): void {
+        this.mostrarClientes = false;
+        this.servicio.cargarFacturas(cliente).subscribe(
+            data => {
+                this.movimientosDeuda = data;
+                if (!data.length) {
+                    this.errorMessage = 'Este cliente no tiene facturas';
+                    console.log('Este cliente no tiene facturas');
+                    return;
+                }
             },
             error => this.errorMessage = <any>error
         );

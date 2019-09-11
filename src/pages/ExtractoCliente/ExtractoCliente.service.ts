@@ -27,15 +27,23 @@ export class ExtractoClienteService {
             .catch(this.handleError);
     }
 
-    public descargarFactura(empresa: string, numeroFactura: string) {
-        /*
+    public cargarFacturas(cliente: any): Observable<any> {
+        let fechaHasta: Date = new Date();
+        let fechaDesde: Date = new Date();
+        fechaDesde.setMonth(fechaDesde.getMonth() - 6);
         let params: HttpParams = new HttpParams();
-        params = params.append('empresa', empresa);
-        params = params.append('numeroFactura', numeroFactura);
+        //string empresa, string cliente, string tipoApunte, DateTime fechaDesde, DateTime fechaHasta
+        params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+        params = params.append('cliente', cliente.cliente);
+        params = params.append('tipoApunte', "1");
+        params = params.append('fechaDesde', fechaDesde.toISOString());
+        params = params.append('fechaHasta', fechaHasta.toISOString());
 
-        return this.http.get(Configuracion.API_URL + "/Facturas", { params })
+        return this.http.get(this._baseUrl, { params })
             .catch(this.handleError);
-        */
+    }
+
+    public descargarFactura(empresa: string, numeroFactura: string) {
        const filetransfer: FileTransferObject = this.transfer.create(); 
        const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim(); 
        filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf').then((entry) => {
