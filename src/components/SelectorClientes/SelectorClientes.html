@@ -2,7 +2,7 @@
 <ion-scroll scrollY="true">
   <ion-list>
     <div ion-item *ngFor="let cliente of datosFiltrados" (click)="seleccionarDato(cliente)">
-      <ion-icon name="contact" item-left></ion-icon>
+      <ion-icon name="contact" [color]="colorEstado(cliente.estado)" item-left></ion-icon>
       <h2 text-wrap>{{ cliente.nombre }}</h2>
       <h3 text-wrap>{{ cliente.direccion }}</h3>
       <p text-wrap>{{ cliente.codigoPostal }} {{ cliente.poblacion }} ({{ cliente.provincia }})</p>

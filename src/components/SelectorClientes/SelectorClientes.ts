@@ -70,4 +70,14 @@ export class SelectorClientes extends SelectorBase {
             }
         );
     }
+
+    public colorEstado(estado: number): string {
+        if (estado == 0 || estado == 9 || estado == 7) {
+            return "secondary";
+        }
+        if (estado == 5) {
+            return "danger";
+        }
+        return "default";
+    }
 }
