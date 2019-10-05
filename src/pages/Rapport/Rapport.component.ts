@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+﻿import { Component, ViewChild } from '@angular/core';
 import { NavParams, AlertController, LoadingController } from 'ionic-angular';
 import { RapportService } from './Rapport.service';
 import { Usuario } from '../../models/Usuario';
@@ -29,6 +29,13 @@ export class RapportComponent {
 
     submitted = false;
     onSubmit() { this.submitted = true; }
+    
+    @ViewChild('cliente') inputCliente;
+    ngAfterViewInit() {
+        setTimeout(()=>{
+            this.inputCliente.setFocus();
+        },500)
+    }
 
     public leerCliente(cliente: string, contacto: string): void {
         this.servicio.getCliente(cliente, contacto).subscribe(
@@ -44,6 +51,7 @@ export class RapportComponent {
                     this.rapport.Cliente = data.cliente;
                     this.rapport.Contacto = data.contacto;
                     this.rapport.Direccion = data.direccion;
+                    this.rapport.EstadoCliente = data.estado;
                     let vendedorEstetica = data.vendedor.trim();
                     let vendedorPeluqueria = "";
                     if (data.VendedoresGrupoProducto && data.VendedoresGrupoProducto[0]) {
@@ -132,6 +140,7 @@ export class RapportComponent {
 
     public seleccionarContacto(evento: any): void {
         this.rapport.Contacto = evento.contacto;
+        this.rapport.EstadoCliente = evento.estado;
     }
 
     public seleccionarTexto(evento: any): void {
@@ -145,4 +154,29 @@ export class RapportComponent {
         return !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
     }
 
+    public mostrarEstadoCliente(estadoCliente: number): void {
+        if (estadoCliente == undefined) {
+            return;
+        }
+        let alert: any = this.alertCtrl.create({
+            title: 'Info',
+            subTitle: 'El cliente está en estado ' + estadoCliente.toString(),
+            buttons: ['Ok'],
+        });
+        alert.present();
+    }
+
+    public colorEstado(estado: number): string {
+        if (estado == 0 || estado == 9) {
+            return "secondary";
+        }
+        if (estado == 5) {
+            return "danger";
+        }
+        if (estado == 7) {
+            return "primary";
+        }
+
+        return "default";
+    }
 }

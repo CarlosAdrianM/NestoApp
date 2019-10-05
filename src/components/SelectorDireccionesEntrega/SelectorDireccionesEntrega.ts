@@ -75,4 +75,18 @@ export class SelectorDireccionesEntrega extends SelectorBase {
     public ngOnChanges(changes): void {
         this.cargarDatos(this.cliente);
     }
+
+    public colorEstado(estado: number): string {
+        if (estado == 0 || estado == 9) {
+            return "secondary";
+        }
+        if (estado == 5) {
+            return "danger";
+        }
+        if (estado == 7) {
+            return "primary";
+        }
+
+        return "default";
+    }
 }

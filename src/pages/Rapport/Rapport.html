@@ -12,10 +12,11 @@
 <ion-content>
   <form>
     <ion-item>
-      <ion-label for="cliente">Cliente</ion-label>
-      <ion-input type="text" class="form-control" id="cliente" required
+      <ion-label for="cliente" [color]="colorEstado(rapport.EstadoCliente)">Cliente</ion-label>
+      <ion-input type="text" class="form-control" id="cliente" #cliente required
                  [(ngModel)]="numeroCliente"
-                 name="cliente" (ionFocus)="seleccionarTexto($event)" (ionBlur)="leerClientePrincipal()"></ion-input>
+                 name="cliente" (ionFocus)="seleccionarTexto($event)" (ionBlur)="leerClientePrincipal()"
+                 [color]="colorEstado(rapport.EstadoCliente)" (press)="mostrarEstadoCliente(rapport.EstadoCliente)"></ion-input>
     </ion-item>
     <selector-direcciones-entrega cliente="{{rapport.Cliente}}" seleccionado="{{rapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
 
