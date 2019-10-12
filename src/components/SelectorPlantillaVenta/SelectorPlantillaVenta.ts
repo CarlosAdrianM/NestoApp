@@ -8,7 +8,6 @@ import { Keyboard } from '@ionic-native/keyboard';
 @Component({
     selector: 'selector-plantilla-venta',
     templateUrl: 'SelectorPlantillaVenta.html',
-    // inputs: ['cliente'],
 })
 
 export class SelectorPlantillaVenta extends SelectorBase {
@@ -19,6 +18,7 @@ export class SelectorPlantillaVenta extends SelectorBase {
     private nav: NavController;
 
     @Input() public cliente: any;
+    @Input() public estadoCliente: number;
     @Input() public almacen: any;
 
     constructor(servicio: SelectorPlantillaVentaService, alertCtrl: AlertController, loadingCtrl: LoadingController, nav: NavController, private keyboard: Keyboard) {
@@ -118,7 +118,10 @@ export class SelectorPlantillaVenta extends SelectorBase {
     }
 
     public ngOnChanges(changes): void {
-        this.cargarDatos(this.cliente);
+        if (this.estadoCliente != 5)
+        {
+            this.cargarDatos(this.cliente);
+        }
     }
 
     public buscarEnTodosLosProductos(filtro: any): void {

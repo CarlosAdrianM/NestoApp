@@ -105,7 +105,7 @@
             <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
         </ion-card-content>
         <button ion-button block (click)="slideActual = DATOS_COMISIONES">&lt; Volver a Datos de Comisiones</button>
-        <button ion-button block [disabled]="cliente.formaPago=='RCB' && cliente.iban.length < 24" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</button>
+        <button ion-button block [disabled]="cliente.formaPago=='RCB' && (!cliente.iban || cliente.iban.length < 24)" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</button>
     </ion-card>
 
     <ion-card *ngIf="slideActual == DATOS_CONTACTO">
@@ -133,7 +133,7 @@
             
         </ion-card-content>
         <button ion-button block (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</button>
-        <button ion-button block (click)="crearCliente()">FINALIZAR</button>
+        <button ion-button block (click)="finalizar()">FINALIZAR</button>
     </ion-card>
 
 </ion-content>  

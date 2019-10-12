@@ -52,6 +52,25 @@ export class ClienteService {
         .catch(this.handleError);
   }
 
+  leerClienteCrear(empresa: string, cliente: string, contacto: string): Observable<any> {
+    var urlLlamada: string = this._baseUrl+'/GetClienteCrear';
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('cliente', cliente);
+    params = params.append('contacto', contacto);
+
+    return this.http.get(urlLlamada, { params: params })
+        .catch(this.handleError);
+  }
+
+  public modificarCliente(cliente: any): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    return this.http.put(this._baseUrl, JSON.stringify(cliente), { headers: headers })
+        .catch(this.handleError);
+  }
+
   private handleError(error: HttpErrorResponse): Observable<any> {
     // in a real world app, we may send the error to some remote logging infrastructure
     // instead of just logging it to the console

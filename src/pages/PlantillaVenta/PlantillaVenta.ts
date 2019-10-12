@@ -8,6 +8,7 @@ import {Usuario} from '../../models/Usuario';
 import { Parametros } from '../../services/Parametros.service';
 import { ProfilePage } from '../../pages/profile/profile';
 import { DecimalPipe } from '@angular/common';
+import { ClienteComponent } from '../Cliente/Cliente.component';
 
 @Component({
     templateUrl: 'PlantillaVenta.html',
@@ -75,6 +76,13 @@ export class PlantillaVenta {
         if (value) {
             this.formaPago = value.formaPago;
             this.plazosPago = value.plazosPago;
+        }
+        if (this._direccionSeleccionada.estado == 5) {
+            this.nav.push(ClienteComponent, { 
+                empresa: this.clienteSeleccionado.empresa, 
+                cliente: this.clienteSeleccionado.cliente,
+                contacto: this._direccionSeleccionada.contacto
+            })
         }
     }
     private hoy: Date = new Date();

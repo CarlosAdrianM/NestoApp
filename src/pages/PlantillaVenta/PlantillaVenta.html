@@ -21,7 +21,7 @@
             <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
         </ion-slide>
         <ion-slide *ngIf="clienteSeleccionado">
-            <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" almacen="{{almacen}}"></selector-plantilla-venta>
+            <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}"></selector-plantilla-venta>
         </ion-slide>
         <ion-slide  style="overflow-y:scroll">
             <ion-content>
