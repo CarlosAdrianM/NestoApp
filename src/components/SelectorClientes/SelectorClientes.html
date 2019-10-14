@@ -8,6 +8,9 @@
       <p text-wrap>{{ cliente.codigoPostal }} {{ cliente.poblacion }} ({{ cliente.provincia }})</p>
       <p text-wrap>{{ cliente.cliente }} - {{ cliente.telefono }}</p>
       <p text-wrap>{{ cliente.comentarios }}</p>
-    </div>
+      <ion-fab right middle>
+        <button ion-fab mini (click)="crearContacto($event, cliente)" item-right><ion-icon name="add"></ion-icon></button>
+      </ion-fab>
+  </div>
   </ion-list>
 </ion-scroll>

@@ -48,7 +48,8 @@ export class ClienteComponent {
         private nav: NavController,
         navParams: NavParams
     ){
-        if (navParams.data && navParams.data.length == 3) {
+        if (navParams.data && navParams.data.empresa &&
+            navParams.data.cliente && navParams.data.contacto) {
             this.servicio.leerClienteCrear(
                 navParams.get('empresa'), 
                 navParams.get('cliente'),
@@ -73,9 +74,15 @@ export class ClienteComponent {
             }
         } else {
             this.cliente.esUnaModificacion = false;
+            this.getGeolocation();
+            this.annadirPersonaContacto();
         }
-        this.getGeolocation();
-        this.annadirPersonaContacto();
+
+        if (navParams.data && navParams.data.nif && navParams.data.nombre) {
+            this.cliente.nif = navParams.get("nif");
+            this.cliente.nombre = navParams.get("nombre");
+            this.goToDatosGenerales();
+        } 
     }
 
     @ViewChild('iban') inputIban;
@@ -111,7 +118,9 @@ export class ClienteComponent {
 
     ngAfterViewInit() {
         setTimeout(()=>{
-            this.inputNif.setFocus();
+            if (this.slideActual == this.DATOS_FISCALES){
+                this.inputNif.setFocus();
+            }
         },500)
     }
 

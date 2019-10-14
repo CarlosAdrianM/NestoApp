@@ -1,8 +1,9 @@
 import {Component, Injectable, Output, EventEmitter, ViewChild} from '@angular/core';
-import {AlertController, LoadingController} from 'ionic-angular';
+import {AlertController, LoadingController, NavController} from 'ionic-angular';
 import {SelectorClientesService} from './SelectorClientes.service';
 import { SelectorBase } from '../SelectorBase/SelectorBase';
 import { Keyboard } from '@ionic-native/keyboard';
+import { ClienteComponent } from '../../pages/Cliente/Cliente.component';
 
 @Component({
     selector: 'selector-clientes',
@@ -17,7 +18,8 @@ export class SelectorClientes extends SelectorBase {
     private loadingCtrl: LoadingController;
     private alertCtrl: AlertController;
 
-    constructor(servicio: SelectorClientesService, loadingCtrl: LoadingController, alertCtrl: AlertController, private keyboard: Keyboard) {
+    constructor(servicio: SelectorClientesService, loadingCtrl: LoadingController, 
+        alertCtrl: AlertController, private keyboard: Keyboard, private nav: NavController) {
         super();
         this.servicio = servicio;
         this.loadingCtrl = loadingCtrl;
@@ -83,5 +85,13 @@ export class SelectorClientes extends SelectorBase {
         }
 
         return "default";
+    }
+
+    crearContacto(event: Event, cliente: any): void {
+        event.stopPropagation();
+        this.nav.push(ClienteComponent, { 
+            nif: cliente.cifNif,
+            nombre: cliente.nombre
+        })
     }
 }
