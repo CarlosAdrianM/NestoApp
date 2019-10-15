@@ -94,4 +94,9 @@ export class SelectorClientes extends SelectorBase {
             nombre: cliente.nombre
         })
     }
+
+    annadirCliente(event: Event): void {
+        event.stopPropagation();
+        this.nav.push(ClienteComponent);
+    }
 }

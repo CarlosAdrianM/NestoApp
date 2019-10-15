@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, ViewChild} from '@angular/core';
 import {ExtractoClienteService} from './ExtractoCliente.service';
 
 @Component({
@@ -17,6 +17,14 @@ export class ExtractoCliente {
     public tipoMovimientos: string = "deuda";
     public clienteSeleccionado: any;
     private hoy: Date;
+
+    @ViewChild('selector') selectorClientes: any;
+
+    ngAfterViewInit() {
+        setTimeout(()=>{
+            this.selectorClientes.setFocus();
+        },500)
+    }
 
     public onSegmentChange(): void {
         if (!this.clienteSeleccionado || this.clienteSeleccionado.cliente == "") {
