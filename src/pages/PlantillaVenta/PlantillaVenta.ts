@@ -77,7 +77,7 @@ export class PlantillaVenta {
             this.formaPago = value.formaPago;
             this.plazosPago = value.plazosPago;
         }
-        if (this._direccionSeleccionada.estado == 5) {
+        if (this._direccionSeleccionada && this._direccionSeleccionada.estado == 5) {
             this.nav.push(ClienteComponent, { 
                 empresa: this.clienteSeleccionado.empresa, 
                 cliente: this.clienteSeleccionado.cliente,
