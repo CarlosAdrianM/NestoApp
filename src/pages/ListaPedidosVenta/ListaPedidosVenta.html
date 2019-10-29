@@ -4,6 +4,11 @@
             <ion-icon name="menu"></ion-icon>
         </button>
         <ion-title>Lista de Pedidos Venta</ion-title>
+        <ion-buttons end>
+            <button ion-button (click)="mostrarFiltros()">
+                <ion-icon name="funnel"></ion-icon>
+            </button>
+        </ion-buttons>
     </ion-navbar>
     <ion-searchbar #filtro placeholder="Introduzca algún dato del pedido" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
 </ion-header>
@@ -18,6 +23,7 @@
             <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
             <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
             <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
+            <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
             <ion-icon name="arrow-forward" item-right></ion-icon>
         </ion-item>
     </ion-list>

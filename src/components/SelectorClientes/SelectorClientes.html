@@ -9,7 +9,7 @@
       <p text-wrap>{{ cliente.cliente }} - {{ cliente.telefono }}</p>
       <p text-wrap>{{ cliente.comentarios }}</p>
       <ion-fab right middle>
-        <button ion-fab mini (click)="crearContacto($event, cliente)" item-right><ion-icon name="add"></ion-icon></button>
+        <button ion-fab mini (click)="crearContacto($event, cliente)" item-right [disabled]="cliente.cifNif == null"><ion-icon name="add"></ion-icon></button>
       </ion-fab>
   </div>
   </ion-list>

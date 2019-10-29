@@ -16,10 +16,15 @@ export class ListaPedidosVentaService {
 
     private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
     
-    public cargarLista(): Observable<any> {
+    public cargarLista(mostrarPresupuestos: boolean): Observable<any> {
         let params: HttpParams = new HttpParams();
         if (this.usuario.vendedor) {
             params = params.append('vendedor', this.usuario.vendedor);
+        } else {
+            params = params.append('vendedor', '');
+        }
+        if (mostrarPresupuestos) {
+            params = params.append('estado', "-3");
         }
 
         return this.http.get(this._baseUrl, { params })

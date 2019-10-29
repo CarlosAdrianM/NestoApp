@@ -23,6 +23,58 @@ export class ListaPedidosVenta extends SelectorBase {
     private servicio: ListaPedidosVentaService;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
+    private _estaFiltradoPendientes: boolean;
+    get estaFiltradoPendientes(): boolean {
+        return this._estaFiltradoPendientes;
+    }
+    set estaFiltradoPendientes(value: boolean) {
+        if (this._estaFiltradoPendientes != value) {
+            this._estaFiltradoPendientes = value;
+            if (value && this.estaFiltradoPresupuestos) {
+                this.estaFiltradoPresupuestos = false;
+            }
+            if (value) {
+                this.datosFiltrados = this.datosFiltrados.filter((e)=> e.tienePendientes);
+            } else {
+                this.datosFiltrados = this.datosIniciales();
+                this._estaFiltradoPicking = false;
+            }    
+        }        
+    }
+    private _estaFiltradoPicking: boolean;
+    get estaFiltradoPicking(): boolean {
+        return this._estaFiltradoPicking;
+    }
+    set estaFiltradoPicking(value: boolean) {
+        if (this._estaFiltradoPicking != value) {
+            this._estaFiltradoPicking = value;
+            if (value && this.estaFiltradoPresupuestos) {
+                this.estaFiltradoPresupuestos = false;
+            }
+            if (value) {
+                this.datosFiltrados = this.datosFiltrados.filter((e)=> e.tienePicking);
+            } else {
+                this.datosFiltrados = this.datosIniciales();
+                this._estaFiltradoPendientes = false;
+            }    
+        }   
+    }
+    private _estaFiltradoPresupuestos: boolean;
+    get estaFiltradoPresupuestos(): boolean {
+        return this._estaFiltradoPresupuestos;
+    }
+    set estaFiltradoPresupuestos(value: boolean) {
+        if (value != this._estaFiltradoPresupuestos) {
+            if (value && this.estaFiltradoPendientes) {
+                this.estaFiltradoPendientes = false;
+            }
+            if (value && this.estaFiltradoPicking) {
+                this.estaFiltradoPicking = false;
+            }
+            this._estaFiltradoPresupuestos = value;
+            this.cargarDatos();    
+        }
+    }
 
     constructor(servicio: ListaPedidosVentaService, nav: NavController, alertCtrl: AlertController, loadingCtrl: LoadingController) {
         super();
@@ -30,7 +82,7 @@ export class ListaPedidosVenta extends SelectorBase {
         this.nav = nav;
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
-        this.cargarDatos(''); // El parámetro no se usa para nada
+        this.cargarDatos();
     }
 
     public abrirPedido(pedido: any): void {
@@ -41,14 +93,14 @@ export class ListaPedidosVenta extends SelectorBase {
         this.nav.push(PedidoVentaComponent, { empresa: "1", numero: numeroPedido });
     }
 
-    public cargarDatos(nada: string): void {
+    public cargarDatos(): void {
         let loading: any = this.loadingCtrl.create({
             content: 'Cargando Pedidos...',
         });
 
         loading.present();
 
-        this.servicio.cargarLista().subscribe(
+        this.servicio.cargarLista(this.estaFiltradoPresupuestos).subscribe(
             data => {
                 if (data.length === 0) {
                     let alert = this.alertCtrl.create({
@@ -69,6 +121,39 @@ export class ListaPedidosVenta extends SelectorBase {
                 loading.dismiss();
             }
         );
+    }
+
+    public mostrarFiltros() {
+        let alert = this.alertCtrl.create();
+        alert.setTitle('Seleccione los filtros');
+
+        alert.addInput({
+            type: 'checkbox',
+            label: 'Presupuestos',
+            value: 'presupuestos',
+            checked: this.estaFiltradoPresupuestos,
+            handler: data => { this.estaFiltradoPresupuestos = data.checked}
+        });
+
+        alert.addInput({
+        type: 'checkbox',
+        label: 'Pendientes',
+        value: 'pendientes',
+        checked: this.estaFiltradoPendientes,
+        handler: data => { this.estaFiltradoPendientes = data.checked}
+        });
+
+        alert.addInput({
+        type: 'checkbox',
+        label: 'Picking',
+        value: 'picking',
+        checked: this.estaFiltradoPicking,
+        handler: data => { this.estaFiltradoPicking = data.checked}
+        });
+
+        alert.addButton('OK');
+        
+        alert.present();
     }
 
     
