@@ -20,8 +20,11 @@ export class PlantillaVenta {
     private platform: Platform;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
+    private ultimoClienteAbierto: string = "";
 
-    constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, loadingCtrl: LoadingController, private ref: ChangeDetectorRef) {
+    constructor(usuario: Usuario, nav: NavController, servicio: PlantillaVentaService, 
+            parametros: Parametros, platform: Platform, events: Events, alertCtrl: AlertController, 
+            loadingCtrl: LoadingController, private ref: ChangeDetectorRef) {
         this.usuario = usuario;
         this.nav = nav;
         this.alertCtrl = alertCtrl;
@@ -30,6 +33,11 @@ export class PlantillaVenta {
         this.parametros = parametros;
         this.platform = platform;
         this.almacen = this.usuario.almacen;
+
+        events.subscribe('clienteModificado', (clienteModificado: any) => {
+            this.clienteSeleccionado = clienteModificado;
+            this.cargarProductos(clienteModificado);
+        });
     }
 
     @ViewChild(Slides) slider: Slides;
@@ -65,7 +73,52 @@ export class PlantillaVenta {
 
 
     private nav: NavController;   
-    public clienteSeleccionado: any;
+    private _clienteSeleccionado: any;
+    get clienteSeleccionado(): any {
+        return this._clienteSeleccionado;
+    }
+    set clienteSeleccionado(value: any) {
+        if (value && !value.cifNif) {
+            if (this.ultimoClienteAbierto == value.cliente) {
+                let alert = this.alertCtrl.create({
+                    title: 'Faltan datos',
+                    message: 'A este cliente le faltan datos. Si continuas es '+
+                    'posible que no puedas finalizar el pedido. Elige entre rellenar los '+
+                    'datos que faltan o continuar con el pedido.',
+                    buttons: [
+                        {
+                            text: 'Rellenar',
+                            role: 'cancel',
+                            handler: () => {
+                                this.nav.push(ClienteComponent, { 
+                                    empresa: value.empresa, 
+                                    cliente: value.cliente,
+                                    contacto: value.contacto
+                                })
+                            }
+                        },
+                        {
+                            text: 'Continuar',
+                            handler: () => {
+                                this._clienteSeleccionado = value;
+                                this.cargarProductos(this.clienteSeleccionado);
+                            }
+                        }
+                    ]
+                });
+                alert.present();
+            } else {
+                this.ultimoClienteAbierto = value.cliente;
+                this.nav.push(ClienteComponent, { 
+                    empresa: value.empresa, 
+                    cliente: value.cliente,
+                    contacto: value.contacto
+                })    
+            }
+        } else {
+            this._clienteSeleccionado = value;
+        }
+    }
     public productosResumen: any[];
     private _direccionSeleccionada: any;
     get direccionSeleccionada(): any {
@@ -76,13 +129,6 @@ export class PlantillaVenta {
         if (value) {
             this.formaPago = value.formaPago;
             this.plazosPago = value.plazosPago;
-        }
-        if (this._direccionSeleccionada && this._direccionSeleccionada.estado == 5) {
-            this.nav.push(ClienteComponent, { 
-                empresa: this.clienteSeleccionado.empresa, 
-                cliente: this.clienteSeleccionado.cliente,
-                contacto: this._direccionSeleccionada.contacto
-            })
         }
     }
     private hoy: Date = new Date();
@@ -135,10 +181,13 @@ export class PlantillaVenta {
         }
     }
 
-    private cargarProductosPlantilla(cliente: any[]): void {
+    private cargarProductosPlantilla(cliente: any): void {
+        this.clienteSeleccionado = cliente;
+        if (!cliente.cifNif) {
+            return;
+        }
         this.slider.lockSwipeToNext(false);
         this.siguientePantalla();
-        this.clienteSeleccionado = cliente;
         /*
         setTimeout(() => {
             this._selectorPlantillaVenta.setFocus();

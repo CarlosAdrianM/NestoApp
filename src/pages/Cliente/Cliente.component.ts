@@ -22,11 +22,12 @@ Telefono
 */
 import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { ClienteService } from './Cliente.service';
-import { TextInput, AlertController, NavParams, NavController } from 'ionic-angular';
+import { TextInput, AlertController, NavParams, NavController, ModalController, Events } from 'ionic-angular';
 import { NativeGeocoder, NativeGeocoderReverseResult, NativeGeocoderOptions } from '@ionic-native/native-geocoder';
 import { Geolocation } from '@ionic-native/geolocation';
 import { Configuracion } from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
+import { ClientesMismoTelefonoComponent } from './ClientesMismoTelefono.component';
 
 
 @Component({
@@ -46,7 +47,9 @@ export class ClienteComponent {
         private nativeGeocoder: NativeGeocoder,
         private usuario: Usuario,
         private nav: NavController,
-        navParams: NavParams
+        navParams: NavParams,
+        public modalCtrl: ModalController,
+        public events: Events
     ){
         if (navParams.data && navParams.data.empresa &&
             navParams.data.cliente && navParams.data.contacto) {
@@ -216,6 +219,13 @@ export class ClienteComponent {
                     this.cliente.direccionValidada = true;
                     this.slideActual = this.DATOS_COMISIONES;
                 }
+                if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
+                    data.clientesMismoTelefono = data.clientesMismoTelefono.filter(c => c.cliente != this.cliente.cliente);
+                }
+                if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
+                    let clientesModal = this.modalCtrl.create(ClientesMismoTelefonoComponent, data.clientesMismoTelefono);
+                    clientesModal.present();
+                }
             },
             error => {
                 let alert = this.alertCtrl.create({
@@ -332,6 +342,20 @@ export class ClienteComponent {
                     buttons: ['Ok'],
                 });
                 alert.present();
+                this.events.publish('clienteModificado', {
+                    empresa: data.Empresa.trim(),
+                    cliente: data.Nº_Cliente.trim(),
+                    contacto: data.Contacto.trim(),
+                    cifNif: data.CIF_NIF,
+                    nombre: data.Nombre,
+                    direccion: data.Dirección,
+                    codigoPostal: data.CodPostal,
+                    poblacion: data.Población,
+                    provincia: data.Provincia,
+                    comentarios: data.Comentarios,
+                    telefono: data.Teléfono,
+                    estado: data.Estado
+                });
                 this.cliente = {
                     formaPago: "EFC",
                     plazosPago: "CONTADO",
@@ -339,8 +363,6 @@ export class ClienteComponent {
                     iban: "",
                     usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
                 };
-                this.mensajeDatosFiscales = "";
-                this.slideActual = this.DATOS_FISCALES;
             },
             error => {
                 var textoExcepcion: string = error.ExceptionMessage;

@@ -31,11 +31,11 @@ export class SelectorPlantillaVenta extends SelectorBase {
 
     @ViewChild('filtro') myProductoSearchBar;
 
-    /*
+    
     ngAfterViewInit() {
-        
+        this.setFocus();        
     }
-    */
+    
 
     public setFocus(): void {
         setTimeout(() => {
@@ -121,6 +121,8 @@ export class SelectorPlantillaVenta extends SelectorBase {
         if (this.estadoCliente != 5)
         {
             this.cargarDatos(this.cliente);
+        } else {
+            this.inicializarDatos([]);
         }
     }
 

@@ -62,6 +62,7 @@ import { NativeGeocoder } from '@ionic-native/native-geocoder';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
 import { File } from '@ionic-native/file';
 import { FileOpener } from '@ionic-native/file-opener';
+import { ClientesMismoTelefonoComponent } from '../pages/Cliente/ClientesMismoTelefono.component';
 
 let storage = new Storage({});
 
@@ -99,7 +100,8 @@ export function getAuthHttp(http) {
     ListaProductosComponent,
     SelectorProductosComponent,
     SelectorAlmacenesComponent,
-    ClienteComponent
+    ClienteComponent,
+    ClientesMismoTelefonoComponent
   ],
   imports: [
       BrowserModule,
@@ -128,7 +130,8 @@ export function getAuthHttp(http) {
     ListaProductosComponent,
     SelectorProductosComponent,
     SelectorAlmacenesComponent,
-    ClienteComponent
+    ClienteComponent,
+    ClientesMismoTelefonoComponent
   ],
   providers: [
       {   
