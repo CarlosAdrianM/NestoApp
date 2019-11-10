@@ -173,6 +173,7 @@ export class ListaPedidosVenta extends SelectorBase {
                     buttons: ['Ok'],
                 });
                 alert.present();
+                loading.dismiss();
                 this.fileOpener.open(entry.toURL(), 'application/pdf');
             },
             error => {
