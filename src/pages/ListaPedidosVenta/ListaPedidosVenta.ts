@@ -158,7 +158,8 @@ export class ListaPedidosVenta extends SelectorBase {
         alert.present();
     }
 
-    public descargarPedido(pedido: any): void {
+    public descargarPedido(event: Event, pedido: any): void {
+        event.stopPropagation();
         let loading: any = this.loadingCtrl.create({
             content: 'Generando PDF pedido...',
         });
