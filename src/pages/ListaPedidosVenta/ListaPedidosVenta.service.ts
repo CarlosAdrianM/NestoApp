@@ -4,13 +4,21 @@ import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import {Usuario} from '../../models/Usuario';
+import { FileTransferObject, FileTransfer } from '@ionic-native/file-transfer';
+import { File } from '@ionic-native/file';
+
 
 @Injectable()
 export class ListaPedidosVentaService {
     
     private usuario: any;
 
-    constructor(private http: HttpClient, usuario: Usuario) {
+    constructor(
+        private http: HttpClient, 
+        usuario: Usuario, 
+        private transfer: FileTransfer, 
+        private file: File
+    ) {
         this.usuario = usuario;
     }
 
@@ -30,6 +38,23 @@ export class ListaPedidosVentaService {
         return this.http.get(this._baseUrl, { params })
             .catch(this.handleError);
     }
+
+    public descargarPedido(empresa: string, pedido: number): Promise<any> {
+        const filetransfer: FileTransferObject = this.transfer.create(); 
+        const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+pedido.toString().trim(); 
+        return filetransfer.download(url, this.file.externalDataDirectory + pedido.toString().trim() + '.pdf')
+            .catch(this.handleError);
+        /*
+        .then((entry) => {
+             alert("Factura descargada: \n"+entry.toURL());
+             this.fileOpener.open(entry.toURL(), 'application/pdf')
+             .then(() => console.log('File is opened'))
+             .catch(e => console.log('Error opening file', e));
+        }, (error) => {
+            alert(error);
+        });
+        */
+     }
 
     private handleError(error: Response): Observable<any> {
         // in a real world app, we may send the error to some remote logging infrastructure

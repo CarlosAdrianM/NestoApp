@@ -11,6 +11,7 @@ import {SelectorBase} from '../../components/SelectorBase/SelectorBase';
 
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
+import { FileOpener } from '@ionic-native/file-opener';
 
 registerLocaleData(localeEs);
 
@@ -76,7 +77,8 @@ export class ListaPedidosVenta extends SelectorBase {
         }
     }
 
-    constructor(servicio: ListaPedidosVentaService, nav: NavController, alertCtrl: AlertController, loadingCtrl: LoadingController) {
+    constructor(servicio: ListaPedidosVentaService, nav: NavController, alertCtrl: AlertController, 
+        loadingCtrl: LoadingController, private fileOpener: FileOpener) {
         super();
         this.servicio = servicio;
         this.nav = nav;
@@ -156,7 +158,27 @@ export class ListaPedidosVenta extends SelectorBase {
         alert.present();
     }
 
-    
+    public descargarPedido(pedido: any): void {
+        let loading: any = this.loadingCtrl.create({
+            content: 'Generando PDF pedido...',
+        });
 
+        loading.present();
 
+        this.servicio.descargarPedido(pedido.empresa, pedido.numero).then(
+            entry => {
+                let alert = this.alertCtrl.create({
+                    title: 'PDF generado',
+                    subTitle: "Pedido descargado: \n"+entry.toURL(),
+                    buttons: ['Ok'],
+                });
+                alert.present();
+                this.fileOpener.open(entry.toURL(), 'application/pdf');
+            },
+            error => {
+                loading.dismiss();
+                this.errorMessage = <any>error;
+            }
+        );
+    }
 }
