@@ -44,16 +44,6 @@ export class ListaPedidosVentaService {
         const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+pedido.toString().trim(); 
         return filetransfer.download(url, this.file.externalDataDirectory + pedido.toString().trim() + '.pdf')
             .catch(this.handleError);
-        /*
-        .then((entry) => {
-             alert("Factura descargada: \n"+entry.toURL());
-             this.fileOpener.open(entry.toURL(), 'application/pdf')
-             .then(() => console.log('File is opened'))
-             .catch(e => console.log('Error opening file', e));
-        }, (error) => {
-            alert(error);
-        });
-        */
      }
 
     private handleError(error: Response): Observable<any> {

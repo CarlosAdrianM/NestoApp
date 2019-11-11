@@ -12,6 +12,9 @@
       <ion-segment-button value="fecha">
         Fecha
       </ion-segment-button>
+      <ion-segment-button value="codigoPostal">
+        Cód. Postal
+      </ion-segment-button>
     </ion-segment>
   <div [ngSwitch]="segmentoRapports">
     <div *ngSwitchCase="'cliente'">
@@ -35,11 +38,20 @@
         <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
       </ion-item>
     </div>
+    <div *ngSwitchCase="'codigoPostal'">
+      <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+      <ion-item>
+        <ion-label>Código Postal</ion-label>
+        <ion-select [(ngModel)]="codigoPostalSeleccionado">
+          <ion-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.codigoPostal">{{codPostal.codigoPostal}} {{codPostal.poblacion}}</ion-option>
+        </ion-select>
+      </ion-item>
+    </div>
   </div>
 </ion-header>
 
 <ion-content>
-  <ion-list>
+  <ion-list *ngIf="segmentoRapports != 'codigoPostal'">
     <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" text-wrap>
       <ion-icon name="contact" item-left></ion-icon>
       <p>{{rapport.Cliente}}</p>
@@ -67,10 +79,22 @@
       </div>
     </ion-item>
   </ion-list>
+
+  <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
+    <ion-item *ngIf="!usuario.vendedor"></ion-item>
+    <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitar" (click)="annadirRapport(clienteSinVisitar)" text-wrap>
+      <ion-icon name="contact" [color]="colorEstado(clienteSinVisitar.estado)" item-left></ion-icon>
+      <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
+      <h2>{{clienteSinVisitar.nombre}}</h2>
+      <h3>{{clienteSinVisitar.direccion}}</h3>
+      <p>Estado: {{clienteSinVisitar.estado}}</p>
+    </ion-item>
+  </ion-list>
 </ion-content>
+
 <ion-footer>
   <ion-fab right bottom>
-    <button ion-fab (click)="annadirRapport()">
+    <button ion-fab (click)="annadirRapport({cliente:clienteRapport, contacto: contactoRapport})">
       <ion-icon name="add"></ion-icon>
     </button>
   </ion-fab>

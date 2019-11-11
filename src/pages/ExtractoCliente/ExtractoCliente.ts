@@ -1,12 +1,17 @@
 import {Component, ViewChild} from '@angular/core';
 import {ExtractoClienteService} from './ExtractoCliente.service';
+import { AlertController, LoadingController } from 'ionic-angular';
+import { FileOpener } from '@ionic-native/file-opener';
 
 @Component({
     templateUrl: 'ExtractoCliente.html',
 })
 export class ExtractoCliente {
     private servicio: ExtractoClienteService;
-    constructor(servicio: ExtractoClienteService) {
+    constructor(servicio: ExtractoClienteService,
+        private alertCtrl: AlertController, 
+        private loadingCtrl: LoadingController, 
+        private fileOpener: FileOpener) {
         this.servicio = servicio;
     };
 
@@ -92,9 +97,27 @@ export class ExtractoCliente {
     }
 
     public descargarFactura(movimiento: any): void {
-        this.servicio.descargarFactura(movimiento.empresa, movimiento.documento);
+        let loading: any = this.loadingCtrl.create({
+            content: 'Generando factura en PDF...',
+        });
+
+        loading.present();
+
+        this.servicio.descargarFactura(movimiento.empresa, movimiento.documento).then(
+            entry => {
+                let alert = this.alertCtrl.create({
+                    title: 'PDF generado',
+                    subTitle: "Factura descargada: \n"+entry.toURL(),
+                    buttons: ['Ok'],
+                });
+                alert.present();
+                loading.dismiss();
+                this.fileOpener.open(entry.toURL(), 'application/pdf');
+            },
+            error => {
+                loading.dismiss();
+                this.errorMessage = <any>error;
+            }
+        );
     }
-
-    
-
 }

@@ -43,10 +43,12 @@ export class ExtractoClienteService {
             .catch(this.handleError);
     }
 
-    public descargarFactura(empresa: string, numeroFactura: string) {
+    public descargarFactura(empresa: string, numeroFactura: string): Promise<any> {
        const filetransfer: FileTransferObject = this.transfer.create(); 
        const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim(); 
-       filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf').then((entry) => {
+       return filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf');
+       /*
+       .then((entry) => {
             alert("Factura descargada: \n"+entry.toURL());
             this.fileOpener.open(entry.toURL(), 'application/pdf')
             .then(() => console.log('File is opened'))
@@ -54,6 +56,7 @@ export class ExtractoClienteService {
        }, (error) => {
            alert(error);
        });
+       */
     }
 
     private handleError(error: Response): Observable<any> {

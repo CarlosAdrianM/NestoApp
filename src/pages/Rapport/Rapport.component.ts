@@ -1,5 +1,5 @@
 ﻿import { Component, ViewChild } from '@angular/core';
-import { NavParams, AlertController, LoadingController } from 'ionic-angular';
+import { NavParams, AlertController, LoadingController, Events } from 'ionic-angular';
 import { RapportService } from './Rapport.service';
 import { Usuario } from '../../models/Usuario';
 import { Configuracion } from '../../components/configuracion/configuracion';
@@ -16,7 +16,8 @@ export class RapportComponent {
     public numeroCliente: string;
     modificando: boolean = false;
 
-    constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, private loadingCtrl: LoadingController, private usuario: Usuario) {
+    constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, 
+        private loadingCtrl: LoadingController, private usuario: Usuario, public events: Events) {
         this.rapport = navParams.get('rapport');
         this.numeroCliente = this.rapport.Cliente;
         /*
@@ -106,7 +107,7 @@ export class RapportComponent {
                                 });
                                 alert.present();
                                 loading.dismiss();
-                                // this.reinicializar();
+                                this.events.publish('rapportCreado', data);
                                 this.modificando = false;
                             },
                             error => {
