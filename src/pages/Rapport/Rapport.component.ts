@@ -52,6 +52,7 @@ export class RapportComponent {
                     this.rapport.Cliente = data.cliente;
                     this.rapport.Contacto = data.contacto;
                     this.rapport.Direccion = data.direccion;
+                    this.rapport.Nombre = data.nombre;
                     this.rapport.EstadoCliente = data.estado;
                     let vendedorEstetica = data.vendedor.trim();
                     let vendedorPeluqueria = "";
@@ -107,7 +108,7 @@ export class RapportComponent {
                                 });
                                 alert.present();
                                 loading.dismiss();
-                                this.events.publish('rapportCreado', data);
+                                this.events.publish('rapportCreado', this.rapport);
                                 this.modificando = false;
                             },
                             error => {

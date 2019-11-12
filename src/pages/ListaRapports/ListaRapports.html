@@ -4,7 +4,14 @@
             <ion-icon name="menu"></ion-icon>
         </button>
         <ion-title>Lista de Rapports</ion-title>
+        <ion-buttons end *ngIf="vendedorSeleccionado && segmentoRapports == 'codigoPostal'">
+          <button ion-button (click)="mostrarFiltros()">
+              <ion-icon name="funnel"></ion-icon>
+          </button>
+      </ion-buttons>
+
     </ion-navbar>
+
     <ion-segment [(ngModel)]="segmentoRapports" (ionChange)="inicializarDatos(); cambiarSegmento();">
       <ion-segment-button value="cliente">
         Cliente
@@ -88,6 +95,8 @@
       <h2>{{clienteSinVisitar.nombre}}</h2>
       <h3>{{clienteSinVisitar.direccion}}</h3>
       <p>Estado: {{clienteSinVisitar.estado}}</p>
+      <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
+      <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>
     </ion-item>
   </ion-list>
 </ion-content>

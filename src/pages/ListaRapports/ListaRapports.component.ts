@@ -69,11 +69,14 @@ export class ListaRapports extends SelectorBase {
                 this.datosFiltrados = [];
             }
             this.datosFiltrados.push(rapportCreado);
-            var clienteEncontrado = this.listadoClientesSinVisitar
-                .find(p => p.cliente == rapportCreado.Número.trim() &&
-                    p.contacto == rapportCreado.Contacto);
-            if (clienteEncontrado != undefined) {
-                this.listadoClientesSinVisitar.pop(clienteEncontrado);
+            if (this.listadoClientesSinVisitar)
+            {
+                var clienteEncontrado = this.listadoClientesSinVisitar
+                    .find(p => p.cliente == rapportCreado.Número.trim() &&
+                        p.contacto == rapportCreado.Contacto);
+                if (clienteEncontrado != undefined) {
+                    this.listadoClientesSinVisitar.pop(clienteEncontrado);
+                }
             }
         });
     }
@@ -203,7 +206,7 @@ export class ListaRapports extends SelectorBase {
         this.cargarCodigosPostalesSinVisitar();
     }
     
-    cargarCodigosPostalesSinVisitar() {
+    cargarCodigosPostalesSinVisitar(forzarTodos: boolean = false) {
         if (!this.vendedorSeleccionado) {
             return;
         }
@@ -214,7 +217,7 @@ export class ListaRapports extends SelectorBase {
 
         loading.present();
 
-        this.servicio.cargarCodigosPostalesSinVisitar(this.vendedorSeleccionado).subscribe(
+        this.servicio.cargarCodigosPostalesSinVisitar(this.vendedorSeleccionado, forzarTodos).subscribe(
             data => {
                 if (data.length === 0) {
                     let alert = this.alertCtrl.create({
@@ -271,6 +274,43 @@ export class ListaRapports extends SelectorBase {
             }
         );
     }
+
+    public mostrarFiltros() {
+        let alert = this.alertCtrl.create();
+        alert.setTitle('Seleccione el filtro deseado');
+
+        alert.addInput({
+            type: 'radio',
+            label: 'Solo C.P. sin visitas',
+            value: 'filtrado',
+            checked: true
+        });
+
+        alert.addInput({
+            type: 'radio',
+            label: 'Todos los C.P.',
+            value: 'todos'
+        });
+
+        alert.addButton({
+            text: 'Cancelar',
+            role: 'cancel'
+        });
+        alert.addButton({
+            text: 'OK',
+            handler: (data:string) => { 
+                if (data == 'todos')
+                {
+                    this.cargarCodigosPostalesSinVisitar(true);
+                } else {
+                    this.cargarCodigosPostalesSinVisitar();
+                }
+            }
+        });
+        
+        alert.present();
+    }
+
     
     public colorEstado(estado: number): string {
         if (estado == 0 || estado == 9) {

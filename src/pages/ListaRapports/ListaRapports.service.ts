@@ -42,10 +42,13 @@ export class ListaRapportsService {
             .catch(this.handleError);
     }
 
-    cargarCodigosPostalesSinVisitar(vendedor: string) {
+    cargarCodigosPostalesSinVisitar(vendedor: string, forzarTodos: boolean = false) {
         var date = new Date();
         var primerDia = new Date(date.getFullYear(), date.getMonth(), 1);
         var ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        if (forzarTodos) {
+            ultimoDia = new Date(primerDia.getTime() - 1);
+        }
         
         let params: HttpParams = new HttpParams();
         params = params.append('vendedor', vendedor);
