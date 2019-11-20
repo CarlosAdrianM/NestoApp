@@ -48,7 +48,7 @@
     <div *ngSwitchCase="'codigoPostal'">
       <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
       <ion-item>
-        <ion-label>Código Postal</ion-label>
+        <ion-label>Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}</ion-label>
         <ion-select [(ngModel)]="codigoPostalSeleccionado">
           <ion-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.codigoPostal">{{codPostal.codigoPostal}} {{codPostal.poblacion}}</ion-option>
         </ion-select>

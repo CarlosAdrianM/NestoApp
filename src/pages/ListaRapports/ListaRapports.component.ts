@@ -72,7 +72,7 @@ export class ListaRapports extends SelectorBase {
             if (this.listadoClientesSinVisitar)
             {
                 var clienteEncontrado = this.listadoClientesSinVisitar
-                    .find(p => p.cliente == rapportCreado.Número.trim() &&
+                    .find(p => p.cliente == rapportCreado.Cliente.trim() &&
                         p.contacto == rapportCreado.Contacto);
                 if (clienteEncontrado != undefined) {
                     this.listadoClientesSinVisitar.pop(clienteEncontrado);

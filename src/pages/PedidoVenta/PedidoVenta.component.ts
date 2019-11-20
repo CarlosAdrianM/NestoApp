@@ -6,6 +6,8 @@ import {LineaVenta} from '../LineaVenta/LineaVenta';
 import { PedidoVenta } from './PedidoVenta';
 import {Configuracion} from '../../components/configuracion/configuracion';
 import { Usuario } from '../../models/Usuario';
+import { dateDataSortValue } from 'ionic-angular/umd/util/datetime-util';
+import { listLazyRoutes } from '@angular/compiler/src/aot/lazy_routes';
 
 
 @Component({
@@ -22,6 +24,21 @@ export class PedidoVentaComponent {
     private servicio: PedidoVentaService;
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
+    private _fechaEntrega: string;
+    get fechaEntrega() {
+        return this._fechaEntrega;
+    }
+    set fechaEntrega(value: string) {
+        if (this._fechaEntrega) {
+            this.pedido.LineasPedido.forEach(l => {
+                if (l.picking == 0 && (l.estado == -1 || l.estado == 1)) {
+                    l.fechaEntrega = new Date(value)
+                }
+            });
+        }
+        this._fechaEntrega = value;
+    }
+
         
     constructor(servicio: PedidoVentaService, nav: NavController, navParams: NavParams, alertCtrl: AlertController, loadingCtrl: LoadingController, private usuario: Usuario) {
         this.nav = nav;
@@ -47,6 +64,15 @@ export class PedidoVentaComponent {
                 this.iva = this.pedido.iva;
                 this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
                 this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
+                if (this.pedido.LineasPedido && this.pedido.LineasPedido.length > 0) {
+                    this.fechaEntrega = this.pedido.LineasPedido[0].fechaEntrega.toString();
+                }
+                
+                /*
+                var fechaPedidoConUsoHorario: Date = new Date(this.pedido.fecha);
+                var fechaPedido: Date = new Date(fechaPedidoConUsoHorario.getTime() - fechaPedidoConUsoHorario.getTimezoneOffset()*60000);
+                this.pedido.fecha = new Date(fechaPedido.getFullYear(), fechaPedido.getMonth(), fechaPedido.getDate()).toISOString();
+                */
             },
             error => {
                 let textoError = 'No se ha podido cargar el pedido de la empresa ' + empresa + ".\n" + error.ExceptionMessage;

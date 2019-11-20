@@ -2,11 +2,12 @@
 import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Rx';
 import { Configuracion } from '../../components/configuracion/configuracion';
+import { Usuario } from '../../models/Usuario';
 
 @Injectable()
 export class RapportService {
 
-    constructor(private http: HttpClient) {    }
+    constructor(private http: HttpClient, private usuario: Usuario) {    }
 
     private _baseUrl: string = Configuracion.API_URL + '/SeguimientosClientes';
     private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
@@ -32,6 +33,27 @@ export class RapportService {
 
         return this.http.get(this._clientesUrl, { params: params })
             .catch(this.handleError);
+    }
+
+    public dejarDeVisitar(rapport: any, vendedorEstetica: string, vendedorPeluqueria: string): Observable<any> {
+        let headers: any = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/json');
+        let clienteCrear: any = {
+            empresa: rapport.Empresa,
+            cliente: rapport.Cliente,
+            contacto: rapport.Contacto,
+            usuario: rapport.Usuario
+        }
+
+        if (vendedorEstetica == this.usuario.vendedor) {
+            clienteCrear.vendedorEstetica = Configuracion.VENDEDOR_GENERAL;
+        }
+        if (vendedorPeluqueria == this.usuario.vendedor) {
+            clienteCrear.vendedorPeluqueria = Configuracion.VENDEDOR_GENERAL;
+        }
+        return this.http.put(this._clientesUrl+'/DejarDeVisitar', JSON.stringify(clienteCrear), { headers: headers })
+            .catch(this.handleError);
+      
     }
 
     private handleError(error: HttpErrorResponse): Observable<any> {

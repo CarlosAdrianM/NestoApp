@@ -1,5 +1,5 @@
 ﻿import { Component, ViewChild } from '@angular/core';
-import { NavParams, AlertController, LoadingController, Events } from 'ionic-angular';
+import { NavParams, AlertController, LoadingController, Events, NavController } from 'ionic-angular';
 import { RapportService } from './Rapport.service';
 import { Usuario } from '../../models/Usuario';
 import { Configuracion } from '../../components/configuracion/configuracion';
@@ -15,9 +15,13 @@ export class RapportComponent {
     public errorMessage: string;
     public numeroCliente: string;
     modificando: boolean = false;
+    dejarDeVisitar: boolean = false;
+    private vendedorEstetica: string;
+    private vendedorPeluqueria: string;
 
-    constructor(navParams: NavParams, private servicio: RapportService, private alertCtrl: AlertController, 
-        private loadingCtrl: LoadingController, private usuario: Usuario, public events: Events) {
+    constructor(navParams: NavParams, private servicio: RapportService, 
+        private alertCtrl: AlertController, private loadingCtrl: LoadingController, 
+        private usuario: Usuario, public events: Events, private nav: NavController) {
         this.rapport = navParams.get('rapport');
         this.numeroCliente = this.rapport.Cliente;
         /*
@@ -54,16 +58,16 @@ export class RapportComponent {
                     this.rapport.Direccion = data.direccion;
                     this.rapport.Nombre = data.nombre;
                     this.rapport.EstadoCliente = data.estado;
-                    let vendedorEstetica = data.vendedor.trim();
-                    let vendedorPeluqueria = "";
+                    this.vendedorEstetica = data.vendedor.trim();
+                    this.vendedorPeluqueria = "";
                     if (data.VendedoresGrupoProducto && data.VendedoresGrupoProducto[0]) {
-                        vendedorPeluqueria = data.VendedoresGrupoProducto[0].vendedor.trim();
+                        this.vendedorPeluqueria = data.VendedoresGrupoProducto[0].vendedor.trim();
                     }
-                    if (vendedorEstetica != Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria == Configuracion.VENDEDOR_GENERAL) {
+                    if (this.vendedorEstetica != Configuracion.VENDEDOR_GENERAL && this.vendedorPeluqueria == Configuracion.VENDEDOR_GENERAL) {
                         this.rapport.TipoCentro = 1; // Solo estética
-                    } else if (vendedorEstetica == Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
+                    } else if (this.vendedorEstetica == Configuracion.VENDEDOR_GENERAL && this.vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
                         this.rapport.TipoCentro = 2; // Solo peluquería
-                    } else if (vendedorEstetica != Configuracion.VENDEDOR_GENERAL && vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
+                    } else if (this.vendedorEstetica != Configuracion.VENDEDOR_GENERAL && this.vendedorPeluqueria != Configuracion.VENDEDOR_GENERAL) {
                         this.rapport.TipoCentro = 3; // Estética y peluquería
                     } else {
                         this.rapport.TipoCentro = 0; // No sabemos qué es
@@ -91,8 +95,43 @@ export class RapportComponent {
                 {
                     text: 'Sí',
                     handler: () => {
+
+                        if (this.dejarDeVisitar) {
+                            this.modificando = true;
+                            let loadingDejarDeVisitar: any = this.loadingCtrl.create({
+                                content: 'Quitando Cliente...',
+                            });
+    
+                            loadingDejarDeVisitar.present();
+    
+                            this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
+                                data => {
+                                    let alert = this.alertCtrl.create({
+                                        title: 'Clientes',
+                                        subTitle: 'Se ha sacado el cliente de la cartera',
+                                        buttons: ['Ok'],
+                                    });
+                                    alert.present();
+                                    loadingDejarDeVisitar.dismiss();
+                                },
+                                error => {
+                                    let alert = this.alertCtrl.create({
+                                        title: 'Error',
+                                        subTitle: 'No se ha podido quitar el cliente.\n' + error.ExceptionMessage,
+                                        buttons: ['Ok'],
+                                    });
+                                    alert.present();
+                                    loadingDejarDeVisitar.dismiss();
+                                    this.modificando = false;
+                                },
+                                () => {
+                                    //loading.dismiss();
+                                }
+                            );
+                        }
+
+
                         this.modificando = true;
-                        // Hay que guardar el pedido original en alguna parte
                         let loading: any = this.loadingCtrl.create({
                             content: 'Guardando Rapport...',
                         });
@@ -110,6 +149,7 @@ export class RapportComponent {
                                 loading.dismiss();
                                 this.events.publish('rapportCreado', this.rapport);
                                 this.modificando = false;
+                                this.nav.pop();
                             },
                             error => {
                                 let alert = this.alertCtrl.create({
@@ -153,7 +193,9 @@ export class RapportComponent {
 
     public sePuedeModificar(): boolean {
         let usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
-        return !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
+        var sePuedePorUsuario = !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
+        var sePuedePorDejarDeVisitar = !this.dejarDeVisitar || (this.rapport && this.rapport.Comentarios && this.rapport.Comentarios.length > 50);
+        return sePuedePorUsuario && sePuedePorDejarDeVisitar;
     }
 
     public mostrarEstadoCliente(estadoCliente: number): void {
