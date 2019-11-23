@@ -18,7 +18,16 @@ export class SelectorDireccionesEntrega extends SelectorBase {
     public direccionSeleccionada: any;
 
     // @Input() 
-    public cliente: any;
+    private _cliente: any;
+    get cliente() {
+        return this._cliente;
+    }
+    set cliente(value: any) {
+        if (value && value.trim() != this._cliente){
+            this.cargarDatos(value);
+            this._cliente = value;    
+        }
+    }
     public seleccionado: string;
 
     constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController) {
@@ -42,25 +51,8 @@ export class SelectorDireccionesEntrega extends SelectorBase {
                     alert.present();
                 } else {
                     this.direccionesEntrega = data;
-                    this.direccionSeleccionada = undefined;
-                    let i: number = 0;
-                    while (this.direccionSeleccionada === undefined) {
-                        if (i + 1 > this.direccionesEntrega.length) {
-                            throw 'Error en la API de Nesto: cliente sin dirección por defecto';
-                        }
-                        if (this.seleccionado === undefined) {
-                            if (this.direccionesEntrega[i].esDireccionPorDefecto) {
-                                this.direccionSeleccionada = this.direccionesEntrega[i];
-                                this.seleccionarDato(this.direccionSeleccionada);
-                            }
-                        } else {
-                            if (this.seleccionado && this.direccionesEntrega[i].contacto && this.seleccionado.trim()  === this.direccionesEntrega[i].contacto.trim()) {
-                                this.direccionSeleccionada = this.direccionesEntrega[i];
-                                this.seleccionarDato(this.direccionSeleccionada);
-                            }
-                        }
-                        i++;
-                    }
+                    this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
+                    this.seleccionarDato(this.direccionSeleccionada);
                 }
             },
             error => this.errorMessage = <any>error
@@ -73,7 +65,7 @@ export class SelectorDireccionesEntrega extends SelectorBase {
     }
 
     public ngOnChanges(changes): void {
-        this.cargarDatos(this.cliente);
+        //this.cargarDatos(this.cliente);
     }
 
     public colorEstado(estado: number): string {

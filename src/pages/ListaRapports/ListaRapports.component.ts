@@ -73,9 +73,9 @@ export class ListaRapports extends SelectorBase {
             {
                 var clienteEncontrado = this.listadoClientesSinVisitar
                     .find(p => p.cliente == rapportCreado.Cliente.trim() &&
-                        p.contacto == rapportCreado.Contacto);
+                        p.contacto == rapportCreado.Contacto.trim());
                 if (clienteEncontrado != undefined) {
-                    this.listadoClientesSinVisitar.pop(clienteEncontrado);
+                    this.listadoClientesSinVisitar = this.listadoClientesSinVisitar.filter(obj => obj !== clienteEncontrado);
                 }
             }
         });

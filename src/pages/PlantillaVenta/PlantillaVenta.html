@@ -115,7 +115,7 @@
                     <ion-label>Portes</ion-label>
                     <p item-right>{{ costeGlovo | currency:'EUR' }}</p>
                 </ion-item>
-                <button ion-button block [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif" (click)="crearPedido()">Crear Pedido</button>
+                <button ion-button block [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif && !esPresupuesto" (click)="crearPedido()">Crear Pedido</button>
             </ion-content>
         </ion-slide>
     </ion-slides>

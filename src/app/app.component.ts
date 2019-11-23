@@ -10,7 +10,6 @@ import { Usuario } from '../models/Usuario';
 import { FCM } from '@ionic-native/fcm';
 import { PedidoVentaComponent } from '../pages/PedidoVenta/PedidoVenta.component';
 import { ComisionesComponent } from '../pages/Comisiones/Comisiones.component';
-import { ProductoComponent } from '../pages/Producto/Producto.component';
 import { ListaProductosComponent } from '../pages/ListaProductos/ListaProductos.component';
 import { ClienteComponent } from '../pages/Cliente/Cliente.component';
 
@@ -89,8 +88,6 @@ export class MyApp {
          
                 };
             });
-
-          //this.fcm.unsubscribeFromTopic('marketing');
         });
     }
 

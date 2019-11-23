@@ -24,12 +24,7 @@ export class RapportComponent {
         private usuario: Usuario, public events: Events, private nav: NavController) {
         this.rapport = navParams.get('rapport');
         this.numeroCliente = this.rapport.Cliente;
-        /*
-        // Esto debería hacerlo la API directamente
-        if (this.rapport && this.rapport.Tipo) {
-            this.rapport.Tipo = this.rapport.Tipo.trim();
-        }
-        */
+        this.rapport.Tipo = usuario.ultimoTipoRapport;
     }
 
     submitted = false;
@@ -95,42 +90,6 @@ export class RapportComponent {
                 {
                     text: 'Sí',
                     handler: () => {
-
-                        if (this.dejarDeVisitar) {
-                            this.modificando = true;
-                            let loadingDejarDeVisitar: any = this.loadingCtrl.create({
-                                content: 'Quitando Cliente...',
-                            });
-    
-                            loadingDejarDeVisitar.present();
-    
-                            this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
-                                data => {
-                                    let alert = this.alertCtrl.create({
-                                        title: 'Clientes',
-                                        subTitle: 'Se ha sacado el cliente de la cartera',
-                                        buttons: ['Ok'],
-                                    });
-                                    alert.present();
-                                    loadingDejarDeVisitar.dismiss();
-                                },
-                                error => {
-                                    let alert = this.alertCtrl.create({
-                                        title: 'Error',
-                                        subTitle: 'No se ha podido quitar el cliente.\n' + error.ExceptionMessage,
-                                        buttons: ['Ok'],
-                                    });
-                                    alert.present();
-                                    loadingDejarDeVisitar.dismiss();
-                                    this.modificando = false;
-                                },
-                                () => {
-                                    //loading.dismiss();
-                                }
-                            );
-                        }
-
-
                         this.modificando = true;
                         let loading: any = this.loadingCtrl.create({
                             content: 'Guardando Rapport...',
@@ -146,10 +105,37 @@ export class RapportComponent {
                                     buttons: ['Ok'],
                                 });
                                 alert.present();
+                                if (this.dejarDeVisitar) {
+                                    this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
+                                        data => {
+                                            let alertOK = this.alertCtrl.create({
+                                                title: 'Clientes',
+                                                subTitle: 'Se ha sacado el cliente de la cartera',
+                                                buttons: ['Ok'],
+                                            });
+                                            alertOK.present();
+                                            this.nav.pop();
+                                        },
+                                        error => {
+                                            let alertKO = this.alertCtrl.create({
+                                                title: 'Error',
+                                                subTitle: 'No se ha podido quitar el cliente.\n' + error.ExceptionMessage,
+                                                buttons: ['Ok'],
+                                            });
+                                            alertKO.present();
+                                        },
+                                        () => {
+                                            //loading.dismiss();
+                                        }
+                                    );
+                                }        
                                 loading.dismiss();
                                 this.events.publish('rapportCreado', this.rapport);
                                 this.modificando = false;
-                                this.nav.pop();
+                                this.usuario.ultimoTipoRapport = this.rapport.Tipo;
+                                if (!this.dejarDeVisitar) {
+                                    this.nav.pop();
+                                }
                             },
                             error => {
                                 let alert = this.alertCtrl.create({

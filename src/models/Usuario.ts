@@ -17,4 +17,5 @@ export class Usuario {
     public delegacion: string = 'ALG';
     public formaVenta: string = 'DIR';
     public vendedor: string;
+    public ultimoTipoRapport: string = 'V';
 }
