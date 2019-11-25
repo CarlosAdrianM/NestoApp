@@ -51,7 +51,11 @@ export class SelectorDireccionesEntrega extends SelectorBase {
                     alert.present();
                 } else {
                     this.direccionesEntrega = data;
-                    this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
+                    if (this.seleccionado) {
+                        this.direccionSeleccionada = this.direccionesEntrega.find(d => d.contacto.trim() == this.seleccionado.trim());
+                    } else {
+                        this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
+                    }
                     this.seleccionarDato(this.direccionSeleccionada);
                 }
             },

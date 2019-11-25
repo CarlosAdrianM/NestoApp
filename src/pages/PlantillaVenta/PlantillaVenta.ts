@@ -367,6 +367,7 @@ export class PlantillaVenta {
         this._selectorClientes.resetearFiltros();
         this.productosResumen = null;
         this.direccionSeleccionada = null;
+        this.fechaEntrega = this.fechaMinima;
         this.slider.slideTo(0);
         this.slider.lockSwipeToNext(true);
     }

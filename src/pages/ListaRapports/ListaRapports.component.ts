@@ -61,7 +61,7 @@ export class ListaRapports extends SelectorBase {
         this.alertCtrl = alertCtrl;
         this.loadingCtrl = loadingCtrl;
         this.clienteRapport = "";
-        this.contactoRapport = "0";
+        this.contactoRapport;
         this.vendedorSeleccionado = usuario.vendedor;
 
         events.subscribe('rapportCreado', (rapportCreado: any) => {
