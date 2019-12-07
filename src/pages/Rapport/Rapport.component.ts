@@ -24,7 +24,9 @@ export class RapportComponent {
         private usuario: Usuario, public events: Events, private nav: NavController) {
         this.rapport = navParams.get('rapport');
         this.numeroCliente = this.rapport.Cliente;
-        this.rapport.Tipo = usuario.ultimoTipoRapport;
+        if (!this.rapport.Id) {
+            this.rapport.Tipo = usuario.ultimoTipoRapport;
+        }
     }
 
     submitted = false;
@@ -194,6 +196,10 @@ export class RapportComponent {
             buttons: ['Ok'],
         });
         alert.present();
+    }
+
+    public mostrarTipoCentro(): boolean {
+        return (this.rapport.Id == null || this.rapport.Id == 0) && this.vendedorEstetica == this.vendedorPeluqueria && this.vendedorEstetica == this.usuario.vendedor;
     }
 
     public colorEstado(estado: number): string {

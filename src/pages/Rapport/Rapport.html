@@ -81,7 +81,7 @@
       <ion-toggle [(ngModel)]="dejarDeVisitar" color="danger" name="dejarDeVisitar"></ion-toggle>
     </ion-item>
 
-    <ion-item *ngIf="rapport.Id == null || rapport.Id == 0">
+    <ion-item *ngIf="mostrarTipoCentro()">
       <ion-label>Tipo de Centro</ion-label>
       <ion-select name="tipoCentro" [(ngModel)]="rapport.TipoCentro">
         <ion-option value="0" selected="rapport.TipoCentro == 0">No sé cómo es</ion-option>
