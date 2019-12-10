@@ -93,6 +93,9 @@ export class RapportComponent {
                     text: 'Sí',
                     handler: () => {
                         this.modificando = true;
+                        if (!this.mostrarEstadoCliente) {
+                            this.rapport.TipoCentro = 0; // no se sabe
+                        }
                         let loading: any = this.loadingCtrl.create({
                             content: 'Guardando Rapport...',
                         });
