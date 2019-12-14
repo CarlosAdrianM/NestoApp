@@ -99,7 +99,8 @@
                     {{direccionSeleccionada.iva}}
                 </ion-item>
                 <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
-                <selector-plazos-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+                <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+                <h2 ion-text color="danger" *ngIf="direccionSeleccionada.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
                 <ion-item>
                   <ion-label>Crear como presupuesto</ion-label>
                   <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>

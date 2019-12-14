@@ -89,7 +89,9 @@
 
   <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
     <ion-item *ngIf="!usuario.vendedor"></ion-item>
-    <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitar" (click)="annadirRapport(clienteSinVisitar)" text-wrap>
+    <ion-item *ngIf="!usuario.vendedor"></ion-item>
+    <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionInput)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
+    <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)" text-wrap>
       <ion-icon name="contact" [color]="colorEstado(clienteSinVisitar.estado)" item-left></ion-icon>
       <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
       <h2>{{clienteSinVisitar.nombre}}</h2>
@@ -97,6 +99,14 @@
       <p>Estado: {{clienteSinVisitar.estado}}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>
+      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" name="alert" color="danger" item-right></ion-icon>
+      <h2 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">¡¡¡ CONTADO RIGUROSO !!!</h2>
+      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" name="warning" color="danger" item-right></ion-icon>
+      <h3 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" color="danger">Tiene impagados pendientes</h3>
+      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" name="warning" color="primary" item-right></ion-icon>
+      <h2 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" color="primary">Tiene deuda vencida</h2>
+      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 2" color="primary">Las deudas de este cliente no están vencidas</p>
+      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="secondary">Cliente sin deudas</p>
     </ion-item>
   </ion-list>
 </ion-content>

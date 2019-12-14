@@ -1,5 +1,5 @@
 ﻿import {Component, ViewChild} from '@angular/core';
-import { NavController, AlertController, LoadingController, Events} from 'ionic-angular';
+import { NavController, AlertController, LoadingController, Events, Searchbar} from 'ionic-angular';
 import { ListaRapportsService } from './ListaRapports.service';
 import { SelectorBase } from '../../components/SelectorBase/SelectorBase';
 import { Usuario } from '../../models/Usuario';
@@ -13,6 +13,7 @@ import { Geolocation } from '@ionic-native/geolocation';
 })
 export class ListaRapports extends SelectorBase {
     @ViewChild('clienteInput') myClienteInput;
+    @ViewChild('barraFiltrar') myBarraFiltrar : Searchbar;
 
     private nav: NavController;
     private servicio: ListaRapportsService;
@@ -30,13 +31,20 @@ export class ListaRapports extends SelectorBase {
     private codigosPostalesSinVisitar: any;
     public vendedorSeleccionado: string;
     public listadoClientesSinVisitar: any;
+    public listadoClientesSinVisitarFiltrado: any;
     private _codigoPostalSeleccionado: any;
+    public filtro: string;
+    
     get codigoPostalSeleccionado() {
         return this._codigoPostalSeleccionado;
     }
     set codigoPostalSeleccionado(value: any) {
         this._codigoPostalSeleccionado = value;
         this.cargarClientesSinVisitar();
+        setTimeout(() => {
+            this.myBarraFiltrar.setFocus();
+        }, 150);
+        
     }
 
     // Variables de geolocalización
@@ -263,6 +271,7 @@ export class ListaRapports extends SelectorBase {
                     alert.present();
                 } else {
                     this.listadoClientesSinVisitar = data;
+                    this.listadoClientesSinVisitarFiltrado = data;
                 }
             },
             error => {
@@ -310,6 +319,15 @@ export class ListaRapports extends SelectorBase {
         
         alert.present();
     }
+
+    cambiaFiltro(event: any) {
+        var filtro = this.filtro.toUpperCase();
+        function contieneCadena(element, index, array) { 
+            return (element.cliente == filtro || element.nombre.toUpperCase().includes(filtro) || element.direccion.toUpperCase().includes(filtro)); 
+        } 
+        this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(contieneCadena)
+    }
+
 
     
     public colorEstado(estado: number): string {

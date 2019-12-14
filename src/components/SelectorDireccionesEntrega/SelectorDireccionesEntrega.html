@@ -1,8 +1,10 @@
 ﻿<ion-list>
     <ion-item *ngFor="let direccion of direccionesEntrega" (click)="seleccionarDireccion(direccion)">
-        <ion-icon [color]="colorEstado(direccion.estado)" name="map" item-left></ion-icon>
+        <ion-icon *ngIf="direccion.plazosPago != 'CR'" [color]="colorEstado(direccion.estado)" name="map" item-left></ion-icon>
+        <ion-icon *ngIf="direccion.plazosPago == 'CR'" color="danger" name="alert" item-left></ion-icon>
         <h4 class="media-heading">{{direccion.direccion}}</h4>
         <p>{{direccion.codigoPostal}} {{direccion.poblacion}} ({{direccion.provincia}})</p>
         <ion-icon name="checkmark" *ngIf="direccion === direccionSeleccionada" item-right></ion-icon>
+        <h2 ion-text color="danger" *ngIf="direccion.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
     </ion-item>
 </ion-list>
