@@ -77,6 +77,15 @@ export class ListaRapports extends SelectorBase {
                 this.datosFiltrados = [];
             }
             this.datosFiltrados.push(rapportCreado);
+            if (this.listadoClientesSinVisitarFiltrado)
+            {
+                var clienteEncontrado = this.listadoClientesSinVisitarFiltrado
+                    .find(p => p.cliente == rapportCreado.Cliente.trim() &&
+                        p.contacto == rapportCreado.Contacto.trim());
+                if (clienteEncontrado != undefined) {
+                    this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitarFiltrado.filter(obj => obj !== clienteEncontrado);
+                }
+            }
             if (this.listadoClientesSinVisitar)
             {
                 var clienteEncontrado = this.listadoClientesSinVisitar
