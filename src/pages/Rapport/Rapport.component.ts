@@ -173,7 +173,8 @@ export class RapportComponent {
 
     public seleccionarContacto(evento: any): void {
         this.rapport.Contacto = evento.contacto;
-        this.rapport.EstadoCliente = evento.estado;
+        //this.rapport.EstadoCliente = evento.estado;
+        this.leerCliente(this.rapport.Cliente, this.rapport.Contacto);
     }
 
     public seleccionarTexto(evento: any): void {
