@@ -116,6 +116,29 @@ export class PedidoVentaComponent {
         this.pedido.LineasPedido = this.pedido.LineasPedido.concat(linea);
     }
 
+    public borrarLinea(linea: LineaVenta) {
+        let confirm = this.alertCtrl.create({
+            title: 'Confirmar',
+            message: '¿Desea borrar la línea?',
+            buttons: [
+                {
+                    text: 'Sí',
+                    handler: () => {
+                        this.pedido.LineasPedido = this.pedido.LineasPedido.filter(obj => obj !== linea);
+                    }
+                },
+                {
+                    text: 'No',
+                    handler: () => {
+                        return;
+                    }
+                }
+
+            ]
+        });
+        confirm.present();
+    }
+
     public modificarPedido(): void {
 
         let confirm = this.alertCtrl.create({

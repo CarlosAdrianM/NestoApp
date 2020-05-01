@@ -64,22 +64,32 @@
         </div>
         <div *ngSwitchCase="'lineas'">
             <ion-list>
-                <ion-item *ngFor="let linea of pedido.LineasPedido" (click)="abrirLinea(linea)">
-                    <h2>{{linea.texto}}</h2>
-                    <ion-row>
-                        <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
-                        <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
-                        <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR'}}</p></ion-col>
-                        <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
-                        <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR'}}</p></ion-col>
-                    </ion-row>
-                    <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
-                    <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>
-                    <ion-badge color="secondary" *ngIf="linea.estado == 1 && linea.picking > 0">Picking</ion-badge>
-                    <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
-                    <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
-                    <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>
-                </ion-item>
+                <ion-item-sliding *ngFor="let linea of pedido.LineasPedido">
+                    <ion-item-options side="right">
+                        <button ion-button (click)="borrarLinea(linea)" color="danger">
+                            <ion-icon name="trash"></ion-icon>
+                            Borrar
+                        </button>
+                    </ion-item-options>
+                    <ion-item>
+                        <span (click)="abrirLinea(linea)">
+                        <h2>{{linea.texto}}</h2>
+                        <ion-row>
+                            <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
+                            <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
+                            <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR'}}</p></ion-col>
+                            <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
+                            <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR'}}</p></ion-col>
+                        </ion-row>
+                        <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
+                        <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>
+                        <ion-badge color="secondary" *ngIf="linea.estado == 1 && linea.picking > 0">Picking</ion-badge>
+                        <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
+                        <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
+                        <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>
+                    </span>
+                    </ion-item>
+                </ion-item-sliding> 
             </ion-list>
         </div>
         <ion-list *ngSwitchCase="'comentarios'">
