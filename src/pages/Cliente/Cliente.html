@@ -126,6 +126,10 @@
                         <ion-label>Correo-e</ion-label>
                         <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
                     </ion-item>
+                    <ion-item>
+                        <ion-label>Facturación Electrónica</ion-label>
+                        <ion-toggle [(ngModel)]="persona.facturacionElectronica"></ion-toggle>
+                    </ion-item>
                 </ion-card>
                 <ion-fab bottom right>
                     <button ion-fab mini (click)="annadirPersonaContacto()"><ion-icon name="add"></ion-icon></button>

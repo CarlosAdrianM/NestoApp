@@ -65,6 +65,7 @@ export class SelectorPlantillaVentaDetalle {
                 producto.stockActualizado = true;
                 producto.stock = data.stock;
                 producto.cantidadDisponible = data.cantidadDisponible;
+                producto.cantidadPendienteRecibir = data.cantidadPendienteRecibir;
                 producto.urlImagen = data.urlImagen;
                 console.log("Existe el producto y seleccionamos el color");
                 this.seleccionarColorStock(producto);
@@ -138,6 +139,9 @@ export class SelectorPlantillaVentaDetalle {
         } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
             producto.colorStock = 'secondary';
             console.log("Seleccionamos el color secondary");
+        } else if (producto.cantidadDisponible + producto.cantidadPendienteRecibir >= cantidad + cantidadOferta) {
+            producto.colorStock = 'primary';
+            console.log("Seleccionamos el color primary");
         } else if (producto.stock >= cantidad + cantidadOferta) {
             producto.colorStock = 'dark';
             console.log("Seleccionamos el color dark");
