@@ -21,6 +21,15 @@ export class PedidoVentaService {
         return this.http.get(this._baseUrl, { params: params })
             .catch(this.handleError);
     }
+    
+    public cargarEnlacesSeguimiento(empresa: string, numero: number): Observable<PedidoVenta> {
+        let params: HttpParams = new HttpParams();
+        params = params.append('empresa', empresa);
+        params = params.append('pedido', numero.toString());
+
+        return this.http.get(Configuracion.API_URL+'/EnviosAgencias', { params: params })
+            .catch(this.handleError);
+    }
 
     public modificarPedido(pedido: any): Observable<any> {
         let headers: any = new HttpHeaders();

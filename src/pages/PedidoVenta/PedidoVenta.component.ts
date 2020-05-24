@@ -25,6 +25,7 @@ export class PedidoVentaComponent {
     private alertCtrl: AlertController;
     private loadingCtrl: LoadingController;
     private _fechaEntrega: string;
+    private listaEnlacesSeguimiento;
     get fechaEntrega() {
         return this._fechaEntrega;
     }
@@ -67,7 +68,26 @@ export class PedidoVentaComponent {
                 if (this.pedido.LineasPedido && this.pedido.LineasPedido.length > 0) {
                     this.fechaEntrega = this.pedido.LineasPedido[0].fechaEntrega.toString();
                 }
-                
+                this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
+                    data => {
+                        this.listaEnlacesSeguimiento = data;
+                    },
+                    error => {
+                        let textoError = 'No se han podido cargar los seguimietnos del pedido de la empresa ' + empresa + ".\n" + error.ExceptionMessage;
+                        let innerException = error.InnerException;
+                        while (innerException != null) {
+                          textoError += '\n' + innerException.ExceptionMessage;
+                          innerException = innerException.InnerException;
+                        }
+                        let alert = this.alertCtrl.create({
+                            title: 'Error',
+                            subTitle: textoError,
+                            buttons: ['Ok'],
+                        });
+                        alert.present();
+                        loading.dismiss();
+                    }
+                )
                 /*
                 var fechaPedidoConUsoHorario: Date = new Date(this.pedido.fecha);
                 var fechaPedido: Date = new Date(fechaPedidoConUsoHorario.getTime() - fechaPedidoConUsoHorario.getTimezoneOffset()*60000);
@@ -205,6 +225,10 @@ export class PedidoVentaComponent {
 
     public cadenaFecha(cadena: string): Date {
         return new Date(cadena);
+    }
+
+    public abrirEnlace(urlDestino: string): void {
+        window.open(urlDestino, '_system', 'location=yes');
     }
 
 }

@@ -25,6 +25,7 @@
             <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
             <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
             <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
+            <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>
             <ion-icon name="arrow-forward" item-right></ion-icon>
         </ion-item>
     </ion-list>
