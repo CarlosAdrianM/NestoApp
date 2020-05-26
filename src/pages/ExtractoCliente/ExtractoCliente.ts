@@ -1,7 +1,8 @@
 import {Component, ViewChild} from '@angular/core';
 import {ExtractoClienteService} from './ExtractoCliente.service';
-import { AlertController, LoadingController } from 'ionic-angular';
+import { AlertController, LoadingController, NavController } from 'ionic-angular';
 import { FileOpener } from '@ionic-native/file-opener';
+import { PedidoVentaComponent } from '../PedidoVenta/PedidoVenta.component';
 
 @Component({
     templateUrl: 'ExtractoCliente.html',
@@ -11,7 +12,8 @@ export class ExtractoCliente {
     constructor(servicio: ExtractoClienteService,
         private alertCtrl: AlertController, 
         private loadingCtrl: LoadingController, 
-        private fileOpener: FileOpener) {
+        private fileOpener: FileOpener, 
+        private nav: NavController) {
         this.servicio = servicio;
     };
 
@@ -37,9 +39,10 @@ export class ExtractoCliente {
         }
         if (this.tipoMovimientos == "deuda") {
             this.cargarDeuda(this.clienteSeleccionado);
-        }
-        if (this.tipoMovimientos == "facturas") {
+        } else if (this.tipoMovimientos == "facturas") {
             this.cargarFacturas(this.clienteSeleccionado);
+        }else if (this.tipoMovimientos == "pedidos") {
+            this.cargarPedidos(this.clienteSeleccionado);
         }
     }
 
@@ -95,6 +98,26 @@ export class ExtractoCliente {
             error => this.errorMessage = <any>error
         );
     }
+
+    public cargarPedidos(cliente: any): void {
+        this.mostrarClientes = false;
+        this.servicio.cargarPedidos(cliente).subscribe(
+            data => {
+                this.movimientosDeuda = data;
+                if (!data.length) {
+                    this.errorMessage = 'Este cliente no tiene pedidos';
+                    console.log('Este cliente no tiene pedidos');
+                    return;
+                }
+            },
+            error => this.errorMessage = <any>error
+        );
+    }
+
+    public abrirPedido(pedido: any): void {
+        this.nav.push(PedidoVentaComponent, { empresa: pedido.empresa, numero: pedido.numero });
+    }
+
 
     public descargarFactura(movimiento: any): void {
         let loading: any = this.loadingCtrl.create({

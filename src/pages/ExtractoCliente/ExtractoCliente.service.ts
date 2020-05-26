@@ -6,6 +6,7 @@ import {Configuracion} from '../../components/configuracion/configuracion';
 import { FileTransferObject, FileTransfer } from '@ionic-native/file-transfer';
 import { File } from '@ionic-native/file';
 import { FileOpener } from '@ionic-native/file-opener';
+import { Usuario } from '../../models/Usuario';
 
 @Injectable()
 export class ExtractoClienteService {
@@ -13,7 +14,8 @@ export class ExtractoClienteService {
     constructor(private http: HttpClient, 
         private transfer: FileTransfer, 
         private file: File,
-        private fileOpener: FileOpener) {
+        private fileOpener: FileOpener,
+        private usuario: Usuario) {
         this.http = http;
     }
 
@@ -40,6 +42,19 @@ export class ExtractoClienteService {
         params = params.append('fechaHasta', fechaHasta.toISOString());
 
         return this.http.get(this._baseUrl, { params })
+            .catch(this.handleError);
+    }
+    
+    public cargarPedidos(cliente: any): Observable<any> {
+        let params: HttpParams = new HttpParams();
+        if (this.usuario.vendedor) {
+            params = params.append('vendedor', this.usuario.vendedor);
+        } else {
+            params = params.append('vendedor', '');
+        }
+        params = params.append('cliente', cliente.cliente);
+
+        return this.http.get(Configuracion.API_URL+'/PedidosVenta', { params })
             .catch(this.handleError);
     }
 
