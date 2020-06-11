@@ -24,7 +24,7 @@ export class ClienteService {
   validarDatosGenerales(cliente: any): Observable<any> {
     var urlLlamada: string = this._baseUrl+'/ComprobarDatosGenerales';
     let params: HttpParams = new HttpParams();
-    params = params.append('direccion', cliente.direccion);
+    params = params.append('direccion', cliente.direccionCalleNumero);
     params = params.append('codigoPostal', cliente.codigoPostal);
     params = params.append('telefono', cliente.telefono);
 

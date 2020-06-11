@@ -131,6 +131,18 @@ export class PlantillaVenta {
             this.plazosPago = value.plazosPago;
         }
     }
+    get textoFacturacionElectronica(): string {
+        if (!this.direccionSeleccionada) {
+                return ""
+        }
+        if (this.direccionSeleccionada.tieneFacturacionElectronica) {
+            return "Este contacto tiene la facturación electrónica activada"
+        }
+        if (this.direccionSeleccionada.tieneCorreoElectronico) {
+            return "Este contacto tiene correo electrónico, pero NO tiene la facturación electrónica activada"
+        }
+        return "Recuerde pedir un correo electrónico al cliente para poder activar la facturación electrónica"
+    }
     private hoy: Date = new Date();
     private hoySinHora: Date = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
     public fechaMinima: string = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0,10);

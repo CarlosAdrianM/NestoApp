@@ -76,6 +76,9 @@
                         <ion-label>Mantener Junto</ion-label>
                         <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
                     </ion-item>
+                    <ion-item text-wrap>
+                        <strong>{{textoFacturacionElectronica}}</strong>
+                    </ion-item>
                     <ion-item>
                         <ion-label>Periodo facturación</ion-label>
                         <ion-label style="text-align:right">{{clienteSeleccionado.periodoFacturacion}}</ion-label>

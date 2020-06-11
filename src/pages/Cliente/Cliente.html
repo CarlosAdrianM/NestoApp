@@ -39,8 +39,12 @@
             </ion-card-title>
             <ion-list>
                 <ion-item>
-                    <ion-label floating>Dirección</ion-label>
-                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccion" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                    <ion-label floating>Dirección (solo calle y número)</ion-label>
+                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                </ion-item>
+                <ion-item>
+                    <ion-label floating>Dirección (resto de información)</ion-label>
+                    <ion-input #direccion type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
                 </ion-item>
                 <ion-item>
                     <ion-label floating>Código Postal</ion-label>

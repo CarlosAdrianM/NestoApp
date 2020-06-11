@@ -206,15 +206,16 @@ export class ClienteComponent {
         }
         this.servicio.validarDatosGenerales(this.cliente).subscribe(
             data => {
-                if (!this.cliente.direccionValidada) {
-                    this.cliente.direccion = data.direccionFormateada;
-                    this.cliente.poblacion = data.poblacion;
-                    this.cliente.provincia = data.provincia;
-                    this.cliente.ruta = data.ruta;
-                    this.cliente.telefono = data.telefonoFormateado;
-                    this.cliente.vendedorEstetica = data.vendedorEstetica;
-                    this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
+                this.cliente.direccion = data.direccionFormateada;
+                if (this.cliente.direccionAdicional) {
+                    this.cliente.direccion += ", " + this.cliente.direccionAdicional.toUpperCase();
                 }
+                this.cliente.poblacion = data.poblacion;
+                this.cliente.provincia = data.provincia;
+                this.cliente.ruta = data.ruta;
+                this.cliente.telefono = data.telefonoFormateado;
+                this.cliente.vendedorEstetica = data.vendedorEstetica;
+                this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
                 if (!data.hayErrores) {
                     this.cliente.direccionValidada = true;
                     this.slideActual = this.DATOS_COMISIONES;
