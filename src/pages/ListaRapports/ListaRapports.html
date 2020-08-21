@@ -1,15 +1,14 @@
 ﻿<ion-header>
     <ion-navbar>
-        <button ion-button menuToggle>
-            <ion-icon name="menu"></ion-icon>
+      <button ion-button menuToggle>
+          <ion-icon name="menu"></ion-icon>
+      </button>
+      <ion-title>Lista de Rapports</ion-title>
+      <ion-buttons end *ngIf="vendedorSeleccionado && segmentoRapports == 'codigoPostal'">
+        <button ion-button (click)="mostrarFiltros()">
+            <ion-icon name="funnel"></ion-icon>
         </button>
-        <ion-title>Lista de Rapports</ion-title>
-        <ion-buttons end *ngIf="vendedorSeleccionado && segmentoRapports == 'codigoPostal'">
-          <button ion-button (click)="mostrarFiltros()">
-              <ion-icon name="funnel"></ion-icon>
-          </button>
       </ion-buttons>
-
     </ion-navbar>
 
     <ion-segment [(ngModel)]="segmentoRapports" (ionChange)="inicializarDatos(); cambiarSegmento();">
@@ -21,6 +20,9 @@
       </ion-segment-button>
       <ion-segment-button value="codigoPostal">
         Cód. Postal
+      </ion-segment-button>
+      <ion-segment-button value="buscar">
+        <ion-icon name="search"></ion-icon>
       </ion-segment-button>
     </ion-segment>
   <div [ngSwitch]="segmentoRapports">
@@ -54,6 +56,16 @@
         </ion-select>
       </ion-item>
     </div>
+    <div *ngSwitchCase="'buscar'">
+    <form (ngSubmit)="buscarRapports()">
+      <ion-item>
+        <ion-label for="buscar">Buscar</ion-label>
+        <ion-input #buscarInput class="form-control" id="buscar" required
+                   [(ngModel)]="filtroBuscar"
+                   name="buscar" (ionFocus)="seleccionarTexto($event)" (click)="seleccionarTexto($event)"></ion-input>
+      </ion-item>
+    </form>
+  </div>
   </div>
 </ion-header>
 

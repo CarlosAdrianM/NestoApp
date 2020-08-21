@@ -200,16 +200,19 @@ export class ClienteComponent {
         if (this.cliente.telefono == 'undefined') {
             this.cliente.telefono = '';
         }
+        /*
         if (this.cliente.direccionValidada) {
             this.slideActual = this.DATOS_COMISIONES;
             return;
         }
+        */
         this.servicio.validarDatosGenerales(this.cliente).subscribe(
             data => {
                 this.cliente.direccion = data.direccionFormateada;
                 if (this.cliente.direccionAdicional) {
                     this.cliente.direccion += ", " + this.cliente.direccionAdicional.toUpperCase();
                 }
+                this.cliente.direccion = this.cliente.direccion.substr(0, 50);
                 this.cliente.poblacion = data.poblacion;
                 this.cliente.provincia = data.provincia;
                 this.cliente.ruta = data.ruta;

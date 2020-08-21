@@ -74,6 +74,19 @@ export class ListaRapportsService {
         return this.http.get(this._baseUrl+'/GetClientesSinVisitar', { params })
             .catch(this.handleError);
     }
+
+    public cargarRapportsFiltrados(filtroBuscar: string): Observable<any> {
+        let params: HttpParams = new HttpParams();
+        if (this.usuario.vendedor) {
+            params = params.append('vendedor', this.usuario.vendedor);
+        } else {
+            params = params.append('vendedor','');
+        }
+        params = params.append('filtro', filtroBuscar);
+
+        return this.http.get(this._baseUrl, { params })
+            .catch(this.handleError);
+    }
        
 
     private handleError(error: Response): Observable<any> {

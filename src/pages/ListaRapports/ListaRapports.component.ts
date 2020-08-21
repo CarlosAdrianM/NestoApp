@@ -13,6 +13,7 @@ import { Geolocation } from '@ionic-native/geolocation';
 })
 export class ListaRapports extends SelectorBase {
     @ViewChild('clienteInput') myClienteInput;
+    @ViewChild('buscarInput') myFiltroInput;
     @ViewChild('barraFiltrar') myBarraFiltrar : Searchbar;
 
     private nav: NavController;
@@ -34,6 +35,7 @@ export class ListaRapports extends SelectorBase {
     public listadoClientesSinVisitarFiltrado: any;
     private _codigoPostalSeleccionado: any;
     public filtro: string;
+    public filtroBuscar: string;
     
     get codigoPostalSeleccionado() {
         return this._codigoPostalSeleccionado;
@@ -215,6 +217,10 @@ export class ListaRapports extends SelectorBase {
             }, 150);
         } else if (this.segmentoRapports == 'codigoPostal' && this.usuario.vendedor) {
             this.cargarCodigosPostalesSinVisitar();
+        } else if (this.segmentoRapports == 'buscar') {
+            setTimeout(() => {
+                this.myFiltroInput.setFocus();
+            }, 150);
         }
     }
 
@@ -337,7 +343,35 @@ export class ListaRapports extends SelectorBase {
         this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(contieneCadena)
     }
 
+    public buscarRapports(): void {
+        let loading: any = this.loadingCtrl.create({
+            content: 'Cargando Rapports...',
+        });
 
+        loading.present();
+
+        this.servicio.cargarRapportsFiltrados(this.filtroBuscar).subscribe(
+            data => {
+                if (data.length === 0) {
+                    let alert = this.alertCtrl.create({
+                        title: 'Error',
+                        subTitle: 'No hay ningún rapport que incluya ese texto',
+                        buttons: ['Ok'],
+                    });
+                    alert.present();
+                } else {
+                    this.inicializarDatos(data);
+                }
+            },
+            error => {
+                loading.dismiss();  
+                this.errorMessage = <any>error;
+            },
+            () => {
+                loading.dismiss();
+            }
+        );
+    }
     
     public colorEstado(estado: number): string {
         if (estado == 0 || estado == 9) {
