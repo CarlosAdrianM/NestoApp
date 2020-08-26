@@ -72,4 +72,18 @@
       <img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" imageViewer />
     </div>
   </div>
+  <div>
+    <button *ngIf="!clientes" ion-button block (click)="cargarClientes()">Ver clientes con compra</button>
+    <ion-list>
+      <ion-item *ngFor="let cliente of clientes">
+        <p text-wrap><i>{{ cliente.Cliente }}/{{ cliente.Contacto }}</i></p>
+        <h2 text-wrap>{{ cliente.Nombre }}</h2>
+        <h3 text-wrap>{{ cliente.Direccion }}</h3>
+        <p text-wrap>{{ cliente.CodigoPostal }} {{ cliente.Poblacion }}</p>
+        <p text-wrap>Cantidad: {{ cliente.Cantidad }}</p>
+        <p text-wrap>Última compra: {{ cliente.UltimaCompra | date: 'dd/MM/yy' }}</p>
+        <p text-wrap>Estados: {{ cliente.EstadoMinimo }}/{{ cliente.EstadoMaximo }} </p>
+      </ion-item>
+    </ion-list>
+  </div>
 </ion-content>
