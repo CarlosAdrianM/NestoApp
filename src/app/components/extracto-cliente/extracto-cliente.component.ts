@@ -117,7 +117,7 @@ export class ExtractoClienteComponent {
   }
 
   public abrirPedido(pedido: any): void {
-      this.nav.navigateForward('pedido', { queryParams: { empresa: pedido.empresa, numero: pedido.numero }});
+      this.nav.navigateForward('pedido-venta', { queryParams: { empresa: pedido.empresa, numero: pedido.numero }});
   }
 
 

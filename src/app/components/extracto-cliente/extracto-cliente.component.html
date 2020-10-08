@@ -33,8 +33,8 @@
               <h3>{{mov.vencimiento | date: 'dd/MM/yy'}}</h3>
               <p>{{mov.concepto}}</p>
               <p>{{mov.importePendiente | currency:'EUR' }}</p>
-              <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
             </ion-label>
+            <ion-icon name="download" (click)="descargarFactura(mov)" slot="end"></ion-icon>
           </ion-item>
               
           <ion-card *ngIf="!mostrarClientes">
@@ -70,8 +70,8 @@
               <h3>{{mov.fecha | date: 'dd/MM/yy'}}</h3>
               <p>{{mov.concepto}}</p>
               <p>{{mov.importe | currency:'EUR' }}</p>
-              <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
             </ion-label>  
+            <ion-icon name="download" (click)="descargarFactura(mov)" slot="end"></ion-icon>
           </ion-item>
       </ion-list>    
 
@@ -81,15 +81,15 @@
             <ion-label class="ion-text-wrap">
               <h2>{{pedido.nombre}}</h2>
               <h3>{{pedido.direccion}}</h3>
-              <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR':'es-ES'}})</p>
+              <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR'}})</p>
               <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
               <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
               <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
               <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
               <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
               <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>
-              <ion-icon name="arrow-forward" item-right></ion-icon>
             </ion-label>
+            <ion-icon name="arrow-forward" slot="end"></ion-icon>
           </ion-item>
       </ion-list>   
   </div>

@@ -55,8 +55,8 @@
 
               <ion-item>
                   <ion-row>
-                      <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
-                      <ion-col (press)="cambiarIVA()" width-50>{{pedido.iva}}</ion-col>
+                      <ion-col>{{pedido.periodoFacturacion}}</ion-col>
+                      <ion-col (click)="cambiarIVA()">{{pedido.iva}}</ion-col>
                   </ion-row>
               </ion-item>
               <ion-item>
@@ -68,7 +68,7 @@
                   <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
               </ion-item>
               <ion-item>
-                  <button ion-button block *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</button>
+                  <ion-button expand="block" *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</ion-button>
               </ion-item>
           </ion-list>
       </div>
