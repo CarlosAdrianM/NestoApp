@@ -1,0 +1,132 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Pedido Venta</ion-title>
+    <ion-buttons slot="end">
+        <ion-button (click)="modificarPedido()">
+            <ion-icon name="archive"></ion-icon>
+        </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-segment [(ngModel)]="segmentoPedido">
+      <ion-segment-button value="cabecera">
+          Cabecera
+      </ion-segment-button>
+      <ion-segment-button value="lineas">
+          Líneas
+      </ion-segment-button>
+      <ion-segment-button value="comentarios">
+          Comentarios
+      </ion-segment-button>
+  </ion-segment>
+</ion-header>
+
+<ion-content>
+  <div [ngSwitch]="segmentoPedido" *ngIf="pedido">
+      <div *ngSwitchCase="'cabecera'">
+          <ion-list>
+              <ion-item>
+                  <ion-label>Pedido {{pedido.numero}}</ion-label>
+              </ion-item>
+              <ion-item>
+                  <ion-label>{{pedido.usuario}}</ion-label>
+              </ion-item>
+              <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
+              <ion-item>
+                  <ion-label>Fecha Pedido</ion-label>
+                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
+              </ion-item>
+              <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
+              <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
+              <ion-item>
+                  <ion-label>Fecha Vencimiento</ion-label>
+                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.primerVencimiento"></ion-datetime>
+              </ion-item>
+              <ion-item>
+                  <ion-label>Fecha Entrega</ion-label>
+                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaEntrega"></ion-datetime>
+              </ion-item>
+              <ion-item *ngIf="pedido.notaEntrega">
+                  <ion-label><strong>Nota de entrega</strong></ion-label>
+              </ion-item>
+
+
+              <ion-item>
+                  <ion-row>
+                      <ion-col width-50>{{pedido.periodoFacturacion}}</ion-col>
+                      <ion-col (press)="cambiarIVA()" width-50>{{pedido.iva}}</ion-col>
+                  </ion-row>
+              </ion-item>
+              <ion-item>
+                  <ion-label>Servir Junto</ion-label>
+                  <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
+              </ion-item>
+              <ion-item>
+                  <ion-label>Mantener Junto</ion-label>
+                  <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
+              </ion-item>
+              <ion-item>
+                  <button ion-button block *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</button>
+              </ion-item>
+          </ion-list>
+      </div>
+      <div *ngSwitchCase="'lineas'">
+          <ion-list>
+              <ion-item-sliding *ngFor="let linea of pedido.LineasPedido">
+                  <ion-item-options side="end">
+                      <button ion-button (click)="borrarLinea(linea)" color="danger">
+                          <ion-icon name="trash"></ion-icon>
+                          Borrar
+                      </button>
+                  </ion-item-options>
+                  <ion-item>
+                    <ion-label class="ion-text-wrap">
+                      <span (click)="abrirLinea(linea)">
+                        <h2>{{linea.texto}}</h2>
+                        <ion-row>
+                            <ion-col width-25 style="text-align:center"><p>{{linea.producto}}</p></ion-col>
+                            <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
+                            <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR'}}</p></ion-col>
+                            <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
+                            <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR'}}</p></ion-col>
+                        </ion-row>
+                        <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
+                        <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>
+                        <ion-badge color="secondary" *ngIf="linea.estado == 1 && linea.picking > 0">Picking</ion-badge>
+                        <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
+                        <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
+                        <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>                        
+                      </span>
+                    </ion-label>
+                  </ion-item>
+              </ion-item-sliding> 
+          </ion-list>
+      </div>
+      <ion-list *ngSwitchCase="'comentarios'">
+          <ion-item>
+              <ion-label floating>Comentarios Ruta</ion-label>
+              <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
+          </ion-item>
+          <ion-item>
+              <ion-label floating>Comentarios Picking</ion-label>
+              <ion-input [(ngModel)]="pedido.comentarioPicking"></ion-input>
+          </ion-item>
+          <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">
+              <ion-item>
+                  <h2>{{enlace.Fecha | date}}</h2>
+                  <h3>{{enlace.AgenciaNombre}}</h3>
+                  <a href="#" (click)="abrirEnlace(enlace.EnlaceSeguimiento)">{{enlace.EnlaceSeguimiento}}</a>
+              </ion-item>
+          </ion-list>
+      </ion-list>
+  </div>
+</ion-content>
+<ion-footer *ngIf="segmentoPedido == 'lineas'">
+  <ion-fab horizontal="end" vertical="bottom" slot="fixed">
+    <ion-fab-button (click)="annadirLinea()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-footer>

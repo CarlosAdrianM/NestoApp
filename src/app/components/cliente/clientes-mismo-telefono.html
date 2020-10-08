@@ -1,0 +1,17 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-title>Clientes con mismo teléfono</ion-title>
+    </ion-toolbar>
+</ion-header>
+<ion-content>
+    <ion-list>
+        <ion-item *ngFor="let cliente of listaClientes">
+            <ion-label class="ion-text-wrap">
+                <h2>{{cliente.nombre}}</h2>
+                <p>{{cliente.empresa}}/{{cliente.cliente}}/{{cliente.contacto}}</p>
+            </ion-label>
+        </ion-item>
+    </ion-list>
+
+    <ion-button expand="block" (click)="cerrar()">Volver</ion-button>
+</ion-content>

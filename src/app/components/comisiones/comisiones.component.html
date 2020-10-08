@@ -1,0 +1,57 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Comisiones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+  <ion-button expand="block" (click)="doCheckbox()">{{nombreMesSeleccionado}}</ion-button>
+  <ion-item>
+    <ion-label>Incluir Fin de Mes</ion-label>
+    <ion-toggle [(ngModel)]="incluirAlbaranes" (ionChange)="cargarResumen()" disabled="{{deshabilitarIncluirAlbaranes}}"></ion-toggle>
+  </ion-item>
+  <ion-item>
+    <ion-label>Incluir Picking</ion-label>
+    <ion-toggle [(ngModel)]="incluirPicking" (ionChange)="cargarResumen()" disabled="{{deshabilitarIncluirAlbaranes}}"></ion-toggle>
+  </ion-item>
+  <div *ngIf="resumen">
+    <ion-list *ngFor="let etiqueta of resumen.Etiquetas">
+      <ion-item-divider color="light">{{etiqueta.Nombre}}</ion-item-divider>
+      <ion-item>
+        <ion-label>Venta</ion-label>
+        <p item-right (click)="abrirDetalle(etiqueta.Nombre)">{{etiqueta.Venta | currency:'EUR'}}</p>
+      </ion-item>
+      <ion-item>
+        <ion-label>Tipo</ion-label>
+        <p item-right>{{etiqueta.Tipo | percent:'1.2-2'}}</p>
+      </ion-item>
+      <ion-item>
+        <ion-label>Comisión</ion-label>
+        <p item-right>{{etiqueta.Comision | currency:'EUR'}}</p>
+      </ion-item>
+    </ion-list>
+    <ion-item-divider color="light">Total</ion-item-divider>
+    <ion-item>
+      <ion-range min="{{resumen.GeneralInicioTramo}}" max="{{resumen.GeneralFinalTramo}}" color="{{colorRango(resumen.GeneralBajaSaltoMesSiguiente)}}" [(ngModel)]="resumen.GeneralProyeccion">
+        <ion-label range-left>{{resumen.GeneralInicioTramo | currency:'EUR'}}</ion-label>
+        <ion-label range-right>{{resumen.GeneralFinalTramo | currency:'EUR'}}</ion-label>
+      </ion-range>
+    </ion-item>
+    <ion-item>
+      <ion-label>Proyección Año</ion-label>
+      <p item-right>{{resumen.GeneralProyeccion | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Falta para siguiente salto</ion-label>
+      <p item-right>{{resumen.GeneralFaltaParaSalto | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label><strong>Total Comisiones</strong></ion-label>
+      <p item-right><strong>{{resumen.TotalComisiones | currency:'EUR'}}</strong></p>
+    </ion-item>
+  </div>
+</ion-content>

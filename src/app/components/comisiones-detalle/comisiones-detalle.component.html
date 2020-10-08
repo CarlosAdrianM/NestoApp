@@ -1,0 +1,21 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Detalle de Comisiones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item *ngFor="let detalle of listaDetalleComision" (click)="abrirPedido(detalle)">
+      <ion-label class="ion-text-wrap">
+        <h2>{{detalle.Nombre}}</h2>
+        <h3>{{detalle.Direccion}}</h3>
+        <p>Fecha: {{detalle.Fecha_Factura | date:'shortDate'}}</p>
+        <p>Importe: {{detalle.BaseImponible | currency:'EUR'}}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

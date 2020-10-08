@@ -1,0 +1,145 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+        <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Cliente</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-card *ngIf="slideActual == DATOS_FISCALES">
+      <ion-card-header>
+          Datos Identificación Fiscal
+      </ion-card-header>
+      <ion-card-content>
+          <ion-item *ngIf="!cliente.nifValidado || cliente.nif">
+              <ion-label>NIF</ion-label>
+              <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+          </ion-item>
+          <ion-item *ngIf="!nombreDisabled()">
+              <ion-label floating>Nombre</ion-label>
+              <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+          </ion-item>
+          <ion-label *ngIf="mensajeDatosFiscales" color="danger" text-wrap>
+          {{mensajeDatosFiscales}}
+          </ion-label>
+      <ion-button expand="block" [disabled]="!cliente.nif && !cliente.nombre" (click)="goToDatosGenerales()">Siguiente</ion-button>
+      </ion-card-content>
+  </ion-card>
+  
+  <ion-card *ngIf="slideActual == DATOS_GENERALES">
+      <ion-card-header>
+          Datos Generales
+      </ion-card-header>
+      
+      <ion-card-content>
+          <ion-card-title *ngIf="cliente && cliente.esContacto">
+              Creando Contacto (ya existe el cliente [{{cliente.cliente}}] )
+          </ion-card-title>
+          <ion-list>
+              <ion-item>
+                  <ion-label floating>Dirección (solo calle y número)</ion-label>
+                  <ion-input #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item>
+                  <ion-label floating>Dirección (resto de información)</ion-label>
+                  <ion-input #direccion type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item>
+                  <ion-label floating>Código Postal</ion-label>
+                  <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item *ngIf="cliente.direccionValidada">
+                  <ion-label floating>Población</ion-label>
+                  <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item *ngIf="cliente.direccionValidada">
+                  <ion-label floating>Provincia</ion-label>
+                  <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item>
+                  <ion-label floating>Teléfono</ion-label>
+                  <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+          </ion-list>
+          <ion-button expand="block" (click)="slideActual = DATOS_FISCALES">&lt; Volver a Datos Fiscales</ion-button>
+          <ion-button expand="block" (click)="goToDatosComisiones()">Ir a Datos de Comisiones &gt;</ion-button>
+      </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="slideActual == DATOS_COMISIONES">
+      <ion-card-header>Datos Comisiones</ion-card-header>
+      <ion-card-content>
+          <ion-item>
+              <ion-label>¿Tiene Estética?</ion-label>
+              <ion-toggle [(ngModel)]="cliente.estetica"></ion-toggle>
+              <ion-label color="secondary" *ngIf="cliente.estetica">({{cliente.vendedorEstetica}})</ion-label>
+          </ion-item>
+          <ion-item>
+              <ion-label>¿Tiene Peluquería?</ion-label>
+              <ion-toggle [(ngModel)]="cliente.peluqueria"></ion-toggle>
+              <ion-label color="secondary" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</ion-label>
+          </ion-item>
+          <ion-card *ngIf="slideActual == DATOS_COMISIONES">
+              <ion-card-content>
+                  <p (click)="slideActual = DATOS_FISCALES"><strong>{{cliente.nombre}}</strong></p>
+                  <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}</p>
+                  <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
+                  <p></p>
+                  <p *ngIf="cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!=''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
+                  <p *ngIf="!(cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
+                  <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
+              </ion-card-content>
+          </ion-card>
+          
+          <ion-button expand="block" (click)="slideActual = DATOS_GENERALES">&lt; Volver a Datos Generales</ion-button>
+          <ion-button expand="block" [disabled]="!cliente.estetica && !cliente.peluqueria" (click)="goToDatosPago()">Ir a Datos de Pago &gt;</ion-button>
+      </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="slideActual == DATOS_PAGO">
+      <ion-card-header>Datos de Pago</ion-card-header>
+      <ion-card-content>
+          <selector-formas-pago seleccionado="{{cliente.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
+          <ion-item *ngIf="cliente.formaPago == 'RCB'">
+              <ion-label>IBAN</ion-label>
+              <ion-input #iban [(ngModel)]="cliente.iban"></ion-input>
+          </ion-item>
+          <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
+      </ion-card-content>
+      <ion-button expand="block" (click)="slideActual = DATOS_COMISIONES">&lt; Volver a Datos de Comisiones</ion-button>
+      <ion-button expand="block" [disabled]="cliente.formaPago=='RCB' && (!cliente.iban || cliente.iban.length < 24)" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</ion-button>
+  </ion-card>
+
+  <ion-card *ngIf="slideActual == DATOS_CONTACTO">
+      <ion-card-header>Datos de Contacto</ion-card-header>
+      <ion-card-content>
+        <ion-button expand="block" (click)="annadirPersonaContacto()">Añadir Persona de Contacto</ion-button>
+        <ion-card *ngFor="let persona of cliente.personasContacto">
+            <ion-fab horizontal="end">
+                <ion-fab-button size="small" (click)="borrarPersonaContacto(persona)"><ion-icon name="trash"></ion-icon></ion-fab-button>
+            </ion-fab>
+            <ion-item>
+                <ion-label>Nombre</ion-label>
+                <ion-input type="text" [(ngModel)]="persona.nombre" name="nombre"></ion-input>
+            </ion-item>
+            <ion-item>
+                <ion-label>Correo-e</ion-label>
+                <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
+            </ion-item>
+            <ion-item>
+                <ion-label>Facturación Electrónica</ion-label>
+                <ion-toggle [(ngModel)]="persona.facturacionElectronica"></ion-toggle>
+            </ion-item>
+        </ion-card>
+        <ion-fab vertical="bottom" horizontal="end">
+            <ion-fab-button size="small" (click)="annadirPersonaContacto()"><ion-icon name="add"></ion-icon></ion-fab-button>
+        </ion-fab>
+          
+      </ion-card-content>
+      <ion-button expand="block" (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</ion-button>
+      <ion-button expand="block" (click)="finalizar()">FINALIZAR</ion-button>
+  </ion-card>
+
+</ion-content>  

@@ -1,0 +1,97 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Extracto del Cliente</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div padding *ngIf="!mostrarClientes">
+      <ion-segment [(ngModel)]="tipoMovimientos" (ionChange)="onSegmentChange()">
+          <ion-segment-button value="deuda">
+          Deuda
+          </ion-segment-button>
+          <ion-segment-button value="facturas">
+          Facturas
+          </ion-segment-button>
+          <ion-segment-button value="pedidos">
+          Pedidos
+          </ion-segment-button>
+      </ion-segment>
+  </div>
+  
+  
+  <selector-clientes #selector *ngIf="mostrarClientes" (seleccionar)="clienteSeleccionado=$event;onSegmentChange();"></selector-clientes>
+  <div scrollY="true">
+  <div [ngSwitch]="tipoMovimientos">
+      <ion-list *ngSwitchCase="'deuda'">
+          <ion-item *ngFor="let mov of movimientosDeuda">
+            <ion-label class="ion-text-wrap">
+              <h3>{{mov.vencimiento | date: 'dd/MM/yy'}}</h3>
+              <p>{{mov.concepto}}</p>
+              <p>{{mov.importePendiente | currency:'EUR' }}</p>
+              <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
+            </ion-label>
+          </ion-item>
+              
+          <ion-card *ngIf="!mostrarClientes">
+              <ion-card-header>
+                  Resumen de movimientos
+              </ion-card-header>
+      
+              <ion-card-content>
+                  <ion-row *ngIf="resumenDeuda.vencida">
+                      <ion-col>Total Vencida</ion-col>
+                      <ion-col>{{resumenDeuda.vencida | currency:'EUR'}}</ion-col>
+                  </ion-row>
+                  <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.impagados">
+                      <ion-col>Total Impagados</ion-col>
+                      <ion-col>{{resumenDeuda.impagados | currency:'EUR'}}</ion-col>
+                  </ion-row>
+                  <ion-row style="background-color: red; color: white" *ngIf="resumenDeuda.abogado">
+                      <ion-col>Total Abogado</ion-col>
+                      <ion-col>{{resumenDeuda.abogado | currency:'EUR'}}</ion-col>
+                  </ion-row>
+                  <ion-row>
+                      <ion-col><strong>TOTAL</strong></ion-col>
+                      <ion-col><strong>{{resumenDeuda.total | currency:'EUR'}}</strong></ion-col>
+                  </ion-row>
+              </ion-card-content>
+      
+          </ion-card>            
+      </ion-list>
+  
+      <ion-list *ngSwitchCase="'facturas'">
+          <ion-item *ngFor="let mov of movimientosDeuda">
+            <ion-label class="ion-text-wrap">
+              <h3>{{mov.fecha | date: 'dd/MM/yy'}}</h3>
+              <p>{{mov.concepto}}</p>
+              <p>{{mov.importe | currency:'EUR' }}</p>
+              <ion-icon name="download" (click)="descargarFactura(mov)" item-right></ion-icon>
+            </ion-label>  
+          </ion-item>
+      </ion-list>    
+
+
+      <ion-list *ngSwitchCase="'pedidos'">
+          <ion-item *ngFor="let pedido of movimientosDeuda" (click)="abrirPedido(pedido)">
+            <ion-label class="ion-text-wrap">
+              <h2>{{pedido.nombre}}</h2>
+              <h3>{{pedido.direccion}}</h3>
+              <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR':'es-ES'}})</p>
+              <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
+              <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
+              <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
+              <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
+              <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
+              <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>
+              <ion-icon name="arrow-forward" item-right></ion-icon>
+            </ion-label>
+          </ion-item>
+      </ion-list>   
+  </div>
+</div>
+</ion-content>

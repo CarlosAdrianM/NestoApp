@@ -1,0 +1,91 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Producto</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item>
+      <ion-label>Referencia</ion-label>
+      <ion-input type="text" [(ngModel)]="productoActual" (keyup.enter)="cargar()" (ionFocus)="seleccionarTexto($event)"></ion-input>
+    </ion-item>
+  </ion-list>
+  <ion-list *ngIf="producto">
+    <ion-item>
+      <ion-label>Nombre</ion-label>
+      <p item-right>{{producto.Nombre}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Tamaño</ion-label>
+      <p item-right>{{producto.Tamanno}} {{producto.UnidadMedida}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Familia</ion-label>
+      <p item-right>{{producto.Familia}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Precio (profesional)</ion-label>
+      <p item-right>{{producto.PrecioProfesional | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Estado</ion-label>
+      <p item-right>{{producto.Estado}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Subgrupo ({{producto.Grupo}})</ion-label>
+      <p item-right>{{producto.Subgrupo}}</p>
+    </ion-item>
+  </ion-list>
+  <div *ngIf="producto">
+    <ion-list *ngFor="let stock of producto.Stocks">
+      <ion-item-divider color="light">{{stock.Almacen}}</ion-item-divider>
+      <ion-item>
+        <ion-label>Stock</ion-label>
+        <p item-right>{{stock.Stock}}</p>
+      </ion-item>
+      <ion-item *ngIf="stock.PendienteEntregar > 0">
+        <ion-label>Pendientes de Entregar</ion-label>
+        <p item-right>{{stock.PendienteEntregar}}</p>
+      </ion-item>
+      <ion-item *ngIf="stock.PendienteRecibir > 0">
+        <ion-label>Pendientes de Recibir</ion-label>
+        <p item-right>{{stock.PendienteRecibir}}</p>
+      </ion-item>
+      <ion-item *ngIf="stock.FechaEstimadaRecepcion < '9999-12-31T23:59:59'">
+        <ion-label>Fecha Estimada de Recepción</ion-label>
+        <p item-right>{{stock.FechaEstimadaRecepcion | date:'shortDate'}}</p>
+      </ion-item>
+      <ion-item *ngIf="stock.PendienteReposicion > 0">
+        <ion-label>Pendientes de Reposición</ion-label>
+        <p item-right>{{stock.PendienteReposicion}}</p>
+      </ion-item>
+      <ion-item *ngIf="stock.CantidadDisponible != stock.Stock">
+        <ion-label>Cantidad Disponible</ion-label>
+        <p item-right>{{stock.CantidadDisponible}}</p>
+      </ion-item>
+    </ion-list>
+    <div text-center>
+      <ion-img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" ionImgViewer ></ion-img>
+    </div>
+  </div>
+  <div>
+    <ion-button *ngIf="!clientes" expand="block" (click)="cargarClientes()">Ver clientes con compra</ion-button>
+    <ion-list>
+      <ion-item *ngFor="let cliente of clientes">
+        <ion-label class="ion-text-wrap">
+          <p text-wrap><i>{{ cliente.Cliente }}/{{ cliente.Contacto }}</i></p>
+          <h2 text-wrap>{{ cliente.Nombre }}</h2>
+          <h3 text-wrap>{{ cliente.Direccion }}</h3>
+          <p text-wrap>{{ cliente.CodigoPostal }} {{ cliente.Poblacion }}</p>
+          <p text-wrap>Cantidad: {{ cliente.Cantidad }}</p>
+          <p text-wrap>Última compra: {{ cliente.UltimaCompra | date: 'dd/MM/yy' }}</p>
+          <p text-wrap>Estados: {{ cliente.EstadoMinimo }}/{{ cliente.EstadoMaximo }} </p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

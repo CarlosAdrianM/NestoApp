@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Lista de Pedidos Venta</ion-title>
+    <ion-buttons slot="end">
+        <ion-button (click)="mostrarFiltros()">
+            <ion-icon name="funnel"></ion-icon>
+        </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-searchbar #filtro placeholder="Introduzca algún dato del pedido" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltro($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+      <ion-item *ngFor="let pedido of datosFiltrados"  (click)="abrirPedido(pedido)">
+        <ion-icon name="download" (click)="descargarPedido($event, pedido)" slot="start"></ion-icon>
+        <ion-label class="ion-text-wrap">
+          <h2>{{pedido.nombre}}</h2>
+          <h3>{{pedido.direccion}}</h3>
+          <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR' }})</p>
+          <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
+          <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
+          <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
+          <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
+          <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
+          <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>          
+        </ion-label>
+        <ion-icon name="arrow-forward" slot="end"></ion-icon>
+      </ion-item>
+  </ion-list>
+  <ion-button expand="block" *ngIf="numeroDeDatos() <= 0 && filtro" (click)="abrirPedidoNumero(filtro.value)">Abrir El Pedido {{filtro.value}}</ion-button>
+</ion-content>

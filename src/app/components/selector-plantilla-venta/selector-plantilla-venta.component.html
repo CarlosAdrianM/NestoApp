@@ -1,0 +1,17 @@
+<div id="contenedor">
+  <ion-searchbar  #filtro placeholder="Introduzca algún dato del producto" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltroBuscarEnTodos($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
+  <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 3" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
+  <div id="myFixZone" scrollY="true">
+    <ion-list>
+      <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="producto.estado == 0 ? '' : 'light'">
+        <ion-label class="ion-text-wrap">
+          <h2>{{producto.texto}}</h2>
+          <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+          <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>
+          <p *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00'">Última compra {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>
+          <ion-badge *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00' || producto.cantidad || producto.cantidadOferta" [color]="producto.colorStock" item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</div>

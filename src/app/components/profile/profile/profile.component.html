@@ -1,0 +1,72 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start" *ngIf="usuario && usuario.nombre">
+        <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Usuario</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div [ngSwitch]="authType" class="login" *ngIf="!(usuario && usuario.nombre)">
+      <ion-segment [(ngModel)]="authType">
+          <ion-segment-button value="login">
+              Iniciar Sesión
+          </ion-segment-button>
+          <ion-segment-button value="signup">
+              Registrarse
+          </ion-segment-button>
+      </ion-segment>
+      
+      <form *ngSwitchCase="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
+          <ion-item>
+              <ion-label>Nombre de usuario</ion-label>
+              <ion-input type="text" name="username" ngModel></ion-input>
+          </ion-item>
+
+          <ion-item>
+              <ion-label>Contraseña</ion-label>
+              <ion-input type="password" name="password" ngModel></ion-input>
+          </ion-item>
+
+          <div class="ion-padding">
+              <ion-button expand="block" type="submit">Iniciar Sesión</ion-button>
+          </div>
+
+      </form>
+          
+
+      <form *ngSwitchCase="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
+          <ion-item>
+              <ion-label>Nombre de Usuario</ion-label>
+              <ion-input type="text" ngControl="username"></ion-input>
+          </ion-item>
+
+          <ion-item>
+              <ion-label>Contraseña</ion-label>
+              <ion-input type="password" ngControl="password"></ion-input>
+          </ion-item>
+
+          <div class="ion-padding">
+              <ion-button expand="block" block type="submit">Registrarse</ion-button>
+          </div>
+
+      </form>
+
+  </div>
+
+  <div *ngIf="error" class="ion-padding">
+      <p class="error">{{ error }}</p>
+  </div>
+
+  <div *ngIf="(usuario && usuario.nombre)">
+      <div class="ion-padding">
+          <h1>Hola, {{ usuario.nombre }}</h1>
+          <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>
+          <h3>Versión 2.0.0</h3>
+          <ion-item><strong>Se actualiza el sistema completo a una nueva versión</strong></ion-item>
+          <p></p>
+      </div>
+  </div>
+</ion-content>

@@ -1,0 +1,121 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button (click)="comprobarCanDeactivate=true;"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Plantilla Venta</ion-title>
+  </ion-toolbar>   
+</ion-header>
+
+<ion-content>
+    <ion-fab vertical="bottom" horizontal="start" slot="fixed" *ngIf="indexActivo > 0">
+        <ion-fab-button (click)="anteriorPantalla()" size="small">
+            <ion-icon name="chevron-back-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="sePuedeAvanzar()">
+        <ion-fab-button (click)="siguientePantalla()" size="small">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
+  <ion-slides #slider (ionSlideWillChange)="avanzar()" (ionSlideDidChange)="haAvanzado()">
+      <ion-slide>
+        <ion-item>
+            <selector-almacenes seleccionado="{{almacen}}" (seleccionar)="almacen = $event"></selector-almacenes>
+        </ion-item>
+        <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
+      </ion-slide>
+      <ion-slide *ngIf="clienteSeleccionado">
+          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}"></selector-plantilla-venta>
+      </ion-slide>
+      <ion-slide scrollY="true" class="conscroll">
+          <div class="conscroll" scrollY="true" *ngIf="productosResumen">
+            <ion-list  scrollY="true">
+                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen">
+                    <ion-avatar slot="start">
+                        <img src="{{producto.urlImagen}}">
+                    </ion-avatar>
+                    <ion-label class="ion-text-wrap">
+                        <h2>{{producto.texto}}</h2>
+                        <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
+                        <p>{{+producto.precio | currency:'EUR'}} (Dto: {{producto.descuento | percent}})</p>
+                    </ion-label>
+                    <ion-badge [color]="producto.colorStock" slot="end">{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
+                </ion-item>
+                <ion-item *ngIf="baseImponibleParaPortes != baseImponiblePedido">
+                    <ion-label slot="start">Base Imponible Para Portes:</ion-label>
+                    <ion-label slot="end" class="ion-text-right">{{baseImponibleParaPortes | currency:'EUR'}}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label slot="start">Base Imponible Pedido:</ion-label>
+                    <ion-label slot="end" class="ion-text-right">{{baseImponiblePedido | currency:'EUR'}}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label position="floating">Comentarios Picking (los ven en almacén)</ion-label>
+                    <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
+                </ion-item>
+            </ion-list>
+        </div>
+      </ion-slide>
+      <ion-slide *ngIf="clienteSeleccionado" scrollY="true" class="conscroll">
+        <div scrollY="true">
+            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
+            <ion-list *ngIf="direccionSeleccionada">
+                <ion-item>
+                    <ion-label>Fecha de Entrega:</ion-label>
+                    <ion-datetime displayFormat="DD/MM/YYYY" [min]="fechaMinima" [(ngModel)]="fechaEntrega" cancelText="Cancelar" doneText="Seleccionar"></ion-datetime>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Servir Junto</ion-label>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Mantener Junto</ion-label>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <strong>{{textoFacturacionElectronica}}</strong>
+                </ion-item>
+                <ion-item>
+                    <ion-label slot="start">Periodo facturación</ion-label>
+                    <ion-label slot="end" class="ion-text-right">{{clienteSeleccionado.periodoFacturacion}}</ion-label>
+                </ion-item>
+                <ion-item>
+                    <ion-label position="floating">Comentarios Ruta (los ve el cliente y la agencia)</ion-label>
+                    <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
+                </ion-item>
+            </ion-list>
+        </div>
+      </ion-slide>
+      <ion-slide *ngIf="productosResumen" scrollY="true">
+        <ion-item>
+            <ion-label slot="start">Total pedido:</ion-label>
+            <ion-label slot="end" class="ion-text-right">{{totalPedido | currency:'EUR'}}</ion-label>
+        </ion-item>
+        <ion-item (click)="cambiarIVA()">
+             <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
+        </ion-item>
+        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+        <div>
+            <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
+        </div>
+        <ion-item>
+            <ion-label>Crear como presupuesto</ion-label>
+            <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>
+        </ion-item>
+        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo">
+            <ion-label>Servir por Glovo <ion-img src="https://glovoapp.com/assets-cdn/images/logo_togo.svg"></ion-img></ion-label>
+            <ion-toggle [(ngModel)]="servirPorGlovo"></ion-toggle>
+        </ion-item>
+        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
+            <ion-label>{{direccionFormateada}}</ion-label>
+        </ion-item>
+        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
+            <ion-label slot="start">Portes</ion-label>
+            <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 
+        </ion-item>
+        <ion-button expand="block" [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif && !esPresupuesto" (click)="crearPedido()">Crear Pedido</ion-button>
+      </ion-slide>
+  </ion-slides>
+</ion-content>

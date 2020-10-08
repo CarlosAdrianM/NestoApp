@@ -1,0 +1,103 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Rapport</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form>
+    <ion-item>
+      <ion-label for="cliente" [color]="colorEstado(rapport.EstadoCliente)">Cliente</ion-label>
+      <ion-input type="text" class="form-control" id="cliente" #cliente required
+                 [(ngModel)]="numeroCliente"
+                 name="cliente" (ionFocus)="seleccionarTexto($event)" (ionBlur)="leerClientePrincipal()"
+                 [color]="colorEstado(rapport.EstadoCliente)" (press)="mostrarEstadoCliente(rapport.EstadoCliente)"></ion-input>
+    </ion-item>
+    <selector-direcciones-entrega cliente="{{rapport.Cliente}}" seleccionado="{{rapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
+
+    <ion-item>
+      <ion-label>Tipo de Rapport</ion-label>
+      <ion-select name="tipo" [(ngModel)]="rapport.Tipo">
+        <ion-select-option value="V" selected="rapport.Tipo == 'V'">Visita</ion-select-option>
+        <ion-select-option value="T" selected="rapport.Tipo == 'T'">Teléfono</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label>Estado</ion-label>
+      <ion-select name="estado" [(ngModel)]="rapport.Estado">
+        <ion-select-option value="-1" selected="rapport.Estado == -1">Nulo</ion-select-option>
+        <ion-select-option value="0" selected="rapport.Estado == 0">Vigente</ion-select-option>
+        <ion-select-option value="1" selected="rapport.Estado == 1">No Contactado</ion-select-option>
+        <ion-select-option value="2" selected="rapport.Estado == 2">Gestión Administrativa</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label for="Pedido">Pedido</ion-label>
+      <ion-checkbox class="form-control" id="Pedido"
+                    [(ngModel)]="rapport.Pedido" name="Pedido"></ion-checkbox>
+    </ion-item>
+    <ion-item>
+      <ion-label for="ClienteNuevo">Cliente Nuevo</ion-label>
+      <ion-checkbox class="form-control" id="ClienteNuevo"
+                    [(ngModel)]="rapport.ClienteNuevo" name="ClienteNuevo"></ion-checkbox>
+    </ion-item>
+    <ion-item>
+      <ion-label for="Aviso">Aviso</ion-label>
+      <ion-checkbox class="form-control" id="Aviso"
+                    [(ngModel)]="rapport.Aviso" name="Aviso"></ion-checkbox>
+    </ion-item>
+    <ion-item>
+      <ion-label for="Aparatos">Aparatos</ion-label>
+      <ion-checkbox class="form-control" id="Aparatos"
+                    [(ngModel)]="rapport.Aparatos" name="Aparatos"></ion-checkbox>
+    </ion-item>
+    <ion-item>
+      <ion-label for="GestionAparatos">Gestión Aparatos</ion-label>
+      <ion-checkbox class="form-control" id="GestionAparatos"
+                    [(ngModel)]="rapport.GestionAparatos" name="GestionAparatos"></ion-checkbox>
+    </ion-item>
+
+    <ion-item>
+      <ion-label for="PrimeraVisita">Primera Visita</ion-label>
+      <ion-checkbox class="form-control" id="PrimeraVisita"
+                    [(ngModel)]="rapport.PrimeraVisita" name="PrimeraVisita"></ion-checkbox>
+    </ion-item>
+
+    <ion-item>
+      <ion-label for="Comentarios">Comentarios</ion-label>
+      <ion-textarea rows="5" class="form-control" id="Comentarios"
+                    [(ngModel)]="rapport.Comentarios" name="Comentarios"></ion-textarea>
+    </ion-item>
+
+    <ion-item>
+      <ion-label for="dejarDeVisitar">Quitar de mi listado</ion-label>
+      <ion-toggle [(ngModel)]="dejarDeVisitar" color="danger" name="dejarDeVisitar"></ion-toggle>
+    </ion-item>
+
+    <ion-item *ngIf="mostrarTipoCentro()">
+      <ion-label>Tipo de Centro</ion-label>
+      <ion-select name="tipoCentro" [(ngModel)]="rapport.TipoCentro">
+        <ion-select-option value="0" selected="rapport.TipoCentro == 0">No sé cómo es</ion-select-option>
+        <ion-select-option value="1" selected="rapport.TipoCentro == 1">Sólo Estética</ion-select-option>
+        <ion-select-option value="2" selected="rapport.TipoCentro == 2">Sólo Peluquería</ion-select-option>
+        <ion-select-option value="3" selected="rapport.TipoCentro == 3">Peluquería y Estética</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-label for="Usuario">Usuario</ion-label>
+      <ion-input type="text" class="form-control" id="Usuario" required
+                 [ngModel]="rapport.Usuario"
+                 name="Usuario" disabled="true"></ion-input>
+    </ion-item>
+
+
+
+  </form>
+  {{errorMessage}}
+</ion-content>
