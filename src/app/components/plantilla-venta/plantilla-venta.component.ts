@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild, OnInit } from '@angular/core';
-import { AlertController, LoadingController, NavController, IonSlides } from '@ionic/angular';
+import { AlertController, LoadingController, NavController, IonSlides, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -24,12 +24,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     private nav: NavController,
     private alertCtrl: AlertController, 
     private loadingCtrl: LoadingController, 
-    private ref: ChangeDetectorRef
+    private ref: ChangeDetectorRef,
+    private platform: Platform
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
           this.clienteSeleccionado = clienteModificado;
           this.cargarProductos(clienteModificado);
+      });
+      this.platform.backButton.subscribeWithPriority(10, () => {
+        console.log('Botón atrás pulsado');
       });
   }
 

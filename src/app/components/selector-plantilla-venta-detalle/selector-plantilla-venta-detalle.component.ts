@@ -142,8 +142,8 @@ export class SelectorPlantillaVentaDetalleComponent {
           producto.colorStock = 'default';
           console.log("Seleccionamos el color default");
       } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
-          producto.colorStock = 'secondary';
-          console.log("Seleccionamos el color secondary");
+          producto.colorStock = 'success';
+          console.log("Seleccionamos el color success");
       } else if (producto.cantidadDisponible + producto.cantidadPendienteRecibir >= cantidad + cantidadOferta) {
           producto.colorStock = 'primary';
           console.log("Seleccionamos el color primary");

@@ -22,7 +22,7 @@
           <h3>{{pedido.direccion}}</h3>
           <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR' }})</p>
           <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
-          <ion-badge color="secondary" *ngIf="pedido.tienePicking">Picking</ion-badge>
+          <ion-badge color="success" *ngIf="pedido.tienePicking">Picking</ion-badge>
           <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
           <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
           <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>

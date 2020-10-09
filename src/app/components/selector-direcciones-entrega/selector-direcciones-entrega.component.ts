@@ -72,7 +72,7 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
 
   public colorEstado(estado: number): string {
       if (estado == 0 || estado == 9) {
-          return "secondary";
+          return "success";
       }
       if (estado == 5) {
           return "danger";

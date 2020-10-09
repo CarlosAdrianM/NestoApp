@@ -79,12 +79,12 @@
         <ion-badge *ngIf="rapport.Tipo=='T'">Teléfono</ion-badge>
         <ion-badge color="light" *ngIf="rapport.Estado==1">No Contactado</ion-badge>
         <ion-badge color="dark" *ngIf="rapport.Estado==2">Gestión Administrativa</ion-badge>
-        <ion-badge color="secondary" *ngIf="rapport.Pedido">Pedido</ion-badge>
+        <ion-badge color="success" *ngIf="rapport.Pedido">Pedido</ion-badge>
         <ion-badge color="primary" *ngIf="rapport.ClienteNuevo">Cliente Nuevo</ion-badge>
         <ion-badge color="light" *ngIf="rapport.Aviso">Aviso</ion-badge>
-        <ion-badge color="dark" *ngIf="rapport.Aparatos">Aparatos</ion-badge>
+        <ion-badge color="tertiary" *ngIf="rapport.Aparatos">Aparatos</ion-badge>
         <ion-badge color="danger" *ngIf="rapport.GestionAparatos">Gestión Aparatos</ion-badge>
-        <ion-badge color="primary" *ngIf="rapport.PrimeraVisita">Primera Visita</ion-badge>
+        <ion-badge color="secondary" *ngIf="rapport.PrimeraVisita">Primera Visita</ion-badge>
       </p>
       <div [ngSwitch]="segmentoRapports">
         <div *ngSwitchCase="'fecha'">
@@ -121,7 +121,7 @@
       <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" name="warning" color="primary" item-right></ion-icon>
       <h2 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" color="primary">Tiene deuda vencida</h2>
       <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 2" color="primary">Las deudas de este cliente no están vencidas</p>
-      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="secondary">Cliente sin deudas</p>
+      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="success">Cliente sin deudas</p>
     </ion-label>
   </ion-item>
 </ion-list>

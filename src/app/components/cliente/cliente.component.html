@@ -74,12 +74,12 @@
           <ion-item>
               <ion-label>¿Tiene Estética?</ion-label>
               <ion-toggle [(ngModel)]="cliente.estetica"></ion-toggle>
-              <ion-label color="secondary" *ngIf="cliente.estetica">({{cliente.vendedorEstetica}})</ion-label>
+              <ion-label color="success" *ngIf="cliente.estetica">({{cliente.vendedorEstetica}})</ion-label>
           </ion-item>
           <ion-item>
               <ion-label>¿Tiene Peluquería?</ion-label>
               <ion-toggle [(ngModel)]="cliente.peluqueria"></ion-toggle>
-              <ion-label color="secondary" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</ion-label>
+              <ion-label color="success" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</ion-label>
           </ion-item>
           <ion-card *ngIf="slideActual == DATOS_COMISIONES">
               <ion-card-content>

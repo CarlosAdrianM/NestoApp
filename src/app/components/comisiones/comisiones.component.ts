@@ -216,6 +216,6 @@ export class ComisionesComponent implements OnInit {
   }
 
   colorRango(rojo: boolean): string {
-    return rojo ? 'danger' : 'secondary';
+    return rojo ? 'danger' : 'success';
   }
 }
