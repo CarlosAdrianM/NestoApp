@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewChild, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, NavController, IonSlides, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';

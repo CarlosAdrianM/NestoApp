@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { AuthService } from 'src/app/services/auth/auth.service';
@@ -7,16 +7,13 @@ import { Parametros } from 'src/app/services/parametros.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { FCM } from '@ionic-native/fcm/ngx';
 import { Storage } from '@ionic/storage';
-import { CommonModule } from '@angular/common';  
-import { BrowserModule } from '@angular/platform-browser';
-
 
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss'],
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent {
 
   private LOGIN_URL: string = Configuracion.URL_SERVIDOR + '/oauth/token';
   private SIGNUP_URL: string = Configuracion.URL_SERVIDOR + '/users';
@@ -28,29 +25,28 @@ export class ProfileComponent implements OnInit {
       'Content-Type': 'application/x-www-form-urlencoded',
   });
   public error: string;
-  private local: Storage;
-  private http: HttpClient;
-  public usuario: Usuario;
-  private loadingCtrl: LoadingController;
+  public mostrarOlvideMiContrasenna: boolean;
+  public correoContrasennaOlvidada: string;
 
-  constructor(http: HttpClient, usuario: Usuario, loadingCtrl: LoadingController, 
-      local: Storage, private parametros: Parametros, 
+  constructor(
+      private http: HttpClient, 
+      public usuario: Usuario, 
+      private loadingCtrl: LoadingController, 
+      private local: Storage, 
+      private parametros: Parametros, 
       private alertCtrl: AlertController,
-      public auth: AuthService) {
-    this.http = http;
-    this.loadingCtrl = loadingCtrl;
-    this.usuario = usuario;
-    this.local = local;
-  }
+      public auth: AuthService) {  }
 
-  ngOnInit() {}
+  @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
 
   ionViewDidEnter() {
     if(this.usuario && !this.usuario.nombre) {
         this.local.get('profile').then(profile => {
             console.log(profile);
-            this.usuario.nombre = profile;
-            this.cargarParametros();
+            if (profile) {
+                this.usuario.nombre = profile;
+                this.cargarParametros();    
+            }
         }).catch(error => {
             console.log(error);
             //this.nav.push(ProfilePage);
@@ -82,7 +78,7 @@ export class ProfileComponent implements OnInit {
             this.cargarParametros();
         },
         async err => {
-            this.error = err,
+            this.error = 'Se ha producido un error al intentar iniciar sesión',
             await loading.dismiss();
         },
         async () => {
@@ -146,6 +142,76 @@ private cargarParametros(): void {
     );
 
 }
+
+    async olvideMiContrasenna(correo: string) {
+        let alert = await this.alertCtrl.create({
+            header: 'Contraseña',
+            message: '¿Está seguro que desea cambiar su contraseña?',
+            buttons: [
+                {
+                    text:'Sí',
+                    handler: () => {
+                        this.llamarApiOlvideContrasenna(correo);
+                    }
+                },
+                {
+                    text:'No',
+                    role: 'cancel',
+                }
+            ],
+        });
+        await alert.present();
+    }
+
+    async llamarApiOlvideContrasenna(correo: string) {
+        let loading: any = await this.loadingCtrl.create({
+            message: 'Reseteando contraseña...',
+        })
+        
+        await loading.present();
+
+        const url_ = Configuracion.API_URL+'/Accounts/OlvideMiContrasenna';
+        const params = new URLSearchParams();
+        params.set('correo', correo);
+
+        this.http.post(
+            url_,
+            params,
+            {
+                headers: this.contentHeader,
+                params: {
+                    correo: correo,
+                }
+            })
+            .subscribe(
+            async () => {
+                let alert = await this.alertCtrl.create({
+                    header: 'Contraseña',
+                    subHeader: 'Le hemos enviado un correo electrónico',
+                    message: 'Haga clic en el enlace del correo para cambiar la contraseña',
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+                this.mostrarOlvideMiContrasenna = false;
+            },
+            async () => {
+                this.loadingCtrl.dismiss();
+                this.error = 'No se ha podido conectar con el servidor para recuperar la contraseña';
+            },
+            async () => {
+                this.loadingCtrl.dismiss();
+            }
+        );        
+    }
+
+    mostrarOcultarOlvideContrasenna() {
+        this.mostrarOlvideMiContrasenna = !this.mostrarOlvideMiContrasenna;
+        if (this.mostrarOlvideMiContrasenna) {
+            setTimeout(() => {
+                this.correoContrasenna.setFocus();            
+            }, 200);    
+        }
+    }
     /*
     public getToken() {
     this.fcm.getToken().then(token => {

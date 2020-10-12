@@ -115,9 +115,11 @@
           </ion-item>
           <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">
               <ion-item>
+                <ion-label class="ion-text-wrap">
                   <h2>{{enlace.Fecha | date}}</h2>
                   <h3>{{enlace.AgenciaNombre}}</h3>
                   <a href="#" (click)="abrirEnlace(enlace.EnlaceSeguimiento)">{{enlace.EnlaceSeguimiento}}</a>
+                </ion-label>
               </ion-item>
           </ion-list>
       </ion-list>
