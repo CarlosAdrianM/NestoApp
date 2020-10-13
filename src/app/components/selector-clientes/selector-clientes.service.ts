@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CacheService } from 'ionic-cache';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Usuario } from 'src/app/models/Usuario';
@@ -9,7 +10,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
   providedIn: 'root'
 })
 export class SelectorClientesService {
-  constructor(private http: HttpClient, private usuario: Usuario) {    }
+  constructor(private http: HttpClient, private usuario: Usuario, private cache:CacheService) {    }
 
   private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
 
@@ -21,13 +22,14 @@ export class SelectorClientesService {
           params = params.append('vendedor', this.usuario.vendedor);
       }
 
-      return this.http.get(this._clientesUrl, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
-          
-
+      let cacheKey = this._clientesUrl + params.toString();
+      let request = this.http.get(this._clientesUrl, { params: params })
+        .pipe(
+          catchError(this.handleError)
+        )
+      return this.cache.loadFromObservable(cacheKey, request);
   }
+
   private handleError(error: Response): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure
       // instead of just logging it to the console

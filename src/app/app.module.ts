@@ -50,6 +50,7 @@ import { SelectorPlantillaVentaDetalleComponent } from './components/selector-pl
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
+import { CacheModule } from "ionic-cache";
 
 
 registerLocaleData(localeEs);
@@ -94,7 +95,8 @@ let storage = new Storage({}, {});
     IonicStorageModule.forRoot(),
     CommonModule,
     FormsModule,
-    NgxIonicImageViewerModule
+    NgxIonicImageViewerModule,
+    CacheModule.forRoot({ keyPrefix: 'NestoApp' })
   ],
   providers: [
     StatusBar,

@@ -33,11 +33,7 @@ export class SelectorClientesComponent extends SelectorBase {
 
   @ViewChild('barra') myIonSearchBar;
   
-  ngAfterViewInit()
-  {
-      this.setFocus();
-  }
-  
+
 
   public setFocus(): void {
       setTimeout(() => {

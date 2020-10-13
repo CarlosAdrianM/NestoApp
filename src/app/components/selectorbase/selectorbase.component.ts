@@ -49,7 +49,7 @@ export abstract class SelectorBase {
           f => Object.keys(f).some(
               (key) => (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
                   f[key].toUpperCase().indexOf(filtro) > -1 :
-                  (f[key] && typeof f[key] === 'number' && !isNaN(parseFloat(filtro))) ? f[key] === parseFloat(filtro) :
+                  (f[key] && typeof f[key] === 'number' && !isNaN(Number(filtro))) ? f[key] === parseFloat(filtro) :
                   false
           )
       );

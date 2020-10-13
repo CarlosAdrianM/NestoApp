@@ -52,6 +52,7 @@
     "cordova-res": "^0.15.1",
     "cordova-sqlite-storage": "5.1.0",
     "g": "^2.0.1",
+    "ionic-cache": "^5.2.0",
     "ngx-ionic-image-viewer": "^0.7.1",
     "rxjs": "~6.5.5",
     "rxjs-compat": "^6.6.3",

@@ -1,4 +1,4 @@
-<div id="contenedor">
+<div id="contenedor" scrollY="false">
   <ion-searchbar  #filtro placeholder="Introduzca algún dato del producto" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltroBuscarEnTodos($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
   <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 3" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
   <div id="myFixZone" scrollY="true">

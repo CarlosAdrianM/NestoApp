@@ -6,6 +6,7 @@ import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { ProfileComponent } from './components/profile/profile/profile.component';
 import { Usuario } from './models/Usuario';
 import { FCM } from '@ionic-native/fcm/ngx';
+import { CacheService } from "ionic-cache";
 
 
 @Component({
@@ -22,6 +23,7 @@ export class AppComponent {
     private statusBar: StatusBar,
     public usuario: Usuario, 
     private alertCtrl: AlertController, 
+    cache: CacheService
     //private fcm: FCM
   ) {
     this.initializeApp();
@@ -37,6 +39,8 @@ export class AppComponent {
       { title: 'Usuario', url: '/profile', icon: 'person' },
     ];
     
+    cache.setDefaultTTL(60 * 60); //set default cache TTL for 1 hour
+
     if (this.usuario == undefined || this.usuario.nombre == undefined) {
       this.rootPage = ProfileComponent;
     }

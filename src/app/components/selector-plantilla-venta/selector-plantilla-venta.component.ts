@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -9,31 +9,21 @@ import { SelectorPlantillaVentaService } from './selector-plantilla-venta.servic
   templateUrl: './selector-plantilla-venta.component.html',
   styleUrls: ['./selector-plantilla-venta.component.scss'],
 })
-export class SelectorPlantillaVentaComponent extends SelectorBase implements OnInit {
-  private alertCtrl: AlertController;
-  private loadingCtrl: LoadingController;
-  private servicio: SelectorPlantillaVentaService;
-  private nav: NavController;
-
+export class SelectorPlantillaVentaComponent extends SelectorBase {
+  
   @Input() public cliente: any;
   @Input() public estadoCliente: number;
   @Input() public almacen: any;
 
-  constructor(servicio: SelectorPlantillaVentaService, alertCtrl: AlertController, loadingCtrl: LoadingController, nav: NavController, private keyboard: Keyboard) {
-      super();
-      this.servicio = servicio;
-      this.alertCtrl = alertCtrl;
-      this.loadingCtrl = loadingCtrl;
-      this.nav = nav;
-  }
+  constructor(
+      private servicio: SelectorPlantillaVentaService, 
+      private alertCtrl: AlertController, 
+      private loadingCtrl: LoadingController, 
+      private nav: NavController, 
+      private keyboard: Keyboard
+      ) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
-
-  
-  ngOnInit() {
-      this.setFocus();        
-  }
-  
 
   public setFocus(): void {
       setTimeout(() => {

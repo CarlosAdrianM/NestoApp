@@ -25,13 +25,13 @@
         </ion-item>
         <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
       </ion-slide>
-      <ion-slide *ngIf="clienteSeleccionado">
+      <ion-slide *ngIf="clienteSeleccionado" scrollY="false">
           <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}"></selector-plantilla-venta>
       </ion-slide>
       <ion-slide scrollY="true" class="conscroll">
           <div class="conscroll" scrollY="true" *ngIf="productosResumen">
             <ion-list  scrollY="true">
-                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen">
+                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen" (click)="_selectorPlantillaVenta.abrirDetalle(producto, almacen)">
                     <ion-avatar slot="start">
                         <img src="{{producto.urlImagen}}">
                     </ion-avatar>
