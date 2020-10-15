@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { NavController, AlertController, ToastController, NavParams } from '@ionic/angular';
+import { Events } from 'src/app/services/events.service';
 import { SelectorPlantillaVentaDetalleService } from './selector-plantilla-venta-detalle.service';
 
 @Component({
@@ -17,7 +18,8 @@ export class SelectorPlantillaVentaDetalleComponent {
     alertCtrl: AlertController, 
     toastCtrl: ToastController, 
     private keyboard: Keyboard,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public events: Events
     ) {
       this.nav = nav;
       this.producto = this.route.snapshot.queryParams.producto;
@@ -199,4 +201,7 @@ export class SelectorPlantillaVentaDetalleComponent {
     this.nav.navigateForward('producto', { queryParams: { empresa: "1", producto: this.producto.producto }});
   }
 
+  public salir() {
+    this.events.publish('carritoModificado');
+  }
 }

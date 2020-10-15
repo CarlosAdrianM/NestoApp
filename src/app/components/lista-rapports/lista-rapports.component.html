@@ -25,47 +25,47 @@
       <ion-icon name="search"></ion-icon>
     </ion-segment-button>
   </ion-segment>
-<div [ngSwitch]="segmentoRapports">
-  <div *ngSwitchCase="'cliente'">
-      <!--selector-clientes (seleccionar)="cargarRapport($event)"></!--selector-clientes>-->
-    <form (ngSubmit)="actualizarCliente()">
+  <div [ngSwitch]="segmentoRapports">
+    <div *ngSwitchCase="'cliente'">
+        <!--selector-clientes (seleccionar)="cargarRapport($event)"></!--selector-clientes>-->
+      <form (ngSubmit)="actualizarCliente()">
+        <ion-item>
+          <ion-label for="cliente">Cliente</ion-label>
+          <ion-input #clienteInput class="form-control" id="cliente" required
+                    [(ngModel)]="numeroCliente"
+                    name="cliente" (ionFocus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
+        </ion-item>
+        <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport}}" seleccionado="{{contactoRapport}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
+        <button block [hidden]="true">
+          <ion-icon name="add"></ion-icon>Cargar
+        </button>
+      </form>
+    </div>
+    <div *ngSwitchCase="'fecha'">
       <ion-item>
-        <ion-label for="cliente">Cliente</ion-label>
-        <ion-input #clienteInput class="form-control" id="cliente" required
-                   [(ngModel)]="numeroCliente"
-                   name="cliente" (ionFocus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
+        <ion-label>Fecha Rapport</ion-label>
+        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
       </ion-item>
-      <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport}}" seleccionado="{{contactoRapport}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
-      <button block [hidden]="true">
-        <ion-icon name="add"></ion-icon>Cargar
-      </button>
+    </div>
+    <div *ngSwitchCase="'codigoPostal'">
+      <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+      <ion-item>
+        <ion-label>Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}</ion-label>
+        <ion-select [(ngModel)]="codigoPostalSeleccionado">
+          <ion-select-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.codigoPostal">{{codPostal.codigoPostal}} {{codPostal.poblacion}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+    </div>
+    <div *ngSwitchCase="'buscar'">
+    <form (ngSubmit)="buscarRapports()">
+      <ion-item>
+        <ion-label for="buscar">Buscar</ion-label>
+        <ion-input #buscarInput class="form-control" id="buscar" required
+                  [(ngModel)]="filtroBuscar"
+                  name="buscar" (ionFocus)="seleccionarTexto($event)"></ion-input>
+      </ion-item>
     </form>
   </div>
-  <div *ngSwitchCase="'fecha'">
-    <ion-item>
-      <ion-label>Fecha Rapport</ion-label>
-      <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
-    </ion-item>
-  </div>
-  <div *ngSwitchCase="'codigoPostal'">
-    <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
-    <ion-item>
-      <ion-label>Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}</ion-label>
-      <ion-select [(ngModel)]="codigoPostalSeleccionado">
-        <ion-select-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.codigoPostal">{{codPostal.codigoPostal}} {{codPostal.poblacion}}</ion-select-option>
-      </ion-select>
-    </ion-item>
-  </div>
-  <div *ngSwitchCase="'buscar'">
-  <form (ngSubmit)="buscarRapports()">
-    <ion-item>
-      <ion-label for="buscar">Buscar</ion-label>
-      <ion-input #buscarInput class="form-control" id="buscar" required
-                 [(ngModel)]="filtroBuscar"
-                 name="buscar" (ionFocus)="seleccionarTexto($event)"></ion-input>
-    </ion-item>
-  </form>
-</div>
 </div>
 </ion-header>
 
@@ -102,27 +102,35 @@
 </ion-list>
 
 <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
-  <ion-item *ngIf="!usuario.vendedor"></ion-item>
-  <ion-item *ngIf="!usuario.vendedor"></ion-item>
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
-  <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)" text-wrap>
-    <ion-label class="ion-text-wrap">
-      <ion-icon name="contact" [color]="colorEstado(clienteSinVisitar.estado)" item-left></ion-icon>
+  <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)">
+    <ion-icon name="person" color="colorEstado(clienteSinVisitar.estado)" slot="start"></ion-icon>
+    <ion-label class="ion-text-wrap">      
       <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
       <h2>{{clienteSinVisitar.nombre}}</h2>
       <h3>{{clienteSinVisitar.direccion}}</h3>
       <p>Estado: {{clienteSinVisitar.estado}}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
-      <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>
-      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" name="alert" color="danger" item-right></ion-icon>
-      <h2 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">¡¡¡ CONTADO RIGUROSO !!!</h2>
-      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" name="warning" color="danger" item-right></ion-icon>
-      <h3 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" color="danger">Tiene impagados pendientes</h3>
-      <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" name="warning" color="primary" item-right></ion-icon>
-      <h2 ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" color="primary">Tiene deuda vencida</h2>
-      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 2" color="primary">Las deudas de este cliente no están vencidas</p>
-      <p ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="success">Cliente sin deudas</p>
+      <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
+      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">
+        <h2>¡¡¡ CONTADO RIGUROSO !!!</h2>      
+      </ion-text>
+      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" color="danger">
+        <h3>Tiene impagados pendientes</h3>      
+      </ion-text>
+      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" color="primary">
+        <h3>Tiene deuda vencida</h3>
+      </ion-text>
+      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 2" color="primary">
+        Las deudas de este cliente no están vencidas
+      </ion-text>
+      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="success">
+        Cliente sin deudas
+      </ion-text>    
     </ion-label>
+    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" name="alert" size="large" color="danger" slot="end"></ion-icon>
+    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" name="warning" color="danger" slot="end"></ion-icon>
+    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" name="warning" color="primary" slot="end"></ion-icon>
   </ion-item>
 </ion-list>
 </ion-content>

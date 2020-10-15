@@ -31,7 +31,7 @@
       <ion-slide scrollY="true" class="conscroll">
           <div class="conscroll" scrollY="true" *ngIf="productosResumen">
             <ion-list  scrollY="true">
-                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen" (click)="_selectorPlantillaVenta.abrirDetalle(producto, almacen)">
+                <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen" (click)="abrirDetalle(producto, almacen)">
                     <ion-avatar slot="start">
                         <img src="{{producto.urlImagen}}">
                     </ion-avatar>
@@ -43,12 +43,12 @@
                     <ion-badge [color]="producto.colorStock" slot="end">{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
                 </ion-item>
                 <ion-item *ngIf="baseImponibleParaPortes != baseImponiblePedido">
-                    <ion-label slot="start">Base Imponible Para Portes:</ion-label>
-                    <ion-label slot="end" class="ion-text-right">{{baseImponibleParaPortes | currency:'EUR'}}</ion-label>
+                    <div>Base Imponible Para Portes:</div>
+                    <div slot="end" class="ion-text-right">{{baseImponibleParaPortes | currency:'EUR'}}</div>
                 </ion-item>
                 <ion-item>
-                    <ion-label slot="start">Base Imponible Pedido:</ion-label>
-                    <ion-label slot="end" class="ion-text-right">{{baseImponiblePedido | currency:'EUR'}}</ion-label>
+                    <div>Base Imponible Pedido:</div>
+                    <div slot="end" class="ion-text-right">{{baseImponiblePedido | currency:'EUR'}}</div>
                 </ion-item>
                 <ion-item>
                     <ion-label position="floating">Comentarios Picking (los ven en almacén)</ion-label>
@@ -89,8 +89,8 @@
       </ion-slide>
       <ion-slide *ngIf="productosResumen" scrollY="true">
         <ion-item>
-            <ion-label slot="start">Total pedido:</ion-label>
-            <ion-label slot="end" class="ion-text-right">{{totalPedido | currency:'EUR'}}</ion-label>
+            <div>Total pedido:</div>
+            <div slot="end" class="ion-text-right">{{totalPedido | currency:'EUR'}}</div>
         </ion-item>
         <ion-item (click)="cambiarIVA()">
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>

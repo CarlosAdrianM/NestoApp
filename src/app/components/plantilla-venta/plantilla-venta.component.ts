@@ -32,6 +32,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           this.clienteSeleccionado = clienteModificado;
           this.cargarProductos(clienteModificado);
       });
+      events.subscribe('carritoModificado', () => {
+          this.slider.getActiveIndex().then(i => {
+              if (i === 2) { //resumen
+                this._selectorPlantillaVenta.cargarResumen();
+              }
+          });          
+      });
       this.platform.backButton.subscribeWithPriority(10, () => {
         console.log('Botón atrás pulsado');
       });
@@ -438,5 +445,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           nuevaFecha.setDate(nuevaFecha.getDate() + 1); //mañana
           return nuevaFecha;
       }
+  }
+
+  public abrirDetalle(producto: string, almacen: string): void {
+    this._selectorPlantillaVenta.abrirDetalle(producto, almacen);
   }
 }
