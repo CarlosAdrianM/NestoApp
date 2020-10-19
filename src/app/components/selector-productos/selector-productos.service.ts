@@ -1,7 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from 'ionic-cache';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
@@ -27,11 +27,10 @@ export class SelectorProductosService {
     return this.cache.loadFromObservable(cacheKey, request);
   }
 
-  private handleError(error: Response): Observable<any> {
+  private handleError(error: HttpErrorResponse): Observable<any> {
     // in a real world app, we may send the error to some remote logging infrastructure
     // instead of just logging it to the console
     console.error(error);
-    let errores: any = error;
-    return Observable.throw(errores.json().error || 'Server error');
+    return throwError(error.error || 'Server error');
   }
 }

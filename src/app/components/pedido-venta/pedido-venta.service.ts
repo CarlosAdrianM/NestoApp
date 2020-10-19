@@ -1,6 +1,6 @@
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVenta } from './pedido-venta';
@@ -48,10 +48,10 @@ export class PedidoVentaService {
         )
   }
 
-  private handleError(error: any): Observable<any> {
+  private handleError(error: HttpErrorResponse): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure
       // instead of just logging it to the console
       console.error(error);
-      return Observable.throw(error.json() || 'Server error');
+      return throwError(error.error || 'Server error');
   }
 }

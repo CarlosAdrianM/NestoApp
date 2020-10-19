@@ -393,7 +393,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           async error => {
               let alert = await this.alertCtrl.create({
                   header: 'Error',
-                  message: 'No se ha podido crear el pedido:\n' + error.ExceptionMessage,
+                  subHeader: 'No se ha podido crear el pedido',
+                  message: error.ExceptionMessage,
                   buttons: ['Ok'],
               });
               await alert.present();
