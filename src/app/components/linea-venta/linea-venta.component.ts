@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertController, NavController } from '@ionic/angular';
 import { ProductoComponent } from '../producto/producto.component';
@@ -10,7 +10,7 @@ import { LineaVentaService } from './linea-venta.service';
   templateUrl: './linea-venta.component.html',
   styleUrls: ['./linea-venta.component.scss'],
 })
-export class LineaVentaComponent {
+export class LineaVentaComponent implements OnInit {
     
   public linea: LineaVenta;
   private cliente: string;
@@ -30,6 +30,14 @@ constructor(
       this.actualizarDescuento(this.linea.descuento * 100);
   }
 
+  @ViewChild('inputProducto') txtProducto: any;
+
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.txtProducto.setFocus();      
+    }, 200);
+  }
+
   submitted = false;
   onSubmit() { this.submitted = true; }
 
@@ -42,12 +50,7 @@ constructor(
       this.descuentoCadena = dto + '%';
   }
 
-  public cambiarProducto(evento): void {
-      let nuevoProducto: string = evento.value;
-      if (this.linea.producto == nuevoProducto) {
-          return;
-      }
-
+  public cambiarProducto(nuevoProducto: string): void {
       this.servicio.getProducto(nuevoProducto, this.cliente, this.contacto, this.linea.cantidad).subscribe(
           async data => {
               if (data.length === 0) {

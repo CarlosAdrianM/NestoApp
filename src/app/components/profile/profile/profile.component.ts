@@ -120,6 +120,7 @@ private cargarParametros(): void {
         },
         error => {
             console.log('No se ha podido cargar el vendedor por defecto');
+            this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
 
@@ -129,6 +130,7 @@ private cargarParametros(): void {
         },
         error => {
             console.log('No se ha podido cargar la delegación por defecto');
+            this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
 
@@ -138,6 +140,7 @@ private cargarParametros(): void {
         },
         error => {
             console.log('No se ha podido cargar el almacén por defecto');
+            this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
 

@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -9,7 +10,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 })
 export class LineaVentaService {
    
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private cache:CacheService) {
       this.http = http;
   }
 
@@ -22,10 +23,13 @@ export class LineaVentaService {
       params = params.append('cliente', cliente);
       params = params.append('contacto', contacto);
       params = params.append('cantidad', cantidad.toString());
-      return this.http.get(this._baseUrl, { params })
+      
+      let cacheKey = this._baseUrl + params.toString();
+      let request = this.http.get(this._baseUrl, { params })
         .pipe(
           catchError(this.handleError)
         )
+      return this.cache.loadFromObservable(cacheKey, request);;
   }
   private handleError(error: HttpErrorResponse): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure
