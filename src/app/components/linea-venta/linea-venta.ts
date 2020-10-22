@@ -64,7 +64,8 @@ export class LineaVenta {
         return this.precio * this.cantidad;
     }
     public get baseImponible(): number {
-        return this.bruto * (1 - this.sumaDescuentos);
+        let importeDescuento = this.redondea(this.bruto * this.sumaDescuentos);
+        return this.bruto - importeDescuento;
     }
     public set baseImponible(value: number) {} //para que no de error
     public importeIva: number;
@@ -81,5 +82,9 @@ export class LineaVenta {
         this.iva = pedido.LineasPedido[0].iva;  
         this.estado = 1;
         this.picking = 0;  
+    }
+
+    private redondea(value) {
+        return Number(Math.round(value * 100) / 100);
     }
 }
