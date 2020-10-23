@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AlertController, LoadingController, NavController, IonSlides, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
@@ -25,7 +26,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     private alertCtrl: AlertController, 
     private loadingCtrl: LoadingController, 
     private ref: ChangeDetectorRef,
-    private platform: Platform
+    private platform: Platform,
+    private firebaseAnalytics: FirebaseAnalytics
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
@@ -381,6 +383,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
 
       this.servicio.crearPedido(this.prepararPedido()).subscribe(
           async data => {
+              this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
               let numeroPedido: string = data.numero;
               let alert = await this.alertCtrl.create({
                   header: 'Creado',

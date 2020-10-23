@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { ComisionesDetalleService } from './comisiones-detalle.service';
 
@@ -16,7 +17,8 @@ export class ComisionesDetalleComponent {
     private nav: NavController,
     public alertCtrl: AlertController,
     public loadingCtrl: LoadingController, 
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private firebaseAnalytics: FirebaseAnalytics
     ) {
       
     this.cargarDetalle(this.route.snapshot.queryParams.vendedor,
@@ -28,6 +30,7 @@ export class ComisionesDetalleComponent {
 
   private async cargarDetalle(vendedor: string, anno: number, mes: number,
     incluirAlbaranes: boolean, etiqueta: string) {
+    this.firebaseAnalytics.logEvent("cargar_detalle_comisiones", {vendedor: vendedor, anno: anno, mes: mes, incluirAlbaranes: incluirAlbaranes, etiqueta: etiqueta});
     let loading: any = await this.loadingCtrl.create({
       message: 'Cargando Comisiones...',
     });

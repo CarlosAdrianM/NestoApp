@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavController, NavParams, AlertController, LoadingController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { ComisionesService } from './comisiones.service';
@@ -28,7 +29,8 @@ export class ComisionesComponent implements OnInit {
     private nav: NavController,
     public alertCtrl: AlertController,
     public loadingCtrl: LoadingController, 
-    public usuario: Usuario
+    public usuario: Usuario,
+    private firebaseAnalytics: FirebaseAnalytics
     ) {
     this.vendedorSeleccionado = usuario.vendedor;
   }
@@ -63,6 +65,7 @@ export class ComisionesComponent implements OnInit {
           });
           await alert.present();
         } else {
+          this.firebaseAnalytics.logEvent("consultar_comisiones", {vendedor: this.vendedorSeleccionado});
           this.resumen = data;
         }
       },

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
-import { PedidoVentaComponent } from '../pedido-venta/pedido-venta.component';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaPedidosVentaService } from './lista-pedidos-venta.service';
 
@@ -69,8 +69,14 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         }
     }
 
-    constructor(servicio: ListaPedidosVentaService, nav: NavController, alertCtrl: AlertController, 
-        loadingCtrl: LoadingController, private fileOpener: FileOpener) {
+    constructor(
+        servicio: ListaPedidosVentaService, 
+        nav: NavController, 
+        alertCtrl: AlertController, 
+        loadingCtrl: LoadingController, 
+        private fileOpener: FileOpener,
+        private firebaseAnalytics: FirebaseAnalytics
+        ) {
         super();
         this.servicio = servicio;
         this.nav = nav;
@@ -134,21 +140,30 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
             label: 'Presupuestos',
             value: 'presupuestos',
             checked: this.estaFiltradoPresupuestos,
-            handler: data => { this.estaFiltradoPresupuestos = data.checked}
+            handler: data => { 
+                this.firebaseAnalytics.logEvent("lista_pedidos_filtro", {filtro: "presupuestos", valor: data.checked});
+                this.estaFiltradoPresupuestos = data.checked
+            }
           },
           {
             type: 'checkbox',
             label: 'Pendientes',
             value: 'pendientes',
             checked: this.estaFiltradoPendientes,
-            handler: data => { this.estaFiltradoPendientes = data.checked}
+            handler: data => { 
+                this.firebaseAnalytics.logEvent("lista_pedidos_filtro", {filtro: "pendientes", valor: data.checked});
+                this.estaFiltradoPendientes = data.checked
+            }
           },
           {
             type: 'checkbox',
             label: 'Picking',
             value: 'picking',
             checked: this.estaFiltradoPicking,
-            handler: data => { this.estaFiltradoPicking = data.checked}
+            handler: data => { 
+                this.firebaseAnalytics.logEvent("lista_pedidos_filtro", {filtro: "picking", valor: data.checked});
+                this.estaFiltradoPicking = data.checked
+            }
           }],
           buttons: [
             {text:'OK'}
@@ -168,6 +183,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
 
         this.servicio.descargarPedido(pedido.empresa, pedido.numero).then(
             async entry => {
+                this.firebaseAnalytics.logEvent("descargar_pedido", {empresa: pedido.empresa, pedido: pedido.numero});
                 let alert = await this.alertCtrl.create({
                     header: 'PDF generado',
                     message: "Pedido descargado: \n"+entry.toURL(),

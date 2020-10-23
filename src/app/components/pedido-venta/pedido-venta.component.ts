@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavController, AlertController, LoadingController, NavParams } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -44,7 +45,8 @@ export class PedidoVentaComponent  {
     alertCtrl: AlertController, 
     loadingCtrl: LoadingController, 
     private usuario: Usuario,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private firebaseAnalytics: FirebaseAnalytics
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -62,6 +64,7 @@ export class PedidoVentaComponent  {
 
       this.servicio.cargarPedido(empresa, numero).subscribe(
           data => {
+              this.firebaseAnalytics.logEvent("cargar_pedido", {empresa: empresa, pedido: numero});
               this.pedido = data as PedidoVenta;
               for (let i = 0; i < this.pedido.LineasPedido.length; i++) {
                   this.pedido.LineasPedido[i] = new LineaVenta(this.pedido.LineasPedido[i]);
@@ -115,19 +118,22 @@ export class PedidoVentaComponent  {
   }
   
   public seleccionarFormaPago(evento: any): void {
+      this.firebaseAnalytics.logEvent("pedido_seleccionar_forma_pago", {pedido:this.pedido.numero, formaPago: evento});
       this.pedido.formaPago = evento;
   }
 
   public cambiarIVA(): void {
+      this.firebaseAnalytics.logEvent("pedido_cambiar_iva", {actual: this.pedido.iva, nuevo: this.pedido.iva ? undefined : this.iva});
       this.pedido.iva = this.pedido.iva ? undefined : this.iva;
   }
 
   public abrirLinea(linea: LineaVenta) {
-      console.log(linea);
+      this.firebaseAnalytics.logEvent("pedido_venta_abrir_linea", {linea: linea, cliente: this.pedido.cliente, contacto: this.pedido.contacto});
       this.nav.navigateForward('linea-venta', { queryParams: {linea: linea, cliente: this.pedido.cliente, contacto: this.pedido.contacto}});
   }
 
   public annadirLinea() {
+      this.firebaseAnalytics.logEvent("pedido_venta_annadir_linea", {pedido: this.pedido.numero});
       let linea: LineaVenta = new LineaVenta();
       linea.copiarDatosPedido(this.pedido);
       linea.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
@@ -143,6 +149,7 @@ export class PedidoVentaComponent  {
               {
                   text: 'Sí',
                   handler: () => {
+                      this.firebaseAnalytics.logEvent("pedido_venta_borrar_linea", {pedido: this.pedido.numero, linea:linea.id});
                       this.pedido.LineasPedido = this.pedido.LineasPedido.filter(obj => obj !== linea);
                   }
               },
@@ -176,6 +183,7 @@ export class PedidoVentaComponent  {
 
                       this.servicio.modificarPedido(this.pedido).subscribe(
                           async data => {
+                              this.firebaseAnalytics.logEvent("modificar_pedido_venta", {pedido: this.pedido.numero});
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
                               let alert = await this.alertCtrl.create({
                                   header: 'Modificado',
@@ -233,7 +241,7 @@ export class PedidoVentaComponent  {
                       let loading: any = await this.loadingCtrl.create({
                           message: 'Aceptando presupuesto...',
                       });
-
+                      this.firebaseAnalytics.logEvent("pedido_venta_aceptar_presupuesto", {pedido: this.pedido.numero});
                       await loading.present();
 
                       this.pedido.EsPresupuesto = false;
@@ -288,6 +296,7 @@ export class PedidoVentaComponent  {
   }
 
   public abrirEnlace(urlDestino: string): void {
+      this.firebaseAnalytics.logEvent("pedido_venta_abrir_enlace", {enlace: urlDestino});
       window.open(urlDestino, '_system', 'location=yes');
   }
 }

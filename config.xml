@@ -19,6 +19,7 @@
     <preference name="SplashScreen" value="screen" />
     <preference name="SplashScreenDelay" value="3000" />
     <platform name="android">
+        <resource-file src="google-services.json" target="app/google-services.json" />
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application" xmlns:android="http://schemas.android.com/apk/res/android">
             <application android:networkSecurityConfig="@xml/network_security_config" />
         </edit-config>
@@ -113,5 +114,6 @@
         <variable name="MIN_BACKGROUND_DURATION" value="30" />
         <variable name="UPDATE_API" value="https://api.ionicjs.com" />
     </plugin>
-    <engine name="android" spec="^7.1.4" />
+    <plugin name="cordova-support-google-services" spec="~1.4.1" />
+    <plugin name="cordova-plugin-firebase-analytics" spec="~4.5.0" />
 </widget>

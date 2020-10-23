@@ -7,6 +7,7 @@ import { Parametros } from 'src/app/services/parametros.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { FCM } from '@ionic-native/fcm/ngx';
 import { Storage } from '@ionic/storage';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 @Component({
   selector: 'app-profile',
@@ -35,7 +36,9 @@ export class ProfileComponent {
       private local: Storage, 
       private parametros: Parametros, 
       private alertCtrl: AlertController,
-      public auth: AuthService) {  }
+      public auth: AuthService,
+      private firebaseAnalytics: FirebaseAnalytics
+      ) {  }
 
   @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
 
@@ -45,6 +48,7 @@ export class ProfileComponent {
             console.log(profile);
             if (profile) {
                 this.usuario.nombre = profile;
+                this.firebaseAnalytics.setUserId(this.usuario.nombre);
                 this.cargarParametros();    
             }
         }).catch(error => {
@@ -73,6 +77,7 @@ export class ProfileComponent {
         .subscribe(
         data => {
             this.usuario.nombre = credentials.username;
+            this.firebaseAnalytics.logEvent("login", {nombre: this.usuario.nombre});
             let datos: any = data;
             this.authSuccess(datos.access_token);
             this.cargarParametros();
@@ -101,6 +106,7 @@ public signup(credentials: any): void {
 public logout(): void {
     this.local.remove('id_token');
     this.local.remove('profile');
+    this.firebaseAnalytics.logEvent("logout", {nombre: this.usuario.nombre});
     this.usuario.nombre = null;
 }
 

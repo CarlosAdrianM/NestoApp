@@ -51,6 +51,7 @@ import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "ionic-cache";
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 
 registerLocaleData(localeEs);
@@ -112,7 +113,8 @@ let storage = new Storage({}, {});
     File,
     FileOpener,
     Keyboard,
-    CanDeactivateGuard
+    CanDeactivateGuard,
+    FirebaseAnalytics
     //FCM
   ],
   bootstrap: [AppComponent]

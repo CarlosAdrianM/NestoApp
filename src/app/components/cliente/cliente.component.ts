@@ -8,6 +8,7 @@ import { ClientesMismoTelefonoComponent } from './clientes-mismo-telefono';
 import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 @Component({
   selector: 'app-cliente',
@@ -31,7 +32,8 @@ export class ClienteComponent {
       private nav: NavController,
       public modalCtrl: ModalController,
       public events: Events,
-      private route: ActivatedRoute
+      private route: ActivatedRoute,
+      private firebaseAnalytics: FirebaseAnalytics
   ){
       if (this.route.snapshot.queryParams && this.route.snapshot.queryParams.empresa &&
         this.route.snapshot.queryParams.cliente && this.route.snapshot.queryParams.contacto) {
@@ -283,6 +285,7 @@ export class ClienteComponent {
   crearCliente() {
       this.servicio.crearCliente(this.cliente).subscribe(
           async data => {
+              this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
               let alert = await this.alertCtrl.create({
                   message: 'Cliente',
                   subHeader: 'Se ha creado correctamente el cliente: ' 
@@ -324,6 +327,7 @@ export class ClienteComponent {
   modificarCliente() {
       this.servicio.modificarCliente(this.cliente).subscribe(
           async data => {
+            this.firebaseAnalytics.logEvent("modificar_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
               let alert = await this.alertCtrl.create({
                   message: 'Cliente',
                   subHeader: 'Se ha modificado correctamente el cliente: ' 

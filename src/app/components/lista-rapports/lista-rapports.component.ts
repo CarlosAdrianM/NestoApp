@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
@@ -7,6 +7,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaRapportsService } from './lista-rapports.service';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 
 @Component({
@@ -67,7 +68,8 @@ export class ListaRapportsComponent extends SelectorBase {
   constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController, 
           loadingCtrl: LoadingController, public usuario: Usuario,
           private geolocation: Geolocation, private nativeGeocoder: NativeGeocoder,
-          public events: Events) {
+          public events: Events,
+          private firebaseAnalytics: FirebaseAnalytics) {
       super();
       this.servicio = servicio;
       this.nav = nav;
@@ -200,6 +202,7 @@ export class ListaRapportsComponent extends SelectorBase {
       rapport.Usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
       rapport.TipoCentro = 0; // No se sabe
       rapport.Estado = 0; // Vigente
+      this.firebaseAnalytics.logEvent("annadir_rapport", {cliente: rapport.Cliente, contacto: rapport.Contacto, fecha: rapport.Fecha});
       this.abrirRapport(rapport);
   }
 
@@ -228,6 +231,7 @@ export class ListaRapportsComponent extends SelectorBase {
   }
 
   seleccionarVendedor(vendedor: string) {
+      this.firebaseAnalytics.logEvent("seleccionar_vendedor_rapport", {vendedor: vendedor});
       this.vendedorSeleccionado = vendedor;
       this.cargarCodigosPostalesSinVisitar();
   }
@@ -271,6 +275,7 @@ export class ListaRapportsComponent extends SelectorBase {
       if (!this.vendedorSeleccionado) {
           return;
       }
+      this.firebaseAnalytics.logEvent("rapport_clientes_sin_visitar", {vendedor: this.vendedorSeleccionado});
       
       let loading: any = await this.loadingCtrl.create({
           message: 'Cargando Clientes...',
@@ -363,6 +368,7 @@ export class ListaRapportsComponent extends SelectorBase {
                   });
                   await alert.present();
               } else {
+                  this.firebaseAnalytics.logEvent("buscar_rapport", {filtro: this.filtroBuscar});
                   this.inicializarDatos(data);
               }
           },

@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AlertController, NavController } from '@ionic/angular';
 import { ProductoComponent } from '../producto/producto.component';
 import { LineaVenta } from './linea-venta';
@@ -22,7 +23,8 @@ constructor(
   private servicio: LineaVentaService, 
   private alertCtrl: AlertController, 
   private nav: NavController,
-  private route: ActivatedRoute
+  private route: ActivatedRoute,
+  private firebaseAnalytics: FirebaseAnalytics
   ) {
       this.linea = this.route.snapshot.queryParams.linea;
       this.cliente = this.route.snapshot.queryParams.cliente;
@@ -61,6 +63,7 @@ constructor(
                   });
                   await alert.present();
               } else {
+                  this.firebaseAnalytics.logEvent("cambiar_producto", {productoAnterior: this.linea.producto, productoNuevo: nuevoProducto});
                   this.linea.producto = nuevoProducto;
                   this.linea.precio = data.precio;
                   this.linea.texto = data.nombre;
@@ -80,6 +83,7 @@ constructor(
   }
 
   public abrirProducto(): void {
+    this.firebaseAnalytics.logEvent("abrir_producto", {producto: this.linea.producto});
     this.nav.navigateForward('producto', { queryParams: { empresa: "1", producto: this.linea.producto }});
   }
 

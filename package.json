@@ -13,7 +13,6 @@
   },
   "private": true,
   "dependencies": {
-    "-": "0.0.1",
     "@angular/common": "~10.0.0",
     "@angular/core": "~10.0.0",
     "@angular/forms": "~10.0.0",
@@ -27,6 +26,7 @@
     "@ionic-native/file": "^5.28.0",
     "@ionic-native/file-opener": "^5.28.0",
     "@ionic-native/file-transfer": "^5.28.0",
+    "@ionic-native/firebase-analytics": "^5.29.0",
     "@ionic-native/geolocation": "^5.28.0",
     "@ionic-native/keyboard": "^5.28.0",
     "@ionic-native/native-geocoder": "^5.28.0",
@@ -66,10 +66,11 @@
     "@angular/compiler-cli": "~10.0.0",
     "@angular/language-service": "~10.0.0",
     "@ionic/angular-toolkit": "^2.3.0",
-    "@types/node": "^12.11.1",
     "@types/jasmine": "~3.5.0",
     "@types/jasminewd2": "~2.0.3",
+    "@types/node": "^12.11.1",
     "codelyzer": "^6.0.0",
+    "cordova-android": "^9.0.0",
     "jasmine-core": "~3.5.0",
     "jasmine-spec-reporter": "~5.0.0",
     "karma": "~5.0.0",
@@ -107,10 +108,10 @@
         "MAX_STORE": "2",
         "MIN_BACKGROUND_DURATION": "30",
         "UPDATE_API": "https://api.ionicjs.com"
-      }
+      },
+      "cordova-support-google-services": {},
+      "cordova-plugin-firebase-analytics": {}
     },
-    "platforms": [
-      "android"
-    ]
+    "platforms": []
   }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { ExtractoClienteService } from './extracto-cliente.service';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 @Component({
   selector: 'app-extracto-cliente',
@@ -15,7 +16,9 @@ export class ExtractoClienteComponent {
       private alertCtrl: AlertController, 
       private loadingCtrl: LoadingController, 
       private fileOpener: FileOpener, 
-      private nav: NavController) {
+      private nav: NavController,
+      private firebaseAnalytics: FirebaseAnalytics
+      ) {
       this.servicio = servicio;
   };
 
@@ -117,6 +120,7 @@ export class ExtractoClienteComponent {
   }
 
   public abrirPedido(pedido: any): void {
+    this.firebaseAnalytics.logEvent("extracto_cliente_abrir_pedido", {pedido: pedido});
       this.nav.navigateForward('pedido-venta', { queryParams: { empresa: pedido.empresa, numero: pedido.numero }});
   }
 
@@ -130,6 +134,7 @@ export class ExtractoClienteComponent {
 
       this.servicio.descargarFactura(movimiento.empresa, movimiento.documento).then(
           async entry => {
+              this.firebaseAnalytics.logEvent("descargar_factura", {empresa: movimiento.empresa, factura: movimiento.documento});
               let alert = await this.alertCtrl.create({
                   message: 'PDF generado',
                   subHeader: "Factura descargada: \n"+entry.toURL(),
@@ -145,5 +150,4 @@ export class ExtractoClienteComponent {
           }
       );
   }
-
 }
