@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:206513477970:android:fdc5b6da7c85f43d",
         "android_client_info": {
-          "package_name": "com.ionicframework.nestoapp958858"
+          "package_name": "io.ionic.starter"
         }
       },
       "oauth_client": [
