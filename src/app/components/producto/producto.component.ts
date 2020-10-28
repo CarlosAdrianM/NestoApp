@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { ProductoService } from './producto.service';
 
@@ -17,7 +18,9 @@ export class ProductoComponent implements OnInit {
   constructor(private servicio: ProductoService, 
     public loadingCtrl: LoadingController, 
     public alertCtrl: AlertController,
-    private route: ActivatedRoute) {
+    private route: ActivatedRoute,
+    private firebaseAnalytics: FirebaseAnalytics
+    ) {
     if (this.route.snapshot.queryParams.producto) {
       this.productoActual = this.route.snapshot.queryParams.producto;
     }
@@ -36,6 +39,7 @@ export class ProductoComponent implements OnInit {
     this.servicio.cargar("1", this.productoActual, true)
       .subscribe(
         async data => {
+          this.firebaseAnalytics.logEvent("producto_cargar", {producto: this.productoActual});
           if (data.length === 0) {
             let alert = await this.alertCtrl.create({
               message: 'Error',
@@ -65,6 +69,7 @@ export class ProductoComponent implements OnInit {
     this.servicio.cargarClientes("1", this.productoActual)
       .subscribe(
         async data => {
+          this.firebaseAnalytics.logEvent("producto_ver_clientes", {producto: this.productoActual});
           if (data.length === 0) {
             let alert = await this.alertCtrl.create({
               message: 'Error',

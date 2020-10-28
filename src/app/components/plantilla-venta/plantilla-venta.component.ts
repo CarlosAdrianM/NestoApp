@@ -6,6 +6,7 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { IDeactivatableComponent } from 'src/app/utils/ideactivatable-component';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { PedidoVentaComponent } from '../pedido-venta/pedido-venta.component';
 import { SelectorClientesComponent } from '../selector-clientes/selector-clientes.component';
 import { SelectorPlantillaVentaComponent } from '../selector-plantilla-venta/selector-plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
@@ -56,6 +57,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
 
     if (areUnsavedChanges && this.comprobarCanDeactivate) {
       canDeactivate = window.confirm('El pedido tiene productos.\n¿Seguro que quiere salir?');
+      this.firebaseAnalytics.logEvent("plantilla_venta_desea_salir", {respuesta: canDeactivate});
     }
 
     this.comprobarCanDeactivate = false;
@@ -129,6 +131,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           text: 'Rellenar',
           role: 'cancel',
           handler: () => {
+            this.firebaseAnalytics.logEvent("plantilla_venta_rellenar_cliente", {cliente: value.cliente, contacto: value.contacto});
             this.nav.navigateForward('cliente', {
               queryParams: {
                 empresa: value.empresa,

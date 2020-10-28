@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavParams, AlertController, LoadingController, NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -27,7 +28,8 @@ export class RapportComponent {
     private usuario: Usuario, 
     public events: Events, 
     private nav: NavController,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private firebaseAnalytics: FirebaseAnalytics
     ) {
       this.rapport = this.route.snapshot.queryParams.rapport;
       this.numeroCliente = this.rapport.Cliente;
@@ -111,6 +113,7 @@ export class RapportComponent {
 
                       this.servicio.crearRapport(this.rapport).subscribe(
                           async data => {
+                            this.firebaseAnalytics.logEvent("rapport_crear", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
                               let alert = await this.alertCtrl.create({
                                   header: 'Creado',
                                   message: 'Rapport guardado correctamente',
@@ -120,6 +123,7 @@ export class RapportComponent {
                               if (this.dejarDeVisitar) {
                                   this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
                                       async data => {
+                                        this.firebaseAnalytics.logEvent("rapport_dejar_de_visitar", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
                                           let alertOK = await this.alertCtrl.create({
                                               header: 'Clientes',
                                               message: 'Se ha sacado el cliente de la cartera',

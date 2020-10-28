@@ -8,6 +8,7 @@ import { Configuracion } from '../../configuracion/configuracion/configuracion.c
 import { FCM } from '@ionic-native/fcm/ngx';
 import { Storage } from '@ionic/storage';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { AppVersion } from '@ionic-native/app-version/ngx';
 
 @Component({
   selector: 'app-profile',
@@ -28,6 +29,7 @@ export class ProfileComponent {
   public error: string;
   public mostrarOlvideMiContrasenna: boolean;
   public correoContrasennaOlvidada: string;
+  public numeroVersion: string;
 
   constructor(
       private http: HttpClient, 
@@ -37,8 +39,11 @@ export class ProfileComponent {
       private parametros: Parametros, 
       private alertCtrl: AlertController,
       public auth: AuthService,
-      private firebaseAnalytics: FirebaseAnalytics
-      ) {  }
+      private firebaseAnalytics: FirebaseAnalytics,
+      private appVersion: AppVersion
+      ) {
+          this.appVersion.getVersionNumber().then((ver) => this.numeroVersion = ver);
+        }
 
   @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
 

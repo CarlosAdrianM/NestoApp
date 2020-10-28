@@ -52,6 +52,7 @@ import { UltimasVentasProductoClienteComponent } from './components/ultimas-vent
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "ionic-cache";
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { AppVersion } from '@ionic-native/app-version/ngx';
 
 
 registerLocaleData(localeEs);
@@ -114,7 +115,8 @@ let storage = new Storage({}, {});
     FileOpener,
     Keyboard,
     CanDeactivateGuard,
-    FirebaseAnalytics
+    FirebaseAnalytics,
+    AppVersion
     //FCM
   ],
   bootstrap: [AppComponent]
