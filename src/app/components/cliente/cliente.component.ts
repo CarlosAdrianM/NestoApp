@@ -404,7 +404,7 @@ export class ClienteComponent {
       this.nativeGeocoder.reverseGeocode(latitude, longitude, this.geoencoderOptions)
       .then((result: NativeGeocoderResult[]) => {
           this.cliente.codigoPostal = result[0].postalCode;
-          this.cliente.direccion = (result[0].thoroughfare || "") +
+          this.cliente.direccionCalleNumero = (result[0].thoroughfare || "") +
                " " +(result[0].subThoroughfare || "")
       })
       .catch((error: any) => {
