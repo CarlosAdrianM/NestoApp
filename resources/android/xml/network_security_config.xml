@@ -3,5 +3,6 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">api.nuevavision.es</domain>
+        <domain includeSubdomains="true">www.productosdeesteticaypeluqueriaprofesional.com</domain>
     </domain-config>
 </network-security-config>
