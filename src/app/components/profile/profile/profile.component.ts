@@ -29,7 +29,8 @@ export class ProfileComponent {
   public error: string;
   public mostrarOlvideMiContrasenna: boolean;
   public correoContrasennaOlvidada: string;
-  public numeroVersion: string;
+  public numeroVersionBinarios: string;
+  public numeroVersionActualizacion: string;
 
   constructor(
       private http: HttpClient, 
@@ -42,7 +43,8 @@ export class ProfileComponent {
       private firebaseAnalytics: FirebaseAnalytics,
       private appVersion: AppVersion
       ) {
-          this.appVersion.getVersionNumber().then((ver) => this.numeroVersion = ver);
+          this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
+          this.numeroVersionActualizacion = Configuracion.VERSION;
         }
 
   @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
