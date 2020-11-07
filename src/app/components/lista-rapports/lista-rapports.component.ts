@@ -130,6 +130,8 @@ export class ListaRapportsComponent extends SelectorBase {
 
       await loading.present();
 
+      fecha = fecha.substr(0,10) + 'T00:00:00';
+
       this.servicio.cargarListaFecha(fecha).subscribe(
           async data => {
               if (data.length === 0) {

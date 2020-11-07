@@ -44,7 +44,7 @@
     <div *ngSwitchCase="'fecha'">
       <ion-item>
         <ion-label>Fecha Rapport</ion-label>
-        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
+        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" display-timezone="utc" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
       </ion-item>
     </div>
     <div *ngSwitchCase="'codigoPostal'">
@@ -73,7 +73,7 @@
 <ion-list *ngIf="segmentoRapports != 'codigoPostal'">
   <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" text-wrap>
     <ion-label class="ion-text-wrap">
-      <ion-icon name="contact" item-left></ion-icon>
+      <ion-icon name="contact" slot="start"></ion-icon>
       <p>{{rapport.Cliente}}</p>
       <p>
         <ion-badge *ngIf="rapport.Tipo=='T'">Teléfono</ion-badge>
