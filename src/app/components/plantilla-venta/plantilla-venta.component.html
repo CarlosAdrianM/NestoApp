@@ -97,6 +97,18 @@
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
         <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+        <ion-item *ngIf="esTarjetaPrepago()">
+            <ion-label>¿Mandar cobro por tarjeta?</ion-label>
+            <ion-toggle [(ngModel)]="mandarCobroTarjeta"></ion-toggle>
+        </ion-item>
+        <ion-item *ngIf="esTarjetaPrepago() && mandarCobroTarjeta">
+            <ion-label position="floating">Correo tarjeta</ion-label>
+            <ion-input type="email" [(ngModel)]="cobroTarjetaCorreo"></ion-input>
+        </ion-item>
+        <ion-item *ngIf="esTarjetaPrepago() && mandarCobroTarjeta">
+            <ion-label position="floating">Móvil tarjeta</ion-label>
+            <ion-input type="tel" [(ngModel)]="cobroTarjetaMovil"></ion-input>
+        </ion-item>
         <div>
             <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
         </div>

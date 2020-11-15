@@ -161,6 +161,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
       if (value) {
           this.formaPago = value.formaPago;
           this.plazosPago = value.plazosPago;
+          this.cargarCorreoYMovilTarjeta();
       }
   }
   get textoFacturacionElectronica(): string {
@@ -388,6 +389,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           async data => {
               this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
               let numeroPedido: string = data.numero;
+              if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
+                this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido).subscribe(
+                    d => {
+                        this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
+                    },
+                    e => {
+                        console.log(e);
+                    }
+                )
+              }
               let alert = await this.alertCtrl.create({
                   header: 'Creado',
                   message: 'Pedido ' + numeroPedido + ' creado correctamente',
@@ -456,5 +467,47 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
 
   public abrirDetalle(producto: string, almacen: string): void {
     this._selectorPlantillaVenta.abrirDetalle(producto, almacen);
+  }
+
+  public esTarjetaPrepago(): boolean {
+      return this.iva && this.formaPago == "TAR" && this.plazosPago == "PRE";
+  }
+
+  public cargarCorreoYMovilTarjeta() {
+      this.servicio.leerCliente(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente, this.direccionSeleccionada.contacto)
+      .subscribe(
+        data => {
+            var cliente = data;
+            var telefonos = cliente.telefono.split("/");
+            this.cobroTarjetaMovil = telefonos.find(x => x.startsWith("6") || x.startsWith("7") || x.startsWith("8"));
+            var personaContacto = cliente.personasContacto.find(x => x.facturacionElectronica);
+            if (personaContacto){
+                this.cobroTarjetaCorreo = personaContacto.correoElectronico;
+            }
+            
+            if (!this.cobroTarjetaCorreo){
+                personaContacto = cliente.personasContacto.find(x => x.correoElectronico)
+                if (personaContacto){
+                    this.cobroTarjetaCorreo = personaContacto.correoElectronico;    
+                }
+            }
+        },
+        async error => {
+            let alert = await this.alertCtrl.create({
+                message: 'Error',
+                subHeader: 'No se han podido cargar los datos del cliente:\n' + error.ExceptionMessage,
+                buttons: ['Ok'],
+            });
+            await alert.present();
+        }
+    )    
+  }
+
+  public mandarCobroTarjeta: boolean;
+  public cobroTarjetaCorreo: string;
+  public cobroTarjetaMovil: string;
+
+  private redondea(value) {
+    return Number(Math.round(value * 100) / 100);
   }
 }

@@ -9,8 +9,8 @@
           <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
           <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>
           <p *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00'">Última compra {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>
-          <ion-badge *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00' || producto.cantidad || producto.cantidadOferta" [color]="producto.colorStock" item-right>{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
         </ion-label>
+        <ion-badge *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00' || producto.cantidad || producto.cantidadOferta" [color]="producto.colorStock" slot="end">{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
       </ion-item>
     </ion-list>
   </div>
