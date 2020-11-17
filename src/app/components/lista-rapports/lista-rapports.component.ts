@@ -27,7 +27,23 @@ export class ListaRapportsComponent extends SelectorBase {
   public segmentoRapports: string = 'cliente';
   
   private hoy: Date = new Date();
-  public fechaRapports: string = this.hoy.toISOString().slice(0, 10);
+  private fechaYaAjustada: boolean;
+  private _fechaRapports: string
+  get fechaRapports(): string {
+      return this._fechaRapports;
+  }
+  set fechaRapports(value: string) {
+      this._fechaRapports = value;
+      var date = new Date(value);
+      var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+      var dateAjustada = new Date(date.getTime() - userTimezoneOffset);
+      if (this.fechaYaAjustada) {
+          this._fechaRapports = date.toISOString();
+      } else {
+        this._fechaRapports = dateAjustada.toISOString();
+        this.fechaYaAjustada = true;
+      }
+  }
   public clienteRapport: string;
   public contactoRapport: string;
   public numeroCliente: string = "";
@@ -78,6 +94,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.clienteRapport = "";
       this.contactoRapport;
       this.vendedorSeleccionado = usuario.vendedor;
+      this.fechaRapports = this.hoy.toISOString();//.slice(0, 10);
 
       events.subscribe('rapportCreado', (rapportCreado: any) => {
           if (!this.datosFiltrados) {
@@ -130,14 +147,12 @@ export class ListaRapportsComponent extends SelectorBase {
 
       await loading.present();
 
-      fecha = fecha.substr(0,10) + 'T00:00:00';
-
       this.servicio.cargarListaFecha(fecha).subscribe(
           async data => {
               if (data.length === 0) {
                   let alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No hay ningún rapport para listar en esa fecha',
+                      header: 'Error',
+                      message: 'No hay ningún rapport para listar en esa fecha',
                       buttons: ['Ok'],
                   });
                   await alert.present();

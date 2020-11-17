@@ -44,7 +44,7 @@
     <div *ngSwitchCase="'fecha'">
       <ion-item>
         <ion-label>Fecha Rapport</ion-label>
-        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" display-timezone="utc" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
+        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" display-timezone="Europe/Madrid" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
       </ion-item>
     </div>
     <div *ngSwitchCase="'codigoPostal'">

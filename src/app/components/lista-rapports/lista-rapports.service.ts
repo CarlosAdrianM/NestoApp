@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Usuario } from 'src/app/models/Usuario';
@@ -12,7 +13,7 @@ export class ListaRapportsService {
   private usuario: any;
   static ngInjectableDef = undefined;
 
-  constructor(private http: HttpClient, usuario: Usuario) {
+  constructor(private http: HttpClient, usuario: Usuario, private cache: CacheService) {
       this.usuario = usuario;
   }
 
@@ -30,10 +31,13 @@ export class ListaRapportsService {
       }
       params = params.append('fecha', fecha);
 
-      return this.http.get(this._baseUrl, { params })
+      let ttl = 10; // TTL in seconds
+      let cacheKey = this._baseUrl + params.toString();
+      let request = this.http.get(this._baseUrl, { params: params })
         .pipe(
           catchError(this.handleError)
         )
+      return this.cache.loadFromObservable(cacheKey, request, undefined, ttl);
   }
 
   public cargarListaCliente(cliente: string, contacto: string): Observable<any> {
