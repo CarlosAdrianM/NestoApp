@@ -65,7 +65,7 @@ export class ComisionesComponent implements OnInit {
           });
           await alert.present();
         } else {
-          this.firebaseAnalytics.logEvent("consultar_comisiones", {vendedor: this.vendedorSeleccionado});
+          this.firebaseAnalytics.logEvent("consultar_comisiones", {vendedor: this.vendedorSeleccionado, "screen_name": "Comisiones"});
           this.resumen = data;
         }
       },

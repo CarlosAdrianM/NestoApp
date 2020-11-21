@@ -17,7 +17,7 @@ export class SelectorPlantillaVentaService {
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('cliente', cliente);
 
-      let ttl = 60 * 60 * 24 * 7; // TTL in seconds for one week
+      let ttl = 60 * 5; // TTL in seconds (5 min)
       let cacheKey = _baseUrl + params.toString();
       let request = this.http.get(_baseUrl, { params: params })
         .pipe(

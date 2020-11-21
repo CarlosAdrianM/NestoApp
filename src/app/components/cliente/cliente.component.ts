@@ -285,7 +285,7 @@ export class ClienteComponent {
   crearCliente() {
       this.servicio.crearCliente(this.cliente).subscribe(
           async data => {
-              this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
+              this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto, "screen_name": "Cliente"});
               let alert = await this.alertCtrl.create({
                   message: 'Cliente',
                   subHeader: 'Se ha creado correctamente el cliente: ' 
