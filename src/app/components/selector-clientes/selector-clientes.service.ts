@@ -23,11 +23,12 @@ export class SelectorClientesService {
       }
 
       let cacheKey = this._clientesUrl + params.toString();
+      let groupKey = "clientes";
       let request = this.http.get(this._clientesUrl, { params: params })
         .pipe(
           catchError(this.handleError)
         )
-      return this.cache.loadFromObservable(cacheKey, request);
+      return this.cache.loadFromObservable(cacheKey, request, groupKey);
   }
 
   private handleError(error: HttpErrorResponse): Observable<any> {

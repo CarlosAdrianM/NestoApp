@@ -390,7 +390,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
               this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
               let numeroPedido: string = data.numero;
               if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
-                this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido).subscribe(
+                this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido, this.clienteSeleccionado.cliente.trim()).subscribe(
                     d => {
                         this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
                     },

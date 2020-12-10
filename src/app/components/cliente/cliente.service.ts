@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -11,7 +12,7 @@ export class ClienteService {
 
   private _baseUrl: string = Configuracion.API_URL + '/Clientes';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private cache:CacheService) { }
 
   public validarNif(nif: string, nombre: string): Observable<any> {
     var urlLlamada: string = this._baseUrl+'/ComprobarNifNombre';
@@ -56,6 +57,7 @@ export class ClienteService {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
 
+    this.cache.clearGroup("clientes");
     return this.http.post(this._baseUrl, JSON.stringify(cliente), { headers: headers })
       .pipe(
         catchError(this.handleError)
@@ -79,6 +81,7 @@ export class ClienteService {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
 
+    this.cache.clearGroup("clientes");
     return this.http.put(this._baseUrl, JSON.stringify(cliente), { headers: headers })
       .pipe(
         catchError(this.handleError)

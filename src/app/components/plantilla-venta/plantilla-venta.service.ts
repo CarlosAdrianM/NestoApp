@@ -35,12 +35,13 @@ export class PlantillaVentaService {
         )
   }
 
-  public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string) {
+  public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {
       var url = Configuracion.API_URL + "/ReclamacionDeuda";
       let headers: any = new HttpHeaders();
       headers = headers.append('Content-Type', 'application/json');
 
       var parametro = {
+        Cliente : cliente,
         Correo : cobroTarjetaCorreo,
         Movil : cobroTarjetaMovil,
         Importe : totalPedido,
