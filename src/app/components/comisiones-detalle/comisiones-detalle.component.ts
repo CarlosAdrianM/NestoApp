@@ -59,6 +59,6 @@ export class ComisionesDetalleComponent {
   }
 
   public abrirPedido(detalle: any): void {
-    this.nav.navigateForward('/pedido',{ queryParams : { empresa: detalle.Empresa, numero: detalle.Pedido }});
+    this.nav.navigateForward('/pedido-venta',{ queryParams : { empresa: detalle.Empresa, numero: detalle.Pedido }});
   }
 }
