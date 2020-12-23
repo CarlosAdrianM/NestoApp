@@ -76,14 +76,31 @@
 
   <div *ngIf="(usuario && usuario.nombre)">
       <div class="ion-padding">
+          <h4 *ngIf="listaSeEstaVendiendo">Hoy se están vendiendo bien estos productos...</h4>
+          <ion-slides pager="true"  [options]="slideOpts">
+            <ion-slide *ngFor="let producto of listaSeEstaVendiendo">
+                <ion-card>
+                    <ion-img [src]="producto.RutaImagen" (click)="abrirEnlace(producto.RutaEnlace)"></ion-img>
+                    <ion-card-header (click)="abrirFichaProducto(producto)">
+                        <ion-card-subtitle>Ref. {{producto.Producto}}</ion-card-subtitle>
+                        <ion-card-title>{{producto.Nombre}}</ion-card-title>
+                    </ion-card-header>
+                    <ion-card-content>
+                        Este producto se está vendiendo bien en las últimas 24 horas. 
+                        Para ver qué clientes lo han comprado alguna haz clic en el nombre del producto y después en <b>VER CLIENTES CON COMPRA</b>
+                    </ion-card-content>
+                </ion-card>        
+            </ion-slide>
+          </ion-slides>
           <h1>Hola, {{ usuario.nombre }}</h1>
-          <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>
-          <h3>Versión actualización {{ numeroVersionActualizacion }}</h3>
-          <h3>Versión binarios {{ numeroVersionBinarios }}</h3>
+          <ion-item>Añadidos productos que se están vendiendo bien</ion-item>
           <ion-item>Tarjeta/Prepago envía cobro al cliente</ion-item>
           <ion-item>Puesta la opción de recuperar contraseña</ion-item>
           <ion-item>Se actualiza el sistema completo a una nueva versión</ion-item>
           <p></p>
+          <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>
+          <h3>Versión actualización {{ numeroVersionActualizacion }}</h3>
+          <h3>Versión binarios {{ numeroVersionBinarios }}</h3>
       </div>
   </div>
 </ion-content>

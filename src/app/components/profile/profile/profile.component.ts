@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, ViewChild } from '@angular/core';
-import { AlertController, LoadingController } from '@ionic/angular';
+import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { Parametros } from 'src/app/services/parametros.service';
@@ -9,6 +9,7 @@ import { FCM } from '@ionic-native/fcm/ngx';
 import { Storage } from '@ionic/storage';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AppVersion } from '@ionic-native/app-version/ngx';
+import { ProfileService } from './profile.service';
 
 @Component({
   selector: 'app-profile',
@@ -31,6 +32,7 @@ export class ProfileComponent {
   public correoContrasennaOlvidada: string;
   public numeroVersionBinarios: string;
   public numeroVersionActualizacion: string;
+  public listaSeEstaVendiendo: any;
 
   constructor(
       private http: HttpClient, 
@@ -41,13 +43,27 @@ export class ProfileComponent {
       private alertCtrl: AlertController,
       public auth: AuthService,
       private firebaseAnalytics: FirebaseAnalytics,
-      private appVersion: AppVersion
+      private appVersion: AppVersion,
+      private servicio: ProfileService,
+      private nav: NavController,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
         }
 
   @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
+
+  slideOpts = {
+    initialSlide: 1,
+    speed: 400,
+    autoplay: {
+        delay: 2000
+    },
+    navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+    }
+  };
 
   ionViewDidEnter() {
     if(this.usuario && !this.usuario.nombre) {
@@ -56,7 +72,8 @@ export class ProfileComponent {
             if (profile) {
                 this.usuario.nombre = profile;
                 this.firebaseAnalytics.setUserId(this.usuario.nombre);
-                this.cargarParametros();    
+                this.cargarParametros();
+                this.cargarSeEstaVendiendo();
             }
         }).catch(error => {
             console.log(error);
@@ -64,6 +81,14 @@ export class ProfileComponent {
         });
     }
   }
+
+    cargarSeEstaVendiendo() {
+        this.servicio.getSeEstaVendiendo().subscribe(
+            data => {this.listaSeEstaVendiendo = data},
+            error => {},
+            () => {}
+        )
+    }
 
   async login(credentials: any) {
     let loading: any = await this.loadingCtrl.create({
@@ -227,6 +252,16 @@ private cargarParametros(): void {
                 this.correoContrasenna.setFocus();            
             }, 200);    
         }
+    }
+
+    public abrirEnlace(urlDestino: string): void {
+        urlDestino += "&utm_medium=seestavendiendo";
+        this.firebaseAnalytics.logEvent("se_esta_vendiendo_abrir_enlace", {enlace: urlDestino});
+        window.open(urlDestino, '_system', 'location=yes');
+    }
+
+    public abrirFichaProducto(producto: any): void {
+        this.nav.navigateForward("/producto", { queryParams: { empresa: "1", producto: producto.Producto }});
     }
     /*
     public getToken() {
