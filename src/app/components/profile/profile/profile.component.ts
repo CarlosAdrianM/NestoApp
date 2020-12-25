@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { AuthService } from 'src/app/services/auth/auth.service';
@@ -73,7 +73,7 @@ export class ProfileComponent {
                 this.usuario.nombre = profile;
                 this.firebaseAnalytics.setUserId(this.usuario.nombre);
                 this.cargarParametros();
-                this.cargarSeEstaVendiendo();
+                this.cargarSeEstaVendiendo(null);
             }
         }).catch(error => {
             console.log(error);
@@ -82,12 +82,16 @@ export class ProfileComponent {
     }
   }
 
-    cargarSeEstaVendiendo() {
+    cargarSeEstaVendiendo(event: any) {
         this.servicio.getSeEstaVendiendo().subscribe(
             data => {this.listaSeEstaVendiendo = data},
             error => {},
-            () => {}
-        )
+            () => {
+                if (event) {
+                    event.target.complete();
+                }
+            }
+        );
     }
 
   async login(credentials: any) {

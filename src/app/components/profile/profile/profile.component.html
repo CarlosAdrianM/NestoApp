@@ -8,7 +8,9 @@
 </ion-header>
 
 <ion-content>
-
+    <ion-refresher slot="fixed" (ionRefresh)="cargarSeEstaVendiendo($event)">
+        <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
   <div [ngSwitch]="authType" class="login" *ngIf="!(usuario && usuario.nombre)">
       <ion-segment [(ngModel)]="authType">
           <ion-segment-button value="login">
@@ -76,7 +78,7 @@
 
   <div *ngIf="(usuario && usuario.nombre)">
       <div class="ion-padding">
-          <h4 *ngIf="listaSeEstaVendiendo">Hoy se están vendiendo bien estos productos...</h4>
+          <h4 *ngIf="listaSeEstaVendiendo && listaSeEstaVendiendo.length > 0">Hoy se están vendiendo bien estos productos...</h4>
           <ion-slides pager="true"  [options]="slideOpts">
             <ion-slide *ngFor="let producto of listaSeEstaVendiendo">
                 <ion-card>
@@ -99,8 +101,8 @@
           <ion-item>Se actualiza el sistema completo a una nueva versión</ion-item>
           <p></p>
           <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>
-          <h3>Versión actualización {{ numeroVersionActualizacion }}</h3>
-          <h3>Versión binarios {{ numeroVersionBinarios }}</h3>
+          <h4>Versión actualización {{ numeroVersionActualizacion }}</h4>
+          <h4>Versión binarios {{ numeroVersionBinarios }}</h4>
       </div>
   </div>
 </ion-content>
