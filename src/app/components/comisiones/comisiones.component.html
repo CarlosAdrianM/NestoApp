@@ -42,6 +42,18 @@
       </ion-range>
     </ion-item>
     <ion-item>
+      <ion-label>Venta acumulada (General)</ion-label>
+      <p item-right>{{resumen.GeneralVentaAcumulada | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>% Conseguido/Real (General)</ion-label>
+      <p item-right>{{resumen.GeneralTipoConseguido | percent:'1.2-2'}} / {{resumen.GeneralTipoReal | percent:'1.2-2'}}</p>
+    </ion-item>
+    <ion-item>
+      <ion-label>Comisión acumulada (General)</ion-label>
+      <p item-right>{{resumen.GeneralComisionAcumulada | currency:'EUR'}}</p>
+    </ion-item>
+    <ion-item>
       <ion-label>Proyección Año</ion-label>
       <p item-right>{{resumen.GeneralProyeccion | currency:'EUR'}}</p>
     </ion-item>
