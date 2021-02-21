@@ -15,6 +15,9 @@
     </ion-item>
   </ion-list>
   <ion-list *ngIf="producto">
+    <ion-item *ngIf="producto.RoturaStockProveedor">
+      <ion-label color="danger">Producto en rotura de stock del proveedor</ion-label>
+    </ion-item>
     <ion-item>
       <ion-label>Nombre</ion-label>
       <p item-right>{{producto.Nombre}}</p>
