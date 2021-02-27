@@ -88,6 +88,9 @@ export class SelectorPlantillaVentaDetalleComponent {
       if (producto.cantidadOferta > 0) {
           console.log("No aplicar descuento");
           producto.aplicarDescuento = false;
+          this.descuentoMostrar = "0";
+          producto.descuento = 0;
+          this.actualizarDescuento(0);
       } else {
           console.log("Guardamos aplicar descuento ficha");
           producto.aplicarDescuento = producto.aplicarDescuentoFicha;
