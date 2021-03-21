@@ -34,10 +34,10 @@
     <ion-item>
       <ion-label>Estado</ion-label>
       <ion-select name="estado" [(ngModel)]="rapport.Estado">
-        <ion-select-option value="-1" selected="rapport.Estado == -1">Nulo</ion-select-option>
-        <ion-select-option value="0" selected="rapport.Estado == 0">Vigente</ion-select-option>
-        <ion-select-option value="1" selected="rapport.Estado == 1">No Contactado</ion-select-option>
-        <ion-select-option value="2" selected="rapport.Estado == 2">Gestión Administrativa</ion-select-option>
+        <ion-select-option [value]="-1" selected="rapport.Estado == -1">Nulo</ion-select-option>
+        <ion-select-option [value]="0" selected="rapport.Estado == 0">Vigente</ion-select-option>
+        <ion-select-option [value]="1" selected="rapport.Estado == 1">No Contactado</ion-select-option>
+        <ion-select-option [value]="2" selected="rapport.Estado == 2">Gestión Administrativa</ion-select-option>
       </ion-select>
     </ion-item>
 
