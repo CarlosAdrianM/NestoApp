@@ -101,6 +101,18 @@ export class SelectorClientesComponent extends SelectorBase {
       }})
   }
 
+  editarContacto(event: Event, cliente: any): void {
+    event.stopPropagation();
+    if (cliente.cifNif == null) {
+        return;
+    }
+    this.router.navigate(['cliente'], { queryParams: { 
+        empresa: cliente.empresa,
+        cliente: cliente.cliente,
+        contacto: cliente.contacto
+    }})
+}
+
   annadirCliente(event: Event): void {
       event.stopPropagation();
       this.router.navigate(['cliente']);

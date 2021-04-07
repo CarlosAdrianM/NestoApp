@@ -34,17 +34,27 @@
       </ion-card-header>
       
       <ion-card-content>
-          <ion-card-title *ngIf="cliente && cliente.esContacto">
-              Creando Contacto (ya existe el cliente [{{cliente.cliente}}] )
+          <ion-card-title *ngIf="cliente && cliente.esContacto && !cliente.esUnaModificacion">
+              Creando Contacto (ya existe el cliente [{{cliente.cliente}}])
+          </ion-card-title>
+          <ion-card-title *ngIf="cliente && cliente.esUnaModificacion">
+              Modificando Cliente {{cliente.cliente}}/{{cliente.contacto}}
           </ion-card-title>
           <ion-list>
-              <ion-item>
+            <ion-item *ngIf="cliente.direccion">
+                <ion-label floating>Dirección actual</ion-label>
+                <ion-input #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" disabled></ion-input>
+            </ion-item>
+            <ion-fab *ngIf="cliente.direccion" horizontal="end" vertical="center" edge>
+                <ion-fab-button size="small" (click)="editarDireccion()" horizontal="end"><ion-icon name="create"></ion-icon></ion-fab-button>
+            </ion-fab>
+              <ion-item *ngIf="!cliente.direccion">
                   <ion-label floating>Dirección (solo calle y número)</ion-label>
                   <ion-input #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
-              <ion-item>
+              <ion-item *ngIf="!cliente.direccion">
                   <ion-label floating>Dirección (resto de información)</ion-label>
-                  <ion-input #direccion type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
                   <ion-label floating>Código Postal</ion-label>

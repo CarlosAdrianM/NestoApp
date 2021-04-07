@@ -12,6 +12,7 @@
           <p text-wrap>{{ cliente.comentarios }}</p>
           <ion-fab horizontal="end" vertical="center" edge>
             <ion-fab-button size="small" (click)="crearContacto($event, cliente)" horizontal="end" [disabled]="cliente.cifNif == null"><ion-icon name="add"></ion-icon></ion-fab-button>
+            <ion-fab-button size="small" (click)="editarContacto($event, cliente)" horizontal="end" [disabled]="cliente.cifNif == null"><ion-icon name="create"></ion-icon></ion-fab-button>
           </ion-fab>
         </ion-label>
       </ion-item>

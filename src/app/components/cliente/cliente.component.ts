@@ -23,6 +23,8 @@ export class ClienteComponent {
   DATOS_PAGO: number = 3;
   DATOS_CONTACTO : number = 4;
 
+  private plazosPagoActuales: string;
+
   constructor(
       private servicio: ClienteService, 
       private alertCtrl: AlertController,
@@ -33,7 +35,7 @@ export class ClienteComponent {
       public modalCtrl: ModalController,
       public events: Events,
       private route: ActivatedRoute,
-      private firebaseAnalytics: FirebaseAnalytics
+      private firebaseAnalytics: FirebaseAnalytics,
   ){
       if (this.route.snapshot.queryParams && this.route.snapshot.queryParams.empresa &&
         this.route.snapshot.queryParams.cliente && this.route.snapshot.queryParams.contacto) {
@@ -46,6 +48,8 @@ export class ClienteComponent {
                   this.cliente = data;
                   this.cliente.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
                   this.cliente.esUnaModificacion = true;
+                  this.plazosPagoActuales = this.cliente.plazosPago;
+                  this.goToDatosGenerales();
               },
               async error => {
                   let alert = await this.alertCtrl.create({
@@ -147,7 +151,7 @@ export class ClienteComponent {
               }
               this.cliente.nombre = data.nombreFormateado;
               this.cliente.esContacto = data.existeElCliente;
-              if (data.existeElCliente) {
+              if (data.existeElCliente && !this.cliente.esUnaModificacion) {
                   this.cliente.empresa = data.empresa;
                   this.cliente.cliente = data.numeroCliente;
                   this.cliente.contacto = data.contacto;
@@ -190,6 +194,10 @@ export class ClienteComponent {
           return;
       }
       */
+      if (this.cliente.direccion && !this.cliente.direccionCalleNumero) {
+        this.slideActual = this.DATOS_COMISIONES;
+        return;
+    }
       this.servicio.validarDatosGenerales(this.cliente).subscribe(
           async data => {
               this.cliente.direccion = data.direccionFormateada;
@@ -242,19 +250,19 @@ export class ClienteComponent {
       this.servicio.validarDatosPago(datosPago).subscribe( 
       async data => {
           this.cliente.iban = data.ibanFormateado;
-          if (data.datosPagoValidos) {
+          if (data.datosPagoValidos || (data.ibanValido && this.cliente.plazosPago == this.plazosPagoActuales)) {
               this.slideActual = this.DATOS_CONTACTO;
           } else if (!data.ibanValido) {
               let alert = await this.alertCtrl.create({
-                  message: 'Error',
-                  subHeader: 'IBAN no válido',
+                  header: 'Error',
+                  message: 'IBAN no válido',
                   buttons: ['Ok'],
               });
               await alert.present();
           } else {
               let alert = await this.alertCtrl.create({
-                  message: 'Error',
-                  subHeader: 'Error en los datos de pago',
+                  header: 'Error',
+                  message: 'Error en los datos de pago',
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -262,8 +270,8 @@ export class ClienteComponent {
       },
       async error => {
           let alert = await this.alertCtrl.create({
-              message: 'Error',
-              subHeader: 'Error en la validación del IBAN:\n' + error.ExceptionMessage,
+              header: 'Error',
+              message: 'Error en la validación del IBAN:\n' + error.ExceptionMessage,
               buttons: ['Ok'],
           });
           await alert.present();
@@ -315,8 +323,8 @@ export class ClienteComponent {
                   }
               }
               let alert = await this.alertCtrl.create({
-                  message: 'Error',
-                  subHeader: 'No se ha podido crear el cliente:\n' + textoExcepcion,
+                  header: 'Error',
+                  message: 'No se ha podido crear el cliente:\n' + textoExcepcion,
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -329,8 +337,8 @@ export class ClienteComponent {
           async data => {
             this.firebaseAnalytics.logEvent("modificar_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
               let alert = await this.alertCtrl.create({
-                  message: 'Cliente',
-                  subHeader: 'Se ha modificado correctamente el cliente: ' 
+                  header: 'Cliente',
+                  message: 'Se ha modificado correctamente el cliente: ' 
                   + data.Nº_Cliente + '/'+data.Contacto,
                   buttons: ['Ok'],
               });
@@ -368,8 +376,8 @@ export class ClienteComponent {
                   }
               }
               let alert = await this.alertCtrl.create({
-                  message: 'Error',
-                  subHeader: 'No se ha podido modificar el cliente:\n' + textoExcepcion,
+                  header: 'Error',
+                  message: 'No se ha podido modificar el cliente:\n' + textoExcepcion,
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -384,6 +392,13 @@ export class ClienteComponent {
               this.inputIban.setFocus();
           }, 500);
       }
+  }
+
+  editarDireccion() {
+      this.cliente.direccion = "";
+      setTimeout(() => {
+        this.inputDireccion.setFocus();
+    }, 500);
   }
 
   // Funciones de geolocalización
