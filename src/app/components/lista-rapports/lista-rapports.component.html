@@ -104,7 +104,7 @@
 <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
   <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)">
-    <ion-icon name="person" color="colorEstado(clienteSinVisitar.estado)" slot="start"></ion-icon>
+    <ion-icon name="information-circle" (click)="seleccionarCliente(clienteSinVisitar.cliente)" color="colorEstado(clienteSinVisitar.estado)" slot="start"></ion-icon>
     <ion-label class="ion-text-wrap">      
       <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
       <h2>{{clienteSinVisitar.nombre}}</h2>

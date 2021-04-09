@@ -113,6 +113,9 @@ export class RapportComponent {
 
                       this.servicio.crearRapport(this.rapport).subscribe(
                           async data => {
+                              if (data) {
+                                this.rapport.Id = data.NºOrden;
+                              }
                             this.firebaseAnalytics.logEvent("rapport_crear", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
                               let alert = await this.alertCtrl.create({
                                   header: 'Creado',
@@ -231,5 +234,4 @@ export class RapportComponent {
 
       return "default";
   }
-
 }

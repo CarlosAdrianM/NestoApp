@@ -129,6 +129,12 @@ export class ListaRapportsComponent extends SelectorBase {
       this.clienteRapport = this.numeroCliente;
   }
 
+  seleccionarCliente(cliente: string) {
+    this.numeroCliente = cliente;
+    this.actualizarCliente();
+    this.segmentoRapports = "cliente";
+  }
+
   public seleccionarContacto(evento: any): void {
       if (!this.clienteRapport) {
           return;

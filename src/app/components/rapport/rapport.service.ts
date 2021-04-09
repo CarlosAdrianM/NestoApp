@@ -26,7 +26,6 @@ export class RapportService {
             .pipe(
               catchError(this.handleError)
             )
-          
       } else {
           return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers })
             .pipe(
