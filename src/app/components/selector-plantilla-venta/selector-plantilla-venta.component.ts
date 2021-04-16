@@ -155,6 +155,16 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       return datos.some(tieneCantidad);
   }
 
+  public ponerStocks(): void {
+      this.servicio.ponerStocks(this.datosFiltrados, this.almacen).subscribe(
+          async data => {
+              this.datosFiltrados = data;
+          },
+          error => this.errorMessage = <any>error
+      )
+  }
+
+
   get totalPedido(): number {
       // Hay que calcularlo bien
       return this._baseImponiblePedido * 1.21;

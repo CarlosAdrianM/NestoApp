@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
@@ -59,6 +59,25 @@ export class SelectorPlantillaVentaService {
         )
       return this.cache.loadFromObservable(cacheKey, request);
   }
+
+  ponerStocks(lineas: any[], almacen: string): Observable<any> {
+    var url = Configuracion.API_URL + '/PlantillaVentas/PonerStock';
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    var parametro = {
+      lineas : lineas,
+      almacen : almacen
+    }
+
+    var parametroJson = JSON.stringify(parametro);
+
+    return this.http.post(url, parametroJson, { headers: headers })
+      .pipe(
+        catchError(this.handleError)
+      )
+  }
+
 
   private handleError(error: HttpErrorResponse): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure
