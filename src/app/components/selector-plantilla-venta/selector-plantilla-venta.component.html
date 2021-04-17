@@ -1,5 +1,6 @@
 <div id="contenedor" scrollY="false">
   <ion-searchbar  #filtro placeholder="Introduzca algún dato del producto" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltroBuscarEnTodos($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
+  <ion-badge color="medium" *ngFor="let filtroFijado of filtrosFijados">{{filtroFijado}}</ion-badge>
   <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 3" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
   <ion-button expand="block" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="soloConStock()">Solo con stock</ion-button>
   <div id="myFixZone" scrollY="true">

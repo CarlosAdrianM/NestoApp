@@ -27,7 +27,7 @@
   </ion-segment>
   <div [ngSwitch]="segmentoRapports">
     <div *ngSwitchCase="'cliente'">
-        <!--selector-clientes (seleccionar)="cargarRapport($event)"></!--selector-clientes>-->
+      <selector-clientes *ngIf="!numeroCliente" (seleccionar)="seleccionarCliente($event.cliente)"></selector-clientes>
       <form (ngSubmit)="actualizarCliente()">
         <ion-item>
           <ion-label for="cliente">Cliente</ion-label>

@@ -9,6 +9,8 @@ export abstract class SelectorBase {
   public datosFiltrados: any[];
   private datosInicial: any[];
   protected errorMessage: string;
+  public filtrosFijados: string[] = [];
+  private filtroInicial: string;
 
   @Output() public seleccionar: EventEmitter<any> = new EventEmitter();
 
@@ -33,11 +35,16 @@ export abstract class SelectorBase {
       let filtro: string = searchbar.target.value.toUpperCase();
       //if (!this.datosInicial || this.datosInicial.length === 0) {
       if (!this.datosInicial) {
+          this.filtroInicial = filtro;
+          this.filtrosFijados.push(filtro);
           this.cargarDatos(filtro);
       } else if (filtro === '') {
+          this.filtrosFijados = [];
+          this.filtrosFijados.push(this.filtroInicial);
           this.datos = this.datosInicial;
           this.datosFiltrados = this.datosInicial;
       } else {
+          this.filtrosFijados.push(filtro);
           this.datos = this.aplicarFiltro(this.datos, filtro);
           this.datosFiltrados = this.datos;
       }
@@ -82,6 +89,7 @@ export abstract class SelectorBase {
   }
 
   public resetearFiltros(): void {
+      this.filtrosFijados = [];
       this.inicializarDatos(null);
   }
 
