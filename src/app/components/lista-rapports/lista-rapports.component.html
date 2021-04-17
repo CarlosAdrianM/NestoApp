@@ -112,7 +112,7 @@
       <p>Estado: {{clienteSinVisitar.estado}}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
-      <p *ngIf="clienteSinVisitar.Visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
+      <p *ngIf="clienteSinVisitar.visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
       <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">
         <h2>¡¡¡ CONTADO RIGUROSO !!!</h2>      
       </ion-text>
