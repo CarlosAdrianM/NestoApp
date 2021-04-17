@@ -103,7 +103,7 @@
 
 <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
-  <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)">
+  <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)" [color]="!clienteSinVisitar.Visitado ? '' : 'light'">
     <ion-icon name="information-circle" (click)="seleccionarCliente(clienteSinVisitar.cliente)" color="colorEstado(clienteSinVisitar.estado)" slot="start"></ion-icon>
     <ion-label class="ion-text-wrap">      
       <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
@@ -112,6 +112,7 @@
       <p>Estado: {{clienteSinVisitar.estado}}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
       <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
+      <p *ngIf="clienteSinVisitar.Visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
       <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">
         <h2>¡¡¡ CONTADO RIGUROSO !!!</h2>      
       </ion-text>
