@@ -46,8 +46,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
                   clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                   clone.esSobrePedido = clone.estado != 0;
                   return clone;
-              });
-              this.inicializarDatos(data);
+              });        
+              
               if (data.length === 0) {
                   let alert: any = await this.alertCtrl.create({
                       header: 'Error',
@@ -57,6 +57,17 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
                   await alert.present();
                   await alert.onDidDismiss();
                   this.setFocus();
+              } else {
+                this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+                    async data => {
+                        this.inicializarDatos(data);
+                    },
+                    error => this.errorMessage = <any>error,
+                    async () => {
+                        await loading.dismiss();
+                        this.setFocus();
+                    }
+                )
               }
           },
           async error => {
@@ -64,10 +75,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
               this.errorMessage = <any>error;
               //this.myProductoSearchBar.setFocus();
           },
-          async () => {
-              await loading.dismiss();
-              this.setFocus();
-          }
+
       );
       //this.myProductoSearchBar.setFocus();
   }
@@ -139,7 +147,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
                   });
                   await alert.present();
               } else {
-                  this.inicializarDatosFiltrados(data);
+                this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+                    async data => {
+                        this.inicializarDatosFiltrados(data);
+                    },
+                    error => this.errorMessage = <any>error
+                )
               }
           },
           error => this.errorMessage = <any>error
@@ -155,8 +168,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       return datos.some(tieneCantidad);
   }
 
-  public ponerStocks(): void {
-      this.servicio.ponerStocks(this.datosFiltrados, this.almacen).subscribe(
+  public ponerStocks(ordenar: boolean): void {
+      this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar).subscribe(
           async data => {
               this.datosFiltrados = data;
           },
@@ -164,6 +177,9 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       )
   }
 
+  public soloConStock() {
+    this.datosFiltrados = this.datosFiltrados.filter(d => d.cantidadDisponible > 0);
+  }
 
   get totalPedido(): number {
       // Hay que calcularlo bien

@@ -1,7 +1,7 @@
 <div id="contenedor" scrollY="false">
   <ion-searchbar  #filtro placeholder="Introduzca algún dato del producto" (ionInput)="filtrarBusqueda($event)" (keyup.enter)="fijarFiltroBuscarEnTodos($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
   <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 3" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
-  <ion-button expand="block" *ngIf="datosFiltrados && datosFiltrados.length > 0 && !(datosFiltrados.length > 100)" (click)="ponerStocks()">Cargar Stocks</ion-button>
+  <ion-button expand="block" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="soloConStock()">Solo con stock</ion-button>
   <div id="myFixZone" scrollY="true">
     <ion-list>
       <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="producto.estado == 0 ? '' : 'light'">
@@ -10,7 +10,7 @@
           <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
           <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>
           <p *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00'">Última compra {{producto.fechaUltimaVenta | date:'dd/MM/yy'}}</p>
-          <ion-badge *ngIf="producto.stock > 0" color="success">Stock: {{producto.stock}} und.</ion-badge>
+          <ion-badge *ngIf="producto.cantidadDisponible > 0" color="success">Stock: {{producto.cantidadDisponible}} und.</ion-badge>
         </ion-label>
         <ion-badge *ngIf="producto.fechaUltimaVenta != '0001-01-01T00:00:00' || producto.cantidad || producto.cantidadOferta" [color]="producto.colorStock" slot="end">{{producto.cantidadVendida}} - {{producto.cantidadAbonada}}</ion-badge>
       </ion-item>
