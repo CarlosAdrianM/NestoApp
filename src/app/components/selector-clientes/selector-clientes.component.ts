@@ -51,17 +51,18 @@ export class SelectorClientesComponent extends SelectorBase {
 
       this.servicio.getClientes(filtro).subscribe(
           async data => {
-            await loading.dismiss();
               if (data.length === 0) {
                   let alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No se encuentra ningún cliente que coincida con ' + filtro,
                       buttons: ['Ok'],
                   });
+                  await loading.dismiss();
                   await alert.present();
                   await alert.onDidDismiss();
               } else {
                   this.inicializarDatos(data);
+                  await loading.dismiss();
               }
               this.setFocus();
           },

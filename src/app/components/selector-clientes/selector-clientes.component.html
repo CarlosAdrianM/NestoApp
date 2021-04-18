@@ -1,6 +1,9 @@
 <div id="contenedor">
   <ion-searchbar #barra slot="fixed" placeholder="Introduzca algún dato del cliente" (ionInput)="filtrarBusqueda($event)" (ionClear)="resetearFiltros()" (keyup.enter)="fijarFiltro($event)" (ionFocus)="seleccionarTexto($event)"></ion-searchbar>
-  <ion-badge color="medium" *ngFor="let filtroFijado of filtrosFijados">{{filtroFijado}}</ion-badge>
+  <ion-chip color="medium" *ngFor="let filtroFijado of filtrosFijados" outline="true">
+    <ion-label>{{filtroFijado}}</ion-label>
+    <ion-icon name="close" (click)="quitarFiltro(filtroFijado)"></ion-icon>
+  </ion-chip>
   <div id="myFixZone" scrollY="true">
     <ion-list>
       <ion-item *ngFor="let cliente of datosFiltrados" (click)="seleccionarDato(cliente)">

@@ -51,6 +51,25 @@ export abstract class SelectorBase {
       searchbar.target.select();
   }
 
+  public quitarFiltro(filtro: string): void {
+    filtro = filtro.toUpperCase();
+    if (filtro == this.filtroInicial || this.filtrosFijados.length == 1){
+        this.resetearFiltros();
+    } else {
+        this.filtrosFijados = this.filtrosFijados.filter(f => f != filtro);
+        this.datos = this.datosInicial;
+        this.datosFiltrados = this.datosInicial;
+        for (let filtroPoner of this.filtrosFijados){
+            this.datos = this.aplicarFiltro(this.datos, filtroPoner);
+            this.datosFiltrados = this.datos;
+        }
+    }
+  }
+
+  public quitarTodosLosFiltros() {
+    this.filtrosFijados = [];
+  }
+
   protected aplicarFiltro(datos: any[], filtro: string): any[] {
       return datos.filter(
           f => Object.keys(f).some(
@@ -75,6 +94,10 @@ export abstract class SelectorBase {
       this.datosFiltrados = datos;
       let i: number;
       let posicion: number;
+
+      if(!this.datosInicial) {
+          this.datosInicial = this.datos;
+      }
 
       for (i = 0; i < this.datosFiltrados.length; i++) {
           posicion = this.datosInicial.map(function (e: any): any { return e.producto; }).indexOf(this.datosFiltrados[i].producto);

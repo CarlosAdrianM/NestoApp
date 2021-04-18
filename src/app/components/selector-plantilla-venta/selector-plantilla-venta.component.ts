@@ -40,15 +40,9 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       await loading.present();
 
       this.servicio.getProductos(cliente).subscribe(
-          async data => {
-              data = data.map(function (item): any {
-                  let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
-                  clone.aplicarDescuentoFicha = clone.aplicarDescuento;
-                  clone.esSobrePedido = clone.estado != 0;
-                  return clone;
-              });        
-              
+          async data => {              
               if (data.length === 0) {
+                await loading.dismiss();
                   let alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'Este cliente no tiene histórico de compras',
@@ -60,9 +54,18 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
               } else {
                 this.servicio.ponerStocks(data, this.almacen, false).subscribe(
                     async data => {
+                        data = data.map(function (item): any {
+                            let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                            clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                            clone.esSobrePedido = clone.estado != 0;
+                            return clone;
+                        });                  
                         this.inicializarDatos(data);
                     },
-                    error => this.errorMessage = <any>error,
+                    async error =>{
+                        await loading.dismiss();
+                        this.errorMessage = <any>error
+                    },
                     async () => {
                         await loading.dismiss();
                         this.setFocus();
@@ -137,7 +140,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   }
 
   public buscarEnTodosLosProductos(filtro: any): void {
-      this.filtrosFijados = [];
+      filtro = filtro.toUpperCase();
+      this.quitarTodosLosFiltros();
       this.filtrosFijados.push(filtro);
       this.servicio.buscarProductos(filtro).subscribe(
           async data => {
@@ -151,6 +155,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
               } else {
                 this.servicio.ponerStocks(data, this.almacen, false).subscribe(
                     async data => {
+                        data = data.map(function (item): any {
+                            let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                            clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                            clone.esSobrePedido = clone.estado != 0;
+                            return clone;
+                        });  
                         this.inicializarDatosFiltrados(data);
                     },
                     error => this.errorMessage = <any>error
