@@ -74,7 +74,7 @@
   <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" text-wrap>
     <ion-label class="ion-text-wrap">
       <ion-icon name="contact" slot="start"></ion-icon>
-      <p>{{rapport.Cliente}}</p>
+      <p>{{rapport.Cliente}}/{{rapport.Contacto}}</p>
       <p>
         <ion-badge *ngIf="rapport.Tipo=='T'">Teléfono</ion-badge>
         <ion-badge color="light" *ngIf="rapport.Estado==1">No Contactado</ion-badge>

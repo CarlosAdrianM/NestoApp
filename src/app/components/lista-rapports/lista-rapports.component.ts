@@ -187,8 +187,8 @@ export class ListaRapportsComponent extends SelectorBase {
           async data => {
               if (data.length === 0) {
                   let alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No hay ningún rapport de ese cliente para listar',
+                      header: 'Error',
+                      message: 'No hay ningún rapport de ese cliente para listar',
                       buttons: ['Ok'],
                   });
                   await alert.present();
@@ -274,8 +274,8 @@ export class ListaRapportsComponent extends SelectorBase {
           async data => {
               if (data.length === 0) {
                   let alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No hay ningún código postal sin visitar',
+                      header: 'Error',
+                      message: 'No hay ningún código postal sin visitar',
                       buttons: ['Ok'],
                   });
                   await alert.present();
@@ -310,10 +310,12 @@ export class ListaRapportsComponent extends SelectorBase {
           async data => {
               if (data.length === 0) {
                   let alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No hay ningún cliente sin visitar',
+                      header: 'Error',
+                      message: 'No hay ningún cliente sin visitar',
                       buttons: ['Ok'],
                   });
+                  this.listadoClientesSinVisitar = [];
+                  this.listadoClientesSinVisitarFiltrado = [];
                   await alert.present();
               } else {
                   this.listadoClientesSinVisitar = data;
@@ -385,8 +387,8 @@ export class ListaRapportsComponent extends SelectorBase {
           async data => {
               if (data.length === 0) {
                   let alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No hay ningún rapport que incluya ese texto',
+                      header: 'Error',
+                      message: 'No hay ningún rapport que incluya ese texto',
                       buttons: ['Ok'],
                   });
                   await alert.present();
