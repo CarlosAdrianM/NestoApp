@@ -142,7 +142,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   public buscarEnTodosLosProductos(filtro: any): void {
       filtro = filtro.toUpperCase();
       this.quitarTodosLosFiltros();
-      this.filtrosFijados.push(filtro);
+      this.annadirFiltro(filtro);
       this.servicio.buscarProductos(filtro).subscribe(
           async data => {
               if (data.length === 0) {

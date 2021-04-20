@@ -26,7 +26,7 @@ export abstract class SelectorBase {
           filtro = "";
       }
 
-      if (this.datos) {
+      if (this.datos && filtro) {
           this.datosFiltrados = this.aplicarFiltro(this.datos, filtro);
       }
   }
@@ -39,8 +39,8 @@ export abstract class SelectorBase {
           this.filtrosFijados.push(filtro);
           this.cargarDatos(filtro);
       } else if (filtro === '') {
-          this.filtrosFijados = [];
-          this.filtrosFijados.push(this.filtroInicial);
+          this.quitarTodosLosFiltros();
+          //this.filtrosFijados.push(this.filtroInicial);
           this.datos = this.datosInicial;
           this.datosFiltrados = this.datosInicial;
       } else {
@@ -52,9 +52,12 @@ export abstract class SelectorBase {
   }
 
   public quitarFiltro(filtro: string): void {
+    if (!filtro) {
+        return;
+    }
     filtro = filtro.toUpperCase();
     if (filtro == this.filtroInicial || this.filtrosFijados.length == 1){
-        this.resetearFiltros();
+        this.quitarTodosLosFiltros();
     } else {
         this.filtrosFijados = this.filtrosFijados.filter(f => f != filtro);
         this.datos = this.datosInicial;
@@ -66,8 +69,16 @@ export abstract class SelectorBase {
     }
   }
 
+  public annadirFiltro(filtro: string) {
+    if (!this.filtroInicial) {
+        this.filtroInicial = filtro;
+    }
+    this.filtrosFijados.push(filtro);
+  }
+
   public quitarTodosLosFiltros() {
     this.filtrosFijados = [];
+    this.datosFiltrados = this.datosInicial;
   }
 
   protected aplicarFiltro(datos: any[], filtro: string): any[] {
