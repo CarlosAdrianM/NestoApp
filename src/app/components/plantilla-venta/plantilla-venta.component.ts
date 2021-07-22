@@ -118,6 +118,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           this._clienteSeleccionado = value;
       }
   }
+  private _pedidoPendienteSeleccionado: number;
+  get pedidoPendienteSeleccionado(): number {
+      return this._pedidoPendienteSeleccionado;
+  }
+  set pedidoPendienteSeleccionado(value: number){
+      if (value) {
+          this.textoBotonCrearPedido = "Ampliar en el Pedido " + value.toString();
+      } else {
+          this.textoBotonCrearPedido = "Crear Pedido"
+      }
+      this._pedidoPendienteSeleccionado = value;
+  }
   public productosResumen: any[];
   private _direccionSeleccionada: any;
   private async mostrarAlertaRellenar(value: any) {
@@ -192,6 +204,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
   public almacen: any;
   public indexActivo: number;
   public comprobarCanDeactivate: boolean = false;
+  public textoBotonCrearPedido: string = "Crear Pedido";
+  public listaPedidosPendientes: any;
+  
   
   @ViewChild(SelectorPlantillaVentaComponent)
   public _selectorPlantillaVenta: SelectorPlantillaVentaComponent;
@@ -247,6 +262,21 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     if (this.indexActivo === 2 && indexPrevio === 1) {
         console.log("Resumen");
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+        this.servicio.cargarListaPendientes(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente).subscribe(
+            data => {
+                this.listaPedidosPendientes = data;
+            },
+            async error => {
+                let alert = await this.alertCtrl.create({
+                    header: 'Error',
+                    message: 'No se ha podido comprobar si el cliente tiene pedidos pendientes:\n' + error.ExceptionMessage,
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+            }
+        ),
+        () => {
+        }
         this.ref.detectChanges();
     } else if (this.indexActivo === 4 && indexPrevio === 3) {
         console.log("Finalizar");
@@ -379,48 +409,83 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
   }
 
   public async crearPedido(): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
-          message: 'Creando Pedido...',
-      });
+      let numeroPedido: string;
 
-      await loading.present();
+      if (!this.pedidoPendienteSeleccionado) {
+        let loading: any = await this.loadingCtrl.create({
+            message: 'Creando Pedido...',
+        });  
+        await loading.present();
+        this.servicio.crearPedido(this.prepararPedido()).subscribe(
+            async data => {
+                this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
+                numeroPedido = data.numero;
+                if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
+                  this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido, this.clienteSeleccionado.cliente.trim()).subscribe(
+                      d => {
+                          this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
+                      },
+                      e => {
+                          console.log(e);
+                      }
+                  )
+                }
+                let alert = await this.alertCtrl.create({
+                    header: 'Creado',
+                    message: 'Pedido ' + numeroPedido + ' creado correctamente',
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+                this.reinicializar();
+            },
+            async error => {
+                let alert = await this.alertCtrl.create({
+                    header: 'Error',
+                    subHeader: 'No se ha podido crear el pedido',
+                    message: error.ExceptionMessage,
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+                await loading.dismiss();
+            },
+            async () => {
+                await loading.dismiss();
+            }
+        );
+      } else {
+        let loading: any = await this.loadingCtrl.create({
+            message: 'Ampliando Pedido...',
+        });  
+        await loading.present();
+        this.servicio.unirPedidos(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado, this.prepararPedido()).subscribe(
+            async data => {
+                this.firebaseAnalytics.logEvent("plantilla_venta_ampliar_pedido", {pedido: data.numero});
+                numeroPedido = data.numero;
+                let alert = await this.alertCtrl.create({
+                    header: 'Ampliado',
+                    message: 'Pedido ' + numeroPedido + ' ampliado correctamente',
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+                this.reinicializar();
+            },
+            async error => {
+                let alert = await this.alertCtrl.create({
+                    header: 'Error',
+                    subHeader: 'No se ha podido ampliar el pedido',
+                    message: error.ExceptionMessage,
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+                await loading.dismiss();
+            },
+            async () => {
+                await loading.dismiss();
+            }
+        );
+      }
 
-      this.servicio.crearPedido(this.prepararPedido()).subscribe(
-          async data => {
-              this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
-              let numeroPedido: string = data.numero;
-              if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
-                this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido, this.clienteSeleccionado.cliente.trim()).subscribe(
-                    d => {
-                        this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
-                    },
-                    e => {
-                        console.log(e);
-                    }
-                )
-              }
-              let alert = await this.alertCtrl.create({
-                  header: 'Creado',
-                  message: 'Pedido ' + numeroPedido + ' creado correctamente',
-                  buttons: ['Ok'],
-              });
-              await alert.present();
-              this.reinicializar();
-          },
-          async error => {
-              let alert = await this.alertCtrl.create({
-                  header: 'Error',
-                  subHeader: 'No se ha podido crear el pedido',
-                  message: error.ExceptionMessage,
-                  buttons: ['Ok'],
-              });
-              await alert.present();
-              await loading.dismiss();
-          },
-          async () => {
-              await loading.dismiss();
-          }
-      );
+      
   }
 
   public hayAlgunProducto(): boolean {

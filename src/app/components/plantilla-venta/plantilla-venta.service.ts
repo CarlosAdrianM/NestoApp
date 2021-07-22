@@ -70,6 +70,34 @@ export class PlantillaVentaService {
       )
   }
 
+  cargarListaPendientes(empresa: any, cliente: any) {
+    var url = Configuracion.API_URL + "/PlantillaVentas/PedidosPendientes";
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('clientePendientes', cliente);
+
+    return this.http.get(url, { params: params })
+      .pipe(
+        catchError(this.handleError)
+      )
+  }
+
+  public unirPedidos(empresa: string, numeroPedidoOriginal: number, pedidoAmpliacion: any): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+    var url = Configuracion.API_URL + "/PedidosVenta/UnirPedidos";
+    var pedido = {
+      "Empresa" : empresa,
+      "NumeroPedidoOriginal" : numeroPedidoOriginal.toString(),
+      "PedidoAmpliacion" : pedidoAmpliacion
+    }
+    
+    return this.http.post(url, JSON.stringify(pedido), { headers: headers })
+      .pipe(
+        catchError(this.handleError)
+      )
+}
+
 
   private handleError(error: HttpErrorResponse): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure

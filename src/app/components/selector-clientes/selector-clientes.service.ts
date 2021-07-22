@@ -28,7 +28,7 @@ export class SelectorClientesService {
         .pipe(
           catchError(this.handleError)
         )
-      return this.cache.loadFromObservable(cacheKey, request, groupKey);
+      return this.cache.loadFromObservable(cacheKey, request, groupKey, 60);
   }
 
   private handleError(error: HttpErrorResponse): Observable<any> {

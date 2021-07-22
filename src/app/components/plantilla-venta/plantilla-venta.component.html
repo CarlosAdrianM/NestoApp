@@ -131,7 +131,14 @@
             <ion-label slot="start">Portes</ion-label>
             <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 
         </ion-item>
-        <ion-button expand="block" [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif && !esPresupuesto" (click)="crearPedido()">Crear Pedido</ion-button>
+        <ion-item *ngIf="listaPedidosPendientes && listaPedidosPendientes.length > 0">
+            <ion-label slot="start">Ampliar en pedido</ion-label>
+            <ion-select slot="end"  [(ngModel)]="pedidoPendienteSeleccionado">
+                <ion-select-option *ngFor="let pedido of listaPedidosPendientes" value="{{pedido}}">{{pedido}}</ion-select-option>
+                <ion-select-option value="">Crear Pedido</ion-select-option>
+            </ion-select>
+        </ion-item>
+        <ion-button expand="block" [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif && !esPresupuesto" (click)="crearPedido()">{{textoBotonCrearPedido}}</ion-button>
       </ion-slide>
   </ion-slides>
 </ion-content>
