@@ -500,6 +500,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
       this.fechaEntrega = this.fechaMinima;
       this.slider.slideTo(0);
       this.slider.lockSwipeToNext(true);
+      this.pedidoPendienteSeleccionado = undefined;
+      this.listaPedidosPendientes = undefined;
   }
       
   get totalPedido(): number {
