@@ -112,7 +112,7 @@
       },
       "cordova-plugin-ionic": {
         "APP_ID": "4652a4e8",
-        "CHANNEL_NAME": "Production",
+        "CHANNEL_NAME": "Master",
         "UPDATE_METHOD": "auto",
         "MAX_STORE": "2",
         "MIN_BACKGROUND_DURATION": "30",
