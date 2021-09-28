@@ -5,7 +5,7 @@
             <ion-title>Menu</ion-title>
         </ion-toolbar>
     </ion-header>
-  
+    
     <ion-content>
         <ion-list *ngFor="let page of pages">
           <ion-menu-toggle auto-hide="true">
@@ -15,6 +15,7 @@
             </ion-item>
           </ion-menu-toggle>
         </ion-list>
+        <app-alerts></app-alerts>
     </ion-content>
   </ion-menu>
   

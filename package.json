@@ -1,6 +1,6 @@
 {
   "name": "nestoapp",
-  "version": "2.2.14",
+  "version": "2.3.0",
   "author": "Grupo Nueva Visión",
   "homepage": "http://www.nuevavision.es/",
   "scripts": {
@@ -21,6 +21,8 @@
     "@angular/platform-browser-dynamic": "~10.0.0",
     "@angular/router": "~10.0.0",
     "@auth0/angular-jwt": "^5.0.1",
+    "@azure/msal-angular": "^2.0.3",
+    "@azure/msal-browser": "^2.17.0",
     "@ionic-native/app-version": "^5.29.0",
     "@ionic-native/core": "^5.0.0",
     "@ionic-native/fcm": "^5.28.0",
@@ -35,6 +37,7 @@
     "@ionic-native/status-bar": "^5.0.0",
     "@ionic/angular": "^5.0.0",
     "@ionic/storage": "^2.3.1",
+    "@microsoft/microsoft-graph-client": "^3.0.0",
     "cordova-android": "^8.1.0",
     "cordova-plugin-add-swift-support": "^2.0.2",
     "cordova-plugin-device": "^2.0.2",
@@ -67,6 +70,7 @@
     "@angular/compiler-cli": "~10.0.0",
     "@angular/language-service": "~10.0.0",
     "@ionic/angular-toolkit": "^2.3.0",
+    "@microsoft/microsoft-graph-types": "^2.6.0",
     "@types/jasmine": "~3.5.0",
     "@types/jasminewd2": "~2.0.3",
     "@types/node": "^12.11.1",

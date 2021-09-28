@@ -2,8 +2,11 @@ import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { AlertsService } from 'src/app/alerts.service';
+import { AuthService } from 'src/app/auth.service';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { Event } from '@microsoft/microsoft-graph-types';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +15,10 @@ export class RapportService {
 
   static ngInjectableDef = undefined;
 
-  constructor(private http: HttpClient, private usuario: Usuario) {    }
+  constructor(private http: HttpClient, 
+    private usuario: Usuario, 
+    private authService: AuthService,
+    private alertsService: AlertsService) {    }
 
   private _baseUrl: string = Configuracion.API_URL + '/SeguimientosClientes';
   private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
@@ -66,6 +72,22 @@ export class RapportService {
         .pipe(
           catchError(this.handleError)
         )
+  }
+
+  async addEventToCalendar(newEvent: microsoftgraph.Event): Promise<void> {
+    if (!this.authService.graphClient) {
+      this.alertsService.addError('Graph client is not initialized.');
+      return undefined;
+    }
+  
+    try {
+      // POST /me/events
+      await this.authService.graphClient
+        .api('/me/events')
+        .post(newEvent);
+    } catch (error) {
+      throw Error(JSON.stringify(error, null, 2));
+    }
   }
 
   private handleError(error: HttpErrorResponse): Observable<any> {

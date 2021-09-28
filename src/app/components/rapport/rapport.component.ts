@@ -6,6 +6,9 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { RapportService } from './rapport.service';
+import { AuthService } from '../../auth.service';
+import { User } from '../../user';
+import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 
 @Component({
   selector: 'app-rapport',
@@ -20,6 +23,7 @@ export class RapportComponent {
   dejarDeVisitar: boolean = false;
   private vendedorEstetica: string;
   private vendedorPeluqueria: string;
+  public fechaCita: string;
 
   constructor(
     private servicio: RapportService, 
@@ -29,7 +33,8 @@ export class RapportComponent {
     public events: Events, 
     private nav: NavController,
     private route: ActivatedRoute,
-    private firebaseAnalytics: FirebaseAnalytics
+    private firebaseAnalytics: FirebaseAnalytics,
+    private authService: AuthService
     ) {
       this.rapport = this.route.snapshot.queryParams.rapport;
       this.numeroCliente = this.rapport.Cliente;
@@ -221,6 +226,50 @@ export class RapportComponent {
       return (this.rapport.Id == null || this.rapport.Id == 0) && this.vendedorEstetica == this.vendedorPeluqueria && this.vendedorEstetica == this.usuario.vendedor;
   }
 
+  public async crearCita() {
+    const timeZone = this.authService.user?.timeZone ?? 'UTC';
+    const graphEvent: MicrosoftGraph.Event = {
+        subject: "Aviso del cliente " + this.rapport.Cliente.trim() + "/" + this.rapport.Contacto.trim(),
+        start: {
+          dateTime: this.fechaCita,
+          timeZone: timeZone
+        },
+        end: {
+          dateTime: this.fechaCita,
+          timeZone: timeZone
+        }
+      };
+    
+      // If there is a body, add it as plain text
+      if (this.rapport.Comentarios && this.rapport.Comentarios.length > 0) {
+        graphEvent.body = {
+          contentType: 'text',
+          content: this.rapport.Comentarios.trim()
+        };
+      }
+
+      graphEvent.isReminderOn = true;
+      graphEvent.reminderMinutesBeforeStart = 0;
+
+      try {
+        this.servicio.addEventToCalendar(graphEvent);
+        let alert: any = await this.alertCtrl.create({
+            header: 'Aviso',
+            message: 'Se ha creado correctamente la cita del cliente ' + this.rapport.Cliente.trim(),
+            buttons: ['Ok'],
+        });
+        await alert.present();
+      } catch (error) {
+        let alert: any = await this.alertCtrl.create({
+            header: 'Error',
+            subHeader: error,
+            message: 'Se ha producido un error al crear la cita del cliente ' + this.rapport.Cliente.trim(),
+            buttons: ['Ok'],
+        });
+        await alert.present();
+      }
+  }
+
   public colorEstado(estado: number): string {
       if (estado == 0 || estado == 9) {
           return "success";
@@ -233,5 +282,22 @@ export class RapportComponent {
       }
 
       return "default";
+  }
+
+  // Is a user logged in?
+  get authenticated(): boolean {
+    return this.authService.authenticated;
+  }
+  // The user
+  get user(): User | undefined {
+    return this.authService.user;
+  }
+
+  async signIn(): Promise<void> {
+    await this.authService.signIn();
+  }
+
+  signOut(): void {
+    this.authService.signOut();
   }
 }

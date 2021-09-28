@@ -94,6 +94,22 @@
       </ion-select>
     </ion-item>
 
+    <div *ngIf="authenticated; then welcomeUser else signInPrompt"></div>
+    <ng-template #welcomeUser>
+      <ion-item>
+        <ion-label>Fecha Cita</ion-label>
+        <ion-datetime displayFormat="DD MMM YYYY HH:mm" display-timezone="Europe/Paris" [(ngModel)]="fechaCita" name="FechaCita"></ion-datetime>
+      </ion-item>
+      <ion-item>
+        <ion-button (click)="crearCita()" [disabled]="!fechaCita || !rapport || !rapport.Comentarios || !rapport.Cliente || !rapport.Contacto">Crear Cita ({{ user != null ? user.displayName : '' }})</ion-button>
+      </ion-item>
+    </ng-template>
+    <ng-template #signInPrompt>
+      <ion-item>
+        <ion-button (click)="signIn()">Iniciar sesión Office</ion-button> 
+      </ion-item>
+    </ng-template>
+
     <ion-item>
       <ion-label for="Usuario">Usuario</ion-label>
       <ion-input type="text" class="form-control" id="Usuario" required

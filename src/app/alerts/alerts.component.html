@@ -1,0 +1,6 @@
+<div *ngFor="let alert of alertsService.alerts" class="ion-padding">
+  <!--ngb-alert type="{{alert.type}}" (close)="close(alert)"-->
+  <ion-item color="danger">{{alert.message}}</ion-item>
+  <pre *ngIf="alert.debug" class="alert-pre border bg-light p-2 mt-2"><code>{{alert.debug}}</code></pre>
+  <!--/ngb-alert-->
+</div>

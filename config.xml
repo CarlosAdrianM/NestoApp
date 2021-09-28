@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.ionicframework.nestoapp958858" version="2.2.14" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.ionicframework.nestoapp958858" version="2.3.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Nesto</name>
     <description>Aplicación móvil para acceder a Nesto</description>
     <author email="nuevavision@nuevavision.es" href="http://www.nuevavision.es/">Grupo Nueva Visión</author>
@@ -106,7 +106,7 @@
     <plugin name="cordova-plugin-ionic-keyboard" spec="^2.2.0" />
     <plugin name="cordova-plugin-ionic" spec="^5.4.7">
         <variable name="APP_ID" value="4652a4e8" />
-        <variable name="CHANNEL_NAME" value="Production" />
+        <variable name="CHANNEL_NAME" value="Master" />
         <variable name="UPDATE_METHOD" value="auto" />
         <variable name="MAX_STORE" value="2" />
         <variable name="MIN_BACKGROUND_DURATION" value="30" />

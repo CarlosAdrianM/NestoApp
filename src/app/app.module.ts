@@ -53,11 +53,35 @@ import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "ionic-cache";
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AppVersion } from '@ionic-native/app-version/ngx';
-
+import { IPublicClientApplication,
+         PublicClientApplication,
+         BrowserCacheLocation } from '@azure/msal-browser';
+import { MsalModule,
+         MsalService,
+         MSAL_INSTANCE } from '@azure/msal-angular';
+import { OAuthSettings } from '../oauth';
+import { AlertsComponent } from '../app/alerts/alerts.component';
 
 registerLocaleData(localeEs);
 
 let storage = new Storage({}, {});
+
+let msalInstance: IPublicClientApplication | undefined = undefined;
+
+export function MSALInstanceFactory(): IPublicClientApplication {
+  msalInstance = msalInstance ?? new PublicClientApplication({
+    auth: {
+      clientId: OAuthSettings.appId,
+      redirectUri: OAuthSettings.redirectUri,
+      postLogoutRedirectUri: OAuthSettings.redirectUri
+    },
+    cache: {
+      cacheLocation: BrowserCacheLocation.LocalStorage,
+    }
+  });
+
+  return msalInstance;
+}
 
 
 @NgModule({
@@ -86,7 +110,8 @@ let storage = new Storage({}, {});
     SelectorPlantillaVentaComponent,
     SelectorPlantillaVentaDetalleComponent,
     PlantillaVentaComponent,
-    UltimasVentasProductoClienteComponent
+    UltimasVentasProductoClienteComponent,
+    AlertsComponent
   ],
   entryComponents: [],
   imports: [
@@ -98,7 +123,8 @@ let storage = new Storage({}, {});
     CommonModule,
     FormsModule,
     NgxIonicImageViewerModule,
-    CacheModule.forRoot({ keyPrefix: 'NestoApp' })
+    CacheModule.forRoot({ keyPrefix: 'NestoApp' }),
+    MsalModule
   ],
   providers: [
     StatusBar,
@@ -116,7 +142,12 @@ let storage = new Storage({}, {});
     Keyboard,
     CanDeactivateGuard,
     FirebaseAnalytics,
-    AppVersion
+    AppVersion,
+    {
+      provide: MSAL_INSTANCE,
+      useFactory: MSALInstanceFactory
+    },
+    MsalService
     //FCM
   ],
   bootstrap: [AppComponent]
