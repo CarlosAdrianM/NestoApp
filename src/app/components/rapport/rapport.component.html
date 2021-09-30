@@ -103,6 +103,9 @@
       <ion-item>
         <ion-button (click)="crearCita()" [disabled]="!fechaCita || !rapport || !rapport.Comentarios || !rapport.Cliente || !rapport.Contacto">Crear Cita ({{ user != null ? user.displayName : '' }})</ion-button>
       </ion-item>
+      <ion-item>
+        <ion-button (click)="signOut()">Cerrar sesión</ion-button>
+      </ion-item>
     </ng-template>
     <ng-template #signInPrompt>
       <ion-item>

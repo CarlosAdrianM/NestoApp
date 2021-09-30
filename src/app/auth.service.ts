@@ -7,6 +7,7 @@ import { User } from './user';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
+import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,8 @@ export class AuthService {
 
   constructor(
     private msalService: MsalService,
-    private alertsService: AlertsService) {
+    private alertsService: AlertsService,
+    private iab: InAppBrowser) {
   
     const accounts = this.msalService.instance.getAllAccounts();
     this.authenticated = accounts.length > 0;
@@ -31,6 +33,26 @@ export class AuthService {
 
   // Prompt the user to sign in and
   // grant consent to the requested permission scopes
+  async signIn(): Promise<void> {
+    const browser = this.iab.create('https://www.microsoft.com/');
+    browser.executeScript({ code: "\
+      const result = await this.msalService\
+        .loginPopup(OAuthSettings)\
+        .toPromise()\
+        .catch((reason) => {\
+          this.alertsService.addError('Login failed',\
+            JSON.stringify(reason, null, 2));\
+        });\
+      if (result) {\
+        this.msalService.instance.setActiveAccount(result.account);\
+        this.authenticated = true;\
+        this.user = await this.getUser();\
+      }"
+    }); 
+    //browser.close();
+  }
+
+  /*
   async signIn(): Promise<void> {
     const result = await this.msalService
       .loginPopup(OAuthSettings)
@@ -46,7 +68,18 @@ export class AuthService {
       this.user = await this.getUser();
     }
   }
+  */
+ /*
+  async signIn(): Promise<void> {
+    await this.msalService.instance.handleRedirectPromise();
 
+    const accounts = this.msalService.instance.getAllAccounts();
+    if (accounts.length === 0) {
+        // No user signed in
+        this.msalService.instance.loginRedirect();
+    }
+  }
+  */
   // Sign out
   async signOut(): Promise<void> {
     await this.msalService.logout().toPromise();

@@ -61,6 +61,7 @@ import { MsalModule,
          MSAL_INSTANCE } from '@azure/msal-angular';
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
+import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
 
 registerLocaleData(localeEs);
 
@@ -147,7 +148,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       provide: MSAL_INSTANCE,
       useFactory: MSALInstanceFactory
     },
-    MsalService
+    MsalService,
+    InAppBrowser
     //FCM
   ],
   bootstrap: [AppComponent]
