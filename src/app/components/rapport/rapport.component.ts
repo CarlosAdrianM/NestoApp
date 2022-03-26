@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { NavParams, AlertController, LoadingController, NavController } from '@ionic/angular';
@@ -9,6 +9,12 @@ import { RapportService } from './rapport.service';
 import { AuthService } from '../../auth.service';
 import { User } from '../../user';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
+/*
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
+import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
+import { InteractionStatus } from '@azure/msal-browser';
+*/
 
 @Component({
   selector: 'app-rapport',
@@ -25,6 +31,11 @@ export class RapportComponent {
   private vendedorPeluqueria: string;
   public fechaCita: string;
 
+  /*
+  private readonly _destroying$ = new Subject<void>();
+
+
+  */
   constructor(
     private servicio: RapportService, 
     private alertCtrl: AlertController, 
@@ -34,7 +45,8 @@ export class RapportComponent {
     private nav: NavController,
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
-    private authService: AuthService
+    private authService: AuthService,
+    //private msalBroadcastService: MsalBroadcastService
     ) {
       this.rapport = this.route.snapshot.queryParams.rapport;
       this.numeroCliente = this.rapport.Cliente;
@@ -52,6 +64,19 @@ export class RapportComponent {
           this.inputCliente.setFocus();
       },500)
   }
+  
+  /*
+  ngOnInit(): void {
+    this.msalBroadcastService.inProgress$
+      .pipe(
+        filter((status: InteractionStatus) => status === InteractionStatus.None),
+        takeUntil(this._destroying$)
+      )
+      .subscribe(() => {
+        this.authService.checkAndSetActiveAccount();
+      })
+  }
+  */
 
   public leerCliente(cliente: string, contacto: string): void {
       this.servicio.getCliente(cliente, contacto).subscribe(
@@ -300,4 +325,11 @@ export class RapportComponent {
   signOut(): void {
     this.authService.signOut();
   }
+
+  /*
+  ngOnDestroy(): void {
+    this._destroying$.next(null);
+    this._destroying$.complete();
+  }
+  */
 }
