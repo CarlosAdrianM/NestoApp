@@ -28,6 +28,7 @@
       <ion-select name="tipo" [(ngModel)]="rapport.Tipo">
         <ion-select-option value="V" selected="rapport.Tipo == 'V'">Visita</ion-select-option>
         <ion-select-option value="T" selected="rapport.Tipo == 'T'">Teléfono</ion-select-option>
+        <ion-select-option value="W" selected="rapport.Tipo == 'W'">WhatsApp</ion-select-option>
       </ion-select>
     </ion-item>
 
@@ -94,6 +95,7 @@
       </ion-select>
     </ion-item>
 
+    <!--
     <div *ngIf="authenticated; then welcomeUser else signInPrompt"></div>
     <ng-template #welcomeUser>
       <ion-item>
@@ -112,7 +114,7 @@
         <ion-button (click)="signIn()">Iniciar sesión Office</ion-button> 
       </ion-item>
     </ng-template>
-
+    -->
     <ion-item>
       <ion-label for="Usuario">Usuario</ion-label>
       <ion-input type="text" class="form-control" id="Usuario" required

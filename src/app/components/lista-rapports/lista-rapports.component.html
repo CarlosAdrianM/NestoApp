@@ -85,6 +85,7 @@
         <ion-badge color="tertiary" *ngIf="rapport.Aparatos">Aparatos</ion-badge>
         <ion-badge color="danger" *ngIf="rapport.GestionAparatos">Gestión Aparatos</ion-badge>
         <ion-badge color="secondary" *ngIf="rapport.PrimeraVisita">Primera Visita</ion-badge>
+        <ion-icon *ngIf="rapport.Tipo=='W'" name="logo-whatsapp"></ion-icon>
       </p>
       <div [ngSwitch]="segmentoRapports">
         <div *ngSwitchCase="'fecha'">

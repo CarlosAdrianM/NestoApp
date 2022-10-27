@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
-import { InteractionType, NavigationClient, PublicClientApplication } from '@azure/msal-browser';
+import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
+import { AuthenticationResult, EventMessage, EventType, InteractionType, NavigationClient, PublicClientApplication } from '@azure/msal-browser';
 import { AlertsService } from './alerts.service';
 import { OAuthSettings } from '../oauth';
 import { User } from './user';
@@ -8,6 +8,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
+import { filter } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
@@ -19,6 +20,7 @@ export class AuthService {
 
   constructor(
     private msalService: MsalService,
+    private msalBroadcastService: MsalBroadcastService,
     private alertsService: AlertsService,
     private iab: InAppBrowser
     ) {
@@ -121,6 +123,7 @@ export class AuthService {
     const navigationClient = new CustomNavigationClient();
     this.msalService.instance.setNavigationClient(navigationClient);
     
+    /*
     this.msalService.instance.handleRedirectPromise().then((authResult: any) => {
       console.debug('AuthResult ---->', authResult);
       if (authResult) { 
@@ -133,6 +136,32 @@ export class AuthService {
         this.msalService.instance.loginRedirect();
       }
     });
+    */
+    this.msalBroadcastService.msalSubject$
+    //.pipe(
+    //  filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
+    //)
+    .subscribe((result: EventMessage) => {
+      console.log('--> login success 1: ', result);
+      const payload = result.payload as AuthenticationResult;
+      this.msalService.instance.setActiveAccount(payload.account);
+
+      // custom service to handle authentication result within application
+      /*
+      this.azureAuthService.handleAuthentication(payload) 
+        .pipe(
+          tap(() => {
+            console.log('--> login success 2: ');
+            this.router.navigate(['/home']);
+          })
+        )
+        .subscribe();
+        */
+    },
+    (error) => {
+      console.log("error");
+    });
+    
 
     /*
     const result = await this.msalService
