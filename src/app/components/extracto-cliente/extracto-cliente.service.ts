@@ -50,7 +50,7 @@ export class ExtractoClienteService {
 
   public cargarPedidos(cliente: any): Observable<any> {
       let params: HttpParams = new HttpParams();
-      if (this.usuario.vendedor) {
+      if (!this.usuario.permitirVerTodosLosPedidos) {
           params = params.append('vendedor', this.usuario.vendedor);
       } else {
           params = params.append('vendedor', '');

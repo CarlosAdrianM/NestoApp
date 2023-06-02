@@ -31,7 +31,7 @@ export class ProductoService {
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);
     params = params.append('id', id);
-    if (this.usuario.vendedor) {
+    if (!this.usuario.permitirVerClientesTodosLosVendedores) {
       params = params.append('vendedor', this.usuario.vendedor);
     } else {
       params = params.append('vendedor', '');

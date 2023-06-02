@@ -16,6 +16,8 @@ export class Usuario {
     public almacen: string = 'ALG';
     public delegacion: string = 'ALG';
     public formaVenta: string = 'DIR';
-    public vendedor: string;
+    public vendedor: string = "Sin Vendedor";
     public ultimoTipoRapport: string = 'V';
+    public permitirVerTodosLosPedidos: boolean = false;
+    public permitirVerClientesTodosLosVendedores: boolean = false;
 }

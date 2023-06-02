@@ -24,7 +24,7 @@ export class ListaRapportsService {
           fecha = fecha.slice(0, -1); //si acaba en Z la quitamos
       }
       let params: HttpParams = new HttpParams();
-      if (this.usuario.vendedor) {
+      if (!this.usuario.permitirVerTodosLosPedidos) {
           params = params.append('vendedor', this.usuario.vendedor);
       } else {
           params = params.append('vendedor','');
@@ -90,7 +90,7 @@ export class ListaRapportsService {
 
   public cargarRapportsFiltrados(filtroBuscar: string): Observable<any> {
       let params: HttpParams = new HttpParams();
-      if (this.usuario.vendedor) {
+      if (!this.usuario.permitirVerTodosLosPedidos) {
           params = params.append('vendedor', this.usuario.vendedor);
       } else {
           params = params.append('vendedor','');

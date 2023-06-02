@@ -27,10 +27,10 @@ export class ListaPedidosVentaService {
   
   public cargarLista(mostrarPresupuestos: boolean): Observable<any> {
       let params: HttpParams = new HttpParams();
-      if (this.usuario.vendedor) {
-          params = params.append('vendedor', this.usuario.vendedor);
+      if (this.usuario.permitirVerTodosLosPedidos) {
+        params = params.append('vendedor', '');
       } else {
-          params = params.append('vendedor', '');
+        params = params.append('vendedor', this.usuario.vendedor);          
       }
       if (mostrarPresupuestos) {
           params = params.append('estado', "-3");

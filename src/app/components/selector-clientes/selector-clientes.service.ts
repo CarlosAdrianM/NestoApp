@@ -18,7 +18,7 @@ export class SelectorClientesService {
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('filtro', filtro);
-      if (this.usuario.vendedor && this.usuario.vendedor.trim() != "") {
+      if (!this.usuario.permitirVerClientesTodosLosVendedores) {
           params = params.append('vendedor', this.usuario.vendedor);
       }
 

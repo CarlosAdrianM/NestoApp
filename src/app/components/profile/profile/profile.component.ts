@@ -185,7 +185,28 @@ private cargarParametros(): void {
             this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
+    
+    this.parametros.leer('PermitirVerTodosLosPedidos').subscribe(
+        data => {
+            self.usuario.permitirVerTodosLosPedidos = data == "1";
+        },
+        error => {
+            self.usuario.permitirVerTodosLosPedidos = false;
+            console.log('No se ha podido cargar el parámetro PermitirVerTodosLosPedidos');
+            this.error = '¡Ups! Parece que no tienes conexión';
+        }
+    );
 
+    this.parametros.leer('PermitirVerClientesTodosLosVendedores').subscribe(
+        data => {
+            self.usuario.permitirVerClientesTodosLosVendedores = data == "1";
+        },
+        error => {
+            self.usuario.permitirVerClientesTodosLosVendedores = false;
+            console.log('No se ha podido cargar el parámetro PermitirVerClientesTodosLosVendedores');
+            this.error = '¡Ups! Parece que no tienes conexión';
+        }
+    );
 }
 
     async olvideMiContrasenna(correo: string) {
