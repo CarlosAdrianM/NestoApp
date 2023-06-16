@@ -75,11 +75,11 @@ export class LineaVenta {
     }
 
     public copiarDatosPedido(pedido: any): void {
-        this.almacen = pedido.LineasPedido[0].almacen;
-        this.delegacion = pedido.LineasPedido[0].delegacion;
-        this.fechaEntrega = pedido.LineasPedido[0].fechaEntrega;
-        this.formaVenta = pedido.LineasPedido[0].formaVenta;
-        this.iva = pedido.LineasPedido[0].iva;  
+        this.almacen = pedido.Lineas[0].almacen;
+        this.delegacion = pedido.Lineas[0].delegacion;
+        this.fechaEntrega = pedido.Lineas[0].fechaEntrega;
+        this.formaVenta = pedido.Lineas[0].formaVenta;
+        this.iva = pedido.Lineas[0].iva;  
         this.estado = 1;
         this.picking = 0;  
     }

@@ -70,7 +70,7 @@
       </div>
       <div *ngSwitchCase="'lineas'">
           <ion-list>
-              <ion-item-sliding *ngFor="let linea of pedido.LineasPedido">
+              <ion-item-sliding *ngFor="let linea of pedido.Lineas">
                   <ion-item-options side="end">
                       <button ion-button (click)="borrarLinea(linea)" color="danger">
                           <ion-icon name="trash"></ion-icon>

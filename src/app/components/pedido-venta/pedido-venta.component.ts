@@ -30,7 +30,7 @@ export class PedidoVentaComponent  {
   }
   set fechaEntrega(value: string) {
       if (this._fechaEntrega) {
-          this.pedido.LineasPedido.forEach(l => {
+          this.pedido.Lineas.forEach(l => {
               if (l.picking == 0 && (l.estado == -1 || l.estado == 1)) {
                   l.fechaEntrega = new Date(value)
               }
@@ -66,14 +66,14 @@ export class PedidoVentaComponent  {
           data => {
               this.firebaseAnalytics.logEvent("cargar_pedido", {empresa: empresa, pedido: numero});
               this.pedido = data as PedidoVenta;
-              for (let i = 0; i < this.pedido.LineasPedido.length; i++) {
-                  this.pedido.LineasPedido[i] = new LineaVenta(this.pedido.LineasPedido[i]);
+              for (let i = 0; i < this.pedido.Lineas.length; i++) {
+                  this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
               }
               this.iva = this.pedido.iva;
               this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
               this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
-              if (this.pedido.LineasPedido && this.pedido.LineasPedido.length > 0) {
-                  this.fechaEntrega = this.pedido.LineasPedido[0].fechaEntrega.toString();
+              if (this.pedido.Lineas && this.pedido.Lineas.length > 0) {
+                  this.fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
               }
               this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
                   data => {
@@ -138,7 +138,7 @@ export class PedidoVentaComponent  {
       linea.copiarDatosPedido(this.pedido);
       linea.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
       this.abrirLinea(linea);
-      this.pedido.LineasPedido = this.pedido.LineasPedido.concat(linea);
+      this.pedido.Lineas = this.pedido.Lineas.concat(linea);
   }
 
   public async borrarLinea(linea: LineaVenta) {
@@ -150,7 +150,7 @@ export class PedidoVentaComponent  {
                   text: 'Sí',
                   handler: () => {
                       this.firebaseAnalytics.logEvent("pedido_venta_borrar_linea", {pedido: this.pedido.numero, linea:linea.id});
-                      this.pedido.LineasPedido = this.pedido.LineasPedido.filter(obj => obj !== linea);
+                      this.pedido.Lineas = this.pedido.Lineas.filter(obj => obj !== linea);
                   }
               },
               {

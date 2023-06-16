@@ -364,7 +364,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           'servirJunto': this.direccionSeleccionada.servirJunto,
           'EsPresupuesto': this.esPresupuesto,
           'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
-          'LineasPedido': [],
+          'Lineas': [],
       };
 
       let nuevaLinea: any = {};
@@ -392,7 +392,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
               'formaVenta': this.usuario.formaVenta,
               'oferta': ofertaLinea === 0 ? null : ofertaLinea,
           };
-          pedido.LineasPedido.push(nuevaLinea);
+          pedido.Lineas.push(nuevaLinea);
 
           linea.cantidadOferta = +linea.cantidadOferta;
           if (linea.cantidadOferta) {
@@ -400,7 +400,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
               lineaPedidoOferta.cantidad = linea.cantidadOferta;
               lineaPedidoOferta.precio = 0;
               lineaPedidoOferta.oferta = nuevaLinea.oferta;
-              pedido.LineasPedido.push(lineaPedidoOferta);
+              pedido.Lineas.push(lineaPedidoOferta);
           }
       }
 
