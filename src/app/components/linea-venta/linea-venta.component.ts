@@ -63,8 +63,8 @@ constructor(
                   });
                   await alert.present();
               } else {
-                  this.firebaseAnalytics.logEvent("cambiar_producto", {productoAnterior: this.linea.producto, productoNuevo: nuevoProducto});
-                  this.linea.producto = nuevoProducto;
+                  this.firebaseAnalytics.logEvent("cambiar_producto", {productoAnterior: this.linea.Producto, productoNuevo: nuevoProducto});
+                  this.linea.Producto = nuevoProducto;
                   this.linea.precio = data.precio;
                   this.linea.texto = data.nombre;
                   this.linea.aplicarDescuento = data.aplicarDescuento;
@@ -83,8 +83,8 @@ constructor(
   }
 
   public abrirProducto(): void {
-    this.firebaseAnalytics.logEvent("abrir_producto", {producto: this.linea.producto});
-    this.nav.navigateForward('producto', { queryParams: { empresa: "1", producto: this.linea.producto }});
+    this.firebaseAnalytics.logEvent("abrir_producto", {producto: this.linea.Producto});
+    this.nav.navigateForward('producto', { queryParams: { empresa: "1", producto: this.linea.Producto }});
   }
 
   public seleccionarTexto(evento: any): void {

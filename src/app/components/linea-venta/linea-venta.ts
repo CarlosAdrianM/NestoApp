@@ -15,7 +15,7 @@ export class LineaVenta {
             this.oferta = linea.oferta;
             this.picking = linea.picking;
             this.precio = linea.precio;
-            this.producto = linea.producto;
+            this.Producto = linea.Producto;
             this.texto = linea.texto;
             this.tipoLinea = linea.tipoLinea;
             this.usuario = linea.usuario;
@@ -32,7 +32,7 @@ export class LineaVenta {
             this.oferta = null;
             this.picking = 0;
             this.precio = 0;
-            this.producto = "";
+            this.Producto = "";
             this.texto = "";
             this.tipoLinea = 1;
             this.vistoBueno = false;
@@ -55,7 +55,7 @@ export class LineaVenta {
     public oferta: number;
     public picking: number;
     public precio: number;
-    public producto: string;
+    public Producto: string;
     public texto: string;
     public tipoLinea: number;
     public usuario: string;
