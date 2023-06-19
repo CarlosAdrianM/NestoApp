@@ -17,7 +17,7 @@
       <ion-item>
         <ion-label for="producto">Producto</ion-label>
         <ion-input #inputProducto type="text" class="form-control" id="producto" required disabled="{{linea.estado > 1 || linea.picking > 0}}"
-                   (ionBlur)="cambiarProducto($event.target.value)" [ngModel]="linea.producto"
+                   (ionBlur)="cambiarProducto($event.target.value)" [ngModel]="linea.Producto"
                    name="producto" (ionFocus)="seleccionarTexto($event)" (press)="abrirProducto()"></ion-input>
       </ion-item>
         <ion-item>
@@ -30,7 +30,7 @@
             <ion-label for="cantidad">Cantidad</ion-label>
             <ion-input type="text" class="form-control" id="cantidad" disabled="{{linea.estado > 1 || linea.picking > 0}}"
                        [(ngModel)]="linea.cantidad" name="cantidad"
-                       (ionBlur)="cambiarProducto(linea.producto)"
+                       (ionBlur)="cambiarProducto(linea.Producto)"
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>
