@@ -39,7 +39,7 @@
                   <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
               </ion-item>
               <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
-              <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="pedido.plazosPago = $event"></selector-plazos-pago>
+              <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="seleccionarPlazosPago($event)"></selector-plazos-pago>
               <ion-item>
                   <ion-label>Fecha Vencimiento</ion-label>
                   <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.primerVencimiento"></ion-datetime>
@@ -83,10 +83,10 @@
                         <h2>{{linea.texto}}</h2>
                         <ion-row>
                             <ion-col width-25 style="text-align:center"><p>{{linea.Producto}}</p></ion-col>
-                            <ion-col width-10 style="text-align:center"><p>{{linea.cantidad}}</p></ion-col>
-                            <ion-col width-20 style="text-align:right"><p>{{linea.precio | currency:'EUR'}}</p></ion-col>
-                            <ion-col width-20 style="text-align:center"><p>{{linea.descuento | percent}}</p></ion-col>
-                            <ion-col width-25 style="text-align:right"><p>{{linea.baseImponible | currency:'EUR'}}</p></ion-col>
+                            <ion-col width-10 style="text-align:center"><p>{{linea.Cantidad}}</p></ion-col>
+                            <ion-col width-20 style="text-align:right"><p>{{linea.PrecioUnitario | currency:'EUR'}}</p></ion-col>
+                            <ion-col width-20 style="text-align:center"><p>{{linea.SumaDescuentos | percent}}</p></ion-col>
+                            <ion-col width-25 style="text-align:right"><p>{{linea.BaseImponible | currency:'EUR'}}</p></ion-col>
                         </ion-row>
                         <ion-badge color="light" *ngIf="linea.estado == -3">Presupuesto</ion-badge>
                         <ion-badge color="danger" *ngIf="linea.estado == -1">Pendiente</ion-badge>

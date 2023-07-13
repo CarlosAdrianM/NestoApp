@@ -3,75 +3,78 @@ export class LineaVenta {
         if (linea) {
             this.id = linea.id;
             this.almacen = linea.almacen;
-            this.aplicarDescuento = linea.aplicarDescuento;
-            this.cantidad = linea.cantidad;
+            this.AplicarDescuento = linea.AplicarDescuento;
+            this.Cantidad = linea.Cantidad;
             this.delegacion = linea.delegacion;
-            this.descuento = linea.descuento;
-            this.descuentoProducto = linea.descuentoProducto;
+            this.DescuentoLinea = linea.DescuentoLinea;
+            this.DescuentoPP = linea.DescuentoPP;
+            this.DescuentoProducto = linea.DescuentoProducto;
             this.estado = linea.estado;
             this.fechaEntrega = linea.fechaEntrega;
             this.formaVenta = linea.formaVenta;
             this.iva = linea.iva;
             this.oferta = linea.oferta;
             this.picking = linea.picking;
-            this.precio = linea.precio;
+            this.PrecioUnitario = linea.PrecioUnitario;
             this.Producto = linea.Producto;
             this.texto = linea.texto;
             this.tipoLinea = linea.tipoLinea;
-            this.usuario = linea.usuario;
+            this.Usuario = linea.usuario;
             this.vistoBueno = linea.vistoBueno;
-            this.importeIva = linea.importeIva;
-            this.total = linea.total;
+            this.ImporteIva = linea.ImporteIva;
+            this.Total = linea.Total;
         } else {
             this.id = 0;
-            this.aplicarDescuento = true;
-            this.cantidad = 1;
-            this.descuento = 0;
-            this.descuentoProducto = 0;
+            this.AplicarDescuento = true;
+            this.Cantidad = 1;
+            this.DescuentoLinea = 0;
+            this.DescuentoPP = 0;
+            this.DescuentoProducto = 0;
             this.estado = 1;
             this.oferta = null;
             this.picking = 0;
-            this.precio = 0;
+            this.PrecioUnitario = 0;
             this.Producto = "";
             this.texto = "";
             this.tipoLinea = 1;
             this.vistoBueno = false;
-            this.importeIva = 0;
-            this.total = 0;
+            this.ImporteIva = 0;
+            this.Total = 0;
         }
     }
 
     public id: number;
     public almacen: string;
-    public aplicarDescuento: boolean;
-    public cantidad: number;
+    public AplicarDescuento: boolean;
+    public Cantidad: number;
     public delegacion: string;
-    public descuento: number;
-    public descuentoProducto: number;
+    public DescuentoLinea: number;
+    public DescuentoPP: number;
+    public DescuentoProducto: number;
     public estado: number;
     public fechaEntrega: Date;
     public formaVenta: string;
     public iva: string;
     public oferta: number;
     public picking: number;
-    public precio: number;
+    public PrecioUnitario: number;
     public Producto: string;
     public texto: string;
     public tipoLinea: number;
-    public usuario: string;
+    public Usuario: string;
     public vistoBueno: boolean;
-    public get bruto(): number {
-        return this.precio * this.cantidad;
+    public get Bruto(): number {
+        return this.PrecioUnitario * this.Cantidad;
     }
-    public get baseImponible(): number {
-        let importeDescuento = this.redondea(this.bruto * this.sumaDescuentos);
-        return this.bruto - importeDescuento;
+    public get BaseImponible(): number {
+        let importeDescuento = this.redondea(this.Bruto * this.SumaDescuentos);
+        return this.Bruto - importeDescuento;
     }
-    public set baseImponible(value: number) {} //para que no de error
-    public importeIva: number;
-    public total: number;
-    public get sumaDescuentos(): number {
-        return 1 - ((1 - this.descuento) * (1 - this.descuentoProducto));
+    public set BaseImponible(value: number) {} //para que no de error
+    public ImporteIva: number;
+    public Total: number;
+    public get SumaDescuentos(): number {
+        return 1 - ((1 - this.DescuentoLinea) * (1 - this.DescuentoProducto) * (1 - this.DescuentoPP));
     }
 
     public copiarDatosPedido(pedido: any): void {
@@ -82,6 +85,7 @@ export class LineaVenta {
         this.iva = pedido.Lineas[0].iva;  
         this.estado = 1;
         this.picking = 0;  
+        this.DescuentoPP = pedido.DescuentoPP;
     }
 
     private redondea(value) {

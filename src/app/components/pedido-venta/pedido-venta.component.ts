@@ -122,6 +122,12 @@ export class PedidoVentaComponent  {
       this.pedido.formaPago = evento;
   }
 
+  public seleccionarPlazosPago(evento: any): void {
+    this.firebaseAnalytics.logEvent("pedido_seleccionar_plazos_pago", {pedido:this.pedido.numero, plazosPago: evento});
+    this.pedido.plazosPago = evento.plazoPago;
+    this.pedido.DescuentoPP = evento.descuentoPP;
+  }
+
   public cambiarIVA(): void {
       this.firebaseAnalytics.logEvent("pedido_cambiar_iva", {actual: this.pedido.iva, nuevo: this.pedido.iva ? undefined : this.iva});
       this.pedido.iva = this.pedido.iva ? undefined : this.iva;
@@ -136,7 +142,7 @@ export class PedidoVentaComponent  {
       this.firebaseAnalytics.logEvent("pedido_venta_annadir_linea", {pedido: this.pedido.numero});
       let linea: LineaVenta = new LineaVenta();
       linea.copiarDatosPedido(this.pedido);
-      linea.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
+      linea.Usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
       this.abrirLinea(linea);
       this.pedido.Lineas = this.pedido.Lineas.concat(linea);
   }

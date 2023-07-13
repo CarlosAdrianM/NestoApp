@@ -51,4 +51,10 @@ export class SelectorPlazosPagoComponent extends SelectorBase implements OnInit 
           }
       );
   }
+
+  obtenerPlazo(event: any) {
+    const indice = event.detail.value;
+    const plazo = this.datosFiltrados.find((p, plazoPago) => p.plazoPago === indice);
+    this.seleccionarDato(plazo);
+  }    
 }

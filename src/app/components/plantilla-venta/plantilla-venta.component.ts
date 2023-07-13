@@ -363,7 +363,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
           'servirJunto': this.direccionSeleccionada.servirJunto,
           'EsPresupuesto': this.esPresupuesto,
-          'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+          'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
           'Lineas': [],
       };
 
@@ -379,13 +379,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
               'tipoLinea': 1, // Producto
               'producto': linea.producto,
               'texto': linea.texto,
-              'cantidad': linea.cantidad,
+              'Cantidad': linea.cantidad,
               'fechaEntrega': this.fechaEntrega,
-              'precio': linea.precio,
-              'descuento': linea.descuento,
-              'aplicarDescuento': linea.aplicarDescuento,
+              'PrecioUnitario': linea.precio,
+              'DescuentoLinea': linea.descuento,
+              'AplicarDescuento': linea.aplicarDescuento,
               'vistoBueno': 0, // calcular
-              'usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+              'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
               'almacen': this.almacen,
               'iva': linea.iva,
               'delegacion': this.usuario.delegacion,
@@ -397,8 +397,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           linea.cantidadOferta = +linea.cantidadOferta;
           if (linea.cantidadOferta) {
               lineaPedidoOferta = Object.assign({}, nuevaLinea);
-              lineaPedidoOferta.cantidad = linea.cantidadOferta;
-              lineaPedidoOferta.precio = 0;
+              lineaPedidoOferta.Cantidad = linea.cantidadOferta;
+              lineaPedidoOferta.PrecioUnitario = 0;
               lineaPedidoOferta.oferta = nuevaLinea.oferta;
               pedido.Lineas.push(lineaPedidoOferta);
           }

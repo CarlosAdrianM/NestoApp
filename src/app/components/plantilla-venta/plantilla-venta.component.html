@@ -100,7 +100,7 @@
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event"></selector-plazos-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event.plazoPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
             <ion-toggle [(ngModel)]="mandarCobroTarjeta"></ion-toggle>

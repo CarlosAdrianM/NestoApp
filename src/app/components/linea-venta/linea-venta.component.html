@@ -27,33 +27,33 @@
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>
-            <ion-label for="cantidad">Cantidad</ion-label>
-            <ion-input type="text" class="form-control" id="cantidad" disabled="{{linea.estado > 1 || linea.picking > 0}}"
-                       [(ngModel)]="linea.cantidad" name="cantidad"
+            <ion-label for="Cantidad">Cantidad</ion-label>
+            <ion-input type="text" class="form-control" id="Cantidad" disabled="{{linea.estado > 1 || linea.picking > 0}}"
+                       [(ngModel)]="linea.Cantidad" name="Cantidad"
                        (ionBlur)="cambiarProducto(linea.Producto)"
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>
-            <ion-label for="precio">Precio</ion-label>
-            <ion-input type="number" class="form-control" id="precio" disabled="{{linea.estado > 2}}"
-                       [(ngModel)]="linea.precio" name="precio"
+            <ion-label for="PrecioUnitario">Precio</ion-label>
+            <ion-input type="number" class="form-control" id="PrecioUnitario" disabled="{{linea.estado > 2}}"
+                       [(ngModel)]="linea.PrecioUnitario" name="PrecioUnitario"
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>
-            <ion-label for="descuento">Descuento</ion-label>
-            <ion-input class="form-control" id="descuento" disabled="{{linea.estado > 2 || !linea.aplicarDescuento}}"
-                       [ngModel]="descuentoCadena" (change)="actualizarDescuento($event.target.value)" name="descuento"
+            <ion-label for="DescuentoLinea">Descuento</ion-label>
+            <ion-input class="form-control" id="DescuentoLinea" disabled="{{linea.estado > 2 || !linea.AplicarDescuento}}"
+                       [ngModel]="descuentoCadena" (change)="actualizarDescuento($event.target.value)" name="DescuentoLinea"
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>
-            <ion-label for="aplicarDescuento">Aplicar Descuento</ion-label>
-            <ion-checkbox class="form-control" id="aplicarDescuento" disabled="{{linea.estado > 2}}"
-                       [(ngModel)]="linea.aplicarDescuento" name="aplicarDescuento"></ion-checkbox>
+            <ion-label for="AplicarDescuento">Aplicar Descuento</ion-label>
+            <ion-checkbox class="form-control" id="AplicarDescuento" disabled="{{linea.estado > 2}}"
+                       [(ngModel)]="linea.AplicarDescuento" name="AplicarDescuento"></ion-checkbox>
         </ion-item>
         <ion-item>
-            <ion-label for="descuentoProducto">Descuento Producto</ion-label>
-            <ion-input class="form-control" id="descuentoProducto" disabled="true"
-                        [ngModel]="linea.descuentoProducto | percent" name="descuentoProducto"
+            <ion-label for="DescuentoProducto">Descuento Producto</ion-label>
+            <ion-input class="form-control" id="DescuentoProducto" disabled="true"
+                        [ngModel]="linea.DescuentoProducto | percent" name="DescuentoProducto"
                         (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
 

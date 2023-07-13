@@ -8,6 +8,16 @@ export class PedidoVenta {
     public fecha: string; // Date
     public formaPago: string;
     public plazosPago: string;
+    private _descuentoPP: number;
+    public get DescuentoPP(): number {
+        return this._descuentoPP;
+    }
+    public set DescuentoPP(value: number) {
+        this._descuentoPP = value;
+        for (const l of this.Lineas) {
+            l.DescuentoPP = value;
+        }
+    }
     public primerVencimiento: string; // Date
     public iva: string;
     public vendedor: string;

@@ -29,7 +29,7 @@ constructor(
       this.linea = this.route.snapshot.queryParams.linea;
       this.cliente = this.route.snapshot.queryParams.cliente;
       this.contacto = this.route.snapshot.queryParams.contacto;
-      this.actualizarDescuento(this.linea.descuento * 100);
+      this.actualizarDescuento(this.linea.DescuentoLinea * 100);
   }
 
   @ViewChild('inputProducto') txtProducto: any;
@@ -48,12 +48,12 @@ constructor(
           dto = (String(dto)).replace(/[^\d.-]/g, '');
       }
       
-      this.linea.descuento = dto / 100;
+      this.linea.DescuentoLinea = dto / 100;
       this.descuentoCadena = dto + '%';
   }
 
   public cambiarProducto(nuevoProducto: string): void {
-      this.servicio.getProducto(nuevoProducto, this.cliente, this.contacto, this.linea.cantidad).subscribe(
+      this.servicio.getProducto(nuevoProducto, this.cliente, this.contacto, this.linea.Cantidad).subscribe(
           async data => {
               if (data.length === 0) {
                   let alert: any = await this.alertCtrl.create({
@@ -65,10 +65,10 @@ constructor(
               } else {
                   this.firebaseAnalytics.logEvent("cambiar_producto", {productoAnterior: this.linea.Producto, productoNuevo: nuevoProducto});
                   this.linea.Producto = nuevoProducto;
-                  this.linea.precio = data.precio;
+                  this.linea.PrecioUnitario = data.precio;
                   this.linea.texto = data.nombre;
-                  this.linea.aplicarDescuento = data.aplicarDescuento;
-                  this.linea.descuentoProducto = data.descuento;
+                  this.linea.AplicarDescuento = data.aplicarDescuento;
+                  this.linea.DescuentoProducto = data.descuento;
                   console.log("Producto cambiado");
               }
           },
