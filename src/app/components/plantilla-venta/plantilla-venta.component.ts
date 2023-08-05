@@ -206,7 +206,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
   public comprobarCanDeactivate: boolean = false;
   public textoBotonCrearPedido: string = "Crear Pedido";
   public listaPedidosPendientes: any;
-  
+  public totalPedidoPlazosPago: number;
   
   @ViewChild(SelectorPlantillaVentaComponent)
   public _selectorPlantillaVenta: SelectorPlantillaVentaComponent;
@@ -280,6 +280,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
         this.ref.detectChanges();
     } else if (this.indexActivo === 4 && indexPrevio === 3) {
         console.log("Finalizar");
+        if (this.totalPedidoPlazosPago != this.totalPedido)
+        {
+            this.totalPedidoPlazosPago = this.totalPedido;
+        }
         var pedido = this.prepararPedido();
         this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
             data => {

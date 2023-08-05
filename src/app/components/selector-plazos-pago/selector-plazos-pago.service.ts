@@ -13,11 +13,15 @@ export class SelectorPlazosPagoService {
 
   private _baseUrl: string = Configuracion.API_URL + '/PlazosPago'
 
-  public getPlazosPago(cliente: any): Observable<any[]> {
+  public getPlazosPago(cliente: any, formaPago: string = "", totalPedido: number = 0): Observable<any[]> {
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       if (cliente) {
           params = params.append('cliente', cliente);
+      }
+      if (formaPago && totalPedido) {
+          params = params.append('formaPago', formaPago);
+          params = params.append('totalPedido', totalPedido.toString());
       }
       return this.http.get(this._baseUrl, { params: params })
       .pipe(

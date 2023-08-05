@@ -61,7 +61,7 @@
       </ion-slide>
       <ion-slide *ngIf="clienteSeleccionado" scrollY="true" class="conscroll">
         <div scrollY="true">
-            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)"></selector-direcciones-entrega>
+            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)" [totalPedido]="totalPedidoPlazosPago"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
                     <ion-label>Fecha de Entrega:</ion-label>
@@ -100,7 +100,7 @@
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event.plazoPago"></selector-plazos-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event.plazoPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
             <ion-toggle [(ngModel)]="mandarCobroTarjeta"></ion-toggle>

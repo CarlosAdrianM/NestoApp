@@ -7,7 +7,7 @@ import { SelectorDireccionesEntregaService } from './selector-direcciones-entreg
   selector: 'selector-direcciones-entrega',
   templateUrl: './selector-direcciones-entrega.component.html',
   styleUrls: ['./selector-direcciones-entrega.component.scss'],
-  inputs: ['cliente', 'seleccionado'],
+  inputs: ['cliente', 'seleccionado', 'totalPedido'],
 })
 export class SelectorDireccionesEntregaComponent extends SelectorBase {
   private servicio: SelectorDireccionesEntregaService;
@@ -28,17 +28,28 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
   }
   public seleccionado: string;
 
+  private _totalPedido: number;
+  get totalPedido() {
+    return this._totalPedido;
+  }
+  set totalPedido(value: number) {
+    if (value != this._totalPedido) {
+        this.cargarDatos(this.cliente, value);
+        this._totalPedido = value;
+    }
+  }
+
   constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController) {
       super();
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
   }
 
-  public cargarDatos(cliente: any): void {
+    public cargarDatos(cliente: any, totalPedido: number = 0): void {
       if (!cliente) {
           return;
       }
-      this.servicio.direccionesEntrega(cliente).subscribe(
+      this.servicio.direccionesEntrega(cliente, totalPedido).subscribe(
           async data => {
               if (data.length === 0) {
                   let alert: any = await this.alertCtrl.create({
