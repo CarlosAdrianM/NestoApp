@@ -99,7 +99,7 @@
         <ion-item (click)="cambiarIVA()">
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
-        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.formaPago}}" (seleccionar)="formaPago = $event"></selector-formas-pago>
+        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="formaPago = $event" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" seleccionado="{{direccionSeleccionada.formaPago}}"></selector-formas-pago>
         <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" seleccionado="{{direccionSeleccionada.plazosPago}}" (seleccionar)="plazosPago = $event.plazoPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
@@ -138,7 +138,7 @@
                 <ion-select-option value="">Crear Pedido</ion-select-option>
             </ion-select>
         </ion-item>
-        <ion-button expand="block" [disabled]="direccionSeleccionada.iva && !clienteSeleccionado.cifNif && !esPresupuesto" (click)="crearPedido()">{{textoBotonCrearPedido}}</ion-button>
+        <ion-button expand="block" [disabled]="direccionSeleccionada.iva && ((!clienteSeleccionado.cifNif && !esPresupuesto) || !formaPago || !plazosPago)" (click)="crearPedido()">{{textoBotonCrearPedido}}</ion-button>
       </ion-slide>
   </ion-slides>
 </ion-content>
