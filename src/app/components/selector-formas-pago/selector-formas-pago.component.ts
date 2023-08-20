@@ -11,7 +11,25 @@ import { SelectorFormasPagoService } from './selector-formas-pago.service';
 export class SelectorFormasPagoComponent extends SelectorBase implements OnInit {
 
     @Input() public cliente: any;
-    @Input() public seleccionado: any;
+    private _seleccionado: any;
+    @Input() 
+    get seleccionado(){
+        return this._seleccionado;
+    }
+    set seleccionado(value: any) {
+        if (this.datosFiltrados){
+            const seleccionadoEnFiltrados = this.datosFiltrados.some(forma => forma.formaPago === value);
+            // Si no está en datosFiltrados, establece seleccionado en null
+            if (!seleccionadoEnFiltrados) {
+                this._seleccionado = null;
+                //this.seleccionarDato(this.seleccionado);
+            } else {
+                this._seleccionado = value;
+            }    
+        } else {
+            this._seleccionado = value;
+        }
+    }
     private _totalPedido: number;
     @Input()
     public get totalPedido(): number {

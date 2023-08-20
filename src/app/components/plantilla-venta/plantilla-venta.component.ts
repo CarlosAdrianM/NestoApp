@@ -10,6 +10,7 @@ import { PedidoVentaComponent } from '../pedido-venta/pedido-venta.component';
 import { SelectorClientesComponent } from '../selector-clientes/selector-clientes.component';
 import { SelectorPlantillaVentaComponent } from '../selector-plantilla-venta/selector-plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
+import { SelectorFormasPagoComponent } from '../selector-formas-pago/selector-formas-pago.component';
 
 @Component({
   selector: 'app-plantilla-venta',
@@ -572,6 +573,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
             await alert.present();
         }
     )    
+  }
+
+  public noSePuedeCrearPedido(): boolean {
+    return this.direccionSeleccionada.iva && ((!this.clienteSeleccionado.cifNif && !this.esPresupuesto) || !this.formaPago || !this.plazosPago);
   }
 
   public mandarCobroTarjeta: boolean;

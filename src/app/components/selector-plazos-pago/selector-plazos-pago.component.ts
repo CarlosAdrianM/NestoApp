@@ -12,19 +12,19 @@ export class SelectorPlazosPagoComponent extends SelectorBase implements OnInit 
   @Input() public seleccionado: any;
   @Input() public cliente: any;
   @Input() public formaPago: string;
-  private _totalPedido: number;
 
+  private _totalPedido: number;
   @Input()
   public get totalPedido(): number {
     return this._totalPedido;
   }
-
   public set totalPedido(value: number) {
     if (value !== this._totalPedido) {
       this._totalPedido = value;
       this.cargarDatos();
     }
   }
+  
   private nav: NavController;
   private servicio: SelectorPlazosPagoService;
   private alertCtrl: AlertController;
