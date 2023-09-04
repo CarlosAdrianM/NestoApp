@@ -261,7 +261,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     this.indexActivo = await this.slider.getActiveIndex();
     let indexPrevio = await this.slider.getPreviousIndex();
     if (this.indexActivo === 2 && indexPrevio === 1) {
-        console.log("Resumen");
+        console.log("Resumen");        
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
         this.servicio.cargarListaPendientes(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente).subscribe(
             data => {
@@ -279,12 +279,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
         () => {
         }
         this.ref.detectChanges();
-    } else if (this.indexActivo === 4 && indexPrevio === 3) {
-        console.log("Finalizar");
         if (this.totalPedidoPlazosPago != this.totalPedido)
         {
             this.totalPedidoPlazosPago = this.totalPedido;
         }
+    } else if (this.indexActivo === 4 && indexPrevio === 3) {
+        console.log("Finalizar");
         var pedido = this.prepararPedido();
         this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
             data => {
