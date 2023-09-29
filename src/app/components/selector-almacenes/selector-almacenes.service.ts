@@ -21,6 +21,10 @@ export class SelectorAlmacenesService {
           {
               almacen : "REI",
               descripcion : "Reina"
+          },
+          {
+              almacen : "ALC",
+              descripcion : "Alcobendas"
           }
       ];
       return of(listaAlmacenes);
