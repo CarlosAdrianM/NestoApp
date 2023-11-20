@@ -90,6 +90,12 @@ export class ProductoComponent implements OnInit {
       );
   }
 
+  public abrirEnlaceWeb(urlDestino: string): void {
+      urlDestino += '&utm_medium=NestoApp_ficha_producto';
+      this.firebaseAnalytics.logEvent("producto_abrir_enlace_web", {enlace: urlDestino});
+      window.open(urlDestino, '_system', 'location=yes');
+  }
+
   public seleccionarTexto(evento: any): void {
     var nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
