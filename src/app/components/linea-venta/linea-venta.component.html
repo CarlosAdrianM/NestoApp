@@ -30,7 +30,7 @@
             <ion-label for="Cantidad">Cantidad</ion-label>
             <ion-input type="text" class="form-control" id="Cantidad" disabled="{{linea.estado > 1 || linea.picking > 0}}"
                        [(ngModel)]="linea.Cantidad" name="Cantidad"
-                       (ionBlur)="cambiarProducto(linea.Producto)"
+                       (ionBlur)="cambiarCantidad(linea.Producto)"
                        (ionFocus)="seleccionarTexto($event)"></ion-input>
         </ion-item>
         <ion-item>

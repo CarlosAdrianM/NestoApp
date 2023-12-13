@@ -18,6 +18,7 @@ export class LineaVentaComponent implements OnInit {
   private contacto: string;
   public errorMessage: string;
   public descuentoCadena: string;
+  cantidadAnterior: number; // lo usamos para ejecutar cambiarProducto solo si cambia la cantidad
 
 constructor(
   private servicio: LineaVentaService, 
@@ -30,6 +31,7 @@ constructor(
       this.cliente = this.route.snapshot.queryParams.cliente;
       this.contacto = this.route.snapshot.queryParams.contacto;
       this.actualizarDescuento(this.linea.DescuentoLinea * 100);
+      this.cantidadAnterior = this.linea.Cantidad;
   }
 
   @ViewChild('inputProducto') txtProducto: any;
@@ -52,7 +54,19 @@ constructor(
       this.descuentoCadena = dto + '%';
   }
 
-  public cambiarProducto(nuevoProducto: string): void {
+  public cambiarCantidad(nuevoProducto: string) {
+    if (this.cantidadAnterior == this.linea.Cantidad) {
+      return;
+    }
+    this.linea.Producto = ''; // para que ejecute el código de cambiarProducto
+    this.cambiarProducto(nuevoProducto);
+    this.cantidadAnterior = this.linea.Cantidad;
+  }
+
+  public cambiarProducto(nuevoProducto: string): void {    
+    if (nuevoProducto == this.linea.Producto)  {
+      return;
+    }
       this.servicio.getProducto(nuevoProducto, this.cliente, this.contacto, this.linea.Cantidad).subscribe(
           async data => {
               if (data.length === 0) {
@@ -69,6 +83,7 @@ constructor(
                   this.linea.texto = data.nombre;
                   this.linea.AplicarDescuento = data.aplicarDescuento;
                   this.linea.DescuentoProducto = data.descuento;
+                  this.linea.DescuentoLinea = 0;
                   console.log("Producto cambiado");
               }
           },
