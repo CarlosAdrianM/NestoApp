@@ -21,16 +21,28 @@
   <div *ngIf="resumen">
     <ion-list *ngFor="let etiqueta of resumen.Etiquetas">
       <ion-item-divider color="light">{{etiqueta.Nombre}}</ion-item-divider>
+      <ng-container *ngIf="etiqueta.Venta !== undefined">
+        <ion-item>
+          <ion-label>Venta</ion-label>
+          <p item-right (click)="abrirDetalle(etiqueta.Nombre)">{{etiqueta.Venta | currency:'EUR'}}</p>
+        </ion-item>
+        <ion-item>
+          <ion-label>% Comisión</ion-label>
+          <p item-right>{{etiqueta.Tipo | percent:'1.2-2'}}</p>
+        </ion-item>
+      </ng-container>
+      <ng-container *ngIf="etiqueta.Recuento !== undefined">
+        <ion-item>
+          <ion-label>Conseguidos</ion-label>
+          <p item-right>{{etiqueta.Recuento}}</p>
+        </ion-item>
+        <ion-item>
+          <ion-label>Comisión (€)</ion-label>
+          <p item-right>{{etiqueta.Tipo | currency:'EUR'}}</p>
+        </ion-item>
+      </ng-container>
       <ion-item>
-        <ion-label>Venta</ion-label>
-        <p item-right (click)="abrirDetalle(etiqueta.Nombre)">{{etiqueta.Venta | currency:'EUR'}}</p>
-      </ion-item>
-      <ion-item>
-        <ion-label>Tipo</ion-label>
-        <p item-right>{{etiqueta.Tipo | percent:'1.2-2'}}</p>
-      </ion-item>
-      <ion-item>
-        <ion-label>Comisión</ion-label>
+        <ion-label>Total Comisión</ion-label>
         <p item-right>{{etiqueta.Comision | currency:'EUR'}}</p>
       </ion-item>
     </ion-list>

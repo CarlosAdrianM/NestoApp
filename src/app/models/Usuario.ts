@@ -20,4 +20,5 @@ export class Usuario {
     public ultimoTipoRapport: string = 'V';
     public permitirVerTodosLosPedidos: boolean = false;
     public permitirVerClientesTodosLosVendedores: boolean = false;
+    public permitirVerTodosLosVendedores: boolean = false;
 }

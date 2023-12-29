@@ -207,6 +207,17 @@ private cargarParametros(): void {
             this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
+
+    this.parametros.leer('PermitirVerTodosLosVendedores').subscribe(
+        data => {
+            self.usuario.permitirVerTodosLosVendedores = data == "1";
+        },
+        error => {
+            self.usuario.permitirVerTodosLosVendedores = false;
+            console.log('No se ha podido cargar el parámetro PermitirVerTodosLosVendedores');
+            this.error = '¡Ups! Parece que no tienes conexión';
+        }
+    );
 }
 
     async olvideMiContrasenna(correo: string) {
