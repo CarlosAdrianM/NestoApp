@@ -100,7 +100,7 @@
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="formaPago = $event" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="plazosPago = $event.plazoPago" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
             <ion-toggle [(ngModel)]="mandarCobroTarjeta"></ion-toggle>
@@ -121,12 +121,18 @@
             <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>
         </ion-item>
         <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo">
-            <ion-label>Servir por Glovo <ion-img src="https://glovoapp.com/assets-cdn/images/logo_togo.svg"></ion-img></ion-label>
+            <ion-label>Servir en 2 horas <ion-img src="https://static.vecteezy.com/system/resources/previews/008/786/429/non_2x/express-delivery-icon-fast-delivery-express-and-urgent-delivery-services-stopwatch-sign-timer-and-express-delivery-inscription-fast-delivery-logo-design-vector.jpg"></ion-img></ion-label>
             <ion-toggle [(ngModel)]="servirPorGlovo"></ion-toggle>
         </ion-item>
+        <ion-item *ngIf="direccionSeleccionada.iva && !sePuedeServirPorGlovo && sePodriaServirConGlovoEnPrepago">
+            <ion-label color="danger">Si hay PREPAGO podría servirse en 2 horas</ion-label>
+        </ion-item>
+        
+        <!--
         <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
             <ion-label>{{direccionFormateada}}</ion-label>
         </ion-item>
+        -->
         <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
             <ion-label slot="start">Portes</ion-label>
             <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 

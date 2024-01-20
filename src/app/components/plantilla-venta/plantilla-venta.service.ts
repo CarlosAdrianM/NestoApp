@@ -96,7 +96,21 @@ export class PlantillaVentaService {
       .pipe(
         catchError(this.handleError)
       )
-}
+  }
+
+  public calcularFechaEntrega(fecha: Date, ruta: string, almacen: string) {
+    const formattedFecha: string = fecha.toISOString(); // Formatear la fecha como cadena en el formato deseado
+    var url = Configuracion.API_URL + "/PedidosVenta/FechaAjustada";
+    let params: HttpParams = new HttpParams();
+    params = params.append('fecha', formattedFecha);
+    params = params.append('ruta', ruta);
+    params = params.append('almacen', almacen);
+
+    return this.http.get(url, { params: params })
+      .pipe(
+        catchError(this.handleError)
+      )
+  }
 
 
   private handleError(error: HttpErrorResponse): Observable<any> {

@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content>
-  <selector-vendedores *ngIf="usuario.permitirVerTodosLosPedidos" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+  <selector-vendedores ocultarConVendedorUnico="true" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
   <ion-button expand="block" (click)="doCheckbox()">{{nombreMesSeleccionado}}</ion-button>
   <ion-item>
     <ion-label>Incluir Fin de Mes</ion-label>

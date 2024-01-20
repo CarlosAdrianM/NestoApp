@@ -14,6 +14,7 @@ export class SelectorVendedoresComponent extends SelectorBase implements OnInit 
 
   @Input() public seleccionado: any;
   @Input() public etiqueta: any;
+  @Input() public ocultarConVendedorUnico: boolean;
   private nav: NavController;
   private servicio: SelectorVendedoresService;
   private alertCtrl: AlertController;
@@ -29,6 +30,10 @@ export class SelectorVendedoresComponent extends SelectorBase implements OnInit 
 
   ngOnInit() {
       this.cargarDatos();
+  }
+
+  public mostrar(): boolean {
+    return !this.ocultarConVendedorUnico || this.numeroDeDatos() > 1;
   }
 
   public cargarDatos(): void {

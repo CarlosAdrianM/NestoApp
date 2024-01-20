@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChild, OnInit } from '@angular/core';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AlertController, LoadingController, NavController, IonSlides, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
@@ -17,7 +17,7 @@ import { SelectorFormasPagoComponent } from '../selector-formas-pago/selector-fo
   templateUrl: './plantilla-venta.component.html',
   styleUrls: ['./plantilla-venta.component.scss'],
 })
-export class PlantillaVentaComponent implements IDeactivatableComponent  {
+export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit  {
   private ultimoClienteAbierto: string = "";
 
   constructor(
@@ -68,6 +68,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
 
   @ViewChild ('slider') slider: IonSlides;
   @ViewChild('inputCliente') mySelectorCliente;
+
+  public async ngOnInit() {
+    this.fechaMinima = (await this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
+    this.fechaEntrega = this.fechaMinima;
+  }
+  
 
   ionViewDidLoad() {
       if (this.usuario != undefined && this.usuario.nombre != undefined) {
@@ -132,7 +138,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
       this._pedidoPendienteSeleccionado = value;
   }
   public productosResumen: any[];
-  private _direccionSeleccionada: any;
+  
   private async mostrarAlertaRellenar(value: any) {
     let alert = await this.alertCtrl.create({
       header: 'Faltan datos',
@@ -165,7 +171,19 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     });
     await alert.present();
   }
+  
+  private _almacen: any;
+  get almacen(): any {
+    return this._almacen;
+  }
+  set almacen(value: any){
+    if (this._almacen != value){
+        this._almacen = value;
+        this.calcularFechaMinima();
+    }
+  }  
 
+  private _direccionSeleccionada: any;
   get direccionSeleccionada(): any {
       return this._direccionSeleccionada;
   }
@@ -175,6 +193,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           this.formaPago = value.formaPago;
           this.plazosPago = value.plazosPago;
           this.cargarCorreoYMovilTarjeta();
+          this.calcularFechaMinima();
       }
   }
   get textoFacturacionElectronica(): string {
@@ -191,23 +210,25 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
   }
   private hoy: Date = new Date();
   private hoySinHora: Date = new Date(this.hoy.getFullYear(), this.hoy.getMonth(), this.hoy.getDate(), 0, 0, 0, 0);
-  public fechaMinima: string = (this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0,10);
-  public fechaEntrega: string = this.fechaMinima;
+  public fechaMinima;
+  public fechaEntrega;
   private iva: string;
   public formaPago: any;
   public plazosPago: any;
   public esPresupuesto: boolean = false;
   public respuestaGlovo: any;
   public sePuedeServirPorGlovo: boolean = false;
+  public sePodriaServirConGlovoEnPrepago: boolean = false;
   public direccionFormateada: string;
   public costeGlovo: number;
   public servirPorGlovo: boolean;
-  public almacen: any;
   public indexActivo: number;
   public comprobarCanDeactivate: boolean = false;
   public textoBotonCrearPedido: string = "Crear Pedido";
   public listaPedidosPendientes: any;
   public totalPedidoPlazosPago: number;
+  public almacenEntregaUrgente: string;
+  
   
   @ViewChild(SelectorPlantillaVentaComponent)
   public _selectorPlantillaVenta: SelectorPlantillaVentaComponent;
@@ -285,32 +306,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
         }
     } else if (this.indexActivo === 4 && indexPrevio === 3) {
         console.log("Finalizar");
-        var pedido = this.prepararPedido();
-        this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
-            data => {
-                this.respuestaGlovo = data;
-                if (this.respuestaGlovo) {
-                    console.log(this.respuestaGlovo);
-                    this.sePuedeServirPorGlovo = true;
-                    this.costeGlovo = this.respuestaGlovo.coste;
-                    this.direccionFormateada= this.respuestaGlovo.direccionFormateada;
-                } else {
-                    this.sePuedeServirPorGlovo = false;
-                    this.costeGlovo = 0;
-                    this.direccionFormateada = "";
-                }
-            },
-            async error => {
-                let alert = await this.alertCtrl.create({
-                    header: 'Error',
-                    message: 'No se ha podido comprobar si se puede servir por Glovo:\n' + error.ExceptionMessage,
-                    buttons: ['Ok'],
-                });
-                await alert.present();
-            },
-            () => {
-            }
-        );
+        this.comprobarSiSePuedeServirPorGlovo();
     } /*else if (slides.getActiveIndex() === 1) {
         setTimeout(() => {
             this._selectorPlantillaVenta.setFocus();
@@ -319,6 +315,39 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
     */
   }
   
+  private comprobarSiSePuedeServirPorGlovo(){
+    var pedido = this.prepararPedido();
+    this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
+        data => {
+            this.respuestaGlovo = data;
+            if (this.respuestaGlovo) {
+                console.log(this.respuestaGlovo);
+                this.sePuedeServirPorGlovo = this.respuestaGlovo.condicionesPagoValidas;
+                this.sePodriaServirConGlovoEnPrepago = true;
+                this.costeGlovo = this.respuestaGlovo.coste;
+                this.direccionFormateada= this.respuestaGlovo.direccionFormateada;
+                this.almacenEntregaUrgente = this.respuestaGlovo.almacen;
+            } else {
+                this.sePuedeServirPorGlovo = false;
+                this.sePodriaServirConGlovoEnPrepago = false;
+                this.costeGlovo = 0;
+                this.direccionFormateada = "";
+                this.almacenEntregaUrgente = "";
+            }
+        },
+        async error => {
+            let alert = await this.alertCtrl.create({
+                header: 'Error',
+                message: 'No se ha podido comprobar si se puede servir por Glovo:\n' + error.ExceptionMessage,
+                buttons: ['Ok'],
+            });
+            await alert.present();
+        },
+        () => {
+        }
+    );
+  }
+
   public sePuedeAvanzar(): boolean {
     if (!this.slider || this.indexActivo === undefined) {
         return false;
@@ -391,7 +420,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
               'AplicarDescuento': linea.aplicarDescuento,
               'vistoBueno': 0, // calcular
               'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
-              'almacen': this.almacen,
+              'almacen': this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen,
               'iva': linea.iva,
               'delegacion': this.usuario.delegacion,
               'formaVenta': this.usuario.formaVenta,
@@ -525,9 +554,37 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
       this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
   }
 
-  private ajustarFechaEntrega(fecha: Date): Date {
+  private ajustarFechaEntrega(fecha: Date): Promise<Date> {
       console.log("Ajustar fecha");
       fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
+      return new Promise<any>((resolve, reject) => {        
+        this.servicio.calcularFechaEntrega(fecha, this.direccionSeleccionada ? this.direccionSeleccionada.ruta : "FW", this.almacen)
+          .subscribe(
+            data => {
+                if (data && typeof data === 'string') {
+                    // Convertir la cadena de fecha a un objeto Date
+                    const fechaConvertida = new Date(data);
+              
+                    // Ajustar la fecha según sea necesario
+                    fechaConvertida.setHours(fechaConvertida.getHours() - fechaConvertida.getTimezoneOffset() / 60);
+              
+                    return fechaConvertida;
+                  } else {
+                    throw new Error('El resultado no es una cadena de fecha válida.');
+                  }
+            },
+            async error => {
+              let alert = await this.alertCtrl.create({
+                message: 'Error',
+                subHeader: 'No se ha podido ajustar la fecha de entrega:\n' + error.ExceptionMessage,
+                buttons: ['Ok'],
+              });
+              await alert.present();
+              reject(error);
+            }
+          );
+      });
+      /*
       if (this.hoy.getHours() < 11) {
           return fecha;
       } else {
@@ -535,6 +592,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
           nuevaFecha.setDate(nuevaFecha.getDate() + 1); //mañana
           return nuevaFecha;
       }
+      */
   }
 
   public abrirDetalle(producto: string, almacen: string): void {
@@ -544,7 +602,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
   public esTarjetaPrepago(): boolean {
       return this.iva && this.formaPago == "TAR" && this.plazosPago == "PRE";
   }
-
+/*
   public cargarCorreoYMovilTarjeta() {
       this.servicio.leerCliente(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente, this.direccionSeleccionada.contacto)
       .subscribe(
@@ -574,9 +632,47 @@ export class PlantillaVentaComponent implements IDeactivatableComponent  {
         }
     )    
   }
+*/
+  public async calcularFechaMinima(){
+    this.fechaMinima = (await this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
+    this.fechaEntrega = this.fechaMinima;    
+  }
 
+  public async cargarCorreoYMovilTarjeta() {
+    try {
+      const data = await this.servicio.leerCliente(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente, this.direccionSeleccionada.contacto).toPromise();
+  
+      const cliente = data;
+      const telefonos = cliente.telefono.split("/");
+      this.cobroTarjetaMovil = telefonos.find(x => x.startsWith("6") || x.startsWith("7") || x.startsWith("8"));
+  
+      const personaContactoFacturacion = cliente.personasContacto.find(x => x.facturacionElectronica);
+      if (personaContactoFacturacion) {
+        this.cobroTarjetaCorreo = personaContactoFacturacion.correoElectronico;
+      }
+  
+      if (!this.cobroTarjetaCorreo) {
+        const personaContactoCorreo = cliente.personasContacto.find(x => x.correoElectronico);
+        if (personaContactoCorreo) {
+          this.cobroTarjetaCorreo = personaContactoCorreo.correoElectronico;
+        }
+      }
+    } catch (error) {
+      let alert = await this.alertCtrl.create({
+        message: 'Error',
+        subHeader: 'No se han podido cargar los datos del cliente:\n' + error.ExceptionMessage,
+        buttons: ['Ok'],
+      });
+      await alert.present();
+    }
+  }
   public noSePuedeCrearPedido(): boolean {
     return this.direccionSeleccionada.iva && ((!this.clienteSeleccionado.cifNif && !this.esPresupuesto) || !this.formaPago || !this.plazosPago);
+  }
+
+  public cambiarPlazosPago(nuevosPlazos: string) {
+    this.plazosPago = nuevosPlazos;
+    this.comprobarSiSePuedeServirPorGlovo();
   }
 
   public mandarCobroTarjeta: boolean;
