@@ -70,8 +70,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   @ViewChild('inputCliente') mySelectorCliente;
 
   public async ngOnInit() {
+    /*
     this.fechaMinima = (await this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
     this.fechaEntrega = this.fechaMinima;
+    */
+   await this.calcularFechaMinima();
   }
   
 
@@ -554,6 +557,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
   }
 
+  /*
   private ajustarFechaEntrega(fecha: Date): Promise<Date> {
       console.log("Ajustar fecha");
       fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
@@ -584,16 +588,34 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
             }
           );
       });
-      /*
-      if (this.hoy.getHours() < 11) {
-          return fecha;
-      } else {
-          let nuevaFecha: Date = fecha;
-          nuevaFecha.setDate(nuevaFecha.getDate() + 1); //mañana
-          return nuevaFecha;
-      }
-      */
   }
+  */
+  private ajustarFechaEntrega(fecha: Date): Promise<Date> {
+    console.log("Ajustar fecha");
+    fecha.setHours(fecha.getHours() - fecha.getTimezoneOffset() / 60);
+
+    return new Promise<Date>((resolve, reject) => {
+        this.servicio.calcularFechaEntrega(fecha, this.direccionSeleccionada ? this.direccionSeleccionada.ruta : "FW", this.almacen)
+            .subscribe(
+                data => {
+                    if (data && typeof data === 'string') {
+                        // Convertir la cadena de fecha a un objeto Date
+                        const fechaConvertida = new Date(data);
+
+                        // Ajustar la fecha según sea necesario
+                        fechaConvertida.setHours(fechaConvertida.getHours() - fechaConvertida.getTimezoneOffset() / 60);
+
+                        resolve(fechaConvertida);
+                    } else {
+                        reject(new Error('El resultado no es una cadena de fecha válida.'));
+                    }
+                },
+                error => {
+                    reject(error);
+                }
+            );
+        });
+    }
 
   public abrirDetalle(producto: string, almacen: string): void {
     this._selectorPlantillaVenta.abrirDetalle(producto, almacen);
