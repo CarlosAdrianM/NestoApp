@@ -73,6 +73,7 @@ export class SelectorPlantillaVentaDetalleComponent {
               producto.stock = data.stock;
               producto.cantidadDisponible = data.cantidadDisponible;
               producto.cantidadPendienteRecibir = data.cantidadPendienteRecibir;
+              producto.StockDisponibleTodosLosAlmacenes = data.StockDisponibleTodosLosAlmacenes;
               producto.urlImagen = data.urlImagen;
               console.log("Existe el producto y seleccionamos el color");
               this.seleccionarColorStock(producto);
@@ -149,6 +150,9 @@ export class SelectorPlantillaVentaDetalleComponent {
       } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
           producto.colorStock = 'success';
           console.log("Seleccionamos el color success");
+      } else if (producto.StockDisponibleTodosLosAlmacenes >= cantidad + cantidadOferta) {
+            producto.colorStock = 'warning';
+            console.log("Seleccionamos el color warning");        
       } else if (producto.cantidadDisponible + producto.cantidadPendienteRecibir >= cantidad + cantidadOferta) {
           producto.colorStock = 'primary';
           console.log("Seleccionamos el color primary");
