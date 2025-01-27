@@ -149,9 +149,33 @@
         </ion-card>
         <ion-fab vertical="bottom" horizontal="end">
             <ion-fab-button size="small" (click)="annadirPersonaContacto()"><ion-icon name="add"></ion-icon></ion-fab-button>
-        </ion-fab>
-          
+        </ion-fab>          
       </ion-card-content>
+
+      <!-- Comentarios -->
+        <ion-card>
+            <ion-card-header>
+            Comentarios
+            </ion-card-header>
+            <ion-card-content>
+            <ion-item>
+                <ion-label position="stacked">Comentarios</ion-label>
+                <ion-textarea [(ngModel)]="cliente.comentarios" placeholder="Escribe los comentarios aquí..." auto-grow="true"></ion-textarea>
+            </ion-item>
+        
+            <ion-item>
+                <ion-label position="stacked">Comentarios Picking</ion-label>
+                <ion-textarea [(ngModel)]="cliente.comentariosPicking" placeholder="Escribe los comentarios sobre picking aquí..." auto-grow="true"></ion-textarea>
+            </ion-item>
+        
+            <ion-item>
+                <ion-label position="stacked">Comentarios Ruta</ion-label>
+                <ion-textarea [(ngModel)]="cliente.comentariosRuta" placeholder="Escribe los comentarios sobre la ruta aquí..." auto-grow="true"></ion-textarea>
+            </ion-item>
+            </ion-card-content>
+        </ion-card>
+  
+
       <ion-button expand="block" (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</ion-button>
       <ion-button expand="block" (click)="finalizar()">FINALIZAR</ion-button>
   </ion-card>
