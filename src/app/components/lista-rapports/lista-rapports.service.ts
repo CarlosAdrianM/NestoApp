@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
@@ -102,6 +102,25 @@ export class ListaRapportsService {
           catchError(this.handleError)
         )
   }
+
+    public cargarResumenRapports(cliente: string, contacto: string): Observable<string> {
+      // Construimos la URL con los parámetros
+      const urlConsulta = `${this._baseUrl}/Resumen?empresa=${Configuracion.EMPRESA_POR_DEFECTO}&cliente=${cliente}&contacto=${contacto}`;
+  
+      // Realizamos la petición GET
+      return this.http.get<any>(urlConsulta).pipe(
+        // Transformamos la respuesta en el resumen
+        map(response => {
+          if (response && response.resumen) {
+            return response.resumen;
+          } else {
+            throw new Error('La respuesta no contiene el resumen esperado.');
+          }
+        }),
+        // Manejamos posibles errores
+        catchError(this.handleError)
+      );
+    }
      
 
   private handleError(error: Response): Observable<any> {

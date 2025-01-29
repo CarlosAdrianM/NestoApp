@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
-import { NavController, AlertController, LoadingController } from '@ionic/angular';
+import { NavController, AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -47,6 +47,7 @@ export class ListaRapportsComponent extends SelectorBase {
   public clienteRapport: string;
   public contactoRapport: string;
   public numeroCliente: string = "";
+  public contactoSeleccionado: string = "";
   public mostrarDirecciones: boolean;
 
   public codigosPostalesSinVisitar: any;
@@ -79,13 +80,13 @@ export class ListaRapportsComponent extends SelectorBase {
     maxResults: 5
   };
 
-
+  generandoResumen = false;
 
   constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController, 
           loadingCtrl: LoadingController, public usuario: Usuario,
           private geolocation: Geolocation, private nativeGeocoder: NativeGeocoder,
           public events: Events,
-          private firebaseAnalytics: FirebaseAnalytics) {
+          private firebaseAnalytics: FirebaseAnalytics, private toastController: ToastController) {
       super();
       this.servicio = servicio;
       this.nav = nav;
@@ -139,6 +140,7 @@ export class ListaRapportsComponent extends SelectorBase {
       if (!this.clienteRapport) {
           return;
       }
+      this.contactoSeleccionado = evento.contacto;
       this.cargarDatosCliente(this.clienteRapport, evento.contacto);
   }
 
@@ -450,6 +452,29 @@ export class ListaRapportsComponent extends SelectorBase {
           console.log('Error getting location'+ JSON.stringify(error));
       });
   }    
+
+  resumirRapports() {
+    if (this.generandoResumen) return; // Evita llamadas duplicadas
+    this.generandoResumen = true; // Deshabilita el botón y cambia el texto
+  
+    this.servicio.cargarResumenRapports(this.numeroCliente, this.contactoSeleccionado)
+      .subscribe(async (resumen) => {
+        const resumenConSaltos = resumen.replace(/\n/g, '<br>');
+  
+        const alert = await this.alertCtrl.create({
+          header: 'Resumen de Rapports',
+          message: `<div style="max-height: 300px; overflow-y: auto;">${resumenConSaltos}</div>`,
+          buttons: ['Cerrar']
+        });
+  
+        await alert.present();
+        this.generandoResumen = false; // Habilita el botón nuevamente
+      }, 
+      () => {
+        this.generandoResumen = false; // En caso de error, también habilitamos el botón
+      });
+  }
+  
 
   public inicializarLosDatos(datos:any[]) {
       super.inicializarDatos(datos);

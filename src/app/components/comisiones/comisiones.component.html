@@ -74,6 +74,14 @@
       <p item-right>{{resumen.GeneralFaltaParaSalto | currency:'EUR'}}</p>
     </ion-item>
     <ion-item>
+      <ion-label>
+        <strong>Comisión real:</strong>
+      </ion-label>
+      <p item-right>
+        <strong>{{ resumen.TotalTipoAcumulado | percent:'1.2-2' }}</strong>
+      </p>
+    </ion-item>
+    <ion-item>
       <ion-label><strong>Total Comisiones</strong></ion-label>
       <p item-right><strong>{{resumen.TotalComisiones | currency:'EUR'}}</strong></p>
     </ion-item>

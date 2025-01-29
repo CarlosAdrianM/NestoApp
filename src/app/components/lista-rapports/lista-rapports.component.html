@@ -36,6 +36,15 @@
                     name="cliente" (ionFocus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
         </ion-item>
         <selector-direcciones-entrega [hidden]="!mostrarDirecciones" cliente="{{clienteRapport}}" seleccionado="{{contactoRapport}}" (seleccionar)="seleccionarContacto($event); mostrarDirecciones = false;"></selector-direcciones-entrega>
+        <ion-button 
+          expand="full" 
+          color="primary" 
+          (click)="resumirRapports()" 
+          [disabled]="generandoResumen || !numeroCliente || !contactoSeleccionado">
+          <ion-icon name="document-text" slot="start"></ion-icon>
+          {{ generandoResumen ? 'Generando resumen...' : 'Resumir los Rapports' }}
+        </ion-button>
+
         <button block [hidden]="true">
           <ion-icon name="add"></ion-icon>Cargar
         </button>
