@@ -2,7 +2,7 @@ import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular
 import { Injectable } from '@angular/core';
 import { CacheService } from 'ionic-cache';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
@@ -22,6 +22,7 @@ export class ClienteService {
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(
+        map(response => this.toCamelCase(response)),
         catchError(this.handleError)
       )
   }
@@ -35,6 +36,7 @@ export class ClienteService {
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(
+        map(response => this.toCamelCase(response)),
         catchError(this.handleError)
       )
 
@@ -49,6 +51,7 @@ export class ClienteService {
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(
+        map(response => this.toCamelCase(response)),
         catchError(this.handleError)
       )
   }
@@ -73,6 +76,7 @@ export class ClienteService {
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(
+        map(response => this.toCamelCase(response)),
         catchError(this.handleError)
       )
   }
@@ -87,6 +91,20 @@ export class ClienteService {
         catchError(this.handleError)
       )
   }
+
+  private toCamelCase(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.toCamelCase(item));
+    } else if (obj !== null && typeof obj === 'object') {
+      return Object.keys(obj).reduce((result: any, key: string) => {
+        // Convertir la primera letra a minúscula y manejar _ en medio del nombre
+        const camelCaseKey = key.charAt(0).toLowerCase() + key.slice(1).replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+        result[camelCaseKey] = this.toCamelCase(obj[key]);
+        return result;
+      }, {});
+    }
+    return obj;
+  } 
 
   private handleError(error: HttpErrorResponse): Observable<any> {
     // in a real world app, we may send the error to some remote logging infrastructure

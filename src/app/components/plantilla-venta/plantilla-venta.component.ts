@@ -665,18 +665,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       const data = await this.servicio.leerCliente(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente, this.direccionSeleccionada.contacto).toPromise();
   
       const cliente = data;
-      const telefonos = cliente.telefono.split("/");
+      const telefonos = cliente.Telefono.split("/");
       this.cobroTarjetaMovil = telefonos.find(x => x.startsWith("6") || x.startsWith("7") || x.startsWith("8"));
   
-      const personaContactoFacturacion = cliente.personasContacto.find(x => x.facturacionElectronica);
+      const personaContactoFacturacion = cliente.PersonasContacto.find(x => x.FacturacionElectronica);
       if (personaContactoFacturacion) {
-        this.cobroTarjetaCorreo = personaContactoFacturacion.correoElectronico;
+        this.cobroTarjetaCorreo = personaContactoFacturacion.CorreoElectronico;
       }
   
       if (!this.cobroTarjetaCorreo) {
-        const personaContactoCorreo = cliente.personasContacto.find(x => x.correoElectronico);
+        const personaContactoCorreo = cliente.PersonasContacto.find(x => x.CorreoElectronico);
         if (personaContactoCorreo) {
-          this.cobroTarjetaCorreo = personaContactoCorreo.correoElectronico;
+          this.cobroTarjetaCorreo = personaContactoCorreo.CorreoElectronico;
         }
       }
     } catch (error) {
