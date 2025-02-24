@@ -219,8 +219,8 @@ export class ListaRapportsComponent extends SelectorBase {
       rapport.Fecha = this.fechaRapports;
       rapport.Empresa = Configuracion.EMPRESA_POR_DEFECTO;
       if (cliente) {
-          rapport.Cliente = cliente.cliente;
-          rapport.Contacto = cliente.contacto;
+          rapport.Cliente = cliente.Cliente;
+          rapport.Contacto = cliente.Contacto;
       }
       //rapport.Vendedor = this.usuario.vendedor; // tiene que ser el del cliente desde la API
       rapport.Tipo = "V"; // Visita

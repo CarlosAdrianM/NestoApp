@@ -61,7 +61,7 @@
       <ion-item>
         <ion-label>Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}</ion-label>
         <ion-select [(ngModel)]="codigoPostalSeleccionado">
-          <ion-select-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.codigoPostal">{{codPostal.codigoPostal}} {{codPostal.poblacion}}</ion-select-option>
+          <ion-select-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.CodigoPostal">{{codPostal.CodigoPostal}} {{codPostal.Poblacion}}</ion-select-option>
         </ion-select>
       </ion-item>
     </div>
@@ -114,34 +114,34 @@
 <ion-list *ngIf="segmentoRapports == 'codigoPostal'">
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
   <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)" [color]="!clienteSinVisitar.Visitado ? '' : 'light'">
-    <ion-icon name="information-circle" (click)="seleccionarCliente(clienteSinVisitar.cliente)" color="colorEstado(clienteSinVisitar.estado)" slot="start"></ion-icon>
+    <ion-icon name="information-circle" (click)="seleccionarCliente(clienteSinVisitar.Cliente)" color="colorEstado(clienteSinVisitar.Estado)" slot="start"></ion-icon>
     <ion-label class="ion-text-wrap">      
-      <p>{{clienteSinVisitar.cliente}}/{{clienteSinVisitar.contacto}}</p>
-      <h2>{{clienteSinVisitar.nombre}}</h2>
-      <h3>{{clienteSinVisitar.direccion}}</h3>
-      <p>Estado: {{clienteSinVisitar.estado}}</p>
-      <p *ngIf="clienteSinVisitar.fechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.fechaUltimaVisita | date:'dd/MM/yy' }}</p>
-      <p *ngIf="clienteSinVisitar.fechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
-      <p *ngIf="clienteSinVisitar.visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
-      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" color="danger">
+      <p>{{clienteSinVisitar.Cliente}}/{{clienteSinVisitar.Contacto}}</p>
+      <h2>{{clienteSinVisitar.Nombre}}</h2>
+      <h3>{{clienteSinVisitar.Direccion}}</h3>
+      <p>Estado: {{clienteSinVisitar.Estado}}</p>
+      <p *ngIf="clienteSinVisitar.FechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.FechaUltimaVisita | date:'dd/MM/yy' }}</p>
+      <p *ngIf="clienteSinVisitar.FechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
+      <p *ngIf="clienteSinVisitar.Visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
+      <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 5" color="danger">
         <h2>¡¡¡ CONTADO RIGUROSO !!!</h2>      
       </ion-text>
-      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" color="danger">
+      <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 4" color="danger">
         <h3>Tiene impagados pendientes</h3>      
       </ion-text>
-      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" color="primary">
+      <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 3" color="primary">
         <h3>Tiene deuda vencida</h3>
       </ion-text>
-      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 2" color="primary">
+      <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 2" color="primary">
         Las deudas de este cliente no están vencidas
       </ion-text>
-      <ion-text *ngIf="clienteSinVisitar.nivelRiesgoPagos == 1" color="success">
+      <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 1" color="success">
         Cliente sin deudas
       </ion-text>    
     </ion-label>
-    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 5" name="alert" size="large" color="danger" slot="end"></ion-icon>
-    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 4" name="warning" color="danger" slot="end"></ion-icon>
-    <ion-icon *ngIf="clienteSinVisitar.nivelRiesgoPagos == 3" name="warning" color="primary" slot="end"></ion-icon>
+    <ion-icon *ngIf="clienteSinVisitar.NivelRiesgoPagos == 5" name="alert" size="large" color="danger" slot="end"></ion-icon>
+    <ion-icon *ngIf="clienteSinVisitar.NivelRiesgoPagos == 4" name="warning" color="danger" slot="end"></ion-icon>
+    <ion-icon *ngIf="clienteSinVisitar.NivelRiesgoPagos == 3" name="warning" color="primary" slot="end"></ion-icon>
   </ion-item>
 </ion-list>
 </ion-content>
