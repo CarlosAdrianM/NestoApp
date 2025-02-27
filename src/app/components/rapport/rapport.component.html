@@ -21,7 +21,7 @@
                  name="cliente" (ionFocus)="seleccionarTexto($event)" (ionBlur)="leerClientePrincipal()"
                  [color]="colorEstado(rapport.EstadoCliente)" (press)="mostrarEstadoCliente(rapport.EstadoCliente)"></ion-input>
     </ion-item>
-    <selector-direcciones-entrega cliente="{{rapport.Cliente}}" seleccionado="{{rapport.Contacto}}" (seleccionar)="seleccionarContacto($event)"></selector-direcciones-entrega>
+    <selector-direcciones-entrega cliente="{{rapport.Cliente}}" seleccionado="{{rapport.Contacto}}" (seleccionar)="seleccionarContacto($event)" forzarEstado="0"></selector-direcciones-entrega>
 
     <ion-item>
       <ion-label>Tipo de Rapport</ion-label>

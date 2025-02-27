@@ -7,7 +7,7 @@ import { SelectorDireccionesEntregaService } from './selector-direcciones-entreg
   selector: 'selector-direcciones-entrega',
   templateUrl: './selector-direcciones-entrega.component.html',
   styleUrls: ['./selector-direcciones-entrega.component.scss'],
-  inputs: ['cliente', 'seleccionado', 'totalPedido'],
+  inputs: ['cliente', 'seleccionado', 'totalPedido', 'forzarEstado'],
 })
 export class SelectorDireccionesEntregaComponent extends SelectorBase {
   private servicio: SelectorDireccionesEntregaService;
@@ -27,6 +27,7 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
       }
   }
   public seleccionado: string;
+  public forzarEstado: number; // para que coja un contacto con un estado concreto
 
   private _totalPedido: number;
   get totalPedido() {
@@ -59,11 +60,20 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
                   });
                   await alert.present();
               } else {
+                    // Seleccionaremos la dirección con estos criterios:
+                    // 1. Si hay this.seleccionado, seleccionar esa dirección
+                    // 2. Si no hay this.seleccionado, mirar si hay alguno en el estado de forzarEstado y si lo hay lo seleccionamos
+                    // 3. Si no hay ninguno en el estado de forzarEstado, seleccionar la dirección por defecto
                   this.direccionesEntrega = data;
                   if (this.seleccionado) {
                       this.direccionSeleccionada = this.direccionesEntrega.find(d => d.contacto.trim() == this.seleccionado.trim());
                   } else {
-                      this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
+                        if (this.forzarEstado) {
+                            this.direccionSeleccionada = this.direccionesEntrega.find(d => d.estado == this.forzarEstado);
+                        }
+                        if (!this.direccionSeleccionada) {
+                            this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
+                        }
                   }
                   this.seleccionarDato(this.direccionSeleccionada);
               }
