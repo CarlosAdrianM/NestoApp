@@ -111,8 +111,8 @@ export class ListaRapportsService {
       return this.http.get<any>(urlConsulta).pipe(
         // Transformamos la respuesta en el resumen
         map(response => {
-          if (response && response.resumen) {
-            return response.resumen;
+          if (response && response.Resumen) {
+            return response.Resumen;
           } else {
             throw new Error('La respuesta no contiene el resumen esperado.');
           }
