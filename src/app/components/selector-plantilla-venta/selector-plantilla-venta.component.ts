@@ -139,6 +139,38 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       }
   }
 
+  public buscarContextual(filtro: any): void {
+    filtro = filtro.toUpperCase();
+    this.quitarTodosLosFiltros();
+    this.annadirFiltro(filtro);
+    this.servicio.buscarContextual(filtro).subscribe(
+        async data => {
+            if (data.length === 0) {
+                let alert: any = await this.alertCtrl.create({
+                    header: 'Error',
+                    message: 'No hay productos que coincidan con ' + filtro,
+                    buttons: ['Ok'],
+                });
+                await alert.present();
+            } else {
+              this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+                  async data => {
+                      data = data.map(function (item): any {
+                          let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                          clone.aplicarDescuentoFicha = clone.aplicarDescuento;
+                          clone.esSobrePedido = clone.estado != 0;
+                          return clone;
+                      });  
+                      this.inicializarDatosFiltrados(data);
+                  },
+                  error => this.errorMessage = <any>error
+              )
+            }
+        },
+        error => this.errorMessage = <any>error
+    );
+}
+
   public buscarEnTodosLosProductos(filtro: any): void {
       filtro = filtro.toUpperCase();
       this.quitarTodosLosFiltros();

@@ -26,11 +26,10 @@ export class SelectorPlantillaVentaService {
       return this.cache.loadFromObservable(cacheKey, request, undefined, ttl);
   }
 
-  public buscarProductos(filtro: any): Observable<any> {
-      let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
+  public buscarContextual(filtro: any): Observable<any> {
+      let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/Buscar';
       let params: HttpParams = new HttpParams();
-      params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
-      params = params.append('filtroProducto', filtro);
+      params = params.append('q', filtro);
 
       let cacheKey = _baseUrl + params.toString();
       let request = this.http.get(_baseUrl, { params: params })
@@ -40,6 +39,21 @@ export class SelectorPlantillaVentaService {
       return this.cache.loadFromObservable(cacheKey, request);
 
   }
+
+  public buscarProductos(filtro: any): Observable<any> {
+    let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+    params = params.append('filtroProducto', filtro);
+
+    let cacheKey = _baseUrl + params.toString();
+    let request = this.http.get(_baseUrl, { params: params })
+      .pipe(
+        catchError(this.handleError)
+      )
+    return this.cache.loadFromObservable(cacheKey, request);
+
+}
 
   public comprobarCondicionesPrecio(linea: any): Observable<any> {
       let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/ComprobarCondiciones';
