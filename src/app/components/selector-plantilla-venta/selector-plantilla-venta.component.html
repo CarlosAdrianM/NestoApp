@@ -5,7 +5,55 @@
     <ion-icon name="close" (click)="quitarFiltro(filtroFijado)"></ion-icon>
   </ion-chip>
   <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 3" (click)="buscarEnTodosLosProductos(filtro.value)">Buscar en todos los productos</ion-button>
-  <ion-button expand="block" *ngIf="filtro.value && filtro.value.length >= 1" (click)="buscarContextual(filtro.value)">Búsqueda contextual de productos</ion-button>
+  
+
+  <!-- Botón del medio con dropdown -->
+  <div class="button-container" *ngIf="filtro.value && filtro.value.length >= 1">
+    <ion-button expand="block" class="contextual-button" (click)="buscarContextual(filtro.value)">
+      Búsqueda contextual ({{ operador == 'AND' ? 'Todas' : 'Alguna' }})
+    </ion-button>
+    <div class="icon-container">
+      <ion-icon name="chevron-down-outline" (click)="mostrarOpciones = !mostrarOpciones"></ion-icon>
+    </div>
+  </div>
+
+  <!-- Opciones de operador -->
+  <ion-list *ngIf="mostrarOpciones" class="operador-popup">
+    <ion-item button (click)="seleccionarOperador('OR')">Alguna de las palabras</ion-item>
+    <ion-item button (click)="seleccionarOperador('AND')">Todas las palabras</ion-item>
+  </ion-list>
+
+
+  <!-- CSS (añadir en tu archivo de estilos) -->
+<style>
+  .button-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .contextual-button {
+    width: 100%;
+  }
+  
+  .icon-container {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: auto;
+  }
+  
+  ion-button {
+    --padding-top: 15px;
+    --padding-bottom: 15px;
+    margin-bottom: 8px;
+  }
+  </style>
+
   <ion-button expand="block" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="soloConStock()">Solo con stock</ion-button>
   <div id="myFixZone" scrollY="true">
     <ion-list>

@@ -26,10 +26,11 @@ export class SelectorPlantillaVentaService {
       return this.cache.loadFromObservable(cacheKey, request, undefined, ttl);
   }
 
-  public buscarContextual(filtro: any): Observable<any> {
+  public buscarContextual(filtro: string, operador: string): Observable<any> {
       let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/Buscar';
       let params: HttpParams = new HttpParams();
       params = params.append('q', filtro);
+      params = params.append('usarBusquedaConAND', operador == 'AND' ? 'true' : 'false');
 
       let cacheKey = _baseUrl + params.toString();
       let request = this.http.get(_baseUrl, { params: params })

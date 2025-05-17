@@ -143,7 +143,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
     filtro = filtro.toUpperCase();
     this.quitarTodosLosFiltros();
     this.annadirFiltro(filtro);
-    this.servicio.buscarContextual(filtro).subscribe(
+    this.servicio.buscarContextual(filtro, this.operador).subscribe(
         async data => {
             if (data.length === 0) {
                 let alert: any = await this.alertCtrl.create({
@@ -224,6 +224,15 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   public soloConStock() {
     this.datosFiltrados = this.datosFiltrados.filter(d => d.cantidadDisponible > 0);
   }
+
+  operador: 'OR' | 'AND' = 'OR';
+  mostrarOpciones = false;
+
+  seleccionarOperador(op: 'OR' | 'AND') {
+    this.operador = op;
+    this.mostrarOpciones = false;
+  }
+
 
   get totalPedido(): number {
       // Hay que calcularlo bien
