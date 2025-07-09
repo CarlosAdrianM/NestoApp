@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
-import { NavController, AlertController, LoadingController, ToastController } from '@ionic/angular';
+import { NavController, AlertController, LoadingController, ToastController, AlertInput } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -57,6 +57,15 @@ export class ListaRapportsComponent extends SelectorBase {
   private _codigoPostalSeleccionado: any;
   public filtro: string = "";
   public filtroBuscar: string = "";
+
+  public mostrarPopoverFiltros = false;
+  public filtroCodigosPostales: 'filtrado' | 'todos' = 'filtrado';
+  public filtroClientesSinVisitar: 'visitables' | 'todos' = 'visitables';
+
+  public segmentoAnterior: string | null = null;
+  public clienteAnterior: string | null = null;
+  public contactoAnterior: string | null = null;
+
   
   get codigoPostalSeleccionado() {
       return this._codigoPostalSeleccionado;
@@ -128,6 +137,7 @@ export class ListaRapportsComponent extends SelectorBase {
           return;
       }
       this.clienteRapport = this.numeroCliente;
+      this.mostrarResumen = false;
   }
 
   seleccionarCliente(cliente: string) {
@@ -321,7 +331,7 @@ export class ListaRapportsComponent extends SelectorBase {
                   await alert.present();
               } else {
                   this.listadoClientesSinVisitar = data;
-                  this.listadoClientesSinVisitarFiltrado = data;
+                  this.aplicarFiltroClientes();
               }
           },
           async error => {
@@ -335,48 +345,93 @@ export class ListaRapportsComponent extends SelectorBase {
   }
 
   public async mostrarFiltros() {
-      let alert =  await this.alertCtrl.create({
-        header: 'Seleccione el filtro deseado',
-        inputs: [{
-          type: 'radio',
-          label: 'Solo C.P. sin visitas',
-          value: 'filtrado',
-          checked: true
+    const alert = await this.alertCtrl.create({
+      header: 'Seleccione los filtros deseados',
+      inputs: [
+        // Filtro códigos postales
+        {
+          type: 'checkbox',
+          label: 'Cód. Postales: Solo sin visitas',
+          value: 'cp_filtrado',
+          checked: this.filtroCodigosPostales !== 'todos'
         },
         {
-          type: 'radio',
-          label: 'Todos los C.P.',
-          value: 'todos'
-        }],
-        buttons: [
-          {
-            text: 'Cancelar',
-            role: 'cancel'
-          },
-          {
-            text: 'OK',
-            handler: (data:string) => { 
-                if (data == 'todos')
-                {
-                    this.cargarCodigosPostalesSinVisitar(true);
-                } else {
-                    this.cargarCodigosPostalesSinVisitar();
-                }
+          type: 'checkbox',
+          label: 'Cód. Postales: Todos',
+          value: 'cp_todos',
+          checked: this.filtroCodigosPostales === 'todos'
+        },
+  
+        // Filtro clientes
+        {
+          type: 'checkbox',
+          label: 'Clientes: Solo visitables',
+          value: 'cli_visitables',
+          checked: this.filtroClientesSinVisitar === 'visitables'
+        },
+        {
+          type: 'checkbox',
+          label: 'Clientes: Todos',
+          value: 'cli_todos',
+          checked: this.filtroClientesSinVisitar !== 'visitables'
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel'
+        },
+        {
+          text: 'OK',
+          handler: (selected: string[]) => {
+            // Resolver conflicto en Códigos Postales
+            let filtroCP: 'todos' | 'filtrado' = 'filtrado';
+            if (selected.includes('cp_todos') && !selected.includes('cp_filtrado')) {
+              filtroCP = 'todos';
             }
+            this.filtroCodigosPostales = filtroCP;
+            this.cargarCodigosPostalesSinVisitar(filtroCP === 'todos');
+          
+            // Resolver conflicto en Clientes
+            let filtroClientes: 'todos' | 'visitables' = 'todos';
+            if (selected.includes('cli_visitables') && !selected.includes('cli_todos')) {
+              filtroClientes = 'visitables';
+            }
+            this.filtroClientesSinVisitar = filtroClientes;
+            this.aplicarFiltroClientes();
           }
-        ]
-      });
-      
-      await alert.present();
+          
+        }
+      ]
+    });
+  
+    await alert.present();
   }
+  
+  
 
   cambiaFiltro(event: any) {
-      var filtro = this.filtro.toUpperCase();
-      function contieneCadena(element, index, array) { 
-          return (element.cliente == filtro || element.nombre.toUpperCase().includes(filtro) || element.direccion.toUpperCase().includes(filtro)); 
-      } 
-      this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(contieneCadena)
+      var filtro = this.filtro.toUpperCase();      
+      this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(
+        c => c.Cliente == filtro || c.Nombre.toUpperCase().includes(filtro) || c.Direccion.toUpperCase().includes(filtro)
+      )
   }
+
+  public aplicarFiltroClientes(): void {
+    if (this.filtroClientesSinVisitar === 'visitables') {
+      this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(
+        c => c.Estado === 0 || c.Estado === 5
+      );
+    } else {
+      this.listadoClientesSinVisitarFiltrado = [...this.listadoClientesSinVisitar];
+    }
+  }
+
+  public aplicarFiltroCodigosPostales() {
+    const forzarTodos = this.filtroCodigosPostales === 'todos';
+    this.cargarCodigosPostalesSinVisitar(forzarTodos);
+  } 
+  
 
   public async buscarRapports(): Promise<void> {
       let loading: any = await this.loadingCtrl.create({
@@ -475,6 +530,43 @@ export class ListaRapportsComponent extends SelectorBase {
       });
   }
   
+  public mostrarResumen: boolean = false;
+
+    mostrarResumenVentas(): void {
+        this.mostrarResumen = !this.mostrarResumen;
+    }
+
+  public verRapportsDeCliente(cliente: string, contacto: string): void {
+  // Guardamos el estado actual
+  this.segmentoAnterior = this.segmentoRapports;
+  this.clienteAnterior = this.numeroCliente;
+  this.contactoAnterior = this.contactoSeleccionado;
+
+  // Cambiamos al segmento de cliente
+  this.numeroCliente = cliente;
+  this.contactoSeleccionado = contacto;
+  this.segmentoRapports = 'cliente';
+  
+  // Llamamos la función que carga los rapports (si no se lanza automáticamente)
+  this.actualizarCliente();
+  this.cargarDatosCliente(cliente, contacto);
+}
+
+public volverASegmentoAnterior(): void {
+    if (this.segmentoAnterior) {
+      this.segmentoRapports = this.segmentoAnterior;
+      this.segmentoAnterior = null;
+  
+      // Restauramos cliente/contacto si hace falta
+      this.numeroCliente = this.clienteAnterior ?? '';
+      this.contactoSeleccionado = this.contactoAnterior ?? '';
+      this.clienteAnterior = null;
+      this.contactoAnterior = null;
+    }
+  }
+  
+
+
 
   public inicializarLosDatos(datos:any[]) {
       super.inicializarDatos(datos);

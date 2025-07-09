@@ -1,0 +1,77 @@
+<div class="resumen-ventas">
+    <!-- Botones de comparativa -->
+    <div class="botonera">
+      <ion-button fill="outline" [color]="modoComparativa === 'anual' ? 'primary' : 'medium'" (click)="cambiarComparativa('anual')">
+        Año natural
+      </ion-button>
+      <ion-button fill="outline" [color]="modoComparativa === 'ultimos12meses' ? 'primary' : 'medium'" (click)="cambiarComparativa('ultimos12meses')">
+        Últimos 12 meses
+      </ion-button>
+    </div>
+  
+    <!-- Botones de agrupación -->
+    <div class="botonera">
+      <ion-button fill="outline" [color]="agruparPor === 'grupo' ? 'primary' : 'medium'" (click)="cambiarAgrupacion('grupo')">
+        Grupo
+      </ion-button>
+      <ion-button fill="outline" [color]="agruparPor === 'familia' ? 'primary' : 'medium'" (click)="cambiarAgrupacion('familia')">
+        Familia
+      </ion-button>
+      <ion-button fill="outline" [color]="agruparPor === 'subgrupo' ? 'primary' : 'medium'" (click)="cambiarAgrupacion('subgrupo')">
+        Subgrupo
+      </ion-button>
+    </div>
+  
+    <!-- Cargando -->
+    <ion-spinner *ngIf="cargando" name="crescent"></ion-spinner>
+  
+    <!-- Tabla -->
+    <ion-grid *ngIf="!cargando && ventas.length" class="tabla-resumen">
+      <!-- Encabezado -->
+      <ion-row class="encabezado">
+        <ion-col size="3.5" class="col-nombre"><strong>Nombre</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Año Actual</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Año Anterior</strong></ion-col>
+        <ion-col size="2.5" class="text-right"><strong>Diferencia</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Ratio</strong></ion-col>
+      </ion-row>
+  
+      <!-- Filas de datos -->
+      <ion-row *ngFor="let venta of ventas; let i = index" 
+               [class.fila-total]="venta.nombre === 'TOTAL'"
+               [class.fila-datos]="venta.nombre !== 'TOTAL'">
+        <ion-col size="3.5" class="col-nombre">
+          <span [class.texto-total]="venta.nombre === 'TOTAL'">{{ venta.nombre }}</span>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="venta.nombre === 'TOTAL'">
+            {{ venta.ventaAnnoActual | currency:'EUR':'symbol':'1.0-0' }}
+          </span>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="venta.nombre === 'TOTAL'">
+            {{ venta.ventaAnnoAnterior | currency:'EUR':'symbol':'1.0-0' }}
+          </span>
+        </ion-col>
+        <ion-col size="2.5" class="text-right">
+          <span [class.texto-total]="venta.nombre === 'TOTAL'"
+                [class.diferencia-positiva]="venta.diferencia > 0 && venta.nombre !== 'TOTAL'"
+                [class.diferencia-negativa]="venta.diferencia < 0 && venta.nombre !== 'TOTAL'">
+            {{ venta.diferencia | currency:'EUR':'symbol':'1.0-0' }}
+          </span>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="venta.nombre === 'TOTAL'"
+                [class.ratio-positivo]="venta.ratio > 0 && venta.nombre !== 'TOTAL'"
+                [class.ratio-negativo]="venta.ratio < 0 && venta.nombre !== 'TOTAL'">
+            {{ venta.ratio | percent:'1.0-1' }}
+          </span>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  
+    <!-- Sin datos -->
+    <ion-text color="medium" *ngIf="!cargando && ventas.length === 0">
+      No hay datos para mostrar.
+    </ion-text>
+  </div>

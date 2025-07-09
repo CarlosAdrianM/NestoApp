@@ -62,6 +62,8 @@ import { MsalModule,
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
+import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
+
 
 registerLocaleData(localeEs);
 
@@ -112,7 +114,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     SelectorPlantillaVentaDetalleComponent,
     PlantillaVentaComponent,
     UltimasVentasProductoClienteComponent,
-    AlertsComponent
+    AlertsComponent,
+    ResumenVentasComponent
   ],
   entryComponents: [],
   imports: [
