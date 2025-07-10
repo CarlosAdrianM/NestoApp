@@ -3,6 +3,7 @@ import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 @Component({
   selector: 'selector-plantilla-venta',
@@ -20,7 +21,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       private alertCtrl: AlertController, 
       private loadingCtrl: LoadingController, 
       private nav: NavController, 
-      private keyboard: Keyboard
+      private keyboard: Keyboard,
+      private firebaseAnalytics: FirebaseAnalytics
       ) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
@@ -143,6 +145,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
     filtro = filtro.toUpperCase();
     this.quitarTodosLosFiltros();
     this.annadirFiltro(filtro);
+    this.firebaseAnalytics.logEvent("busqueda_contextual_plantilla", {cliente: this.cliente, filtro: filtro});
     this.servicio.buscarContextual(filtro, this.operador).subscribe(
         async data => {
             if (data.length === 0) {
@@ -175,6 +178,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       filtro = filtro.toUpperCase();
       this.quitarTodosLosFiltros();
       this.annadirFiltro(filtro);
+      this.firebaseAnalytics.logEvent("plantilla_buscar_en_todos_los_productos", {cliente: this.cliente, filtro: filtro});
       this.servicio.buscarProductos(filtro).subscribe(
           async data => {
               if (data.length === 0) {
@@ -231,6 +235,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   seleccionarOperador(op: 'OR' | 'AND') {
     this.operador = op;
     this.mostrarOpciones = false;
+    this.firebaseAnalytics.logEvent("plantilla_seleccionar_operador", {operador: op, cliente: this.cliente});
   }
 
 

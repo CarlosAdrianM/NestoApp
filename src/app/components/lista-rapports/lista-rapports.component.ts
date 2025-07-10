@@ -511,7 +511,7 @@ export class ListaRapportsComponent extends SelectorBase {
   resumirRapports() {
     if (this.generandoResumen) return; // Evita llamadas duplicadas
     this.generandoResumen = true; // Deshabilita el botón y cambia el texto
-  
+    this.firebaseAnalytics.logEvent("resumir_rapports", {cliente: this.numeroCliente, contacto: this.contactoSeleccionado});
     this.servicio.cargarResumenRapports(this.numeroCliente, this.contactoSeleccionado)
       .subscribe(async (resumen) => {
         const resumenConSaltos = resumen.replace(/\n/g, '<br>');
