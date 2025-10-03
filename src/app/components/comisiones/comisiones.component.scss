@@ -1,0 +1,18 @@
+// Estilos para el alert de detalle de comisiones
+::ng-deep .comisiones-detalle-alert {
+    .alert-message {
+      text-align: left !important;
+      
+      table {
+        width: 100%;
+        
+        td:first-child {
+          text-align: left !important;
+        }
+        
+        td:last-child {
+          text-align: right !important;
+        }
+      }
+    }
+  }

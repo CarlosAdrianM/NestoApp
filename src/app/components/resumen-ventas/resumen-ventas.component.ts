@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ResumenVentasService } from './resumen-ventas.service';
 import { ResumenVentas } from './resumen-ventas.model';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { Usuario } from 'src/app/models/Usuario';
 
 @Component({
   selector: 'app-resumen-ventas',
@@ -19,7 +20,8 @@ export class ResumenVentasComponent implements OnInit {
   agruparPor: 'grupo' | 'familia' | 'subgrupo' = 'grupo';
 
   constructor(private resumenVentasService: ResumenVentasService, 
-              private firebaseAnalytics: FirebaseAnalytics) {}
+              private firebaseAnalytics: FirebaseAnalytics,
+              private usuario: Usuario) {}
 
   ngOnInit(): void {
     this.cargarVentas();
@@ -31,7 +33,7 @@ export class ResumenVentasComponent implements OnInit {
     }
 
     this.cargando = true;
-    this.firebaseAnalytics.logEvent("cargar_ventas_cliente", {cliente: this.cliente, contacto: this.contacto});
+    this.firebaseAnalytics.logEvent("cargar_ventas_cliente", {cliente: this.cliente, contacto: this.contacto, vendedor: this.usuario.vendedor});
     this.resumenVentasService
       .obtenerResumenVentas(this.cliente, this.contacto, this.modoComparativa, this.agruparPor)
       .subscribe({

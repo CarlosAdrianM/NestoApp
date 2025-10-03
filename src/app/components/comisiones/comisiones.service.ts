@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { ResumenComisionesMes } from './comisiones.interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,13 @@ export class ComisionesService {
 
   constructor(private http: HttpClient) { }
 
-  public cargarResumen(vendedor: string, mes: number, anno: number, incluirAlbaranes: boolean, incluirPicking: boolean): Observable<any> {
+  public cargarResumen(
+    vendedor: string, 
+    mes: number, 
+    anno: number, 
+    incluirAlbaranes: boolean, 
+    incluirPicking: boolean
+  ): Observable<ResumenComisionesMes> {
     let params: HttpParams = new HttpParams();
     params = params.append('vendedor', vendedor);
     params = params.append('mes', mes.toString());
@@ -21,10 +28,10 @@ export class ComisionesService {
     params = params.append('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
     params = params.append('incluirPicking', incluirPicking ? 'true' : 'false');
 
-    return this.http.get(this._baseUrl, { params })
-    .pipe(
-      catchError(this.handleError)
-    )      
+    return this.http.get<ResumenComisionesMes>(this._baseUrl, { params })
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   public cargarPrueba(): any {

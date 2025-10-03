@@ -14,6 +14,9 @@ export class ProductoComponent implements OnInit {
   public productoActual: string = "39813";
   public producto: any;
   public clientes: any;
+  public videos: any[] = [];
+  public vistaSeleccionada: string = "info";
+
 
   constructor(private servicio: ProductoService, 
     public loadingCtrl: LoadingController, 
@@ -89,6 +92,38 @@ export class ProductoComponent implements OnInit {
         }
       );
   }
+
+  public abrirVideo(video: any): void {
+    if (video.UrlVideo) {
+      window.open(video.UrlVideo, '_system', 'location=yes');
+    }
+  }
+
+  async cargarVideos() {
+    let loading = await this.loadingCtrl.create({
+      message: 'Cargando vídeos...'
+    });
+    await loading.present();
+  
+    this.servicio.cargarVideosProducto(this.productoActual).subscribe(
+      async data => {
+        this.firebaseAnalytics.logEvent("producto_ver_videos", {producto: this.productoActual});
+        this.videos = data;
+      },
+      async error => {
+        await loading.dismiss();
+      },
+      async () => {
+        await loading.dismiss();
+      }
+    );
+  }
+  
+  segmentChanged(event: any) {
+    if (event.detail.value === 'videos' && this.videos.length === 0) {
+      this.cargarVideos();
+    }
+  } 
 
   public abrirEnlaceWeb(urlDestino: string): void {
       urlDestino += '&utm_medium=NestoApp_ficha_producto';

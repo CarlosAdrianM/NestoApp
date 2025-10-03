@@ -43,6 +43,14 @@ export class ProductoService {
     )
   }
 
+  public cargarVideosProducto(productoId: string): Observable<any> {
+    return this.http.get(`${Configuracion.API_URL}/Videos/Producto/${productoId}`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+  
+
   private handleError(error: HttpErrorResponse): Observable<any> {
     // in a real world app, we may send the error to some remote logging infrastructure
     // instead of just logging it to the console

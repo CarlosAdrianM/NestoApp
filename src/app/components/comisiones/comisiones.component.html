@@ -8,19 +8,39 @@
 </ion-header>
 
 <ion-content>
-  <selector-vendedores ocultarConVendedorUnico="true" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+  <selector-vendedores 
+    ocultarConVendedorUnico="true" 
+    etiqueta="Vendedor" 
+    seleccionado="vendedorSeleccionado" 
+    (seleccionar)="seleccionarVendedor($event)">
+  </selector-vendedores>
+  
   <ion-button expand="block" (click)="doCheckbox()">{{nombreMesSeleccionado}}</ion-button>
+  
   <ion-item>
     <ion-label>Incluir Fin de Mes</ion-label>
     <ion-toggle [(ngModel)]="incluirAlbaranes" (ionChange)="cargarResumen()" disabled="{{deshabilitarIncluirAlbaranes}}"></ion-toggle>
   </ion-item>
+  
   <ion-item>
     <ion-label>Incluir Picking</ion-label>
     <ion-toggle [(ngModel)]="incluirPicking" (ionChange)="cargarResumen()" disabled="{{deshabilitarIncluirAlbaranes}}"></ion-toggle>
   </ion-item>
+  
   <div *ngIf="resumen">
     <ion-list *ngFor="let etiqueta of resumen.Etiquetas">
-      <ion-item-divider color="light">{{etiqueta.Nombre}}</ion-item-divider>
+      <ion-item-divider color="light">
+        <ion-label>{{etiqueta.Nombre}}</ion-label>
+        <!-- CAMBIO: Botón de información para TODAS las etiquetas -->
+        <ion-button 
+          slot="end" 
+          fill="clear" 
+          size="small"
+          (click)="mostrarDetalleEtiqueta(etiqueta)">
+          <ion-icon name="information-circle-outline"></ion-icon>
+        </ion-button>
+      </ion-item-divider>
+      
       <ng-container *ngIf="etiqueta.Venta !== undefined">
         <ion-item>
           <ion-label>Venta</ion-label>
@@ -31,6 +51,7 @@
           <p item-right>{{etiqueta.Tipo | percent:'1.2-2'}}</p>
         </ion-item>
       </ng-container>
+      
       <ng-container *ngIf="etiqueta.Recuento !== undefined">
         <ion-item>
           <ion-label>Conseguidos</ion-label>
@@ -41,38 +62,29 @@
           <p item-right>{{etiqueta.Tipo | currency:'EUR'}}</p>
         </ion-item>
       </ng-container>
+      
       <ion-item>
         <ion-label>Total Comisión</ion-label>
         <p item-right>{{etiqueta.Comision | currency:'EUR'}}</p>
       </ion-item>
     </ion-list>
+    
+    <!-- Sección Total - SIMPLIFICADA -->
     <ion-item-divider color="light">Total</ion-item-divider>
-    <ion-item>
-      <ion-range min="{{resumen.GeneralInicioTramo}}" max="{{resumen.GeneralFinalTramo}}" color="{{colorRango(resumen.GeneralBajaSaltoMesSiguiente)}}" [(ngModel)]="resumen.GeneralProyeccion">
-        <ion-label range-left>{{resumen.GeneralInicioTramo | currency:'EUR'}}</ion-label>
-        <ion-label range-right>{{resumen.GeneralFinalTramo | currency:'EUR'}}</ion-label>
+    
+    <!-- Range visual del tramo -->
+    <ion-item *ngIf="etiquetaGeneral">
+      <ion-range 
+        min="{{etiquetaGeneral.InicioTramo}}" 
+        max="{{etiquetaGeneral.FinalTramo}}" 
+        color="{{colorRangoGeneral}}" 
+        [(ngModel)]="etiquetaGeneral.Proyeccion">
+        <ion-label range-left>{{etiquetaGeneral.InicioTramo | currency:'EUR'}}</ion-label>
+        <ion-label range-right>{{etiquetaGeneral.FinalTramo | currency:'EUR'}}</ion-label>
       </ion-range>
     </ion-item>
-    <ion-item>
-      <ion-label>Venta acumulada (General)</ion-label>
-      <p item-right>{{resumen.GeneralVentaAcumulada | currency:'EUR'}}</p>
-    </ion-item>
-    <ion-item>
-      <ion-label>% Conseguido/Real (General)</ion-label>
-      <p item-right>{{resumen.GeneralTipoConseguido | percent:'1.2-2'}} / {{resumen.GeneralTipoReal | percent:'1.2-2'}}</p>
-    </ion-item>
-    <ion-item>
-      <ion-label>Comisión acumulada (General)</ion-label>
-      <p item-right>{{resumen.GeneralComisionAcumulada | currency:'EUR'}}</p>
-    </ion-item>
-    <ion-item>
-      <ion-label>Proyección Año</ion-label>
-      <p item-right>{{resumen.GeneralProyeccion | currency:'EUR'}}</p>
-    </ion-item>
-    <ion-item>
-      <ion-label>Falta para siguiente salto</ion-label>
-      <p item-right>{{resumen.GeneralFaltaParaSalto | currency:'EUR'}}</p>
-    </ion-item>
+    
+    <!-- Solo mostramos los totales finales -->
     <ion-item>
       <ion-label>
         <strong>Comisión real:</strong>
@@ -81,6 +93,7 @@
         <strong>{{ resumen.TotalTipoAcumulado | percent:'1.2-2' }}</strong>
       </p>
     </ion-item>
+    
     <ion-item>
       <ion-label><strong>Total Comisiones</strong></ion-label>
       <p item-right><strong>{{resumen.TotalComisiones | currency:'EUR'}}</strong></p>
