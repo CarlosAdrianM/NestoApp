@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -6,6 +6,7 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { FileTransfer, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
+import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 
 @Injectable({
   providedIn: 'root'
@@ -64,11 +65,44 @@ export class ExtractoClienteService {
   }
 
   public descargarFactura(empresa: string, numeroFactura: string): Promise<any> {
-    const filetransfer: FileTransferObject = this.transfer.create(); 
-    const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim(); 
+    const filetransfer: FileTransferObject = this.transfer.create();
+    const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+numeroFactura.trim();
     return filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf');
   }
-  
+
+  public leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
+    const url = Configuracion.API_URL + "/Clientes/GetClienteCrear";
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('cliente', cliente);
+    params = params.append('contacto', contacto);
+
+    return this.http.get(url, { params: params })
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  public mandarEnlaceCobro(cliente: string, correo: string, movil: string, importe: number, asunto: string, textoSMS: string): Observable<ReclamacionDeuda> {
+    const url = Configuracion.API_URL + "/ReclamacionDeuda";
+    let headers: HttpHeaders = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    const parametro = {
+      Cliente: cliente,
+      Correo: correo,
+      Movil: movil,
+      Importe: importe,
+      Asunto: asunto,
+      TextoSMS: textoSMS
+    };
+
+    return this.http.post<ReclamacionDeuda>(url, JSON.stringify(parametro), { headers: headers })
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   private handleError(error: HttpErrorResponse): Observable<any> {
       // in a real world app, we may send the error to some remote logging infrastructure
       // instead of just logging it to the console

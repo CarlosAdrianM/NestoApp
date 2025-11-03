@@ -36,7 +36,7 @@ import { ComisionesDetalleComponent } from './components/comisiones-detalle/comi
 import { FileTransfer } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { ExtractoClienteComponent } from './components/extracto-cliente/extracto-cliente.component';
+import { ExtractoClienteComponent, ModalEnviarEnlaceCobroComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { SelectorClientesComponent } from './components/selector-clientes/selector-clientes.component';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
@@ -103,6 +103,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     SelectorProductosComponent,
     ComisionesDetalleComponent,
     ExtractoClienteComponent,
+    ModalEnviarEnlaceCobroComponent,
     SelectorClientesComponent,
     ListaProductosComponent,
     ListaRapportsComponent,

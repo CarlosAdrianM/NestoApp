@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { AlertController, LoadingController, NavController } from '@ionic/angular';
+import { AlertController, LoadingController, NavController, ModalController } from '@ionic/angular';
 import { ExtractoClienteService } from './extracto-cliente.service';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 
 @Component({
   selector: 'app-extracto-cliente',
@@ -13,11 +14,12 @@ export class ExtractoClienteComponent {
 
   private servicio: ExtractoClienteService;
   constructor(servicio: ExtractoClienteService,
-      private alertCtrl: AlertController, 
-      private loadingCtrl: LoadingController, 
-      private fileOpener: FileOpener, 
+      private alertCtrl: AlertController,
+      private loadingCtrl: LoadingController,
+      private fileOpener: FileOpener,
       private nav: NavController,
-      private firebaseAnalytics: FirebaseAnalytics
+      private firebaseAnalytics: FirebaseAnalytics,
+      private modalCtrl: ModalController
       ) {
       this.servicio = servicio;
   };
@@ -29,6 +31,7 @@ export class ExtractoClienteComponent {
   public tipoMovimientos: string = "deuda";
   public clienteSeleccionado: any;
   private hoy: Date;
+  public movimientosSeleccionados: any[] = [];
 
   @ViewChild('selector') selectorClientes: any;
 
@@ -53,6 +56,7 @@ export class ExtractoClienteComponent {
 
   public cargarDeuda(cliente: any): void {
       this.mostrarClientes = false;
+      this.movimientosSeleccionados = [];
       this.servicio.cargarDeuda(cliente).subscribe(
           data => {
               this.movimientosDeuda = data;
@@ -149,5 +153,289 @@ export class ExtractoClienteComponent {
               this.errorMessage = <any>error;
           }
       );
+  }
+
+  public toggleSeleccion(movimiento: any): void {
+      const index = this.movimientosSeleccionados.indexOf(movimiento);
+      if (index > -1) {
+          this.movimientosSeleccionados.splice(index, 1);
+      } else {
+          this.movimientosSeleccionados.push(movimiento);
+      }
+  }
+
+  public estaSeleccionado(movimiento: any): boolean {
+      return this.movimientosSeleccionados.indexOf(movimiento) > -1;
+  }
+
+  public async abrirModalEnlaceCobro(): Promise<void> {
+      this.firebaseAnalytics.logEvent("extracto_cliente_abrir_modal_enlace_cobro", {});
+      const modal = await this.modalCtrl.create({
+          component: ModalEnviarEnlaceCobroComponent,
+          componentProps: {
+              'cliente': this.clienteSeleccionado,
+              'movimientosSeleccionados': this.movimientosSeleccionados
+          }
+      });
+
+      await modal.present();
+
+      const { data } = await modal.onWillDismiss();
+      if (data && data.enviado) {
+          // Limpiar selección después de enviar
+          this.movimientosSeleccionados = [];
+      }
+  }
+}
+
+@Component({
+  selector: 'modal-enviar-enlace-cobro',
+  template: `
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Enviar Enlace de Cobro</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrar()">
+            <ion-icon name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-card *ngIf="movimientosSeleccionados.length > 0">
+        <ion-card-header>
+          <ion-card-subtitle>Movimientos seleccionados</ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-list>
+            <ion-item *ngFor="let mov of movimientosSeleccionados" lines="none">
+              <ion-label>
+                <p>{{mov.concepto}}</p>
+                <p>{{mov.importePendiente | currency:'EUR'}}</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-list>
+        <ion-item>
+          <ion-label position="stacked">Importe</ion-label>
+          <ion-input type="number" [(ngModel)]="importe" placeholder="0.00"></ion-input>
+        </ion-item>
+        <ion-item lines="none" *ngIf="importe">
+          <ion-label>
+            <p style="color: var(--ion-color-medium); font-size: 0.875rem;">{{importe | currency:'EUR'}}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Concepto</ion-label>
+          <ion-input [(ngModel)]="concepto" placeholder="Ej: Señal aparato estética"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Correo electrónico</ion-label>
+          <ion-input type="email" [(ngModel)]="correo" placeholder="email@ejemplo.com"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="stacked">Móvil</ion-label>
+          <ion-input type="tel" [(ngModel)]="movil" placeholder="600123456"></ion-input>
+        </ion-item>
+      </ion-list>
+
+      <ion-card *ngIf="resultado && resultado.TramitadoOK" color="success">
+        <ion-card-header>
+          <ion-card-title>¡Enlace generado correctamente!</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p>{{resultado.Enlace}}</p>
+          <ion-button expand="block" (click)="copiarEnlace()">
+            <ion-icon name="copy" slot="start"></ion-icon>
+            Copiar Enlace
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card *ngIf="resultado && !resultado.TramitadoOK" color="danger">
+        <ion-card-header>
+          <ion-card-title>Error al generar el enlace</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p>No se pudo procesar la solicitud. Por favor, inténtelo de nuevo.</p>
+        </ion-card-content>
+      </ion-card>
+    </ion-content>
+
+    <ion-footer>
+      <ion-toolbar>
+        <ion-button expand="block" (click)="enviarEnlace()" [disabled]="!importe || !concepto || enviando">
+          <ion-spinner *ngIf="enviando" name="crescent"></ion-spinner>
+          <span *ngIf="!enviando">Enviar Enlace</span>
+        </ion-button>
+      </ion-toolbar>
+    </ion-footer>
+  `,
+  styles: [`
+    ion-card-content p {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+  `]
+})
+export class ModalEnviarEnlaceCobroComponent implements OnInit {
+  cliente: any;
+  movimientosSeleccionados: any[] = [];
+  importe: number;
+  concepto: string;
+  correo: string;
+  movil: string;
+  resultado: ReclamacionDeuda;
+  enviando: boolean = false;
+
+  constructor(
+    private modalCtrl: ModalController,
+    private servicio: ExtractoClienteService,
+    private alertCtrl: AlertController,
+    private loadingCtrl: LoadingController,
+    private firebaseAnalytics: FirebaseAnalytics
+  ) {}
+
+  async ngOnInit() {
+    await this.cargarCorreoYMovil();
+    this.calcularImporteYConcepto();
+  }
+
+  async cargarCorreoYMovil(): Promise<void> {
+    try {
+      const data = await this.servicio.leerCliente(
+        this.cliente.empresa,
+        this.cliente.cliente,
+        this.cliente.contacto
+      ).toPromise();
+
+      const clienteCompleto = data;
+
+      // Buscar móvil en los teléfonos
+      if (clienteCompleto.Telefono) {
+        const telefonos = clienteCompleto.Telefono.split("/");
+        this.movil = telefonos.find(x => x.startsWith("6") || x.startsWith("7") || x.startsWith("8")) || '';
+      }
+
+      // Buscar correo en personas de contacto
+      if (clienteCompleto.PersonasContacto && clienteCompleto.PersonasContacto.length > 0) {
+        const personaContactoFacturacion = clienteCompleto.PersonasContacto.find(x => x.FacturacionElectronica);
+        if (personaContactoFacturacion && personaContactoFacturacion.CorreoElectronico) {
+          this.correo = personaContactoFacturacion.CorreoElectronico;
+        }
+
+        if (!this.correo) {
+          const personaContactoCorreo = clienteCompleto.PersonasContacto.find(x => x.CorreoElectronico);
+          if (personaContactoCorreo && personaContactoCorreo.CorreoElectronico) {
+            this.correo = personaContactoCorreo.CorreoElectronico;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar correo y móvil:', error);
+      // Intentar con los datos básicos del cliente
+      this.correo = this.cliente.correo || '';
+      this.movil = this.cliente.telefono || '';
+    }
+  }
+
+  calcularImporteYConcepto(): void {
+    if (this.movimientosSeleccionados.length > 0) {
+      // Calcular importe total
+      this.importe = this.movimientosSeleccionados.reduce((sum, mov) => sum + mov.importePendiente, 0);
+
+      // Generar concepto con números de factura
+      const facturas: string[] = [];
+      for (let mov of this.movimientosSeleccionados) {
+        if (mov.documento) {
+          facturas.push(mov.documento.trim());
+        }
+      }
+
+      if (facturas.length > 0) {
+        let conceptoGenerado = 'Pago facturas ' + facturas.join(', ');
+        if (conceptoGenerado.length > 50) {
+          // Truncar y añadir "y más"
+          conceptoGenerado = conceptoGenerado.substring(0, 43) + ' y más';
+        }
+        this.concepto = conceptoGenerado;
+      } else {
+        this.concepto = 'Pago de deuda pendiente';
+      }
+    }
+  }
+
+  async enviarEnlace(): Promise<void> {
+    if (!this.importe || !this.concepto) {
+      return;
+    }
+
+    this.enviando = true;
+    this.firebaseAnalytics.logEvent("enviar_enlace_cobro", {cliente: this.cliente.cliente, importe: this.importe});
+
+    const asunto = this.concepto + ' - Nueva Visión';
+    const textoSMS = 'Este es un mensaje de @COMERCIO@. Puede pagar ' + this.concepto + ' de @IMPORTE@ @MONEDA@ aquí: @URL@';
+
+    this.servicio.mandarEnlaceCobro(
+      this.cliente.cliente,
+      this.correo,
+      this.movil,
+      this.importe,
+      asunto,
+      textoSMS
+    ).subscribe(
+      async (resultado: ReclamacionDeuda) => {
+        this.resultado = resultado;
+        this.enviando = false;
+
+        if (resultado.TramitadoOK) {
+          this.firebaseAnalytics.logEvent("enlace_cobro_enviado_ok", {cliente: this.cliente.cliente});
+        } else {
+          this.firebaseAnalytics.logEvent("enlace_cobro_error", {cliente: this.cliente.cliente});
+        }
+      },
+      async error => {
+        this.enviando = false;
+        const alert = await this.alertCtrl.create({
+          header: 'Error',
+          message: 'No se pudo enviar el enlace: ' + error,
+          buttons: ['OK']
+        });
+        await alert.present();
+      }
+    );
+  }
+
+  async copiarEnlace(): Promise<void> {
+    if (this.resultado && this.resultado.Enlace) {
+      // Usar la API del portapapeles
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(this.resultado.Enlace);
+          const alert = await this.alertCtrl.create({
+            header: 'Copiado',
+            message: 'El enlace se ha copiado al portapapeles',
+            buttons: ['OK']
+          });
+          await alert.present();
+          this.firebaseAnalytics.logEvent("enlace_cobro_copiado", {});
+        } catch (err) {
+          console.error('Error al copiar: ', err);
+        }
+      }
+    }
+  }
+
+  cerrar(): void {
+    this.modalCtrl.dismiss({
+      enviado: this.resultado && this.resultado.TramitadoOK
+    });
   }
 }
