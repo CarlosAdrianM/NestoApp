@@ -1,17 +1,18 @@
-import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVenta } from './pedido-venta';
+import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PedidoVentaService {
   static ngInjectableDef = undefined;
-  
-  constructor(private http: HttpClient) {    }
+
+  constructor(private http: HttpClient) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
@@ -20,38 +21,42 @@ export class PedidoVentaService {
       params = params.append('empresa', empresa);
       params = params.append('numero', numero.toString());
 
-      return this.http.get(this._baseUrl, { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      return this.http.get<PedidoVenta>(this._baseUrl, { params: params });
   }
-  
-  public cargarEnlacesSeguimiento(empresa: string, numero: number): Observable<PedidoVenta> {
+
+  public cargarEnlacesSeguimiento(empresa: string, numero: number): Observable<any> {
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', empresa);
       params = params.append('pedido', numero.toString());
 
-      return this.http.get(Configuracion.API_URL+'/EnviosAgencias', { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      return this.http.get(Configuracion.API_URL+'/EnviosAgencias', { params: params });
   }
 
-  public modificarPedido(pedido: any): Observable<any> {
-      let headers: any = new HttpHeaders();
-      headers = headers.append('Content-Type', 'application/json');
-      let pedidoJson: string = JSON.stringify(pedido);
+  public modificarPedido(pedido: any, saltarValidacion: boolean = false): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
 
-      return this.http.put(this._baseUrl, pedidoJson, { headers: headers })
-        .pipe(
-          catchError(this.handleError)
-        )
+    // Si se quiere saltar la validación, añadir la propiedad al pedido
+    const pedidoAEnviar = saltarValidacion
+      ? { ...pedido, CreadoSinPasarValidacion: true }
+      : pedido;
+
+    console.log('Modificar pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
+
+    return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
   }
 
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
+  public cargarParametrosIva(empresa: string, ivaCabecera: string): Observable<ParametrosIva[]> {
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('ivaCabecera', ivaCabecera);
+
+    return this.http.get<any[]>(Configuracion.API_URL + '/ParametrosIva', { params }).pipe(
+      map(response => response.map(item => ({
+        codigoIvaProducto: item.CodigoIvaProducto,
+        porcentajeIvaProducto: item.PorcentajeIvaProducto,
+        porcentajeIvaRecargoEquivalencia: item.PorcentajeIvaRecargoEquivalencia
+      })))
+    );
   }
 }

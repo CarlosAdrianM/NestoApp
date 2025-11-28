@@ -10,7 +10,8 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { Usuario } from './models/Usuario';
 import { FCM } from '@ionic-native/fcm/ngx';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { IonicStorageModule } from '@ionic/storage';
 import { Storage } from '@ionic/storage'
 import { JwtHelperService, JWT_OPTIONS } from '@auth0/angular-jwt';
@@ -28,6 +29,7 @@ import { NativeGeocoder } from '@ionic-native/native-geocoder/ngx';
 import { ClienteComponent } from './components/cliente/cliente.component';
 import { SelectorFormasPagoComponent } from './components/selector-formas-pago/selector-formas-pago.component';
 import { SelectorPlazosPagoComponent } from './components/selector-plazos-pago/selector-plazos-pago.component';
+import { SelectorCCCComponent } from './components/selector-ccc/selector-ccc.component';
 import { ClientesMismoTelefonoComponent } from './components/cliente/clientes-mismo-telefono';
 import { SelectorAlmacenesComponent } from './components/selector-almacenes/selector-almacenes.component';
 import { SelectorDireccionesEntregaComponent } from './components/selector-direcciones-entrega/selector-direcciones-entrega.component';
@@ -98,6 +100,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     ClientesMismoTelefonoComponent,
     SelectorFormasPagoComponent,
     SelectorPlazosPagoComponent,
+    SelectorCCCComponent,
     SelectorAlmacenesComponent,
     SelectorDireccionesEntregaComponent,
     SelectorProductosComponent,
@@ -153,8 +156,12 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       useFactory: MSALInstanceFactory
     },
     MsalService,
-    InAppBrowser
-    //FCM
+    InAppBrowser,
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })

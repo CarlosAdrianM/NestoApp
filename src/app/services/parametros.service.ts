@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Usuario } from '../models/Usuario';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
+import { ErrorHandlerService } from './error-handler.service';
+import { ProcessedApiError } from '../models/api-error.model';
 
 
 @Injectable({
@@ -11,7 +13,11 @@ import { Configuracion } from '../components/configuracion/configuracion/configu
 })
 export class Parametros {
 
-  constructor(private http: HttpClient, private usuario: Usuario) { }
+  constructor(
+    private http: HttpClient,
+    private usuario: Usuario,
+    private errorHandler: ErrorHandlerService
+  ) { }
 
   public leer(clave: string): Observable<any> {
     let _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
@@ -21,24 +27,10 @@ export class Parametros {
     params = params.append('clave', clave);
 
     return this.http.get(_baseUrl, { params: params }).pipe(
-        catchError(this.handleError)
+        catchError((error: ProcessedApiError) => {
+          this.errorHandler.handleApiError(error);
+          return throwError(() => error);
+        })
     );
-}
-
-  // Handle API errors
-  handleError(error: HttpErrorResponse) {
-    if (error.error instanceof ErrorEvent) {
-      // A client-side or network error occurred. Handle it accordingly.
-      console.error('An error occurred:', error.error.message);
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong,
-      console.error(
-        `Backend returned code ${error.status}, ` +
-        `body was: ${error.error}`);
-    }
-    // return an observable with a user-facing error message
-    return throwError(
-      'Something bad happened; please try again later.');
-  };
+  }
 }

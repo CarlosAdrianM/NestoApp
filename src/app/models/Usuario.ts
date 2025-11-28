@@ -21,4 +21,5 @@ export class Usuario {
     public permitirVerTodosLosPedidos: boolean = false;
     public permitirVerClientesTodosLosVendedores: boolean = false;
     public permitirVerTodosLosVendedores: boolean = false;
+    public permitirCrearPedidoConErroresValidacion: boolean = false;
 }

@@ -1,3 +1,5 @@
+import { ParametrosIva } from 'src/app/models/parametros-iva.model';
+
 export class LineaVenta {
     constructor(linea?: any) {
         if (linea) {
@@ -12,7 +14,7 @@ export class LineaVenta {
             this.estado = linea.estado;
             this.fechaEntrega = linea.fechaEntrega;
             this.formaVenta = linea.formaVenta;
-            this.iva = linea.iva;
+            this._iva = linea.iva;
             this.oferta = linea.oferta;
             this.picking = linea.picking;
             this.PrecioUnitario = linea.PrecioUnitario;
@@ -21,8 +23,8 @@ export class LineaVenta {
             this.tipoLinea = linea.tipoLinea;
             this.Usuario = linea.usuario;
             this.vistoBueno = linea.vistoBueno;
-            this.ImporteIva = linea.ImporteIva;
-            this.Total = linea.Total;
+            this.PorcentajeIva = linea.PorcentajeIva || 0;
+            this.PorcentajeRecargoEquivalencia = linea.PorcentajeRecargoEquivalencia || 0;
         } else {
             this.id = 0;
             this.AplicarDescuento = true;
@@ -38,10 +40,13 @@ export class LineaVenta {
             this.texto = "";
             this.tipoLinea = 1;
             this.vistoBueno = false;
-            this.ImporteIva = 0;
-            this.Total = 0;
+            this.PorcentajeIva = 0;
+            this.PorcentajeRecargoEquivalencia = 0;
         }
     }
+
+    // Referencia a los parámetros de IVA del pedido (se asigna desde el pedido)
+    public parametrosIva: ParametrosIva[] = [];
 
     public id: number;
     public almacen: string;
@@ -54,7 +59,17 @@ export class LineaVenta {
     public estado: number;
     public fechaEntrega: Date;
     public formaVenta: string;
-    public iva: string;
+
+    private _iva: string;
+    public get iva(): string {
+        return this._iva;
+    }
+    public set iva(value: string) {
+        this._iva = value;
+        // Al cambiar el IVA, buscar el porcentaje en parametrosIva
+        this.actualizarPorcentajeIva();
+    }
+
     public oferta: number;
     public picking: number;
     public PrecioUnitario: number;
@@ -63,16 +78,34 @@ export class LineaVenta {
     public tipoLinea: number;
     public Usuario: string;
     public vistoBueno: boolean;
+
+    public PorcentajeIva: number;
+    public PorcentajeRecargoEquivalencia: number;
+
     public get Bruto(): number {
         return this.PrecioUnitario * this.Cantidad;
     }
+
     public get BaseImponible(): number {
         let importeDescuento = this.redondea(this.Bruto * this.SumaDescuentos);
-        return this.Bruto - importeDescuento;
+        return this.redondea(this.Bruto - importeDescuento);
     }
-    public set BaseImponible(value: number) {} //para que no de error
-    public ImporteIva: number;
-    public Total: number;
+    public set BaseImponible(value: number) { } //para que no de error
+
+    public get ImporteIva(): number {
+        return this.redondea(this.BaseImponible * this.PorcentajeIva / 100);
+    }
+    public set ImporteIva(value: number) { } // para compatibilidad
+
+    public get ImporteRecargoEquivalencia(): number {
+        return this.redondea(this.BaseImponible * this.PorcentajeRecargoEquivalencia / 100);
+    }
+
+    public get Total(): number {
+        return this.redondea(this.BaseImponible + this.ImporteIva + this.ImporteRecargoEquivalencia);
+    }
+    public set Total(value: number) { } // para compatibilidad
+
     public get SumaDescuentos(): number {
         return 1 - ((1 - this.DescuentoLinea) * (1 - this.DescuentoProducto) * (1 - this.DescuentoPP));
     }
@@ -82,13 +115,30 @@ export class LineaVenta {
         this.delegacion = pedido.Lineas[0].delegacion;
         this.fechaEntrega = pedido.Lineas[0].fechaEntrega;
         this.formaVenta = pedido.Lineas[0].formaVenta;
-        this.iva = pedido.Lineas[0].iva;  
+        this.iva = pedido.Lineas[0].iva;
         this.estado = 1;
-        this.picking = 0;  
+        this.picking = 0;
         this.DescuentoPP = pedido.DescuentoPP;
+        // Copiar referencia a parámetros de IVA
+        if (pedido.parametrosIva) {
+            this.parametrosIva = pedido.parametrosIva;
+            this.actualizarPorcentajeIva();
+        }
     }
 
-    private redondea(value) {
+    public actualizarPorcentajeIva(): void {
+        if (this.parametrosIva && this.parametrosIva.length > 0 && this._iva) {
+            const parametro = this.parametrosIva.find(
+                p => p.codigoIvaProducto.toLowerCase() === this._iva.toLowerCase()
+            );
+            if (parametro) {
+                this.PorcentajeIva = parametro.porcentajeIvaProducto;
+                this.PorcentajeRecargoEquivalencia = parametro.porcentajeIvaRecargoEquivalencia;
+            }
+        }
+    }
+
+    private redondea(value: number): number {
         return Number(Math.round(value * 100) / 100);
     }
 }

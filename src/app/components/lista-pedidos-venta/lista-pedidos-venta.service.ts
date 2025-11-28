@@ -1,8 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { FileTransferObject, FileTransfer } from '@ionic-native/file-transfer/ngx';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { File } from '@ionic-native/file/ngx';
@@ -30,29 +29,18 @@ export class ListaPedidosVentaService {
       if (this.usuario.permitirVerTodosLosPedidos) {
         params = params.append('vendedor', '');
       } else {
-        params = params.append('vendedor', this.usuario.vendedor);          
+        params = params.append('vendedor', this.usuario.vendedor);
       }
       if (mostrarPresupuestos) {
           params = params.append('estado', "-3");
       }
 
-      return this.http.get(this._baseUrl, { params })
-        .pipe(
-          catchError(this.handleError)
-        )          
+      return this.http.get(this._baseUrl, { params });
   }
 
   public descargarPedido(empresa: string, pedido: number): Promise<any> {
-      const filetransfer: FileTransferObject = this.transfer.create(); 
-      const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+pedido.toString().trim(); 
-      return filetransfer.download(url, this.file.externalDataDirectory + pedido.toString().trim() + '.pdf')
-          .catch(this.handleError);
+      const filetransfer: FileTransferObject = this.transfer.create();
+      const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+pedido.toString().trim();
+      return filetransfer.download(url, this.file.externalDataDirectory + pedido.toString().trim() + '.pdf');
    }
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
-  }
 }

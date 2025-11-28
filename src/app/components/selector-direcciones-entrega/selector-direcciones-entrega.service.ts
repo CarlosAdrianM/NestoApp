@@ -1,7 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError, publishReplay, refCount } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { publishReplay, refCount } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
@@ -20,15 +20,7 @@ export class SelectorDireccionesEntregaService {
 
       return this.http.get(_baseUrl, { params: params }).pipe(
         publishReplay(1),
-        refCount(),
-        catchError(this.handleError)
-      )
-  }
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
+        refCount()
+      );
   }
 }

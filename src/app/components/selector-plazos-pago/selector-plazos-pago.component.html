@@ -1,8 +1,16 @@
 <ion-item>
   <ion-label>Plazos de Pago</ion-label>
-  <ion-select *ngIf="datosFiltrados" [(ngModel)]="seleccionado" (ionChange)="obtenerPlazo($event)">
-    <ion-select-option *ngFor="let plazo of datosFiltrados; let i = index" [value]="plazo.plazoPago" [selected]="plazo.plazoPago === seleccionado?.plazoPago">
+  <ion-select *ngIf="datosFiltrados" [(ngModel)]="seleccionadoCodigo" (ionChange)="obtenerPlazo($event)" [disabled]="cargando">
+    <ion-select-option *ngFor="let plazo of datosFiltrados" [value]="plazo.plazoPago">
       {{plazo.descripcion}}
     </ion-select-option>
   </ion-select>
+  <ion-spinner *ngIf="cargando" name="crescent" slot="end"></ion-spinner>
+</ion-item>
+<ion-item *ngIf="tieneRestriccionDeuda()" [color]="getColorDeuda()" lines="none">
+  <ion-label class="ion-text-wrap">
+    <ion-text>
+      <small>{{getMensajeDeuda()}}</small>
+    </ion-text>
+  </ion-label>
 </ion-item>

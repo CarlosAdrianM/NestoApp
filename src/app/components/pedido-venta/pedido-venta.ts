@@ -1,4 +1,5 @@
 import { LineaVenta } from '../linea-venta/linea-venta';
+import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 
 export class PedidoVenta {
     public empresa: string;
@@ -36,6 +37,9 @@ export class PedidoVenta {
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;
-    
+
     public Lineas: Array<LineaVenta>;
+
+    // Parámetros de IVA cargados para este pedido
+    public parametrosIva: ParametrosIva[] = [];
 }

@@ -11,6 +11,8 @@ import { SelectorClientesComponent } from '../selector-clientes/selector-cliente
 import { SelectorPlantillaVentaComponent } from '../selector-plantilla-venta/selector-plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
 import { SelectorFormasPagoComponent } from '../selector-formas-pago/selector-formas-pago.component';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
+import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 
 @Component({
   selector: 'app-plantilla-venta',
@@ -21,15 +23,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   private ultimoClienteAbierto: string = "";
 
   constructor(
-    private usuario: Usuario, 
-    private servicio: PlantillaVentaService, 
-    events: Events, 
+    private usuario: Usuario,
+    private servicio: PlantillaVentaService,
+    events: Events,
     private nav: NavController,
-    private alertCtrl: AlertController, 
-    private loadingCtrl: LoadingController, 
+    private alertCtrl: AlertController,
+    private loadingCtrl: LoadingController,
     private ref: ChangeDetectorRef,
     private platform: Platform,
-    private firebaseAnalytics: FirebaseAnalytics
+    private firebaseAnalytics: FirebaseAnalytics,
+    private errorHandler: ErrorHandlerService
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
@@ -476,14 +479,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
                 this.reinicializar();
             },
             async error => {
-                let alert = await this.alertCtrl.create({
-                    header: 'Error',
-                    subHeader: 'No se ha podido crear el pedido',
-                    message: error.ExceptionMessage,
-                    buttons: ['Ok'],
-                });
-                await alert.present();
                 await loading.dismiss();
+                await this.manejarErrorCreacionPedido(error, false);
             },
             async () => {
                 await loading.dismiss();
@@ -507,10 +504,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
                 this.reinicializar();
             },
             async error => {
+                const mensaje = this.errorHandler.extractErrorMessage(error);
                 let alert = await this.alertCtrl.create({
                     header: 'Error',
                     subHeader: 'No se ha podido ampliar el pedido',
-                    message: error.ExceptionMessage,
+                    message: mensaje,
                     buttons: ['Ok'],
                 });
                 await alert.present();
@@ -521,8 +519,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
             }
         );
       }
-
-      
   }
 
   public hayAlgunProducto(): boolean {
@@ -703,5 +699,101 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
 
   private redondea(value) {
     return Number(Math.round(value * 100) / 100);
+  }
+
+  /**
+   * Maneja errores de creación de pedido, permitiendo forzar si el usuario tiene permiso
+   */
+  private async manejarErrorCreacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+    const mensaje = this.errorHandler.extractErrorMessage(error);
+
+    // Verificar si es un error de validación (formato nuevo o antiguo)
+    const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
+    const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;
+
+    if (esErrorValidacion && puedeForzar) {
+      // Mostrar diálogo con opción de forzar
+      const alert = await this.alertCtrl.create({
+        header: 'Error de Validación',
+        message: mensaje + '\n\n¿Desea crear el pedido de todas formas?',
+        buttons: [
+          {
+            text: 'Cancelar',
+            role: 'cancel'
+          },
+          {
+            text: 'Crear sin validar',
+            handler: () => {
+              this.crearPedidoForzado();
+            }
+          }
+        ]
+      });
+      await alert.present();
+    } else {
+      // Error normal, solo mostrar mensaje
+      const alert = await this.alertCtrl.create({
+        header: 'Error',
+        subHeader: 'No se ha podido crear el pedido',
+        message: mensaje,
+        buttons: ['Ok']
+      });
+      await alert.present();
+    }
+  }
+
+  /**
+   * Crea el pedido forzando la validación
+   */
+  private async crearPedidoForzado(): Promise<void> {
+    const loading = await this.loadingCtrl.create({
+      message: 'Creando Pedido (sin validar)...',
+    });
+    await loading.present();
+
+    this.servicio.crearPedido(this.prepararPedido(), true).subscribe(
+      async data => {
+        this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido_forzado", { pedido: data.numero });
+        const alert = await this.alertCtrl.create({
+          header: 'Creado',
+          message: 'Pedido ' + data.numero + ' creado correctamente',
+          buttons: ['Ok']
+        });
+        await alert.present();
+        await loading.dismiss();
+        this.reinicializar();
+      },
+      async error => {
+        await loading.dismiss();
+        // Ya no intentar forzar de nuevo
+        await this.manejarErrorCreacionPedido(error, true);
+      },
+      async () => {
+        await loading.dismiss();
+      }
+    );
+  }
+
+  /**
+   * Detecta si un error es de validación de precios/descuentos
+   * Soporta tanto el formato nuevo (con código) como el antiguo (por mensaje)
+   */
+  private esErrorDeValidacion(error: ProcessedApiError, mensaje: string): boolean {
+    // Formato nuevo estructurado
+    if (error.apiError?.error?.code === ApiErrorCode.PEDIDO_VALIDACION_FALLO) {
+      return true;
+    }
+
+    // Formato antiguo: detectar por el mensaje
+    const patronesValidacion = [
+      'no se encuentra autorizado el descuento',
+      'descuento no autorizado',
+      'precio no válido',
+      'oferta no válida',
+      'validación'
+    ];
+
+    const mensajeLower = mensaje.toLowerCase();
+    return patronesValidacion.some(patron => mensajeLower.includes(patron));
   }
 }

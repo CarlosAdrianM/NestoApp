@@ -218,6 +218,16 @@ private cargarParametros(): void {
             this.error = '¡Ups! Parece que no tienes conexión';
         }
     );
+
+    this.parametros.leer('PermitirCrearPedidoConErroresValidacion').subscribe(
+        data => {
+            self.usuario.permitirCrearPedidoConErroresValidacion = data == "1";
+        },
+        error => {
+            self.usuario.permitirCrearPedidoConErroresValidacion = false;
+            console.log('No se ha podido cargar el parámetro PermitirCrearPedidoConErroresValidacion');
+        }
+    );
 }
 
     async olvideMiContrasenna(correo: string) {

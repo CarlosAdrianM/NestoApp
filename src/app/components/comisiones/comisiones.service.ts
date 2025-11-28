@@ -1,7 +1,6 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { ResumenComisionesMes } from './comisiones.interfaces';
 
@@ -15,10 +14,10 @@ export class ComisionesService {
   constructor(private http: HttpClient) { }
 
   public cargarResumen(
-    vendedor: string, 
-    mes: number, 
-    anno: number, 
-    incluirAlbaranes: boolean, 
+    vendedor: string,
+    mes: number,
+    anno: number,
+    incluirAlbaranes: boolean,
     incluirPicking: boolean
   ): Observable<ResumenComisionesMes> {
     let params: HttpParams = new HttpParams();
@@ -28,20 +27,10 @@ export class ComisionesService {
     params = params.append('incluirAlbaranes', incluirAlbaranes ? 'true' : 'false');
     params = params.append('incluirPicking', incluirPicking ? 'true' : 'false');
 
-    return this.http.get<ResumenComisionesMes>(this._baseUrl, { params })
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http.get<ResumenComisionesMes>(this._baseUrl, { params });
   }
 
   public cargarPrueba(): any {
     return { "$id": "1", "Vendedor": "IF", "Anno": 2018, "Mes": 3, "Etiquetas": [{ "$id": "2", "Nombre": "General", "Venta": 6656.2100, "Tipo": 0.072, "Comision": 479.25 }, { "$id": "3", "Nombre": "Lisap", "Venta": 3423.5300, "Tipo": 0.008, "Comision": 27.39 }], "GeneralFaltaParaSalto": 368.79, "GeneralProyeccion": 66562.1000, "TotalComisiones": 506.64 };
-  }
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-    // in a real world app, we may send the error to some remote logging infrastructure
-    // instead of just logging it to the console
-    console.error(error);
-    return throwError(error.error || 'Server error');
   }
 }

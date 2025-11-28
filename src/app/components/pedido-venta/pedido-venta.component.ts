@@ -7,6 +7,9 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { PedidoVenta } from './pedido-venta';
 import { PedidoVentaService } from './pedido-venta.service';
+import { ParametrosIva } from 'src/app/models/parametros-iva.model';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
+import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 
 @Component({
   selector: 'app-pedido-venta',
@@ -40,13 +43,14 @@ export class PedidoVentaComponent  {
   }
 
       
-  constructor(servicio: PedidoVentaService, 
-    nav: NavController, 
-    alertCtrl: AlertController, 
-    loadingCtrl: LoadingController, 
+  constructor(servicio: PedidoVentaService,
+    nav: NavController,
+    alertCtrl: AlertController,
+    loadingCtrl: LoadingController,
     private usuario: Usuario,
     private route: ActivatedRoute,
-    private firebaseAnalytics: FirebaseAnalytics
+    private firebaseAnalytics: FirebaseAnalytics,
+    private errorHandler: ErrorHandlerService
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -75,20 +79,18 @@ export class PedidoVentaComponent  {
               if (this.pedido.Lineas && this.pedido.Lineas.length > 0) {
                   this.fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
               }
+              // Cargar parámetros de IVA y asignarlos a las líneas
+              this.cargarParametrosIva();
               this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
                   data => {
                       this.listaEnlacesSeguimiento = data;
                   },
                   async error => {
-                      let textoError = 'No se han podido cargar los seguimietnos del pedido de la empresa ' + empresa + ".\n" + error.ExceptionMessage;
-                      let innerException = error.InnerException;
-                      while (innerException != null) {
-                        textoError += '\n' + innerException.ExceptionMessage;
-                        innerException = innerException.InnerException;
-                      }
+                      const mensaje = this.errorHandler.extractErrorMessage(error);
                       let alert = await this.alertCtrl.create({
                           header: 'Error',
-                          message: textoError,
+                          subHeader: 'No se han podido cargar los seguimientos del pedido',
+                          message: mensaje,
                           buttons: ['Ok'],
                       });
                       await alert.present();
@@ -97,15 +99,11 @@ export class PedidoVentaComponent  {
               )
           },
           async error => {
-              let textoError = 'No se ha podido cargar el pedido de la empresa ' + empresa + ".\n" + error.ExceptionMessage;
-              let innerException = error.InnerException;
-              while (innerException != null) {
-                textoError += '\n' + innerException.ExceptionMessage;
-                innerException = innerException.InnerException;
-              }
+              const mensaje = this.errorHandler.extractErrorMessage(error);
               let alert = await this.alertCtrl.create({
                   header: 'Error',
-                  message: textoError,
+                  subHeader: 'No se ha podido cargar el pedido',
+                  message: mensaje,
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -200,19 +198,8 @@ export class PedidoVentaComponent  {
                               await loading.dismiss();
                           },
                           async error => {
-                            let textoError = 'No se ha podido modificar el pedido.\n' + error.ExceptionMessage;
-                              let innerException = error.InnerException;
-                              while (innerException != null) {
-                                textoError += '\n' + innerException.ExceptionMessage;
-                                innerException = innerException.InnerException;
-                              }
-                              let alert = await this.alertCtrl.create({
-                                  header: 'Error',
-                                  message: textoError,
-                                  buttons: ['Ok'],
-                              });
-                              await alert.present();
                               await loading.dismiss();
+                              await this.manejarErrorModificacionPedido(error, false);
                           },
                           () => {
                               //loading.dismiss();
@@ -263,15 +250,11 @@ export class PedidoVentaComponent  {
                               await loading.dismiss();
                           },
                           async error => {
-                            let textoError = 'No se ha podido aceptar el presupuesto.\n' + error.ExceptionMessage;
-                              let innerException = error.InnerException;
-                              while (innerException != null) {
-                                textoError += '\n' + innerException.ExceptionMessage;
-                                innerException = innerException.InnerException;
-                              }
+                              const mensaje = this.errorHandler.extractErrorMessage(error);
                               let alert = await this.alertCtrl.create({
                                   header: 'Error',
-                                  message: textoError,
+                                  subHeader: 'No se ha podido aceptar el presupuesto',
+                                  message: mensaje,
                                   buttons: ['Ok'],
                               });
                               await alert.present();
@@ -304,5 +287,120 @@ export class PedidoVentaComponent  {
   public abrirEnlace(urlDestino: string): void {
       this.firebaseAnalytics.logEvent("pedido_venta_abrir_enlace", {enlace: urlDestino});
       window.open(urlDestino, '_system', 'location=yes');
+  }
+
+  private cargarParametrosIva(): void {
+      if (!this.pedido || !this.pedido.iva) {
+          return;
+      }
+      this.servicio.cargarParametrosIva(this.pedido.empresa, this.pedido.iva).subscribe(
+          (parametros: ParametrosIva[]) => {
+              this.pedido.parametrosIva = parametros;
+              // Asignar parámetros a cada línea y actualizar porcentajes
+              for (const linea of this.pedido.Lineas) {
+                  linea.parametrosIva = parametros;
+                  linea.actualizarPorcentajeIva();
+              }
+          },
+          error => {
+              console.error('Error al cargar parámetros de IVA:', error);
+          }
+      );
+  }
+
+  /**
+   * Maneja errores de modificación de pedido, permitiendo forzar si el usuario tiene permiso
+   */
+  private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      const mensaje = this.errorHandler.extractErrorMessage(error);
+
+      // Verificar si es un error de validación (formato nuevo o antiguo)
+      const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
+      const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;
+
+      if (esErrorValidacion && puedeForzar) {
+          // Mostrar diálogo con opción de forzar
+          const alert = await this.alertCtrl.create({
+              header: 'Error de Validación',
+              message: mensaje + '\n\n¿Desea modificar el pedido de todas formas?',
+              buttons: [
+                  {
+                      text: 'Cancelar',
+                      role: 'cancel'
+                  },
+                  {
+                      text: 'Modificar sin validar',
+                      handler: () => {
+                          this.modificarPedidoForzado();
+                      }
+                  }
+              ]
+          });
+          await alert.present();
+      } else {
+          // Error normal, solo mostrar mensaje
+          const alert = await this.alertCtrl.create({
+              header: 'Error',
+              subHeader: 'No se ha podido modificar el pedido',
+              message: mensaje,
+              buttons: ['Ok']
+          });
+          await alert.present();
+      }
+  }
+
+  /**
+   * Modifica el pedido forzando la validación
+   */
+  private async modificarPedidoForzado(): Promise<void> {
+      const loading = await this.loadingCtrl.create({
+          message: 'Modificando Pedido (sin validar)...',
+      });
+      await loading.present();
+
+      this.servicio.modificarPedido(this.pedido, true).subscribe(
+          async data => {
+              this.firebaseAnalytics.logEvent("modificar_pedido_venta_forzado", { pedido: this.pedido.numero });
+              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
+              const alert = await this.alertCtrl.create({
+                  header: 'Modificado',
+                  message: 'Pedido modificado correctamente',
+                  buttons: ['Ok']
+              });
+              await alert.present();
+              await loading.dismiss();
+          },
+          async error => {
+              await loading.dismiss();
+              // Ya no intentar forzar de nuevo
+              await this.manejarErrorModificacionPedido(error, true);
+          },
+          async () => {
+              await loading.dismiss();
+          }
+      );
+  }
+
+  /**
+   * Detecta si un error es de validación de precios/descuentos
+   * Soporta tanto el formato nuevo (con código) como el antiguo (por mensaje)
+   */
+  private esErrorDeValidacion(error: ProcessedApiError, mensaje: string): boolean {
+      // Formato nuevo estructurado
+      if (error.apiError?.error?.code === ApiErrorCode.PEDIDO_VALIDACION_FALLO) {
+          return true;
+      }
+
+      // Formato antiguo: detectar por el mensaje
+      const patronesValidacion = [
+          'no se encuentra autorizado el descuento',
+          'descuento no autorizado',
+          'precio no válido',
+          'oferta no válida',
+          'validación'
+      ];
+
+      const mensajeLower = mensaje.toLowerCase();
+      return patronesValidacion.some(patron => mensajeLower.includes(patron));
   }
 }

@@ -1,0 +1,25 @@
+<ion-item>
+  <ion-label>Cuenta Bancaria</ion-label>
+  <ion-select
+    *ngIf="cccs.length > 0"
+    [(ngModel)]="seleccionado"
+    (ionChange)="seleccionarCCC(seleccionado)"
+    [compareWith]="compararCCC"
+    [disabled]="cargando">
+    <ion-select-option
+      *ngFor="let ccc of cccs"
+      [value]="ccc"
+      [disabled]="esCCCInvalido(ccc)"
+      [class.ccc-invalido]="esCCCInvalido(ccc)">
+      {{ccc.descripcion}}
+    </ion-select-option>
+  </ion-select>
+  <ion-spinner *ngIf="cargando" name="crescent" slot="end"></ion-spinner>
+</ion-item>
+<ion-item *ngIf="cccObligatorio && (!seleccionado || !seleccionado.numero)" color="warning" lines="none">
+  <ion-label class="ion-text-wrap">
+    <ion-text color="dark">
+      <small>Se requiere seleccionar una cuenta bancaria para esta forma de pago</small>
+    </ion-text>
+  </ion-label>
+</ion-item>

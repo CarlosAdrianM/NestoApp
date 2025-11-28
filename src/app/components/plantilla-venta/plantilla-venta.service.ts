@@ -1,73 +1,67 @@
-import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlantillaVentaService {
-  
+
   static ngInjectableDef = undefined;
 
-  constructor(private http: HttpClient) {    }
+  constructor(private http: HttpClient) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
-  public crearPedido(pedido: any): Observable<any> {
-      let headers: any = new HttpHeaders();
-      headers = headers.append('Content-Type', 'application/json');
+  public crearPedido(pedido: any, saltarValidacion: boolean = false): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
 
-      return this.http.post(this._baseUrl, JSON.stringify(pedido), { headers: headers })
-        .pipe(
-          catchError(this.handleError)
-        )
+    // Si se quiere saltar la validación, añadir la propiedad al pedido
+    const pedidoAEnviar = saltarValidacion
+      ? { ...pedido, CreadoSinPasarValidacion: true }
+      : pedido;
+
+    console.log('Crear pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
+
+    return this.http.post(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
   }
 
   public sePuedeServirPorGlovo(pedido: any): Observable<any> {
-      let headers: any = new HttpHeaders();
-      headers = headers.append('Content-Type', 'application/json');
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
 
-      return this.http.post(this._baseUrl+"/SePuedeServirPorAgencia", JSON.stringify(pedido), { headers: headers })
-        .pipe(
-          catchError(this.handleError)
-        )
+    return this.http.post(this._baseUrl + "/SePuedeServirPorAgencia", JSON.stringify(pedido), { headers: headers });
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {
-      var url = Configuracion.API_URL + "/ReclamacionDeuda";
-      let headers: any = new HttpHeaders();
-      headers = headers.append('Content-Type', 'application/json');
+    var url = Configuracion.API_URL + "/ReclamacionDeuda";
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
 
-      var parametro = {
-        Cliente : cliente,
-        Correo : cobroTarjetaCorreo,
-        Movil : cobroTarjetaMovil,
-        Importe : totalPedido,
-        Asunto : "Pedido " + numeroPedido + " de Nueva Visión",
-        TextoSMS: "Este es un mensaje de @COMERCIO@. Puede pagar el pedido "+numeroPedido+" de @IMPORTE@ @MONEDA@ aquí: @URL@"
-      }
+    var parametro = {
+      Cliente: cliente,
+      Correo: cobroTarjetaCorreo,
+      Movil: cobroTarjetaMovil,
+      Importe: totalPedido,
+      Asunto: "Pedido " + numeroPedido + " de Nueva Visión",
+      TextoSMS: "Este es un mensaje de @COMERCIO@. Puede pagar el pedido " + numeroPedido + " de @IMPORTE@ @MONEDA@ aquí: @URL@"
+    }
 
-      var parametroJson = JSON.stringify(parametro);
+    var parametroJson = JSON.stringify(parametro);
 
-      return this.http.post(url, parametroJson, { headers: headers })
-        .pipe(
-          catchError(this.handleError)
-        )
+    return this.http.post(url, parametroJson, { headers: headers });
   }
 
-  leerCliente(empresa: any, cliente: any, contacto: any) {
+  leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
     var url = Configuracion.API_URL + "/Clientes/GetClienteCrear";
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);
     params = params.append('cliente', cliente);
     params = params.append('contacto', contacto);
 
-    return this.http.get(url, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
+    return this.http.get(url, { params: params });
   }
 
   cargarListaPendientes(empresa: any, cliente: any) {
@@ -76,10 +70,7 @@ export class PlantillaVentaService {
     params = params.append('empresa', empresa);
     params = params.append('clientePendientes', cliente);
 
-    return this.http.get(url, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
+    return this.http.get(url, { params: params });
   }
 
   public unirPedidos(empresa: string, numeroPedidoOriginal: number, pedidoAmpliacion: any): Observable<any> {
@@ -87,36 +78,22 @@ export class PlantillaVentaService {
     headers = headers.append('Content-Type', 'application/json');
     var url = Configuracion.API_URL + "/PedidosVenta/UnirPedidos";
     var pedido = {
-      "Empresa" : empresa,
-      "NumeroPedidoOriginal" : numeroPedidoOriginal.toString(),
-      "PedidoAmpliacion" : pedidoAmpliacion
+      "Empresa": empresa,
+      "NumeroPedidoOriginal": numeroPedidoOriginal.toString(),
+      "PedidoAmpliacion": pedidoAmpliacion
     }
-    
-    return this.http.post(url, JSON.stringify(pedido), { headers: headers })
-      .pipe(
-        catchError(this.handleError)
-      )
+
+    return this.http.post(url, JSON.stringify(pedido), { headers: headers });
   }
 
   public calcularFechaEntrega(fecha: Date, ruta: string, almacen: string) {
-    const formattedFecha: string = fecha.toISOString(); // Formatear la fecha como cadena en el formato deseado
+    const formattedFecha: string = fecha.toISOString();
     var url = Configuracion.API_URL + "/PedidosVenta/FechaAjustada";
     let params: HttpParams = new HttpParams();
     params = params.append('fecha', formattedFecha);
     params = params.append('ruta', ruta);
     params = params.append('almacen', almacen);
 
-    return this.http.get(url, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
-  }
-
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
+    return this.http.get(url, { params: params });
   }
 }

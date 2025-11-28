@@ -1,8 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from 'ionic-cache';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
@@ -19,10 +18,7 @@ export class SelectorPlantillaVentaService {
 
       let ttl = 60 * 5; // TTL in seconds (5 min)
       let cacheKey = _baseUrl + params.toString();
-      let request = this.http.get(_baseUrl, { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      let request = this.http.get(_baseUrl, { params: params });
       return this.cache.loadFromObservable(cacheKey, request, undefined, ttl);
   }
 
@@ -33,10 +29,7 @@ export class SelectorPlantillaVentaService {
       params = params.append('usarBusquedaConAND', operador == 'AND' ? 'true' : 'false');
 
       let cacheKey = _baseUrl + params.toString();
-      let request = this.http.get(_baseUrl, { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      let request = this.http.get(_baseUrl, { params: params });
       return this.cache.loadFromObservable(cacheKey, request);
 
   }
@@ -48,10 +41,7 @@ export class SelectorPlantillaVentaService {
     params = params.append('filtroProducto', filtro);
 
     let cacheKey = _baseUrl + params.toString();
-    let request = this.http.get(_baseUrl, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
+    let request = this.http.get(_baseUrl, { params: params });
     return this.cache.loadFromObservable(cacheKey, request);
 
 }
@@ -61,17 +51,14 @@ export class SelectorPlantillaVentaService {
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('producto', linea.producto);
-      params = params.append('aplicarDescuento', linea.aplicarDescuento); 
+      params = params.append('aplicarDescuento', linea.aplicarDescuento);
       params = params.append('precio', linea.precio);
       params = params.append('descuento', linea.descuento);
       params = params.append('cantidad', linea.cantidad);
       params = params.append('cantidadOferta', linea.cantidadOferta);
 
       let cacheKey = _baseUrl + params.toString();
-      let request = this.http.get(_baseUrl, { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      let request = this.http.get(_baseUrl, { params: params });
       return this.cache.loadFromObservable(cacheKey, request);
   }
 
@@ -88,17 +75,6 @@ export class SelectorPlantillaVentaService {
 
     var parametroJson = JSON.stringify(parametro);
 
-    return this.http.post(url, parametroJson, { headers: headers })
-      .pipe(
-        catchError(this.handleError)
-      )
-  }
-
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
+    return this.http.post(url, parametroJson, { headers: headers });
   }
 }

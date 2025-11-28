@@ -1,7 +1,6 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
@@ -20,11 +19,7 @@ export class ProductoService {
     params = params.append('id', id);
     params = params.append('fichaCompleta', fichaCompleta.toString());
 
-    return this.http.get(this._baseUrl, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )  
-    
+    return this.http.get(this._baseUrl, { params: params });
   }
 
   public cargarClientes(empresa: string, id: string): Observable<any> {
@@ -36,25 +31,11 @@ export class ProductoService {
     } else {
       params = params.append('vendedor', '');
     }
-    
-    return this.http.get(this._baseUrl, { params: params })
-    .pipe(
-      catchError(this.handleError)
-    )
+
+    return this.http.get(this._baseUrl, { params: params });
   }
 
   public cargarVideosProducto(productoId: string): Observable<any> {
-    return this.http.get(`${Configuracion.API_URL}/Videos/Producto/${productoId}`)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-  
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-    // in a real world app, we may send the error to some remote logging infrastructure
-    // instead of just logging it to the console
-    console.error(error);
-    return throwError(error.error || 'Server error');
+    return this.http.get(`${Configuracion.API_URL}/Videos/Producto/${productoId}`);
   }
 }

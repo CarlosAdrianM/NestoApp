@@ -1,37 +1,53 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { Usuario } from 'src/app/models/Usuario';
+import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { PlazoPago, PlazosPagoResponse, InfoDeudaCliente } from 'src/app/models/plazo-pago.model';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SelectorPlazosPagoService {
-  constructor(private http: HttpClient, private usuario: Usuario) {    }
+  constructor(private http: HttpClient) { }
 
-  private _baseUrl: string = Configuracion.API_URL + '/PlazosPago'
+  private _baseUrl: string = Configuracion.API_URL + '/PlazosPago';
 
-  public getPlazosPago(cliente: any, formaPago: string = "", totalPedido: number = 0): Observable<any[]> {
-      let params: HttpParams = new HttpParams();
-      params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
-      if (cliente) {
-          params = params.append('cliente', cliente);
-      }
-      if (formaPago && totalPedido) {
-          params = params.append('formaPago', formaPago);
-          params = params.append('totalPedido', totalPedido.toString());
-      }
-      return this.http.get(this._baseUrl, { params: params })
-      .pipe(
-        catchError(this.handleError)
-      )
+  public getPlazosPago(cliente: any, formaPago: string = "", totalPedido: number = 0): Observable<PlazoPago[]> {
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+    if (cliente) {
+      params = params.append('cliente', cliente);
+    }
+    if (formaPago && totalPedido) {
+      params = params.append('formaPago', formaPago);
+      params = params.append('totalPedido', totalPedido.toString());
+    }
+    return this.http.get<PlazoPago[]>(this._baseUrl, { params: params });
   }
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
+
+  public getPlazosPagoConInfoDeuda(cliente: any): Observable<PlazosPagoResponse> {
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+    if (cliente) {
+      params = params.append('cliente', cliente);
+    }
+
+    return this.http.get<any>(this._baseUrl + '/ConInfoDeuda', { params: params }).pipe(
+      map(response => {
+        // El servidor devuelve PascalCase, mapeamos a camelCase
+        return {
+          plazosPago: response.PlazosPago || response.plazosPago || [],
+          infoDeuda: response.InfoDeuda ? {
+            tieneDeudaVencida: response.InfoDeuda.TieneDeudaVencida,
+            importeDeudaVencida: response.InfoDeuda.ImporteDeudaVencida,
+            diasVencimiento: response.InfoDeuda.DiasVencimiento,
+            tieneImpagados: response.InfoDeuda.TieneImpagados,
+            importeImpagados: response.InfoDeuda.ImporteImpagados,
+            motivoRestriccion: response.InfoDeuda.MotivoRestriccion
+          } : null
+        } as PlazosPagoResponse;
+      })
+    );
   }
 }

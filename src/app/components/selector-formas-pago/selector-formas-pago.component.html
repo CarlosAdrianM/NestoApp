@@ -1,6 +1,12 @@
 <ion-item>
   <ion-label>Forma de Pago</ion-label>
   <ion-select *ngIf="datosFiltrados" [(ngModel)]="seleccionado" (ionChange)="seleccionarDato(seleccionado)">
-      <ion-select-option *ngFor="let forma of datosFiltrados" value="{{forma.formaPago}}" checked="forma.formaPago===seleccionado">{{forma.descripcion}}</ion-select-option>
+    <ion-select-option
+      *ngFor="let forma of datosFiltrados"
+      value="{{forma.formaPago}}"
+      [disabled]="esBloqueada(forma)"
+      checked="forma.formaPago===seleccionado">
+      {{forma.descripcion}}
+    </ion-select-option>
   </ion-select>
 </ion-item>

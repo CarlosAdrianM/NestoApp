@@ -1,7 +1,6 @@
-import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { AlertsService } from 'src/app/alerts.service';
 import { AuthService } from 'src/app/auth.service';
 import { Usuario } from 'src/app/models/Usuario';
@@ -28,16 +27,10 @@ export class RapportService {
       headers = headers.append('Content-Type', 'application/json');
 
       if (rapport.Id == 0) {
-          return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers })
-            .pipe(
-              catchError(this.handleError)
-            )
+          return this.http.post(this._baseUrl, JSON.stringify(rapport), { headers: headers });
       } else {
-          return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers })
-            .pipe(
-              catchError(this.handleError)
-            )
-      }        
+          return this.http.put(this._baseUrl, JSON.stringify(rapport), { headers: headers });
+      }
   }
 
   public getCliente(cliente: string, contacto: string): Observable<any> {
@@ -46,10 +39,7 @@ export class RapportService {
       params = params.append('cliente', cliente);
       params = params.append('contacto', contacto);
 
-      return this.http.get(this._clientesUrl, { params: params })
-        .pipe(
-          catchError(this.handleError)
-        )
+      return this.http.get(this._clientesUrl, { params: params });
   }
 
   public dejarDeVisitar(rapport: any, vendedorEstetica: string, vendedorPeluqueria: string): Observable<any> {
@@ -68,10 +58,7 @@ export class RapportService {
       if (vendedorPeluqueria == this.usuario.vendedor) {
           clienteCrear.vendedorPeluqueria = Configuracion.VENDEDOR_GENERAL;
       }
-      return this.http.put(this._clientesUrl+'/DejarDeVisitar', JSON.stringify(clienteCrear), { headers: headers })
-        .pipe(
-          catchError(this.handleError)
-        )
+      return this.http.put(this._clientesUrl+'/DejarDeVisitar', JSON.stringify(clienteCrear), { headers: headers });
   }
 
   async addEventToCalendar(newEvent: microsoftgraph.Event): Promise<void> {
@@ -79,7 +66,7 @@ export class RapportService {
       this.alertsService.addError('Graph client is not initialized.');
       return undefined;
     }
-  
+
     try {
       // POST /me/events
       await this.authService.graphClient
@@ -88,13 +75,6 @@ export class RapportService {
     } catch (error) {
       throw Error(JSON.stringify(error, null, 2));
     }
-  }
-
-  private handleError(error: HttpErrorResponse): Observable<any> {
-      // in a real world app, we may send the error to some remote logging infrastructure
-      // instead of just logging it to the console
-      console.error(error);
-      return throwError(error.error || 'Server error');
   }
 
 }
