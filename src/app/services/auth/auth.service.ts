@@ -28,6 +28,19 @@ export class AuthService {
     return this.jwtHelper.isTokenExpired(token);
   }
 
+  public async getValidToken(): Promise<string> {
+    const token = await this.storage.get('id_token');
+    if (!token) {
+      throw new Error('No token available');
+    }
+
+    if (this.jwtHelper.isTokenExpired(token)) {
+      return this.refreshToken().toPromise();
+    }
+
+    return token;
+  }
+
   public refreshToken(): Observable<string> {
     if (this.refreshTokenInProgress && this.refreshTokenSubject) {
       return this.refreshTokenSubject;

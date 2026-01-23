@@ -141,9 +141,10 @@ export class ExtractoClienteComponent {
           },
           async error => {
               await loading.dismiss();
+              const errorMsg = error?.body || error?.message || error?.http_status || error?.code || JSON.stringify(error);
               let alert = await this.alertCtrl.create({
                   header: 'Error',
-                  message: 'No se pudo descargar el Modelo 347: ' + (error.message || error),
+                  message: 'No se pudo descargar el Modelo 347: ' + errorMsg,
                   buttons: ['Ok'],
               });
               await alert.present();

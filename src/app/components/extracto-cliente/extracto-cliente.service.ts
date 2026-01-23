@@ -6,7 +6,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { FileTransfer, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
-import { Storage } from '@ionic/storage';
+import { AuthService } from 'src/app/services/auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +17,7 @@ export class ExtractoClienteService {
     private transfer: FileTransfer,
     private file: File,
     private usuario: Usuario,
-    private storage: Storage
+    private authService: AuthService
   ) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/ExtractosCliente';
@@ -95,7 +95,8 @@ export class ExtractoClienteService {
       "&cliente=" + cliente.trim() +
       "&anno=" + ejercicio.toString();
 
-    const token = await this.storage.get('id_token');
+    // Obtener token válido (refresca automáticamente si está expirado)
+    const token = await this.authService.getValidToken();
     const filetransfer: FileTransferObject = this.transfer.create();
     const nombreArchivo = `Modelo347_${cliente.trim()}_${ejercicio}.pdf`;
 
