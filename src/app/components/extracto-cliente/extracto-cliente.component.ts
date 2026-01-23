@@ -32,6 +32,8 @@ export class ExtractoClienteComponent {
   public clienteSeleccionado: any;
   private hoy: Date;
   public movimientosSeleccionados: any[] = [];
+  public mostrarBannerModelo347: boolean = false;
+  public annoModelo347: number;
 
   @ViewChild('selector') selectorClientes: any;
 
@@ -95,6 +97,7 @@ export class ExtractoClienteComponent {
 
   public cargarFacturas(cliente: any): void {
       this.mostrarClientes = false;
+      this.actualizarVisibilidadBannerModelo347();
       this.servicio.cargarFacturas(cliente).subscribe(
           data => {
               this.movimientosDeuda = data;
@@ -105,6 +108,46 @@ export class ExtractoClienteComponent {
               }
           },
           error => this.errorMessage = <any>error
+      );
+  }
+
+  private actualizarVisibilidadBannerModelo347(): void {
+      const hoy = new Date();
+      const mes = hoy.getMonth(); // 0 = enero, 1 = febrero
+      this.mostrarBannerModelo347 = mes === 0 || mes === 1;
+      this.annoModelo347 = hoy.getFullYear() - 1;
+  }
+
+  public async descargarModelo347(): Promise<void> {
+      let loading: any = await this.loadingCtrl.create({
+          message: 'Generando certificado Modelo 347...',
+      });
+
+      await loading.present();
+
+      this.servicio.descargarModelo347(
+          this.clienteSeleccionado.empresa,
+          this.clienteSeleccionado.cliente,
+          this.annoModelo347
+      ).then(
+          async entry => {
+              this.firebaseAnalytics.logEvent("descargar_modelo_347", {
+                  empresa: this.clienteSeleccionado.empresa,
+                  cliente: this.clienteSeleccionado.cliente,
+                  anno: this.annoModelo347
+              });
+              await loading.dismiss();
+              this.fileOpener.open(entry.toURL(), 'application/pdf');
+          },
+          async error => {
+              await loading.dismiss();
+              let alert = await this.alertCtrl.create({
+                  header: 'Error',
+                  message: 'No se pudo descargar el Modelo 347: ' + (error.message || error),
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
       );
   }
 

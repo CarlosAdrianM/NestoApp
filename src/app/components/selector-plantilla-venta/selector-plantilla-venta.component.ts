@@ -226,7 +226,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   }
 
   public soloConStock() {
-    this.datosFiltrados = this.datosFiltrados.filter(d => d.cantidadDisponible > 0);
+    this.datosFiltrados = this.datosFiltrados.filter(d => {
+      if (d.stocks && d.stocks.length > 0) {
+        return d.stocks.some(s => s.cantidadDisponible > 0);
+      }
+      return d.cantidadDisponible > 0;
+    });
   }
 
   operador: 'OR' | 'AND' = 'OR';

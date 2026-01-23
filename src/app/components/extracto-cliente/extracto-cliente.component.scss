@@ -1,0 +1,22 @@
+.banner-347 {
+    --background: #e8f4fd;
+    margin: 8px;
+
+    ion-card-content {
+        padding: 12px;
+    }
+
+    .icon-347 {
+        font-size: 32px;
+        color: #1976d2;
+    }
+
+    p {
+        font-size: 12px;
+        color: var(--ion-color-medium);
+    }
+
+    ion-button {
+        --background: #1976d2;
+    }
+}

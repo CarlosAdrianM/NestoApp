@@ -62,7 +62,7 @@ export class SelectorPlantillaVentaService {
       return this.cache.loadFromObservable(cacheKey, request);
   }
 
-  ponerStocks(lineas: any[], almacen: string, ordenar: boolean): Observable<any> {
+  ponerStocks(lineas: any[], almacen: string, ordenar: boolean, almacenes: string[] = ['ALG', 'REI', 'ALC']): Observable<any> {
     var url = Configuracion.API_URL + '/PlantillaVentas/PonerStock';
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
@@ -70,6 +70,7 @@ export class SelectorPlantillaVentaService {
     var parametro = {
       lineas : lineas,
       almacen : almacen,
+      almacenes: almacenes,
       ordenar : ordenar
     }
 

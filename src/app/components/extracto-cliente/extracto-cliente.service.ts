@@ -6,6 +6,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { FileTransfer, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
+import { Storage } from '@ionic/storage';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,8 @@ export class ExtractoClienteService {
     private http: HttpClient,
     private transfer: FileTransfer,
     private file: File,
-    private usuario: Usuario
+    private usuario: Usuario,
+    private storage: Storage
   ) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/ExtractosCliente';
@@ -84,5 +86,24 @@ export class ExtractoClienteService {
     };
 
     return this.http.post<ReclamacionDeuda>(url, JSON.stringify(parametro), { headers: headers });
+  }
+
+  public async descargarModelo347(empresa: string, cliente: string, anno?: number): Promise<any> {
+    const ejercicio = anno || new Date().getFullYear() - 1;
+    const url = Configuracion.API_URL + "/ExtractosCliente/Modelo347Pdf" +
+      "?empresa=" + empresa.trim() +
+      "&cliente=" + cliente.trim() +
+      "&anno=" + ejercicio.toString();
+
+    const token = await this.storage.get('id_token');
+    const filetransfer: FileTransferObject = this.transfer.create();
+    const nombreArchivo = `Modelo347_${cliente.trim()}_${ejercicio}.pdf`;
+
+    return filetransfer.download(
+      url,
+      this.file.externalDataDirectory + nombreArchivo,
+      true,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
   }
 }

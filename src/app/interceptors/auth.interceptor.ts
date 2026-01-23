@@ -13,6 +13,7 @@ import { Usuario } from '../models/Usuario';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 import { ApiErrorResponse, ProcessedApiError } from '../models/api-error.model';
 import { ErrorHandlerService } from '../services/error-handler.service';
+import { AuthService } from '../services/auth/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -20,7 +21,8 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(
     private storage: Storage,
     private usuario: Usuario,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private authService: AuthService
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
@@ -55,6 +57,26 @@ export class AuthInterceptor implements HttpInterceptor {
 
         return next.handle(clonedRequest).pipe(
           catchError((error: HttpErrorResponse) => {
+            // Si es 401 y no es la petición de refresh, intentar refrescar el token
+            if (error.status === 401 && !request.url.includes('/auth/refreshOAuthToken')) {
+              return this.authService.refreshToken().pipe(
+                switchMap(newToken => {
+                  // Reintentar la petición original con el nuevo token
+                  const retryRequest = request.clone({
+                    setHeaders: {
+                      'Authorization': `Bearer ${newToken}`,
+                      ...(this.usuario?.nombre ? { 'X-Usuario': this.usuario.nombre } : {})
+                    }
+                  });
+                  return next.handle(retryRequest);
+                }),
+                catchError(refreshError => {
+                  // Si falla el refresh, devolver el error original procesado
+                  const processedError = this.processError(error);
+                  return throwError(processedError);
+                })
+              );
+            }
             const processedError = this.processError(error);
             return throwError(processedError);
           })

@@ -66,6 +66,25 @@
       </ion-list>
   
       <ion-list *ngSwitchCase="'facturas'">
+          <ion-card *ngIf="mostrarBannerModelo347" class="banner-347">
+            <ion-card-content>
+              <ion-row class="ion-align-items-center">
+                <ion-col size="auto">
+                  <ion-icon name="document-text" class="icon-347"></ion-icon>
+                </ion-col>
+                <ion-col>
+                  <strong>Modelo 347 disponible</strong>
+                  <p class="ion-no-margin">Certificado fiscal {{annoModelo347}}</p>
+                </ion-col>
+                <ion-col size="auto">
+                  <ion-button size="small" (click)="descargarModelo347()">
+                    <ion-icon name="download" slot="start"></ion-icon>
+                    Descargar
+                  </ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-card-content>
+          </ion-card>
           <ion-item *ngFor="let mov of movimientosDeuda">
             <ion-label class="ion-text-wrap">
               <h3>{{mov.fecha | date: 'dd/MM/yy'}}</h3>
