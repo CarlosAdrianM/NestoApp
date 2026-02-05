@@ -1,0 +1,80 @@
+<div class="selector-regalos">
+  <!-- Indicador de Ganavisiones -->
+  <ion-item color="light" lines="none">
+    <ion-icon name="gift" slot="start" color="primary"></ion-icon>
+    <ion-label>
+      <h2>Ganavisiones disponibles: <strong>{{ ganavisionesDisponibles }}</strong></h2>
+      <p>Usados: {{ ganavisionesUsados }} | Restantes: {{ ganavisionesRestantes }}</p>
+    </ion-label>
+    <ion-button *ngIf="hayRegalosSeleccionados" fill="clear" slot="end" (click)="limpiarSeleccion()">
+      <ion-icon name="trash" slot="icon-only"></ion-icon>
+    </ion-button>
+  </ion-item>
+
+  <!-- Barra de progreso -->
+  <ion-progress-bar [value]="porcentajeUsado / 100" [color]="porcentajeUsado >= 100 ? 'success' : 'primary'"></ion-progress-bar>
+
+  <!-- Búsqueda -->
+  <ion-searchbar
+    placeholder="Buscar producto regalo..."
+    (ionInput)="filtrarBusqueda($event)"
+    [disabled]="cargando">
+  </ion-searchbar>
+
+  <!-- Estado de carga -->
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando productos bonificables...</ion-label>
+  </ion-item>
+
+  <!-- Mensaje de error -->
+  <ion-item *ngIf="errorMessage" color="danger" lines="none">
+    <ion-icon name="alert-circle" slot="start"></ion-icon>
+    <ion-label>{{ errorMessage }}</ion-label>
+  </ion-item>
+
+  <!-- Mensaje si no hay productos -->
+  <ion-item *ngIf="!cargando && !errorMessage && productosFiltrados.length === 0" lines="none">
+    <ion-icon name="information-circle" slot="start" color="medium"></ion-icon>
+    <ion-label class="ion-text-wrap">
+      <p>No hay productos bonificables disponibles</p>
+    </ion-label>
+  </ion-item>
+
+  <!-- Lista de productos bonificables -->
+  <ion-list *ngIf="!cargando && productosFiltrados.length > 0">
+    <ion-item *ngFor="let producto of productosFiltrados" class="producto-item">
+      <ion-label class="ion-text-wrap">
+        <h2>{{ producto.ProductoNombre }}</h2>
+        <p>
+          <ion-text color="primary">{{ producto.Ganavisiones }} pts</ion-text>
+          <ion-text color="medium"> | PVP: {{ producto.PVP | currency:'EUR' }}</ion-text>
+          <ion-text color="medium"> | Stock: {{ producto.StockTotal }}</ion-text>
+        </p>
+      </ion-label>
+
+      <!-- Controles de cantidad -->
+      <div class="cantidad-controls" slot="end">
+        <ion-button
+          fill="clear"
+          size="small"
+          [disabled]="getCantidad(producto.ProductoId) === 0"
+          (click)="decrementarCantidad(producto)">
+          <ion-icon name="remove-circle" slot="icon-only"></ion-icon>
+        </ion-button>
+
+        <span class="cantidad" [class.tiene-cantidad]="getCantidad(producto.ProductoId) > 0">
+          {{ getCantidad(producto.ProductoId) }}
+        </span>
+
+        <ion-button
+          fill="clear"
+          size="small"
+          [disabled]="!puedeIncrementar(producto)"
+          (click)="incrementarCantidad(producto)">
+          <ion-icon name="add-circle" slot="icon-only"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-item>
+  </ion-list>
+</div>

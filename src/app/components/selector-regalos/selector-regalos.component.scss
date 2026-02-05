@@ -1,0 +1,37 @@
+.selector-regalos {
+  width: 100%;
+
+  ion-progress-bar {
+    margin: 0 16px 8px 16px;
+    width: calc(100% - 32px);
+  }
+
+  .producto-item {
+    --padding-start: 16px;
+    --padding-end: 8px;
+  }
+
+  .cantidad-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .cantidad {
+      min-width: 24px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: var(--ion-color-medium);
+
+      &.tiene-cantidad {
+        color: var(--ion-color-primary);
+      }
+    }
+
+    ion-button {
+      --padding-start: 4px;
+      --padding-end: 4px;
+      margin: 0;
+    }
+  }
+}

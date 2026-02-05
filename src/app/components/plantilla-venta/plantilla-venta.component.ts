@@ -13,6 +13,7 @@ import { PlantillaVentaService } from './plantilla-venta.service';
 import { SelectorFormasPagoComponent } from '../selector-formas-pago/selector-formas-pago.component';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
+import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.component';
 
 @Component({
   selector: 'app-plantilla-venta',
@@ -41,10 +42,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       });
       events.subscribe('carritoModificado', () => {
           this.slider.getActiveIndex().then(i => {
-              if (i === 2) { //resumen
+              if (i === this.indexSlideResumen) { //resumen
                 this._selectorPlantillaVenta.cargarResumen();
               }
-          });          
+          });
       });
       this.platform.backButton.subscribeWithPriority(10, () => {
         console.log('Botón atrás pulsado');
@@ -234,8 +235,143 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   public listaPedidosPendientes: any;
   public totalPedidoPlazosPago: number;
   public almacenEntregaUrgente: string;
-  
-  
+
+  // Ganavisiones / Regalos
+  public regalosSeleccionados: RegaloSeleccionado[] = [];
+  private readonly GRUPOS_BONIFICABLES = ['COS', 'ACC', 'PEL'];
+  private productosBonificablesCount: number = -1; // -1 = no verificado aún
+
+  get baseImponibleBonificable(): number {
+    if (!this.productosResumen) return 0;
+    return this.productosResumen
+      .filter(p => p.grupo && this.GRUPOS_BONIFICABLES.includes(p.grupo.trim().toUpperCase()))
+      .reduce((sum, p) => sum + (p.cantidad * p.precio * (1 - p.descuento)), 0);
+  }
+
+  get ganavisionesDisponibles(): number {
+    return Math.floor(this.baseImponibleBonificable / 10);
+  }
+
+  get ganavisionesUsadosPorRegalos(): number {
+    return this.regalosSeleccionados.reduce((sum, r) => sum + (r.producto.Ganavisiones * r.cantidad), 0);
+  }
+
+  get hayGanavisionesDisponibles(): boolean {
+    // Mostrar slide si:
+    // 1. Hay ganavisiones disponibles Y hay productos bonificables, O
+    // 2. Hay regalos ya seleccionados (para que el usuario pueda verlos/quitarlos)
+    const hayPuntos = this.ganavisionesDisponibles > 0;
+    const hayProductos = this.productosBonificablesCount > 0;
+    const hayRegalosSeleccionados = this.regalosSeleccionados.length > 0;
+
+    return (hayPuntos && hayProductos) || hayRegalosSeleccionados;
+  }
+
+  public onProductosBonificablesCargados(count: number): void {
+    this.productosBonificablesCount = count;
+    // Forzar actualización del slider por si cambia la visibilidad
+    if (this.slider) {
+      setTimeout(() => this.slider.update(), 100);
+    }
+  }
+
+  // Offset para calcular índices de slides después de regalos
+  // Si la slide de regalos está visible, las slides posteriores se desplazan +1
+  get offsetRegalos(): number {
+    return (this.hayGanavisionesDisponibles && this.productosResumen) ? 1 : 0;
+  }
+
+  private async validarRegalosSeleccionados(): Promise<void> {
+    if (this.regalosSeleccionados.length === 0) return;
+
+    const ganavisionesUsados = this.ganavisionesUsadosPorRegalos;
+    const ganavisionesDisponibles = this.ganavisionesDisponibles;
+
+    if (ganavisionesUsados > ganavisionesDisponibles) {
+      // Los regalos seleccionados exceden los disponibles, limpiar selección
+      this.regalosSeleccionados = [];
+
+      const mensaje = ganavisionesDisponibles === 0
+        ? 'Ya no tienes Ganavisiones disponibles. Se han eliminado los regalos seleccionados.'
+        : `Solo tienes ${ganavisionesDisponibles} Ganavisiones disponibles, pero habías seleccionado regalos por ${ganavisionesUsados}. Se ha limpiado la selección.`;
+
+      const alert = await this.alertCtrl.create({
+        header: 'Regalos actualizados',
+        message: mensaje,
+        buttons: ['Ok']
+      });
+      await alert.present();
+    }
+  }
+
+  private async verificarProductosBonificables(): Promise<void> {
+    // Si no hay puntos de ganavisiones, no hace falta verificar productos
+    if (this.ganavisionesDisponibles === 0) {
+      this.productosBonificablesCount = 0;
+      return;
+    }
+
+    // Llamar a la API para verificar si hay productos bonificables
+    return new Promise((resolve) => {
+      this.servicio.cargarProductosBonificables(
+        this.clienteSeleccionado.empresa,
+        this.baseImponibleBonificable,
+        this.almacen,
+        this.servirJuntoParaRegalos,
+        this.clienteSeleccionado.cliente
+      ).subscribe(
+        (response) => {
+          this.productosBonificablesCount = response.Productos.length;
+          resolve();
+        },
+        (error) => {
+          console.error('Error verificando productos bonificables:', error);
+          this.productosBonificablesCount = 0;
+          resolve();
+        }
+      );
+    });
+  }
+
+  // Índices de slides (considerando que regalos es condicional)
+  get indexSlideResumen(): number { return 2; }
+  get indexSlideRegalos(): number { return 3; } // Solo existe si hayGanavisionesDisponibles
+  get indexSlideDireccion(): number { return 3 + this.offsetRegalos; }
+  get indexSlidePago(): number { return 4 + this.offsetRegalos; }
+
+  // Getter para usar en template (el operador ?? no está soportado en templates Angular)
+  get servirJuntoParaRegalos(): boolean {
+    return this.direccionSeleccionada ? this.direccionSeleccionada.servirJunto : true;
+  }
+
+  public actualizarRegalos(regalos: RegaloSeleccionado[]): void {
+    this.regalosSeleccionados = regalos;
+  }
+
+  public async onRegalosInvalidados(productosIds: string[]): Promise<void> {
+    if (productosIds.length === 0) return;
+
+    // Buscar los nombres de los productos invalidados en la selección anterior
+    const nombresProductos = this.regalosSeleccionados
+      .filter(r => productosIds.includes(r.producto.ProductoId))
+      .map(r => r.producto.ProductoNombre);
+
+    // Limpiar los regalos invalidados del array
+    this.regalosSeleccionados = this.regalosSeleccionados
+      .filter(r => !productosIds.includes(r.producto.ProductoId));
+
+    const mensaje = nombresProductos.length > 0
+      ? `Se han eliminado los siguientes regalos porque ya no están disponibles con la configuración actual:\n\n${nombresProductos.join('\n')}`
+      : `Se han eliminado ${productosIds.length} regalo(s) porque ya no están disponibles.`;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Regalos actualizados',
+      message: mensaje,
+      buttons: ['Ok']
+    });
+    await alert.present();
+  }
+
   @ViewChild(SelectorPlantillaVentaComponent)
   public _selectorPlantillaVenta: SelectorPlantillaVentaComponent;
 
@@ -288,7 +424,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     this.indexActivo = await this.slider.getActiveIndex();
     let indexPrevio = await this.slider.getPreviousIndex();
     if (this.indexActivo === 2 && indexPrevio === 1) {
-        console.log("Resumen");        
+        console.log("Resumen");
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
         this.servicio.cargarListaPendientes(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente).subscribe(
             data => {
@@ -310,15 +446,24 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
         {
             this.totalPedidoPlazosPago = this.totalPedido;
         }
-    } else if (this.indexActivo === 4 && indexPrevio === 3) {
+
+        // Validar que los regalos seleccionados no excedan los Ganavisiones disponibles
+        await this.validarRegalosSeleccionados();
+
+        // Verificar si hay productos bonificables disponibles (antes de mostrar el slide)
+        await this.verificarProductosBonificables();
+
+        // Actualizar slider para que reconozca la slide de regalos si aplica
+        console.log("baseImponibleBonificable:", this.baseImponibleBonificable, "hayGanavisiones:", this.hayGanavisionesDisponibles, "productosBonificablesCount:", this.productosBonificablesCount);
+        if (this.hayGanavisionesDisponibles) {
+            setTimeout(() => {
+                this.slider.update();
+            }, 100);
+        }
+    } else if (this.indexActivo === this.indexSlidePago && indexPrevio === this.indexSlideDireccion) {
         console.log("Finalizar");
         this.comprobarSiSePuedeServirPorGlovo();
-    } /*else if (slides.getActiveIndex() === 1) {
-        setTimeout(() => {
-            this._selectorPlantillaVenta.setFocus();
-        }, 150);
     }
-    */
   }
   
   private comprobarSiSePuedeServirPorGlovo(){
@@ -359,10 +504,28 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
         return false;
     }
 
-    return  this.indexActivo === 0 && this.clienteSeleccionado ||
-            this.indexActivo === 1 && this._selectorPlantillaVenta.hayAlgunProducto() ||
-            this.indexActivo === 2 && this.productosResumen && this.productosResumen.length > 0 ||
-            this.indexActivo === 3;
+    // Slide 0: Cliente
+    if (this.indexActivo === 0) {
+      return !!this.clienteSeleccionado;
+    }
+    // Slide 1: Productos
+    if (this.indexActivo === 1) {
+      return this._selectorPlantillaVenta.hayAlgunProducto();
+    }
+    // Slide 2: Resumen
+    if (this.indexActivo === this.indexSlideResumen) {
+      return this.productosResumen && this.productosResumen.length > 0;
+    }
+    // Slide 3: Regalos (si existe)
+    if (this.hayGanavisionesDisponibles && this.indexActivo === this.indexSlideRegalos) {
+      return true; // Siempre se puede avanzar desde regalos (son opcionales)
+    }
+    // Slide Dirección
+    if (this.indexActivo === this.indexSlideDireccion) {
+      return !!this.direccionSeleccionada;
+    }
+
+    return false;
   }
 
   public anteriorPantalla(): void {
@@ -442,6 +605,35 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
               lineaPedidoOferta.oferta = nuevaLinea.oferta;
               pedido.Lineas.push(lineaPedidoOferta);
           }
+      }
+
+      // Añadir líneas de regalos (Ganavisiones)
+      for (let regalo of this.regalosSeleccionados) {
+          let textoRegalo = regalo.producto.ProductoNombre;
+          if (textoRegalo.length > 40) {
+              textoRegalo = textoRegalo.substring(0, 40);
+          }
+          textoRegalo += ' (BONIF)';
+
+          const lineaRegalo = {
+              'estado': this.esPresupuesto ? -3 : 1,
+              'tipoLinea': 1,
+              'producto': regalo.producto.ProductoId,
+              'texto': textoRegalo,
+              'Cantidad': regalo.cantidad,
+              'fechaEntrega': this.fechaEntrega,
+              'PrecioUnitario': regalo.producto.PVP,
+              'DescuentoLinea': 1, // 100% descuento
+              'AplicarDescuento': false,
+              'vistoBueno': 0,
+              'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+              'almacen': this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen,
+              'iva': this.direccionSeleccionada.iva,
+              'delegacion': this.usuario.delegacion,
+              'formaVenta': this.usuario.formaVenta,
+              'oferta': null,
+          };
+          pedido.Lineas.push(lineaRegalo);
       }
 
       console.log(pedido);
@@ -535,6 +727,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       this.slider.lockSwipeToNext(true);
       this.pedidoPendienteSeleccionado = undefined;
       this.listaPedidosPendientes = undefined;
+      this.regalosSeleccionados = [];
+      this.productosBonificablesCount = -1; // Resetear verificación de productos bonificables
   }
       
   get totalPedido(): number {

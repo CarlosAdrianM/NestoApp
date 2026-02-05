@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { ProductosBonificablesResponse, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 
 @Injectable({
   providedIn: 'root'
@@ -95,5 +96,34 @@ export class PlantillaVentaService {
     params = params.append('almacen', almacen);
 
     return this.http.get(url, { params: params });
+  }
+
+  public cargarProductosBonificables(
+    empresa: string,
+    baseImponibleBonificable: number,
+    almacen: string,
+    servirJunto: boolean,
+    cliente: string
+  ): Observable<ProductosBonificablesResponse> {
+    const url = Configuracion.API_URL + '/Ganavisiones/ProductosBonificables';
+    let params = new HttpParams()
+      .set('empresa', empresa)
+      .set('baseImponibleBonificable', baseImponibleBonificable.toString())
+      .set('almacen', almacen)
+      .set('servirJunto', servirJunto.toString())
+      .set('cliente', cliente);
+
+    return this.http.get<ProductosBonificablesResponse>(url, { params });
+  }
+
+  public validarServirJunto(
+    almacen: string,
+    productosBonificados: string[]
+  ): Observable<ValidarServirJuntoResponse> {
+    const url = Configuracion.API_URL + '/Ganavisiones/ValidarServirJunto';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    const body = { Almacen: almacen, ProductosBonificados: productosBonificados };
+
+    return this.http.post<ValidarServirJuntoResponse>(url, body, { headers });
   }
 }

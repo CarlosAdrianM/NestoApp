@@ -50,6 +50,7 @@ import { LineaVentaComponent } from './components/linea-venta/linea-venta.compon
 import { SelectorPlantillaVentaComponent } from './components/selector-plantilla-venta/selector-plantilla-venta.component';
 import { SelectorPlantillaVentaDetalleComponent } from './components/selector-plantilla-venta-detalle/selector-plantilla-venta-detalle.component';
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
+import { SelectorRegalosComponent } from './components/selector-regalos/selector-regalos.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "ionic-cache";
@@ -119,7 +120,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     PlantillaVentaComponent,
     UltimasVentasProductoClienteComponent,
     AlertsComponent,
-    ResumenVentasComponent
+    ResumenVentasComponent,
+    SelectorRegalosComponent
   ],
   entryComponents: [],
   imports: [

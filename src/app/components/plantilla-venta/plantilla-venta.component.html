@@ -59,6 +59,20 @@
             </ion-list>
         </div>
       </ion-slide>
+      <!-- Slide Regalos (Ganavisiones) - Solo si hay ganavisiones disponibles -->
+      <ion-slide *ngIf="hayGanavisionesDisponibles" scrollY="true" class="conscroll">
+        <selector-regalos
+          [empresa]="clienteSeleccionado.empresa"
+          [cliente]="clienteSeleccionado.cliente"
+          [almacen]="almacen"
+          [baseImponibleBonificable]="baseImponibleBonificable"
+          [servirJunto]="servirJuntoParaRegalos"
+          [regalosSeleccionados]="regalosSeleccionados"
+          (regalosChange)="actualizarRegalos($event)"
+          (regalosInvalidados)="onRegalosInvalidados($event)"
+          (productosCargados)="onProductosBonificablesCargados($event)">
+        </selector-regalos>
+      </ion-slide>
       <ion-slide *ngIf="clienteSeleccionado" scrollY="true" class="conscroll">
         <div scrollY="true">
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)" [totalPedido]="totalPedidoPlazosPago"></selector-direcciones-entrega>
