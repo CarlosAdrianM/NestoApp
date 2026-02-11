@@ -1,9 +1,10 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
 
 @Component({
   selector: 'selector-plantilla-venta',
@@ -11,10 +12,13 @@ import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
   styleUrls: ['./selector-plantilla-venta.component.scss'],
 })
 export class SelectorPlantillaVentaComponent extends SelectorBase {
-  
+
   @Input() public cliente: any;
   @Input() public estadoCliente: number;
   @Input() public almacen: any;
+
+  // Output para notificar cuando los productos terminan de cargar (Issue #77)
+  @Output() productosCargados = new EventEmitter<void>();
 
   constructor(
       private servicio: SelectorPlantillaVentaService, 
@@ -61,8 +65,10 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
                             clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                             clone.esSobrePedido = clone.estado != 0;
                             return clone;
-                        });                  
+                        });
                         this.inicializarDatos(data);
+                        // Emitir evento cuando los productos terminan de cargar (Issue #77)
+                        this.productosCargados.emit();
                     },
                     async error =>{
                         await loading.dismiss();
@@ -216,6 +222,14 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       return datos.some(tieneCantidad);
   }
 
+  /**
+   * Método público para acceder a los datos iniciales
+   * Se usa para restaurar borradores (Issue #77)
+   */
+  public obtenerDatosIniciales(): any[] {
+      return this.datosIniciales();
+  }
+
   public ponerStocks(ordenar: boolean): void {
       this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar).subscribe(
           async data => {
@@ -263,5 +277,35 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
   }
   set baseImponibleParaPortes(value: number) {
       this._baseImponibleParaPortes = value;
+  }
+
+  /**
+   * Añade un producto externo que no está en la plantilla del cliente
+   * Se usa para restaurar borradores con productos que ya no están en el histórico (Issue #77)
+   */
+  public agregarProductoExterno(lineaBorrador: LineaPlantillaVenta): void {
+    const productoNuevo = {
+      producto: lineaBorrador.producto,
+      texto: lineaBorrador.texto,
+      cantidad: lineaBorrador.cantidad,
+      cantidadOferta: lineaBorrador.cantidadOferta || 0,
+      precio: lineaBorrador.precio,
+      descuento: lineaBorrador.descuento,
+      aplicarDescuento: lineaBorrador.aplicarDescuento,
+      iva: lineaBorrador.iva,
+      grupo: lineaBorrador.grupo,
+      familia: lineaBorrador.familia,
+      subGrupo: lineaBorrador.subGrupo,
+      urlImagen: lineaBorrador.urlImagen,
+      tamanno: lineaBorrador.tamanno,
+      unidadMedida: lineaBorrador.unidadMedida,
+      aplicarDescuentoFicha: lineaBorrador.aplicarDescuentoFicha ?? lineaBorrador.aplicarDescuento,
+      esSobrePedido: true,  // Productos externos siempre como "sobre pedido"
+      esProductoExterno: true,  // Flag para identificar
+      stockActualizado: false,
+      estado: 1  // Estado diferente de 0 para marcar como sobre pedido
+    };
+
+    this.agregarDato(productoNuevo);
   }
 }

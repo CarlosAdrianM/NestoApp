@@ -23,10 +23,25 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
   set cliente(value: any) {
       if (value && value.trim() != this._cliente){
           this.cargarDatos(value);
-          this._cliente = value;    
+          this._cliente = value;
       }
   }
-  public seleccionado: string;
+
+  private _seleccionado: string;
+  get seleccionado(): string {
+      return this._seleccionado;
+  }
+  set seleccionado(value: string) {
+      this._seleccionado = value;
+      // Si ya hay direcciones cargadas y cambia seleccionado, seleccionar la dirección correcta
+      if (value && this.direccionesEntrega && this.direccionesEntrega.length > 0) {
+          const direccion = this.direccionesEntrega.find(d => d.contacto.trim() === value.trim());
+          if (direccion && direccion !== this.direccionSeleccionada) {
+              this.seleccionarDireccion(direccion);
+          }
+      }
+  }
+
   public forzarEstado: number; // para que coja un contacto con un estado concreto
 
   private _totalPedido: number;
@@ -67,7 +82,8 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
                   this.direccionesEntrega = data;
                   if (this.seleccionado) {
                       this.direccionSeleccionada = this.direccionesEntrega.find(d => d.contacto.trim() == this.seleccionado.trim());
-                  } else {
+                  }
+                  if (!this.direccionSeleccionada) {
                         if (this.forzarEstado) {
                             this.direccionSeleccionada = this.direccionesEntrega.find(d => d.estado == this.forzarEstado);
                         }
@@ -76,6 +92,21 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
                         }
                   }
                   this.seleccionarDato(this.direccionSeleccionada);
+
+                  // Si no había seleccionado al cargar, volver a verificar después de un tick
+                  // para dar tiempo a Angular de propagar bindings pendientes
+                  if (!this.seleccionado) {
+                      setTimeout(() => {
+                          if (this.seleccionado && this.direccionesEntrega) {
+                              const direccionCorrecta = this.direccionesEntrega.find(
+                                  d => d.contacto.trim() === this.seleccionado.trim()
+                              );
+                              if (direccionCorrecta && direccionCorrecta !== this.direccionSeleccionada) {
+                                  this.seleccionarDireccion(direccionCorrecta);
+                              }
+                          }
+                      }, 100);
+                  }
               }
           },
           error => this.errorMessage = <any>error

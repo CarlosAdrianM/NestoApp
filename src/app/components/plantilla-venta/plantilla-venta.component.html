@@ -4,7 +4,17 @@
       <ion-back-button (click)="comprobarCanDeactivate=true;"></ion-back-button>
     </ion-buttons>
     <ion-title>Plantilla Venta</ion-title>
-  </ion-toolbar>   
+    <ion-buttons slot="end">
+      <ion-button (click)="abrirMenuBorradores()" title="Borradores">
+        <ion-icon slot="icon-only" name="folder-outline"></ion-icon>
+      </ion-button>
+      <ion-button (click)="onGuardarBorrador()"
+                  [disabled]="!_selectorPlantillaVenta?.hayAlgunProducto()"
+                  title="Guardar borrador">
+        <ion-icon slot="icon-only" name="save-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
@@ -26,7 +36,7 @@
         <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
       </ion-slide>
       <ion-slide *ngIf="clienteSeleccionado" scrollY="false">
-          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}"></selector-plantilla-venta>
+          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" (productosCargados)="onProductosCargados()"></selector-plantilla-venta>
       </ion-slide>
       <ion-slide scrollY="true" class="conscroll">
           <div class="conscroll" scrollY="true" *ngIf="productosResumen">
@@ -75,7 +85,7 @@
       </ion-slide>
       <ion-slide *ngIf="clienteSeleccionado" scrollY="true" class="conscroll">
         <div scrollY="true">
-            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)" [totalPedido]="totalPedidoPlazosPago"></selector-direcciones-entrega>
+            <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)" [totalPedido]="totalPedidoPlazosPago" [seleccionado]="contactoParaRestaurar"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
                     <ion-label>Fecha de Entrega:</ion-label>
@@ -113,7 +123,7 @@
         <ion-item (click)="cambiarIVA()">
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
-        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="formaPago = $event" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
+        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
         <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>

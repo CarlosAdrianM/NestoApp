@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ViewChild, OnInit } from '@angular/core';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { AlertController, LoadingController, NavController, IonSlides, Platform } from '@ionic/angular';
+import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, IonSlides, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -14,6 +14,9 @@ import { SelectorFormasPagoComponent } from '../selector-formas-pago/selector-fo
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.component';
+import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
+import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
+import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 
 @Component({
   selector: 'app-plantilla-venta',
@@ -33,7 +36,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     private ref: ChangeDetectorRef,
     private platform: Platform,
     private firebaseAnalytics: FirebaseAnalytics,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private actionSheetCtrl: ActionSheetController,
+    private modalCtrl: ModalController,
+    private borradorService: BorradorPlantillaVentaService
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
@@ -56,18 +62,55 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     if (!this.comprobarCanDeactivate) {
         return true;
     }
-    const areUnsavedChanges = this._selectorPlantillaVenta && this._selectorPlantillaVenta.hayAlgunProducto();
+    const hayProductos = this._selectorPlantillaVenta && this._selectorPlantillaVenta.hayAlgunProducto();
 
-    let canDeactivate = true;
-
-    if (areUnsavedChanges && this.comprobarCanDeactivate) {
-      canDeactivate = window.confirm('El pedido tiene productos.\n¿Seguro que quiere salir?');
-      this.firebaseAnalytics.logEvent("plantilla_venta_desea_salir", {respuesta: canDeactivate});
+    if (!hayProductos) {
+      this.comprobarCanDeactivate = false;
+      return true;
     }
 
-    this.comprobarCanDeactivate = false;
-
-    return canDeactivate;
+    // Mostrar ActionSheet con 3 opciones (Issue #77)
+    return new Promise(async (resolve) => {
+      const actionSheet = await this.actionSheetCtrl.create({
+        header: 'El pedido tiene productos',
+        subHeader: 'Seleccione una opción:',
+        buttons: [
+          {
+            text: 'Guardar y salir',
+            icon: 'save-outline',
+            handler: async () => {
+              await this.guardarBorradorAutomatico();
+              this.firebaseAnalytics.logEvent('plantilla_venta_guardar_y_salir', {});
+              this.comprobarCanDeactivate = false;
+              resolve(true);
+              return true;
+            }
+          },
+          {
+            text: 'Salir sin guardar',
+            icon: 'exit-outline',
+            role: 'destructive',
+            handler: () => {
+              this.firebaseAnalytics.logEvent('plantilla_venta_salir_sin_guardar', {});
+              this.comprobarCanDeactivate = false;
+              resolve(true);
+              return true;
+            }
+          },
+          {
+            text: 'Cancelar',
+            icon: 'close-outline',
+            role: 'cancel',
+            handler: () => {
+              this.firebaseAnalytics.logEvent('plantilla_venta_cancelar_salida', {});
+              resolve(false);
+              return false;
+            }
+          }
+        ]
+      });
+      await actionSheet.present();
+    });
   }
 
   @ViewChild ('slider') slider: IonSlides;
@@ -195,12 +238,66 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       return this._direccionSeleccionada;
   }
   set direccionSeleccionada(value: any) {
+      // Verificar si la dirección está cambiando ANTES de actualizar _direccionSeleccionada
+      const direccionCambiando = !this._direccionSeleccionada ||
+          this._direccionSeleccionada.contacto?.toString().trim() !== value?.contacto?.toString().trim();
+
       this._direccionSeleccionada = value;
       if (value) {
-          this.formaPago = value.formaPago;
-          this.plazosPago = value.plazosPago;
+          // Si estamos restaurando un borrador, usar los valores del borrador
+          if (this.borradorEnRestauracion) {
+              this.formaPago = this.borradorEnRestauracion.formaPago || value.formaPago;
+              this.plazosPago = this.borradorEnRestauracion.plazosPago || value.plazosPago;
+              // Si esta es la dirección correcta del borrador, limpiar contactoParaRestaurar
+              if (this.contactoParaRestaurar && value.contacto?.toString().trim() === this.contactoParaRestaurar.trim()) {
+                  this.contactoParaRestaurar = '';
+              }
+          } else {
+              // Verificar si esta es la dirección correcta del borrador (restauración tardía)
+              const esRestauracionTardia = this.contactoParaRestaurar &&
+                  value.contacto?.toString().trim() === this.contactoParaRestaurar.trim();
+
+              if (esRestauracionTardia) {
+                  // La dirección correcta del borrador finalmente se seleccionó
+                  // Usar valores protegidos en lugar de los de la dirección
+                  if (this.formaPagoProtegida) {
+                      this.formaPago = this.formaPagoProtegida;
+                  }
+                  if (this.plazosPagoProtegido) {
+                      this.plazosPago = this.plazosPagoProtegido;
+                  }
+                  this.contactoParaRestaurar = '';
+              } else if (direccionCambiando && !this.formaPagoProtegida && !this.plazosPagoProtegido) {
+                  // El usuario cambió de dirección manualmente (sin valores protegidos)
+                  if (this.timeoutRestauracionId) {
+                      clearTimeout(this.timeoutRestauracionId);
+                      this.timeoutRestauracionId = null;
+                  }
+                  this.contactoParaRestaurar = '';
+                  this.formaPago = value.formaPago;
+                  this.plazosPago = value.plazosPago;
+              } else if (direccionCambiando) {
+                  // Dirección cambiando pero hay valores protegidos
+                  // Usar valores de la dirección temporalmente, pero mantener protegidos
+                  this.formaPago = value.formaPago;
+                  this.plazosPago = value.plazosPago;
+              } else {
+                  // Misma dirección (re-seleccionada durante navegación)
+                  // Usar valores protegidos si existen
+                  if (this.formaPagoProtegida) {
+                      this.formaPago = this.formaPagoProtegida;
+                  }
+                  if (this.plazosPagoProtegido) {
+                      this.plazosPago = this.plazosPagoProtegido;
+                  }
+              }
+          }
           this.cargarCorreoYMovilTarjeta();
           this.calcularFechaMinima();
+          // Si estamos restaurando, restaurar la fecha del borrador después de calcularFechaMinima
+          if (this.borradorEnRestauracion && this.borradorEnRestauracion.fechaEntrega) {
+              this.fechaEntrega = this.borradorEnRestauracion.fechaEntrega;
+          }
       }
   }
   get textoFacturacionElectronica(): string {
@@ -240,6 +337,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   public regalosSeleccionados: RegaloSeleccionado[] = [];
   private readonly GRUPOS_BONIFICABLES = ['COS', 'ACC', 'PEL'];
   private productosBonificablesCount: number = -1; // -1 = no verificado aún
+
+  // Borradores (Issue #77) - nombres como Nesto
+  private borradorEnRestauracion: BorradorPlantillaVenta | null = null;
+  private borradorRestauradoEnProductos: boolean = false;
+  public listaBorradores: BorradorMetadata[] = [];
+  public contactoParaRestaurar: string = ''; // Para preseleccionar dirección al cargar borrador
+  // Valores protegidos del borrador (para ignorar eventos de selectores)
+  private formaPagoProtegida: string | null = null;
+  private plazosPagoProtegido: string | null = null;
+  private timeoutRestauracionId: any = null; // Para cancelar setTimeout si el usuario cambia dirección
 
   get baseImponibleBonificable(): number {
     if (!this.productosResumen) return 0;
@@ -882,7 +989,27 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     return this.direccionSeleccionada.iva && ((!this.clienteSeleccionado.cifNif && !this.esPresupuesto) || !this.formaPago || !this.plazosPago);
   }
 
+  public cambiarFormaPago(nuevaFormaPago: string) {
+    // Si hay un valor protegido del borrador, ignorar el evento del selector
+    if (this.formaPagoProtegida) {
+      if (nuevaFormaPago !== this.formaPagoProtegida) {
+        return; // Ignorar - el selector está emitiendo su valor inicial
+      }
+      // Si coincide con el valor protegido, limpiar la protección
+      this.formaPagoProtegida = null;
+    }
+    this.formaPago = nuevaFormaPago;
+  }
+
   public cambiarPlazosPago(nuevosPlazos: string) {
+    // Si hay un valor protegido del borrador, ignorar el evento del selector
+    if (this.plazosPagoProtegido) {
+      if (nuevosPlazos !== this.plazosPagoProtegido) {
+        return; // Ignorar - el selector está emitiendo su valor inicial
+      }
+      // Si coincide con el valor protegido, limpiar la protección
+      this.plazosPagoProtegido = null;
+    }
     this.plazosPago = nuevosPlazos;
     this.comprobarSiSePuedeServirPorGlovo();
   }
@@ -925,12 +1052,20 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       });
       await alert.present();
     } else {
-      // Error normal, solo mostrar mensaje
+      // Error normal, mostrar mensaje y ofrecer guardar borrador (Issue #77)
       const alert = await this.alertCtrl.create({
         header: 'Error',
         subHeader: 'No se ha podido crear el pedido',
         message: mensaje,
-        buttons: ['Ok']
+        buttons: [
+          {
+            text: 'Ok',
+            handler: async () => {
+              // Ofrecer guardar borrador después de cerrar el error
+              await this.ofrecerGuardarBorrador(mensaje);
+            }
+          }
+        ]
       });
       await alert.present();
     }
@@ -990,4 +1125,504 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     const mensajeLower = mensaje.toLowerCase();
     return patronesValidacion.some(patron => mensajeLower.includes(patron));
   }
+
+  // ========================================
+  // REGION: Borradores (Issue #77)
+  // Nombres de métodos y propiedades como Nesto
+  // ========================================
+
+  /**
+   * Crea un borrador desde el estado actual de la plantilla
+   * Equivalente a CrearBorradorDesdeEstadoActual de Nesto
+   */
+  private crearBorradorDesdeEstadoActual(mensajeError?: string): BorradorPlantillaVenta {
+    const lineasProducto = this.extraerLineasProducto();
+    const lineasRegalo = this.extraerLineasRegalo();
+
+    const borrador: BorradorPlantillaVenta = {
+      id: this.borradorService.generarId(),
+      fechaCreacion: new Date().toISOString(),
+      usuario: this.usuario.nombre || '',
+      mensajeError: mensajeError,
+
+      // Datos del cliente
+      empresa: this.clienteSeleccionado?.empresa || '',
+      cliente: this.clienteSeleccionado?.cliente || '',
+      contacto: this.direccionSeleccionada?.contacto || '',
+      nombreCliente: this.clienteSeleccionado?.nombre || '',
+
+      // Líneas
+      lineasProducto: lineasProducto,
+      lineasRegalo: lineasRegalo,
+
+      // Configuración
+      comentarioRuta: this.direccionSeleccionada?.comentarioRuta || '',
+      esPresupuesto: this.esPresupuesto || false,
+      formaPago: this.extraerCodigoFormaPago(),
+      plazosPago: this.extraerCodigoPlazosPago(),
+
+      // Entrega
+      fechaEntrega: this.fechaEntrega || '',
+      almacenCodigo: this.almacen || '',
+      mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
+      servirJunto: this.direccionSeleccionada?.servirJunto || false,
+      comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
+
+      // Total
+      total: this.baseImponiblePedido || 0,
+
+      // Campos específicos NestoApp
+      servirPorGlovo: this.servirPorGlovo || false,
+      mandarCobroTarjeta: this.mandarCobroTarjeta || false,
+      cobroTarjetaCorreo: this.cobroTarjetaCorreo || '',
+      cobroTarjetaMovil: this.cobroTarjetaMovil || ''
+    };
+
+    return borrador;
+  }
+
+  /**
+   * Extrae el código de forma de pago (puede ser string u objeto)
+   */
+  private extraerCodigoFormaPago(): string {
+    if (!this.formaPago) return '';
+    if (typeof this.formaPago === 'string') return this.formaPago;
+    if (this.formaPago.formaPago) return this.formaPago.formaPago;
+    return '';
+  }
+
+  /**
+   * Extrae el código de plazos de pago (puede ser string u objeto)
+   */
+  private extraerCodigoPlazosPago(): string {
+    if (!this.plazosPago) return '';
+    if (typeof this.plazosPago === 'string') return this.plazosPago;
+    if (this.plazosPago.plazoPago) return this.plazosPago.plazoPago;
+    return '';
+  }
+
+  /**
+   * Extrae las líneas de producto del selector
+   */
+  private extraerLineasProducto(): LineaPlantillaVenta[] {
+    if (!this._selectorPlantillaVenta) return [];
+
+    const datosIniciales = this._selectorPlantillaVenta.obtenerDatosIniciales();
+    if (!datosIniciales) return [];
+
+    return datosIniciales
+      .filter(p => +p.cantidad !== 0 || +p.cantidadOferta !== 0)
+      .map(p => ({
+        producto: p.producto,
+        texto: p.texto,
+        cantidad: +p.cantidad || 0,
+        cantidadOferta: +p.cantidadOferta || 0,
+        precio: p.precio,
+        descuento: p.descuento,
+        aplicarDescuento: p.aplicarDescuento,
+        iva: p.iva,
+        grupo: p.grupo,
+        familia: p.familia,
+        subGrupo: p.subGrupo,
+        tamanno: p.tamanno,
+        unidadMedida: p.unidadMedida,
+        urlImagen: p.urlImagen,
+        aplicarDescuentoFicha: p.aplicarDescuentoFicha
+      }));
+  }
+
+  /**
+   * Extrae las líneas de regalo seleccionadas
+   */
+  private extraerLineasRegalo(): LineaRegalo[] {
+    return this.regalosSeleccionados.map(r => ({
+      producto: r.producto.ProductoId,
+      texto: r.producto.ProductoNombre,
+      precio: r.producto.PVP,
+      ganavisiones: r.producto.Ganavisiones,
+      iva: this.direccionSeleccionada?.iva || '',
+      cantidad: r.cantidad
+    }));
+  }
+
+  /**
+   * Guarda un borrador manualmente (botón toolbar)
+   * Equivalente a OnGuardarBorrador de Nesto
+   */
+  public async onGuardarBorrador(): Promise<void> {
+    if (!this._selectorPlantillaVenta?.hayAlgunProducto()) {
+      const alert = await this.alertCtrl.create({
+        header: 'Sin productos',
+        message: 'No hay productos para guardar en el borrador',
+        buttons: ['Ok']
+      });
+      await alert.present();
+      return;
+    }
+
+    const loading = await this.loadingCtrl.create({
+      message: 'Guardando borrador...'
+    });
+    await loading.present();
+
+    try {
+      const borrador = this.crearBorradorDesdeEstadoActual();
+      await this.borradorService.guardarBorrador(borrador);
+      await loading.dismiss();
+
+      this.firebaseAnalytics.logEvent('borrador_guardado_manual', { id: borrador.id });
+
+      const alert = await this.alertCtrl.create({
+        header: 'Borrador guardado',
+        message: 'Se ha guardado el borrador correctamente',
+        buttons: ['Ok']
+      });
+      await alert.present();
+    } catch (error) {
+      await loading.dismiss();
+      const alert = await this.alertCtrl.create({
+        header: 'Error',
+        message: 'No se pudo guardar el borrador: ' + (error as Error).message,
+        buttons: ['Ok']
+      });
+      await alert.present();
+    }
+  }
+
+  /**
+   * Guarda un borrador automáticamente (al salir o en error)
+   * Equivalente a GuardarBorradorAutomatico de Nesto
+   */
+  public async guardarBorradorAutomatico(mensajeError?: string): Promise<void> {
+    try {
+      const borrador = this.crearBorradorDesdeEstadoActual(mensajeError);
+      await this.borradorService.guardarBorrador(borrador);
+      this.firebaseAnalytics.logEvent('borrador_guardado_auto', { id: borrador.id });
+
+      const alert = await this.alertCtrl.create({
+        header: 'Borrador guardado',
+        message: 'Se ha guardado el borrador. Podrá recuperarlo desde el menú.',
+        buttons: ['Ok']
+      });
+      await alert.present();
+    } catch (error) {
+      console.error('Error guardando borrador automático:', error);
+    }
+  }
+
+  /**
+   * Ofrece al usuario guardar un borrador después de un error
+   */
+  private async ofrecerGuardarBorrador(mensajeError: string): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Guardar borrador',
+      message: '¿Desea guardar un borrador para intentarlo más tarde?',
+      buttons: [
+        {
+          text: 'No',
+          role: 'cancel'
+        },
+        {
+          text: 'Guardar',
+          handler: async () => {
+            await this.guardarBorradorAutomatico(mensajeError);
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  /**
+   * Actualiza la lista de borradores
+   * Equivalente a OnActualizarListaBorradores de Nesto
+   */
+  public async onActualizarListaBorradores(): Promise<void> {
+    this.listaBorradores = await this.borradorService.obtenerBorradores();
+  }
+
+  /**
+   * Abre el modal de lista de borradores
+   */
+  public async abrirMenuBorradores(): Promise<void> {
+    await this.onActualizarListaBorradores();
+
+    const modal = await this.modalCtrl.create({
+      component: ModalListaBorradoresComponent,
+      componentProps: {
+        borradores: this.listaBorradores
+      }
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss();
+    if (data?.accion === 'cargar') {
+      await this.onCargarBorrador(data.id);
+    }
+  }
+
+  /**
+   * Carga un borrador y restaura el estado
+   * Equivalente a OnCargarBorrador de Nesto
+   */
+  public async onCargarBorrador(id: string): Promise<void> {
+    const loading = await this.loadingCtrl.create({
+      message: 'Cargando borrador...'
+    });
+    await loading.present();
+
+    try {
+      const borrador = await this.borradorService.cargarBorrador(id);
+      if (!borrador) {
+        throw new Error('Borrador no encontrado');
+      }
+
+      // Guardar borrador para aplicar después de cargar productos
+      this.borradorEnRestauracion = borrador;
+      this.borradorRestauradoEnProductos = false;
+
+      // Establecer valores protegidos para ignorar eventos de los selectores
+      this.formaPagoProtegida = borrador.formaPago || null;
+      this.plazosPagoProtegido = borrador.plazosPago || null;
+
+      // Preseleccionar contacto para el selector de direcciones
+      this.contactoParaRestaurar = borrador.contacto || '';
+      // Forzar actualización del binding antes de continuar
+      this.ref.detectChanges();
+
+      // Fase 1: Restaurar configuración básica
+      this.almacen = borrador.almacenCodigo || this.usuario.almacen;
+      this.esPresupuesto = borrador.esPresupuesto || false;
+      this.fechaEntrega = borrador.fechaEntrega || this.fechaMinima;
+      this.servirPorGlovo = borrador.servirPorGlovo || false;
+      this.mandarCobroTarjeta = borrador.mandarCobroTarjeta || false;
+      this.cobroTarjetaCorreo = borrador.cobroTarjetaCorreo || '';
+      this.cobroTarjetaMovil = borrador.cobroTarjetaMovil || '';
+
+      // Fase 2: Cargar cliente (esto disparará la carga de productos)
+      if (borrador.cliente) {
+        // Crear objeto cliente mínimo para disparar la carga
+        const clienteParaCargar = {
+          empresa: borrador.empresa,
+          cliente: borrador.cliente,
+          contacto: borrador.contacto,
+          nombre: borrador.nombreCliente,
+          cifNif: 'pendiente' // Para evitar alerta de datos faltantes
+        };
+
+        // La carga de productos se completará y llamará a onProductosCargados
+        this.cargarProductosPlantilla(clienteParaCargar);
+
+        // Forzar propagación de bindings después de que el slide se renderice
+        // Esto asegura que contactoParaRestaurar llegue al selector de direcciones
+        this.ref.detectChanges();
+      }
+
+      await loading.dismiss();
+      this.firebaseAnalytics.logEvent('borrador_cargado', { id });
+
+    } catch (error) {
+      await loading.dismiss();
+      this.borradorEnRestauracion = null;
+      const alert = await this.alertCtrl.create({
+        header: 'Error',
+        message: 'No se pudo cargar el borrador: ' + (error as Error).message,
+        buttons: ['Ok']
+      });
+      await alert.present();
+    }
+  }
+
+  /**
+   * Callback cuando el selector de productos termina de cargar
+   * Se llama desde el evento productosCargados del selector
+   */
+  public onProductosCargados(): void {
+    if (this.borradorEnRestauracion && !this.borradorRestauradoEnProductos) {
+      this.borradorRestauradoEnProductos = true;
+      this.aplicarLineasProductoBorrador();
+      this.aplicarLineasRegaloBorrador();
+      this.aplicarConfiguracionBorrador();
+      // Limpiar estado de restauración después de aplicar todo
+      this.borradorEnRestauracion = null;
+    }
+  }
+
+  /**
+   * Aplica las líneas de producto del borrador
+   */
+  private aplicarLineasProductoBorrador(): void {
+    if (!this.borradorEnRestauracion?.lineasProducto) return;
+
+    const datosIniciales = this._selectorPlantillaVenta?.obtenerDatosIniciales();
+    const productosNoEncontrados: string[] = [];
+
+    for (const lineaBorrador of this.borradorEnRestauracion.lineasProducto) {
+      // Buscar en plantilla del cliente
+      const productoEncontrado = datosIniciales?.find(
+        p => p.producto === lineaBorrador.producto
+      );
+
+      if (productoEncontrado) {
+        // Aplicar cantidades y datos del borrador
+        productoEncontrado.cantidad = lineaBorrador.cantidad;
+        productoEncontrado.cantidadOferta = lineaBorrador.cantidadOferta;
+        productoEncontrado.precio = lineaBorrador.precio;
+        productoEncontrado.descuento = lineaBorrador.descuento;
+        // Restaurar urlImagen si no tiene (para que se muestre en resumen)
+        if (lineaBorrador.urlImagen && !productoEncontrado.urlImagen) {
+          productoEncontrado.urlImagen = lineaBorrador.urlImagen;
+        }
+      } else {
+        // Producto no está en la plantilla - agregarlo
+        productosNoEncontrados.push(lineaBorrador.texto);
+        this._selectorPlantillaVenta?.agregarProductoExterno(lineaBorrador);
+      }
+    }
+
+    // Notificar si hubo productos fuera de plantilla
+    if (productosNoEncontrados.length > 0) {
+      this.mostrarAlertaProductosAgregados(productosNoEncontrados);
+    }
+  }
+
+  /**
+   * Aplica las líneas de regalo del borrador
+   */
+  private aplicarLineasRegaloBorrador(): void {
+    if (!this.borradorEnRestauracion?.lineasRegalo?.length) return;
+
+    // Crear regalos seleccionados desde el borrador
+    // Se validarán contra la API cuando se cargue el slide de Ganavisiones
+    const regalosParaRestaurar: RegaloSeleccionado[] = this.borradorEnRestauracion.lineasRegalo.map(lr => ({
+      producto: {
+        ProductoId: lr.producto,
+        ProductoNombre: lr.texto,
+        Ganavisiones: lr.ganavisiones,
+        PVP: lr.precio,
+        Stocks: [],
+        StockTotal: 0
+      },
+      cantidad: lr.cantidad
+    }));
+
+    this.regalosSeleccionados = regalosParaRestaurar;
+  }
+
+  /**
+   * Aplica la configuración del borrador (formaPago, plazosPago, servirJunto, etc.)
+   * Se debe llamar DESPUÉS de cargar el cliente/dirección para sobrescribir valores
+   */
+  private aplicarConfiguracionBorrador(): void {
+    if (!this.borradorEnRestauracion) return;
+
+    // Guardar referencia porque borradorEnRestauracion se limpia después
+    const borrador = this.borradorEnRestauracion;
+
+    // Restaurar fechaEntrega (fallback, también se hace en setter de direccionSeleccionada)
+    if (borrador.fechaEntrega) {
+      this.fechaEntrega = borrador.fechaEntrega;
+    }
+
+    // Restaurar flags y comentarios en direccionSeleccionada
+    if (this.direccionSeleccionada) {
+      if (borrador.servirJunto !== undefined) {
+        this.direccionSeleccionada.servirJunto = borrador.servirJunto;
+      }
+      if (borrador.mantenerJunto !== undefined) {
+        this.direccionSeleccionada.mantenerJunto = borrador.mantenerJunto;
+      }
+      if (borrador.comentarioRuta) {
+        this.direccionSeleccionada.comentarioRuta = borrador.comentarioRuta;
+      }
+    }
+
+    // Restaurar comentarioPicking en clienteSeleccionado
+    if (this.clienteSeleccionado && borrador.comentarioPicking) {
+      this.clienteSeleccionado.comentarioPicking = borrador.comentarioPicking;
+    }
+
+    // NO limpiar contactoParaRestaurar aquí - las direcciones pueden no estar cargadas aún
+    // Se limpiará cuando la dirección correcta sea seleccionada
+
+    // Restaurar forma de pago y plazos con delay para que los selectores terminen de emitir
+    // Los selectores se cargan asíncronamente y pueden emitir eventos que sobrescriben estos valores
+    // Guardamos el ID para poder cancelarlo si el usuario cambia de dirección manualmente
+    this.timeoutRestauracionId = setTimeout(() => {
+      if (borrador.formaPago && this.formaPago !== borrador.formaPago) {
+        this.formaPago = borrador.formaPago;
+      }
+      if (borrador.plazosPago && this.plazosPago !== borrador.plazosPago) {
+        this.plazosPago = borrador.plazosPago;
+      }
+      if (borrador.fechaEntrega && this.fechaEntrega !== borrador.fechaEntrega) {
+        this.fechaEntrega = borrador.fechaEntrega;
+      }
+      this.timeoutRestauracionId = null;
+    }, 1000);
+  }
+
+  /**
+   * Muestra alerta de productos agregados desde borrador
+   */
+  private async mostrarAlertaProductosAgregados(productos: string[]): Promise<void> {
+    const mensaje = productos.length === 1
+      ? `El producto "${productos[0]}" no estaba en la plantilla del cliente y se ha añadido.`
+      : `Los siguientes productos no estaban en la plantilla del cliente y se han añadido:\n\n${productos.join('\n')}`;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Productos añadidos',
+      message: mensaje,
+      buttons: ['Ok']
+    });
+    await alert.present();
+  }
+
+  /**
+   * Copia el JSON de un borrador al portapapeles
+   * Equivalente a OnCopiarBorradorJson de Nesto
+   */
+  public async onCopiarBorradorJson(id: string): Promise<void> {
+    try {
+      const copiado = await this.borradorService.copiarBorradorJson(id);
+      if (copiado) {
+        const alert = await this.alertCtrl.create({
+          header: 'Copiado',
+          message: 'El JSON del borrador se ha copiado al portapapeles',
+          buttons: ['Ok']
+        });
+        await alert.present();
+        this.firebaseAnalytics.logEvent('borrador_json_copiado', { id });
+      }
+    } catch (error) {
+      console.error('Error copiando JSON:', error);
+    }
+  }
+
+  /**
+   * Elimina un borrador
+   * Equivalente a OnEliminarBorrador de Nesto
+   */
+  public async onEliminarBorrador(id: string): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar borrador',
+      message: '¿Está seguro de eliminar este borrador?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: async () => {
+            await this.borradorService.eliminarBorrador(id);
+            this.firebaseAnalytics.logEvent('borrador_eliminado', { id });
+            await this.onActualizarListaBorradores();
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  // FIN REGION: Borradores
 }
