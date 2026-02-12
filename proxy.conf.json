@@ -1,0 +1,10 @@
+{
+  "/prestashop-api": {
+    "target": "https://www.productosdeesteticaypeluqueriaprofesional.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/prestashop-api": ""
+    }
+  }
+}

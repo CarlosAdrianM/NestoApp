@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import { secrets } from '../../environments/secrets';
 
 const IMAGEN_POR_DEFECTO = 'https://www.productosdeesteticaypeluqueriaprofesional.com/img/p/es-default-home_default.jpg';
@@ -18,6 +19,15 @@ export class PrestashopService {
     this.baseUrl = secrets.prestashop.baseUrl;
   }
 
+  /**
+   * URL base para las llamadas API.
+   * En desarrollo (ionic serve) usa el proxy de Angular para evitar CORS.
+   * En producción (dispositivo Capacitor) llama directamente a Prestashop.
+   */
+  private get apiBaseUrl(): string {
+    return environment.production ? this.baseUrl : '/prestashop-api';
+  }
+
   public async obtenerUrlImagen(referencia: string): Promise<string> {
     if (this.imageCache.has(referencia)) {
       return this.imageCache.get(referencia);
@@ -32,7 +42,7 @@ export class PrestashopService {
         'Authorization': 'Basic ' + btoa(this.apiKey + ':')
       });
 
-      const url = `${this.baseUrl}/api/products?filter[reference]=${encodeURIComponent(referencia)}&display=full`;
+      const url = `${this.apiBaseUrl}/api/products?filter[reference]=${encodeURIComponent(referencia)}&display=full`;
       const response = await this.http.get(url, { headers, responseType: 'text' }).toPromise();
 
       const parser = new DOMParser();
@@ -40,6 +50,7 @@ export class PrestashopService {
 
       const products = doc.getElementsByTagName('product');
       if (products.length === 0) {
+        this.imageCache.set(referencia, IMAGEN_POR_DEFECTO);
         return IMAGEN_POR_DEFECTO;
       }
 
@@ -64,6 +75,7 @@ export class PrestashopService {
       const linkRewriteElements = product.getElementsByTagName('link_rewrite');
       const linkRewrite = linkRewriteElements.length > 0 ? linkRewriteElements[0].textContent : '';
 
+      // La URL de la imagen siempre apunta a Prestashop directamente (es pública, no necesita auth)
       const imageUrl = `${this.baseUrl}/${imageId}-small_default/${encodeURIComponent(linkRewrite)}.jpg`;
       this.imageCache.set(referencia, imageUrl);
 
