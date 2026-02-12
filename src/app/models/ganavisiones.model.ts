@@ -10,6 +10,7 @@ export interface ProductoBonificable {
   Ganavisiones: number;
   PVP: number;
   Iva: string;
+  UrlFoto?: string;
   Stocks: StockAlmacen[];
   StockTotal: number;
 }

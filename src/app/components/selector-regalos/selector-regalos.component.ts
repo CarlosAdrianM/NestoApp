@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NavController } from '@ionic/angular';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
+import { PrestashopService } from '../../services/prestashop.service';
 import { ProductoBonificable, ProductosBonificablesResponse } from '../../models/ganavisiones.model';
 
 export interface RegaloSeleccionado {
@@ -97,7 +99,11 @@ export class SelectorRegalosComponent {
   @Output() regalosInvalidados = new EventEmitter<string[]>(); // Emite nombres de productos eliminados
   @Output() productosCargados = new EventEmitter<number>(); // Emite el número de productos disponibles
 
-  constructor(private servicio: PlantillaVentaService) {}
+  constructor(
+    private servicio: PlantillaVentaService,
+    private nav: NavController,
+    private prestashopService: PrestashopService
+  ) {}
 
   get ganavisionesUsados(): number {
     let total = 0;
@@ -146,6 +152,9 @@ export class SelectorRegalosComponent {
 
         // Notificar al padre cuántos productos hay disponibles
         this.productosCargados.emit(response.Productos.length);
+
+        // Cargar imágenes desde Prestashop (en paralelo, sin bloquear)
+        this.cargarImagenesProductos();
 
         // Limpiar selecciones de productos que ya no están disponibles
         this.limpiarSeleccionesInvalidas();
@@ -240,5 +249,21 @@ export class SelectorRegalosComponent {
   public limpiarSeleccion(): void {
     this.cantidadesSeleccionadas.clear();
     this.emitirCambios();
+  }
+
+  private cargarImagenesProductos(): void {
+    for (const producto of this.productosBonificables) {
+      if (!producto.UrlFoto) {
+        this.prestashopService.obtenerUrlImagen(producto.ProductoId).then(url => {
+          producto.UrlFoto = url;
+        });
+      }
+    }
+  }
+
+  public abrirProducto(productoId: string): void {
+    this.nav.navigateForward('producto', {
+      queryParams: { empresa: '1', producto: productoId }
+    });
   }
 }

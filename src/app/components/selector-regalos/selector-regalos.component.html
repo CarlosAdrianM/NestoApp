@@ -44,8 +44,13 @@
   <!-- Lista de productos bonificables -->
   <ion-list *ngIf="!cargando && productosFiltrados.length > 0">
     <ion-item *ngFor="let producto of productosFiltrados" class="producto-item">
+      <ion-thumbnail slot="start" class="producto-foto">
+        <ion-img *ngIf="producto.UrlFoto" [src]="producto.UrlFoto" ionImgViewer></ion-img>
+        <ion-icon *ngIf="!producto.UrlFoto" name="image-outline" class="placeholder-icon"></ion-icon>
+      </ion-thumbnail>
+
       <ion-label class="ion-text-wrap">
-        <h2>{{ producto.ProductoNombre }}</h2>
+        <h2 class="producto-nombre" (click)="abrirProducto(producto.ProductoId)">{{ producto.ProductoNombre }}</h2>
         <p>
           <ion-text color="primary">{{ producto.Ganavisiones }} pts</ion-text>
           <ion-text color="medium"> | PVP: {{ producto.PVP | currency:'EUR' }}</ion-text>

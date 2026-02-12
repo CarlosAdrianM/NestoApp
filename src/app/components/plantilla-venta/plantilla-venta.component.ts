@@ -1241,7 +1241,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       precio: r.producto.PVP,
       ganavisiones: r.producto.Ganavisiones,
       iva: r.producto.Iva || '',
-      cantidad: r.cantidad
+      cantidad: r.cantidad,
+      urlImagen: r.producto.UrlFoto
     }));
   }
 
@@ -1502,6 +1503,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
         Ganavisiones: lr.ganavisiones,
         PVP: lr.precio,
         Iva: lr.iva,
+        UrlFoto: lr.urlImagen,
         Stocks: [],
         StockTotal: 0
       },

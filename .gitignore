@@ -29,3 +29,6 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+
+# Secretos locales
+src/environments/secrets.ts

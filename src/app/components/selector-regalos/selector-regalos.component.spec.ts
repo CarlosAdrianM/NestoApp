@@ -1,16 +1,19 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, NavController } from '@ionic/angular';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { SelectorRegalosComponent, RegaloSeleccionado } from './selector-regalos.component';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
+import { PrestashopService } from '../../services/prestashop.service';
 import { ProductoBonificable, ProductosBonificablesResponse } from '../../models/ganavisiones.model';
 
 describe('SelectorRegalosComponent', () => {
   let component: SelectorRegalosComponent;
   let fixture: ComponentFixture<SelectorRegalosComponent>;
   let mockService: jasmine.SpyObj<PlantillaVentaService>;
+  let mockNav: jasmine.SpyObj<NavController>;
+  let mockPrestashop: jasmine.SpyObj<PrestashopService>;
 
   const mockProductos: ProductoBonificable[] = [
     {
@@ -51,12 +54,17 @@ describe('SelectorRegalosComponent', () => {
   beforeEach(async () => {
     mockService = jasmine.createSpyObj('PlantillaVentaService', ['cargarProductosBonificables']);
     mockService.cargarProductosBonificables.and.returnValue(of(mockResponse));
+    mockNav = jasmine.createSpyObj('NavController', ['navigateForward']);
+    mockPrestashop = jasmine.createSpyObj('PrestashopService', ['obtenerUrlImagen']);
+    mockPrestashop.obtenerUrlImagen.and.returnValue(Promise.resolve('https://example.com/img.jpg'));
 
     await TestBed.configureTestingModule({
       declarations: [SelectorRegalosComponent],
       imports: [IonicModule.forRoot(), HttpClientTestingModule],
       providers: [
-        { provide: PlantillaVentaService, useValue: mockService }
+        { provide: PlantillaVentaService, useValue: mockService },
+        { provide: NavController, useValue: mockNav },
+        { provide: PrestashopService, useValue: mockPrestashop }
       ]
     }).compileComponents();
 
