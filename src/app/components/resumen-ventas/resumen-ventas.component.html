@@ -8,9 +8,9 @@
         Últimos 12 meses
       </ion-button>
     </div>
-  
+
     <!-- Botones de agrupación -->
-    <div class="botonera">
+    <div class="botonera" *ngIf="!esVistaDetalle">
       <ion-button fill="outline" [color]="agruparPor === 'grupo' ? 'primary' : 'medium'" (click)="cambiarAgrupacion('grupo')">
         Grupo
       </ion-button>
@@ -21,12 +21,31 @@
         Subgrupo
       </ion-button>
     </div>
-  
+
+    <!-- Toggle euros/unidades -->
+    <ion-segment [(ngModel)]="modoVisualizacion" class="toggle-visualizacion">
+      <ion-segment-button value="euros">
+        <ion-label>Euros</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="unidades">
+        <ion-label>Unidades</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
     <!-- Cargando -->
     <ion-spinner *ngIf="cargando" name="crescent"></ion-spinner>
-  
-    <!-- Tabla -->
-    <ion-grid *ngIf="!cargando && ventas.length" class="tabla-resumen">
+
+    <!-- Cabecera drill-down -->
+    <div *ngIf="esVistaDetalle && !cargando" class="cabecera-detalle">
+      <ion-button fill="clear" size="small" (click)="volverAVistaAgrupada()">
+        <ion-icon name="arrow-back" slot="start"></ion-icon>
+        Volver
+      </ion-button>
+      <span class="nombre-filtro">{{ nombreFiltroActual }}</span>
+    </div>
+
+    <!-- Vista resumen (agrupada) -->
+    <ion-grid *ngIf="!cargando && !esVistaDetalle && ventas.length" class="tabla-resumen">
       <!-- Encabezado -->
       <ion-row class="encabezado">
         <ion-col size="3.5" class="col-nombre"><strong>Nombre</strong></ion-col>
@@ -35,29 +54,35 @@
         <ion-col size="2.5" class="text-right"><strong>Diferencia</strong></ion-col>
         <ion-col size="2" class="text-right"><strong>Ratio</strong></ion-col>
       </ion-row>
-  
+
       <!-- Filas de datos -->
-      <ion-row *ngFor="let venta of ventas; let i = index" 
+      <ion-row *ngFor="let venta of ventas"
                [class.fila-total]="venta.nombre === 'TOTAL'"
-               [class.fila-datos]="venta.nombre !== 'TOTAL'">
+               [class.fila-datos]="venta.nombre !== 'TOTAL'"
+               [class.fila-clickable]="venta.nombre !== 'TOTAL'"
+               (click)="desglosarProductos(venta)">
         <ion-col size="3.5" class="col-nombre">
           <span [class.texto-total]="venta.nombre === 'TOTAL'">{{ venta.nombre }}</span>
+          <ion-icon *ngIf="venta.nombre !== 'TOTAL'" name="chevron-forward" class="icono-drill"></ion-icon>
         </ion-col>
         <ion-col size="2" class="text-right">
           <span [class.texto-total]="venta.nombre === 'TOTAL'">
-            {{ venta.ventaAnnoActual | currency:'EUR':'symbol':'1.0-0' }}
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ venta.ventaAnnoActual | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ venta.unidadesAnnoActual | number:'1.0-0' }}</ng-container>
           </span>
         </ion-col>
         <ion-col size="2" class="text-right">
           <span [class.texto-total]="venta.nombre === 'TOTAL'">
-            {{ venta.ventaAnnoAnterior | currency:'EUR':'symbol':'1.0-0' }}
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ venta.ventaAnnoAnterior | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ venta.unidadesAnnoAnterior | number:'1.0-0' }}</ng-container>
           </span>
         </ion-col>
         <ion-col size="2.5" class="text-right">
           <span [class.texto-total]="venta.nombre === 'TOTAL'"
                 [class.diferencia-positiva]="venta.diferencia > 0 && venta.nombre !== 'TOTAL'"
                 [class.diferencia-negativa]="venta.diferencia < 0 && venta.nombre !== 'TOTAL'">
-            {{ venta.diferencia | currency:'EUR':'symbol':'1.0-0' }}
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ venta.diferencia | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ (venta.unidadesAnnoActual - venta.unidadesAnnoAnterior) | number:'1.0-0' }}</ng-container>
           </span>
         </ion-col>
         <ion-col size="2" class="text-right">
@@ -69,9 +94,64 @@
         </ion-col>
       </ion-row>
     </ion-grid>
-  
+
+    <!-- Vista detalle (por producto) -->
+    <ion-grid *ngIf="!cargando && esVistaDetalle && detalleProductos.length" class="tabla-resumen">
+      <!-- Encabezado -->
+      <ion-row class="encabezado">
+        <ion-col size="3.5" class="col-nombre"><strong>Producto</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Año Actual</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Año Anterior</strong></ion-col>
+        <ion-col size="2.5" class="text-right"><strong>Diferencia</strong></ion-col>
+        <ion-col size="2" class="text-right"><strong>Ratio</strong></ion-col>
+      </ion-row>
+
+      <!-- Filas de detalle -->
+      <ion-row *ngFor="let producto of detalleProductos"
+               [class.fila-total]="producto.nombre === 'TOTAL'"
+               [class.fila-datos]="producto.nombre !== 'TOTAL'"
+               [class.fila-clickable]="producto.nombre !== 'TOTAL'"
+               (click)="abrirProducto(producto)">
+        <ion-col size="3.5" class="col-nombre">
+          <span [class.texto-total]="producto.nombre === 'TOTAL'"
+                [class.nombre-producto]="producto.nombre !== 'TOTAL'">{{ producto.nombre }}</span>
+          <ion-icon *ngIf="producto.nombre !== 'TOTAL'" name="chevron-forward" class="icono-drill"></ion-icon>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="producto.nombre === 'TOTAL'">
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ producto.ventaAnnoActual | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ producto.unidadesAnnoActual | number:'1.0-0' }}</ng-container>
+          </span>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="producto.nombre === 'TOTAL'">
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ producto.ventaAnnoAnterior | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ producto.unidadesAnnoAnterior | number:'1.0-0' }}</ng-container>
+          </span>
+        </ion-col>
+        <ion-col size="2.5" class="text-right">
+          <span [class.texto-total]="producto.nombre === 'TOTAL'"
+                [class.diferencia-positiva]="producto.diferencia > 0 && producto.nombre !== 'TOTAL'"
+                [class.diferencia-negativa]="producto.diferencia < 0 && producto.nombre !== 'TOTAL'">
+            <ng-container *ngIf="modoVisualizacion === 'euros'">{{ producto.diferencia | currency:'EUR':'symbol':'1.0-0' }}</ng-container>
+            <ng-container *ngIf="modoVisualizacion === 'unidades'">{{ producto.diferenciaUnidades | number:'1.0-0' }}</ng-container>
+          </span>
+        </ion-col>
+        <ion-col size="2" class="text-right">
+          <span [class.texto-total]="producto.nombre === 'TOTAL'"
+                [class.ratio-positivo]="producto.ratio > 0 && producto.nombre !== 'TOTAL'"
+                [class.ratio-negativo]="producto.ratio < 0 && producto.nombre !== 'TOTAL'">
+            {{ producto.ratio | percent:'1.0-1' }}
+          </span>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
     <!-- Sin datos -->
-    <ion-text color="medium" *ngIf="!cargando && ventas.length === 0">
+    <ion-text color="medium" *ngIf="!cargando && !esVistaDetalle && ventas.length === 0">
       No hay datos para mostrar.
+    </ion-text>
+    <ion-text color="medium" *ngIf="!cargando && esVistaDetalle && detalleProductos.length === 0">
+      No hay productos en este grupo.
     </ion-text>
   </div>

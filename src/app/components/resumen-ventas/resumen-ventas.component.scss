@@ -3,10 +3,26 @@
 .resumen-ventas {
   .botonera {
     margin-bottom: 15px;
-    
+
     ion-button {
       margin-right: 8px;
       font-size: 0.9rem;
+    }
+  }
+
+  .toggle-visualizacion {
+    margin-bottom: 12px;
+  }
+
+  .cabecera-detalle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .nombre-filtro {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 4px;
     }
   }
 
@@ -16,11 +32,11 @@
     border: 1px solid var(--ion-color-light-shade);
 
     font-size: 0.85rem; /* Texto más pequeño para que quepan las columnas */
-    padding: 0;      
+    padding: 0;
 
     ion-row {
       border-bottom: 1px solid var(--ion-color-light-shade);
-      
+
       &.encabezado {
         position: sticky;
         top: 0;
@@ -29,13 +45,17 @@
         font-weight: bold;
         border-bottom: 2px solid var(--ion-color-medium);
       }
-      
+
       &.fila-datos {
         &:hover {
           background-color: var(--ion-color-light-tint);
         }
       }
-      
+
+      &.fila-clickable {
+        cursor: pointer;
+      }
+
       &.fila-total {
         background-color: var(--ion-color-primary-tint);
         border-top: 2px solid var(--ion-color-primary);
@@ -43,14 +63,14 @@
         font-weight: bold;
       }
     }
-    
+
     ion-col {
       padding: 8px 6px;
-      
+
       &.col-nombre {
         font-weight: 500;
       }
-      
+
       &.text-right {
         text-align: right;
       }
@@ -60,6 +80,18 @@
   .texto-total {
     font-weight: bold;
     color: var(--ion-color-primary-contrast);
+  }
+
+  .nombre-producto {
+    color: var(--ion-color-primary);
+    text-decoration: underline;
+  }
+
+  .icono-drill {
+    font-size: 0.7rem;
+    color: var(--ion-color-medium);
+    margin-left: 2px;
+    vertical-align: middle;
   }
 
   .diferencia-positiva {
@@ -87,7 +119,7 @@
 @media (max-width: 576px) {
   .resumen-ventas .tabla-resumen {
     font-size: 0.75rem;
-    
+
     ion-col {
       padding: 6px 4px;
     }
@@ -97,7 +129,7 @@
 @media (max-width: 480px) {
   .resumen-ventas .tabla-resumen {
     font-size: 0.7rem;
-    
+
     ion-col {
       padding: 4px 2px;
     }
