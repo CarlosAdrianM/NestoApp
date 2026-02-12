@@ -18,6 +18,7 @@ describe('SelectorRegalosComponent', () => {
       ProductoNombre: 'Producto Regalo 1',
       Ganavisiones: 2,
       PVP: 10,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 5
     },
@@ -26,6 +27,7 @@ describe('SelectorRegalosComponent', () => {
       ProductoNombre: 'Producto Regalo 2',
       Ganavisiones: 3,
       PVP: 15,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 10
     },
@@ -34,6 +36,7 @@ describe('SelectorRegalosComponent', () => {
       ProductoNombre: 'Producto Regalo 3',
       Ganavisiones: 1,
       PVP: 5,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 0 // Sin stock
     }

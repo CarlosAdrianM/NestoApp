@@ -735,7 +735,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
               'vistoBueno': 0,
               'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
               'almacen': this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen,
-              'iva': this.direccionSeleccionada.iva,
+              'iva': regalo.producto.Iva,
               'delegacion': this.usuario.delegacion,
               'formaVenta': this.usuario.formaVenta,
               'oferta': null,
@@ -1240,7 +1240,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       texto: r.producto.ProductoNombre,
       precio: r.producto.PVP,
       ganavisiones: r.producto.Ganavisiones,
-      iva: this.direccionSeleccionada?.iva || '',
+      iva: r.producto.Iva || '',
       cantidad: r.cantidad
     }));
   }
@@ -1501,6 +1501,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
         ProductoNombre: lr.texto,
         Ganavisiones: lr.ganavisiones,
         PVP: lr.precio,
+        Iva: lr.iva,
         Stocks: [],
         StockTotal: 0
       },

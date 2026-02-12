@@ -112,6 +112,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       ProductoNombre: 'Producto 1',
       Ganavisiones: 2,
       PVP: 10,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 10
     };
@@ -121,6 +122,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       ProductoNombre: 'Producto 2',
       Ganavisiones: 3,
       PVP: 15,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 5
     };
@@ -154,6 +156,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       ProductoNombre: 'Producto 1',
       Ganavisiones: 2,
       PVP: 10,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 10
     };
@@ -196,6 +199,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       ProductoNombre: 'Producto 1',
       Ganavisiones: 5,
       PVP: 10,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 10
     };
@@ -321,6 +325,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       ProductoNombre: 'Champú Regalo Premium',
       Ganavisiones: 2,
       PVP: 15.50,
+      Iva: 'G21',
       Stocks: [],
       StockTotal: 10
     };

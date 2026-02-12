@@ -9,6 +9,7 @@ export interface ProductoBonificable {
   ProductoNombre: string;
   Ganavisiones: number;
   PVP: number;
+  Iva: string;
   Stocks: StockAlmacen[];
   StockTotal: number;
 }
