@@ -3,7 +3,11 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  prestashop: {
+    apiKey: 'BJRVA3CATAYNKXMZJZR2UBREJ8MJZCHP',
+    baseUrl: 'https://www.productosdeesteticaypeluqueriaprofesional.com',
+  }
 };
 
 /*

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { secrets } from '../../environments/secrets';
 
 const IMAGEN_POR_DEFECTO = 'https://www.productosdeesteticaypeluqueriaprofesional.com/img/p/es-default-home_default.jpg';
 
@@ -15,8 +14,8 @@ export class PrestashopService {
   private readonly baseUrl: string;
 
   constructor(private http: HttpClient) {
-    this.apiKey = secrets.prestashop.apiKey;
-    this.baseUrl = secrets.prestashop.baseUrl;
+    this.apiKey = environment.prestashop.apiKey;
+    this.baseUrl = environment.prestashop.baseUrl;
   }
 
   /**
