@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
@@ -55,7 +55,7 @@ describe('ComisionesComponent', () => {
     TotalTipoAcumulado: 0.0535
   };
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     const serviceSpyObj = jasmine.createSpyObj('ComisionesService', ['cargarResumen']);
     const usuarioSpyObj = jasmine.createSpyObj('Usuario', [], { vendedor: 'TEST' });
     const firebaseSpyObj = jasmine.createSpyObj('FirebaseAnalytics', ['logEvent']);

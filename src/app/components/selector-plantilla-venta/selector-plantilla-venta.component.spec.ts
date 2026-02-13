@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
@@ -14,7 +14,7 @@ describe('SelectorPlantillaVentaComponent', () => {
   let component: SelectorPlantillaVentaComponent;
   let fixture: ComponentFixture<SelectorPlantillaVentaComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ SelectorPlantillaVentaComponent ],
       imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
