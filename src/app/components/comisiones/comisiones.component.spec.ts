@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
+import { RouterTestingModule } from '@angular/router/testing';
 import { ComisionesComponent } from './comisiones.component';
 import { ComisionesService } from './comisiones.service';
 import { Usuario } from 'src/app/models/Usuario';
@@ -59,12 +62,13 @@ describe('ComisionesComponent', () => {
 
     TestBed.configureTestingModule({
       declarations: [ ComisionesComponent ],
-      imports: [ IonicModule.forRoot() ],
+      imports: [ IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule ],
       providers: [
         { provide: ComisionesService, useValue: serviceSpyObj },
         { provide: Usuario, useValue: usuarioSpyObj },
         { provide: FirebaseAnalytics, useValue: firebaseSpyObj }
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
 
     serviceSpy = TestBed.inject(ComisionesService) as jasmine.SpyObj<ComisionesService>;
@@ -83,22 +87,22 @@ describe('ComisionesComponent', () => {
     expect(component.vendedorSeleccionado).toBe('TEST');
   });
 
-  it('should load summary successfully', async(async () => {
+  it('should load summary successfully', async () => {
     serviceSpy.cargarResumen.and.returnValue(of(mockResumen));
-    
+
     component.vendedorSeleccionado = 'TEST';
     await component.cargarResumen();
-    
+
     expect(serviceSpy.cargarResumen).toHaveBeenCalledWith(
-      'TEST', 
-      jasmine.any(Number), 
-      jasmine.any(Number), 
-      true, 
+      'TEST',
+      jasmine.any(Number),
+      jasmine.any(Number),
+      true,
       false
     );
     expect(component.resumen).toEqual(mockResumen);
     expect(firebaseAnalyticsSpy.logEvent).toHaveBeenCalled();
-  }));
+  });
 
   it('should not load summary if no vendor selected', async () => {
     component.vendedorSeleccionado = '';
@@ -107,15 +111,15 @@ describe('ComisionesComponent', () => {
     expect(serviceSpy.cargarResumen).not.toHaveBeenCalled();
   });
 
-  it('should handle error when loading summary', async(async () => {
+  it('should handle error when loading summary', async () => {
     serviceSpy.cargarResumen.and.returnValue(throwError({ error: 'Error de prueba' }));
-    
+
     component.vendedorSeleccionado = 'TEST';
     await component.cargarResumen();
-    
+
     expect(serviceSpy.cargarResumen).toHaveBeenCalled();
     // El componente debería mostrar un alert de error
-  }));
+  });
 
   it('should return correct color for range', () => {
     expect(component.colorRango(true)).toBe('danger');

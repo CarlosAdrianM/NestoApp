@@ -1,5 +1,8 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { UltimasVentasProductoClienteComponent } from './ultimas-ventas-producto-cliente.component';
 
@@ -10,12 +13,12 @@ describe('UltimasVentasProductoClienteComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ UltimasVentasProductoClienteComponent ],
-      imports: [IonicModule.forRoot()]
+      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
 
     fixture = TestBed.createComponent(UltimasVentasProductoClienteComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   }));
 
   it('should create', () => {

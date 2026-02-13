@@ -1,5 +1,9 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
+import { RouterTestingModule } from '@angular/router/testing';
+import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
 import { ComisionesDetalleComponent } from './comisiones-detalle.component';
 
@@ -10,12 +14,15 @@ describe('ComisionesDetalleComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ ComisionesDetalleComponent ],
-      imports: [IonicModule.forRoot()]
+      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
+      providers: [
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ComisionesDetalleComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   }));
 
   it('should create', () => {

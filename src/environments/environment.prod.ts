@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   prestashop: {
-    apiKey: 'BJRVA3CATAYNKXMZJZR2UBREJ8MJZCHP',
+    apiKey: 'ZPP7I8GS59A8WGI4LG6NIYRCAC41S8VA',
     baseUrl: 'https://www.productosdeesteticaypeluqueriaprofesional.com',
   }
 };
