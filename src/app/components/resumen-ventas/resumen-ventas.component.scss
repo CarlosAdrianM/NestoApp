@@ -27,8 +27,6 @@
   }
 
   .tabla-resumen {
-    max-height: calc(100vh - 355px);
-    overflow-y: auto;
     border: 1px solid var(--ion-color-light-shade);
 
     font-size: 0.85rem; /* Texto más pequeño para que quepan las columnas */

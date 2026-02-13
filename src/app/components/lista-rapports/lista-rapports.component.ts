@@ -1,11 +1,12 @@
 import { Component, ViewChild } from '@angular/core';
 import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
-import { NavController, AlertController, LoadingController, ToastController, AlertInput } from '@ionic/angular';
+import { NavController, AlertController, LoadingController, ToastController, ModalController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaRapportsService } from './lista-rapports.service';
+import { ModalResumenVentasComponent } from '../resumen-ventas/modal-resumen-ventas.component';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 
@@ -91,11 +92,12 @@ export class ListaRapportsComponent extends SelectorBase {
 
   generandoResumen = false;
 
-  constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController, 
+  constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController,
           loadingCtrl: LoadingController, public usuario: Usuario,
           private geolocation: Geolocation, private nativeGeocoder: NativeGeocoder,
           public events: Events,
-          private firebaseAnalytics: FirebaseAnalytics, private toastController: ToastController) {
+          private firebaseAnalytics: FirebaseAnalytics, private toastController: ToastController,
+          private modalCtrl: ModalController) {
       super();
       this.servicio = servicio;
       this.nav = nav;
@@ -137,7 +139,6 @@ export class ListaRapportsComponent extends SelectorBase {
           return;
       }
       this.clienteRapport = this.numeroCliente;
-      this.mostrarResumen = false;
   }
 
   seleccionarCliente(cliente: string) {
@@ -530,11 +531,17 @@ export class ListaRapportsComponent extends SelectorBase {
       });
   }
   
-  public mostrarResumen: boolean = false;
-
-    mostrarResumenVentas(): void {
-        this.mostrarResumen = !this.mostrarResumen;
-    }
+  async mostrarResumenVentas(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: ModalResumenVentasComponent,
+      componentProps: {
+        cliente: this.numeroCliente,
+        contacto: this.contactoSeleccionado
+      }
+    });
+    this.firebaseAnalytics.logEvent("abrir_resumen_ventas_modal", {cliente: this.numeroCliente, contacto: this.contactoSeleccionado});
+    await modal.present();
+  }
 
   public verRapportsDeCliente(cliente: string, contacto: string): void {
   // Guardamos el estado actual

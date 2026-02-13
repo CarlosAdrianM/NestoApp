@@ -84,19 +84,14 @@
           {{ generandoResumen ? 'Generando resumen...' : 'Resumir los Rapports' }}
         </ion-button>
 
-        <ion-button 
-          expand="full" 
-          color="secondary" 
-          (click)="mostrarResumenVentas()" 
+        <ion-button
+          expand="full"
+          color="secondary"
+          (click)="mostrarResumenVentas()"
           [disabled]="!numeroCliente || !contactoSeleccionado">
           <ion-icon name="stats-chart" slot="start"></ion-icon>
           Ver resumen venta
         </ion-button>
-        <app-resumen-ventas 
-          *ngIf="mostrarResumen"
-          [cliente]="numeroCliente" 
-          [contacto]="contactoSeleccionado">
-        </app-resumen-ventas>
         
         <button block [hidden]="true">
           <ion-icon name="add"></ion-icon>Cargar
