@@ -130,14 +130,14 @@ export class ExtractoClienteComponent {
           this.clienteSeleccionado.cliente,
           this.annoModelo347
       ).then(
-          async entry => {
+          async (rutaArchivo: string) => {
               this.firebaseAnalytics.logEvent("descargar_modelo_347", {
                   empresa: this.clienteSeleccionado.empresa,
                   cliente: this.clienteSeleccionado.cliente,
                   anno: this.annoModelo347
               });
               await loading.dismiss();
-              this.fileOpener.open(entry.toURL(), 'application/pdf');
+              this.fileOpener.open(rutaArchivo, 'application/pdf');
           },
           async error => {
               await loading.dismiss();
@@ -181,16 +181,10 @@ export class ExtractoClienteComponent {
       loading.present();
 
       this.servicio.descargarFactura(movimiento.empresa, movimiento.documento).then(
-          async entry => {
+          async (rutaArchivo: string) => {
               this.firebaseAnalytics.logEvent("descargar_factura", {empresa: movimiento.empresa, factura: movimiento.documento});
-              let alert = await this.alertCtrl.create({
-                  message: 'PDF generado',
-                  subHeader: "Factura descargada: \n"+entry.toURL(),
-                  buttons: ['Ok'],
-              });
-              await alert.present();
               await loading.dismiss();
-              this.fileOpener.open(entry.toURL(), 'application/pdf');
+              this.fileOpener.open(rutaArchivo, 'application/pdf');
           },
           async error => {
               await loading.dismiss();

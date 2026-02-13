@@ -1,6 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { FileTransferObject, FileTransfer } from '@ionic-native/file-transfer/ngx';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -14,9 +13,8 @@ export class ListaPedidosVentaService {
   static ngInjectableDef = undefined;
 
   constructor(
-      private http: HttpClient, 
-      usuario: Usuario, 
-      private transfer: FileTransfer, 
+      private http: HttpClient,
+      usuario: Usuario,
       private file: File
   ) {
       this.usuario = usuario;
@@ -38,9 +36,11 @@ export class ListaPedidosVentaService {
       return this.http.get(this._baseUrl, { params });
   }
 
-  public descargarPedido(empresa: string, pedido: number): Promise<any> {
-      const filetransfer: FileTransferObject = this.transfer.create();
-      const url = Configuracion.API_URL + "/Facturas?empresa="+empresa.trim()+"&numeroFactura="+pedido.toString().trim();
-      return filetransfer.download(url, this.file.externalDataDirectory + pedido.toString().trim() + '.pdf');
+  public async descargarPedido(empresa: string, pedido: number): Promise<string> {
+      const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + pedido.toString().trim();
+      const nombreArchivo = pedido.toString().trim() + '.pdf';
+      const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
+      await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
+      return this.file.externalDataDirectory + nombreArchivo;
    }
 }

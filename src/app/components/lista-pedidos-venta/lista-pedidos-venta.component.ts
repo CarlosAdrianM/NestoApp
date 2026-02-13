@@ -182,16 +182,10 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         await loading.present();
 
         this.servicio.descargarPedido(pedido.empresa, pedido.numero).then(
-            async entry => {
+            async (rutaArchivo: string) => {
                 this.firebaseAnalytics.logEvent("descargar_pedido", {empresa: pedido.empresa, pedido: pedido.numero});
-                let alert = await this.alertCtrl.create({
-                    header: 'PDF generado',
-                    message: "Pedido descargado: \n"+entry.toURL(),
-                    buttons: ['Ok'],
-                });
-                await alert.present();
                 await loading.dismiss();
-                this.fileOpener.open(entry.toURL(), 'application/pdf');
+                this.fileOpener.open(rutaArchivo, 'application/pdf');
             },
             async error => {
                 await loading.dismiss();

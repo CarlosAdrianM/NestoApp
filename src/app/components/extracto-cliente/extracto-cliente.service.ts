@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { FileTransfer, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 import { File } from '@ionic-native/file/ngx';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { AuthService } from 'src/app/services/auth/auth.service';
@@ -14,7 +13,6 @@ import { AuthService } from 'src/app/services/auth/auth.service';
 export class ExtractoClienteService {
   constructor(
     private http: HttpClient,
-    private transfer: FileTransfer,
     private file: File,
     private usuario: Usuario,
     private authService: AuthService
@@ -55,10 +53,12 @@ export class ExtractoClienteService {
     return this.http.get(Configuracion.API_URL + '/PedidosVenta', { params });
   }
 
-  public descargarFactura(empresa: string, numeroFactura: string): Promise<any> {
-    const filetransfer: FileTransferObject = this.transfer.create();
+  public async descargarFactura(empresa: string, numeroFactura: string): Promise<string> {
     const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + numeroFactura.trim();
-    return filetransfer.download(url, this.file.externalDataDirectory + numeroFactura.trim() + '.pdf');
+    const nombreArchivo = numeroFactura.trim() + '.pdf';
+    const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
+    await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
+    return this.file.externalDataDirectory + nombreArchivo;
   }
 
   public leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
@@ -88,23 +88,17 @@ export class ExtractoClienteService {
     return this.http.post<ReclamacionDeuda>(url, JSON.stringify(parametro), { headers: headers });
   }
 
-  public async descargarModelo347(empresa: string, cliente: string, anno?: number): Promise<any> {
+  public async descargarModelo347(empresa: string, cliente: string, anno?: number): Promise<string> {
     const ejercicio = anno || new Date().getFullYear() - 1;
     const url = Configuracion.API_URL + "/ExtractosCliente/Modelo347Pdf" +
       "?empresa=" + empresa.trim() +
       "&cliente=" + cliente.trim() +
       "&anno=" + ejercicio.toString();
-
-    // Obtener token válido (refresca automáticamente si está expirado)
-    const token = await this.authService.getValidToken();
-    const filetransfer: FileTransferObject = this.transfer.create();
     const nombreArchivo = `Modelo347_${cliente.trim()}_${ejercicio}.pdf`;
-
-    return filetransfer.download(
-      url,
-      this.file.externalDataDirectory + nombreArchivo,
-      true,
-      { headers: { 'Authorization': `Bearer ${token}` } }
-    );
+    // Refrescar token proactivamente antes de la petición
+    await this.authService.getValidToken();
+    const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
+    await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
+    return this.file.externalDataDirectory + nombreArchivo;
   }
 }
