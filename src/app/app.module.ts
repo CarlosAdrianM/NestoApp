@@ -52,6 +52,7 @@ import { SelectorPlantillaVentaDetalleComponent } from './components/selector-pl
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
 import { ModalListaBorradoresComponent } from './components/plantilla-venta/modal-lista-borradores.component';
 import { SelectorRegalosComponent } from './components/selector-regalos/selector-regalos.component';
+import { ModalResumenVentasComponent } from './components/resumen-ventas/modal-resumen-ventas.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "ionic-cache";
@@ -66,6 +67,7 @@ import { MsalModule,
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
 import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
+import { HTTP } from '@ionic-native/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 
 
@@ -123,9 +125,10 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     UltimasVentasProductoClienteComponent,
     AlertsComponent,
     ResumenVentasComponent,
-    SelectorRegalosComponent
+    SelectorRegalosComponent,
+    ModalResumenVentasComponent
   ],
-  entryComponents: [],
+  entryComponents: [ModalResumenVentasComponent],
   imports: [
     BrowserModule, 
     IonicModule.forRoot(), 
@@ -161,6 +164,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
     },
     MsalService,
     InAppBrowser,
+    HTTP,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
