@@ -55,6 +55,7 @@
   </style>
 
   <ion-button expand="block" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="soloConStock()">Solo con stock</ion-button>
+  <ion-button expand="block" color="medium" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="ordenarPorNombre()">Ordenar por nombre</ion-button>
   <div id="myFixZone" scrollY="true">
     <ion-list>
       <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="producto.estado == 0 ? '' : 'light'">

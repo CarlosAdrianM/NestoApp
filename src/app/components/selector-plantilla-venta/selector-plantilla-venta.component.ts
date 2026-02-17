@@ -248,6 +248,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
     });
   }
 
+  public ordenarPorNombre() {
+    this.datosFiltrados = [...this.datosFiltrados].sort((a, b) =>
+      (a.texto || '').localeCompare(b.texto || '', 'es')
+    );
+  }
+
   operador: 'OR' | 'AND' = 'OR';
   mostrarOpciones = false;
 
