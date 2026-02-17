@@ -101,7 +101,12 @@
     <div *ngSwitchCase="'fecha'">
       <ion-item>
         <ion-label>Fecha Rapport</ion-label>
-        <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaRapports" display-timezone="utc" (ionChange)="cargarDatosFecha(fechaRapports)" doneText="Seleccionar" cancelText="Cancelar"></ion-datetime>
+        <ion-datetime-button datetime="fechaRapport"></ion-datetime-button>
+        <ion-modal [keepContentsMounted]="true">
+            <ng-template>
+                <ion-datetime id="fechaRapport" presentation="date" [(ngModel)]="fechaRapports" (ionChange)="cargarDatosFecha(fechaRapports)" [cancelText]="'Cancelar'" [doneText]="'Seleccionar'" [locale]="'es-ES'"></ion-datetime>
+            </ng-template>
+        </ion-modal>
       </ion-item>
     </div>
     <div *ngSwitchCase="'codigoPostal'">

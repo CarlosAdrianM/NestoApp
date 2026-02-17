@@ -89,7 +89,12 @@
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
                     <ion-label>Fecha de Entrega:</ion-label>
-                    <ion-datetime displayFormat="DD/MM/YYYY" [min]="fechaMinima" [(ngModel)]="fechaEntrega" cancelText="Cancelar" doneText="Seleccionar"></ion-datetime>
+                    <ion-datetime-button datetime="fechaEntregaPlantilla"></ion-datetime-button>
+                    <ion-modal [keepContentsMounted]="true">
+                        <ng-template>
+                            <ion-datetime id="fechaEntregaPlantilla" presentation="date" [min]="fechaMinima" [(ngModel)]="fechaEntrega" [cancelText]="'Cancelar'" [doneText]="'Seleccionar'" [locale]="'es-ES'"></ion-datetime>
+                        </ng-template>
+                    </ion-modal>
                 </ion-item>
                 <ion-item>
                     <ion-label>Servir Junto</ion-label>

@@ -36,17 +36,32 @@
               <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
               <ion-item>
                   <ion-label>Fecha Pedido</ion-label>
-                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.fecha"></ion-datetime>
+                  <ion-datetime-button datetime="fechaPedido"></ion-datetime-button>
+                  <ion-modal [keepContentsMounted]="true">
+                      <ng-template>
+                          <ion-datetime id="fechaPedido" presentation="date" [(ngModel)]="pedido.fecha" [locale]="'es-ES'"></ion-datetime>
+                      </ng-template>
+                  </ion-modal>
               </ion-item>
               <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
               <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="seleccionarPlazosPago($event)"></selector-plazos-pago>
               <ion-item>
                   <ion-label>Fecha Vencimiento</ion-label>
-                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="pedido.primerVencimiento"></ion-datetime>
+                  <ion-datetime-button datetime="fechaVencimiento"></ion-datetime-button>
+                  <ion-modal [keepContentsMounted]="true">
+                      <ng-template>
+                          <ion-datetime id="fechaVencimiento" presentation="date" [(ngModel)]="pedido.primerVencimiento" [locale]="'es-ES'"></ion-datetime>
+                      </ng-template>
+                  </ion-modal>
               </ion-item>
               <ion-item>
                   <ion-label>Fecha Entrega</ion-label>
-                  <ion-datetime displayFormat="DD/MM/YYYY" [(ngModel)]="fechaEntrega"></ion-datetime>
+                  <ion-datetime-button datetime="fechaEntregaPedido"></ion-datetime-button>
+                  <ion-modal [keepContentsMounted]="true">
+                      <ng-template>
+                          <ion-datetime id="fechaEntregaPedido" presentation="date" [(ngModel)]="fechaEntrega" [locale]="'es-ES'"></ion-datetime>
+                      </ng-template>
+                  </ion-modal>
               </ion-item>
               <ion-item *ngIf="pedido.notaEntrega">
                   <ion-label><strong>Nota de entrega</strong></ion-label>
