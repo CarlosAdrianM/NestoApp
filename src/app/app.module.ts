@@ -164,6 +164,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         MsalService,
         InAppBrowser,
         HTTP,
+        FCM,
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,

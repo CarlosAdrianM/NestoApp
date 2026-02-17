@@ -5,7 +5,6 @@ import { Usuario } from 'src/app/models/Usuario';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { Parametros } from 'src/app/services/parametros.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
-import { FCM } from '@ionic-native/fcm/ngx';
 import { Storage } from '@ionic/storage';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AppVersion } from '@ionic-native/app-version/ngx';
@@ -309,19 +308,5 @@ private cargarParametros(): void {
     public abrirFichaProducto(producto: any): void {
         this.nav.navigateForward("/producto", { queryParams: { empresa: "1", producto: producto.Producto }});
     }
-    /*
-    public getToken() {
-    this.fcm.getToken().then(token => {
-        //backend.registerToken(token);
-        this.alertCtrl.create({
-            message: 'Profile',
-            subHeader: `Obtained token: ${token}`,
-            buttons: ['Ok'],
-        }).then(alert => alert.present());
-        
-        console.log(`Obtained token: ${token}`);
-        })    
-    }
-    */
 
 }

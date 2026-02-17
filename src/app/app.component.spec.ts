@@ -3,9 +3,10 @@ import { TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 
-import { Platform } from '@ionic/angular';
+import { Platform, ToastController } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { FCM } from '@ionic-native/fcm/ngx';
 import { Usuario } from './models/Usuario';
 import { CacheService } from 'ionic-cache';
 
@@ -22,7 +23,7 @@ describe('AppComponent', () => {
     statusBarSpy = jasmine.createSpyObj('StatusBar', ['styleDefault']);
     splashScreenSpy = jasmine.createSpyObj('SplashScreen', ['hide']);
     platformReadySpy = Promise.resolve();
-    platformSpy = jasmine.createSpyObj('Platform', { ready: platformReadySpy });
+    platformSpy = jasmine.createSpyObj('Platform', { ready: platformReadySpy, is: false });
 
     TestBed.configureTestingModule({
       declarations: [AppComponent],
@@ -32,6 +33,8 @@ describe('AppComponent', () => {
         { provide: StatusBar, useValue: statusBarSpy },
         { provide: SplashScreen, useValue: splashScreenSpy },
         { provide: Platform, useValue: platformSpy },
+        { provide: ToastController, useValue: jasmine.createSpyObj('ToastController', ['create']) },
+        { provide: FCM, useValue: jasmine.createSpyObj('FCM', ['getToken', 'onTokenRefresh', 'onNotification']) },
         Usuario,
         { provide: CacheService, useValue: { setDefaultTTL: () => {} } },
       ],
