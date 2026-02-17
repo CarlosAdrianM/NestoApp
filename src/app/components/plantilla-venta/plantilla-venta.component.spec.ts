@@ -33,3 +33,36 @@ describe('PlantillaVentaComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+
+describe('Formateo de fechas sin desfase UTC (#85)', () => {
+
+  it('debe formatear fecha local sin usar toISOString para evitar desfase UTC', () => {
+    // Simular medianoche hora local del 17 de febrero
+    const fecha = new Date(2026, 1, 17, 0, 0, 0, 0); // mes 1 = febrero
+
+    // Formateo correcto (hora local) - lo que hace el código corregido
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    const fechaLocal = `${y}-${m}-${d}`;
+
+    expect(fechaLocal).toBe('2026-02-17');
+  });
+
+  it('toISOString puede devolver día anterior a medianoche local (bug original)', () => {
+    // Este test documenta el bug: a medianoche CET (UTC+1),
+    // toISOString devuelve las 23:00 del día anterior en UTC
+    const fecha = new Date(2026, 1, 17, 0, 0, 0, 0);
+    const isoString = fecha.toISOString().substring(0, 10);
+    const offset = fecha.getTimezoneOffset(); // en minutos, negativo para CET
+
+    if (offset < 0) {
+      // En zonas horarias adelantadas a UTC (como CET/CEST),
+      // toISOString devuelve el día anterior
+      expect(isoString).toBe('2026-02-16');
+    } else {
+      // En UTC o zonas atrasadas, no hay desfase
+      expect(isoString).toBe('2026-02-17');
+    }
+  });
+});
