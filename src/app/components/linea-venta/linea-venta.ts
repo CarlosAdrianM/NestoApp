@@ -57,7 +57,7 @@ export class LineaVenta {
     public DescuentoPP: number;
     public DescuentoProducto: number;
     public estado: number;
-    public fechaEntrega: Date;
+    public fechaEntrega: string;
     public formaVenta: string;
 
     private _iva: string;

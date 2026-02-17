@@ -35,7 +35,7 @@ export class PedidoVentaComponent  {
       if (this._fechaEntrega) {
           this.pedido.Lineas.forEach(l => {
               if (l.picking == 0 && (l.estado == -1 || l.estado == 1)) {
-                  l.fechaEntrega = new Date(value)
+                  l.fechaEntrega = value;
               }
           });
       }

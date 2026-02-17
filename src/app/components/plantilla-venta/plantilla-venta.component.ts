@@ -953,8 +953,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   }
 */
   public async calcularFechaMinima(){
-    this.fechaMinima = (await this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
-    this.fechaEntrega = this.fechaMinima;    
+    const fecha = await this.ajustarFechaEntrega(this.hoySinHora);
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    this.fechaMinima = `${y}-${m}-${d}`;
+    this.fechaEntrega = this.fechaMinima;
   }
 
   public async cargarCorreoYMovilTarjeta() {
