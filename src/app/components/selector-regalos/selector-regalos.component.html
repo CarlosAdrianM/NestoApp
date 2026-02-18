@@ -51,6 +51,7 @@
 
       <ion-label class="ion-text-wrap">
         <h2 class="producto-nombre" (click)="abrirProducto(producto.ProductoId)">{{ producto.ProductoNombre }}</h2>
+        <p class="producto-referencia"><ion-text color="medium">Ref: {{ producto.ProductoId }}</ion-text></p>
         <p>
           <ion-text color="primary">{{ producto.Ganavisiones }} pts</ion-text>
           <ion-text color="medium"> | PVP: {{ producto.PVP | currency:'EUR' }}</ion-text>
