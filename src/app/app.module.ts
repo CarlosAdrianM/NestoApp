@@ -21,7 +21,6 @@ import { FormsModule } from '@angular/forms';
 import { ProductoComponent } from './components/producto/producto.component';
 import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
-import { NgxIonicImageViewerModule } from 'ngx-ionic-image-viewer';
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { SelectorVendedoresComponent } from './components/selector-vendedores/selector-vendedores.component';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
@@ -136,7 +135,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         IonicStorageModule.forRoot(),
         CommonModule,
         FormsModule,
-        NgxIonicImageViewerModule,
         CacheModule.forRoot({ keyPrefix: 'NestoApp' }),
         MsalModule
     ],
