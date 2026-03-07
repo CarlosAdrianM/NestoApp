@@ -79,8 +79,8 @@
   <div *ngIf="(usuario && usuario.nombre)">
       <div class="ion-padding">
           <h4 *ngIf="listaSeEstaVendiendo && listaSeEstaVendiendo.length > 0">Hoy se están vendiendo bien estos productos...</h4>
-          <ion-slides pager="true"  [options]="slideOpts">
-            <ion-slide *ngFor="let producto of listaSeEstaVendiendo">
+          <swiper-container pagination="true" autoplay-delay="2000" speed="400" initial-slide="1">
+            <swiper-slide *ngFor="let producto of listaSeEstaVendiendo">
                 <ion-card>
                     <ion-img [src]="producto.RutaImagen" (click)="abrirEnlace(producto.RutaEnlace)"></ion-img>
                     <ion-card-header (click)="abrirFichaProducto(producto)">
@@ -92,8 +92,8 @@
                         Para ver qué clientes lo han comprado alguna haz clic en el nombre del producto y después en <b>VER CLIENTES CON COMPRA</b>
                     </ion-card-content>
                 </ion-card>        
-            </ion-slide>
-          </ion-slides>
+            </swiper-slide>
+          </swiper-container>
           <h1>Hola, {{ usuario.nombre }}</h1>
           <ion-item>Estadísicas de venta cliente con detalle de producto</ion-item>
           <ion-item>Borradores de plantilla de ventas</ion-item>

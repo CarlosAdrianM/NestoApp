@@ -182,7 +182,7 @@ export class AuthService {
 
   // Sign out
   async signOut(): Promise<void> {
-    await this.msalService.logout().toPromise();
+    await this.msalService.logoutRedirect().toPromise();
     this.user = undefined;
     this.authenticated = false;
   }

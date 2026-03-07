@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, ViewChild, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, IonSlides, Platform } from '@ionic/angular';
+import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -23,7 +23,7 @@ import { ModalListaBorradoresComponent } from './modal-lista-borradores.componen
   templateUrl: './plantilla-venta.component.html',
   styleUrls: ['./plantilla-venta.component.scss'],
 })
-export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit  {
+export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit, AfterViewInit  {
   private ultimoClienteAbierto: string = "";
 
   constructor(
@@ -47,11 +47,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
           this.cargarProductos(clienteModificado);
       });
       events.subscribe('carritoModificado', () => {
-          this.slider.getActiveIndex().then(i => {
-              if (i === this.indexSlideResumen) { //resumen
-                this._selectorPlantillaVenta.cargarResumen();
-              }
-          });
+          if (this.swiper && this.swiper.activeIndex === this.indexSlideResumen) {
+            this._selectorPlantillaVenta.cargarResumen();
+          }
       });
       this.platform.backButton.subscribeWithPriority(10, () => {
         console.log('Botón atrás pulsado');
@@ -113,8 +111,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
     });
   }
 
-  @ViewChild ('slider') slider: IonSlides;
+  @ViewChild ('slider') sliderRef: ElementRef;
   @ViewChild('inputCliente') mySelectorCliente;
+
+  private get swiper(): any {
+    return this.sliderRef?.nativeElement?.swiper;
+  }
+
+  ngAfterViewInit() {
+    const swiperEl = this.sliderRef.nativeElement;
+    swiperEl.addEventListener('swiperslidechangetransitionstart', () => this.avanzar());
+    swiperEl.addEventListener('swiperslidechangetransitionend', () => this.haAvanzado());
+  }
 
   public async ngOnInit() {
     /*
@@ -141,9 +149,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
 
   
   ionViewDidEnter() {
-    this.slider.getActiveIndex().then((val) => {
+    if (this.swiper) {
+      const val = this.swiper.activeIndex;
       if (val === 0) {
-          this.slider.lockSwipeToNext(true);
+          this.swiper.allowSlideNext = false;
           setTimeout(() => {
               this.mySelectorCliente.setFocus();
           }, 0);
@@ -152,7 +161,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
               this._selectorPlantillaVenta.setFocus();
           }, 0);
       }
-    })
+    }
   }
     
   private _clienteSeleccionado: any;
@@ -377,8 +386,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   public onProductosBonificablesCargados(count: number): void {
     this.productosBonificablesCount = count;
     // Forzar actualización del slider por si cambia la visibilidad
-    if (this.slider) {
-      setTimeout(() => this.slider.update(), 100);
+    if (this.swiper) {
+      setTimeout(() => this.swiper.update(), 100);
     }
   }
 
@@ -519,17 +528,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       if (!cliente.cifNif) {
           return;
       }
-      this.slider.lockSwipeToNext(false);
+      this.swiper.allowSlideNext = true;
       this.siguientePantalla();
   }
 
-  public async haAvanzado() {
-    this.indexActivo = await this.slider.getActiveIndex();
+  public haAvanzado() {
+    this.indexActivo = this.swiper.activeIndex;
   }
 
   public async avanzar(): Promise<void> {
-    this.indexActivo = await this.slider.getActiveIndex();
-    let indexPrevio = await this.slider.getPreviousIndex();
+    this.indexActivo = this.swiper.activeIndex;
+    let indexPrevio = this.swiper.previousIndex;
     if (this.indexActivo === 2 && indexPrevio === 1) {
         console.log("Resumen");
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
@@ -564,7 +573,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
         console.log("baseImponibleBonificable:", this.baseImponibleBonificable, "hayGanavisiones:", this.hayGanavisionesDisponibles, "productosBonificablesCount:", this.productosBonificablesCount);
         if (this.hayGanavisionesDisponibles) {
             setTimeout(() => {
-                this.slider.update();
+                this.swiper.update();
             }, 100);
         }
     } else if (this.indexActivo === this.indexSlidePago && indexPrevio === this.indexSlideDireccion) {
@@ -607,7 +616,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   }
 
   public sePuedeAvanzar(): boolean {
-    if (!this.slider || this.indexActivo === undefined) {
+    if (!this.swiper || this.indexActivo === undefined) {
         return false;
     }
 
@@ -636,11 +645,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
   }
 
   public anteriorPantalla(): void {
-    this.slider.slidePrev();
+    this.swiper.slidePrev();
   }
 
   public siguientePantalla(): void {
-      this.slider.slideNext();
+      this.swiper.slideNext();
   }
 
   public seleccionarCliente(cliente: any): void {
@@ -830,8 +839,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit 
       this.productosResumen = null;
       this.direccionSeleccionada = null;
       this.fechaEntrega = this.fechaMinima;
-      this.slider.slideTo(0);
-      this.slider.lockSwipeToNext(true);
+      this.swiper.slideTo(0);
+      this.swiper.allowSlideNext = false;
       this.pedidoPendienteSeleccionado = undefined;
       this.listaPedidosPendientes = undefined;
       this.regalosSeleccionados = [];
