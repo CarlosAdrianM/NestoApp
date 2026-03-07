@@ -8,7 +8,7 @@ import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { FCM } from '@ionic-native/fcm/ngx';
 import { Usuario } from './models/Usuario';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from './services/cache.service';
 
 import { AppComponent } from './app.component';
 

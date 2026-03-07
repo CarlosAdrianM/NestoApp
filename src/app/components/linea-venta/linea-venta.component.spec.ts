@@ -5,7 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
 
 import { LineaVentaComponent } from './linea-venta.component';

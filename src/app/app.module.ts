@@ -54,7 +54,7 @@ import { SelectorRegalosComponent } from './components/selector-regalos/selector
 import { ModalResumenVentasComponent } from './components/resumen-ventas/modal-resumen-ventas.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
-import { CacheModule } from "ionic-cache";
+import { CacheModule } from "./services/cache.service";
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
 import { AppVersion } from '@ionic-native/app-version/ngx';
 import { IPublicClientApplication,

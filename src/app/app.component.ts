@@ -7,7 +7,7 @@ import { ProfileComponent } from './components/profile/profile/profile.component
 import { Usuario } from './models/Usuario';
 import { FCM } from '@ionic-native/fcm/ngx';
 import { HttpClient } from '@angular/common/http';
-import { CacheService } from "ionic-cache";
+import { CacheService } from "./services/cache.service";
 import { Configuracion } from './components/configuracion/configuracion/configuracion.component';
 import { Router } from '@angular/router';
 

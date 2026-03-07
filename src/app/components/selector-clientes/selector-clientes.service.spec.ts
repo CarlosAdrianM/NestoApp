@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Usuario } from '../../models/Usuario';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 
 import { SelectorClientesService } from './selector-clientes.service';
 

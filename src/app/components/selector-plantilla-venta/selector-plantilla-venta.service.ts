@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 

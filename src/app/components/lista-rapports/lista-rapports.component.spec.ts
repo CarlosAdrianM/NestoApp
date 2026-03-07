@@ -7,7 +7,7 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Geolocation } from '@ionic-native/geolocation/ngx';
 import { NativeGeocoder } from '@ionic-native/native-geocoder/ngx';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 
 import { ListaRapportsComponent } from './lista-rapports.component';
 

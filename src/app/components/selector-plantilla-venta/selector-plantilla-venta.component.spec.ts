@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';

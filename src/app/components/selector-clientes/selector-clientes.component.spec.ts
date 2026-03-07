@@ -5,7 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { Usuario } from 'src/app/models/Usuario';
-import { CacheService } from 'ionic-cache';
+import { CacheService } from '../../services/cache.service';
 
 import { SelectorClientesComponent } from './selector-clientes.component';
 
