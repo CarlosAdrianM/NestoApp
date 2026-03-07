@@ -7,11 +7,11 @@
   <ion-list>
     <ion-item *ngFor="let producto of datosFiltrados" (click)="seleccionarDato(producto)">
       <ion-label class="ion-text-wrap">
-        <p text-wrap>{{ producto.producto }}</p>
-        <h2 text-wrap>{{ producto.texto }}</h2>
-        <h3 text-wrap>{{ producto.familia}}</h3>
-        <p text-wrap>{{ producto.subGrupo }}</p>
-        <p text-wrap>{{ producto.precio | currency:'EUR' }}</p>
+        <p class="ion-text-wrap">{{ producto.producto }}</p>
+        <h2 class="ion-text-wrap">{{ producto.texto }}</h2>
+        <h3 class="ion-text-wrap">{{ producto.familia}}</h3>
+        <p class="ion-text-wrap">{{ producto.subGrupo }}</p>
+        <p class="ion-text-wrap">{{ producto.precio | currency:'EUR' }}</p>
       </ion-label>
       <ion-icon name="ellipsis-horizontal" slot="end" (click)="abrirFichaProducto(producto)"></ion-icon>
     </ion-item>

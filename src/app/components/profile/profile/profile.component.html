@@ -56,12 +56,12 @@
       <form *ngSwitchCase="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
           <ion-item>
               <ion-label>Nombre de Usuario</ion-label>
-              <ion-input type="text" ngControl="username"></ion-input>
+              <ion-input type="text" name="username" ngModel></ion-input>
           </ion-item>
 
           <ion-item>
               <ion-label>Contraseña</ion-label>
-              <ion-input type="password" ngControl="password"></ion-input>
+              <ion-input type="password" name="password" ngModel></ion-input>
           </ion-item>
 
           <div class="ion-padding">

@@ -133,7 +133,7 @@
 
 <ion-content>
 <ion-list *ngIf="segmentoRapports != 'codigoPostal'">
-  <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" text-wrap>
+  <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" class="ion-text-wrap">
     <ion-label class="ion-text-wrap">
       <ion-icon name="contact" slot="start"></ion-icon>
       <p>{{rapport.Cliente}}/{{rapport.Contacto}}</p>

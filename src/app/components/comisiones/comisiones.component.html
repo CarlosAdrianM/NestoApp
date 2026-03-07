@@ -79,8 +79,8 @@
         max="{{etiquetaGeneral.FinalTramo}}" 
         color="{{colorRangoGeneral}}" 
         [(ngModel)]="etiquetaGeneral.Proyeccion">
-        <ion-label range-left>{{etiquetaGeneral.InicioTramo | currency:'EUR'}}</ion-label>
-        <ion-label range-right>{{etiquetaGeneral.FinalTramo | currency:'EUR'}}</ion-label>
+        <ion-label slot="start">{{etiquetaGeneral.InicioTramo | currency:'EUR'}}</ion-label>
+        <ion-label slot="end">{{etiquetaGeneral.FinalTramo | currency:'EUR'}}</ion-label>
       </ion-range>
     </ion-item>
     

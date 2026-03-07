@@ -117,11 +117,11 @@
       </div>
       <ion-list *ngSwitchCase="'comentarios'">
           <ion-item>
-              <ion-label floating>Comentarios Ruta</ion-label>
+              <ion-label position="floating">Comentarios Ruta</ion-label>
               <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
           </ion-item>
           <ion-item>
-              <ion-label floating>Comentarios Picking</ion-label>
+              <ion-label position="floating">Comentarios Picking</ion-label>
               <ion-input [(ngModel)]="pedido.comentarioPicking"></ion-input>
           </ion-item>
           <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">

@@ -18,10 +18,10 @@
               <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
           </ion-item>
           <ion-item *ngIf="!nombreDisabled()">
-              <ion-label floating>Nombre</ion-label>
+              <ion-label position="floating">Nombre</ion-label>
               <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
           </ion-item>
-          <ion-label *ngIf="mensajeDatosFiscales" color="danger" text-wrap>
+          <ion-label *ngIf="mensajeDatosFiscales" color="danger" class="ion-text-wrap">
           {{mensajeDatosFiscales}}
           </ion-label>
       <ion-button expand="block" [disabled]="!cliente.nif && !cliente.nombre" (click)="goToDatosGenerales()">Siguiente</ion-button>
@@ -42,34 +42,34 @@
           </ion-card-title>
           <ion-list>
             <ion-item *ngIf="cliente.direccion">
-                <ion-label floating>Dirección actual</ion-label>
+                <ion-label position="floating">Dirección actual</ion-label>
                 <ion-input #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" disabled></ion-input>
             </ion-item>
             <ion-fab *ngIf="cliente.direccion" horizontal="end" vertical="center" edge>
                 <ion-fab-button size="small" (click)="editarDireccion()" horizontal="end"><ion-icon name="create"></ion-icon></ion-fab-button>
             </ion-fab>
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-label floating>Dirección (solo calle y número)</ion-label>
+                  <ion-label position="floating">Dirección (solo calle y número)</ion-label>
                   <ion-input #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-label floating>Dirección (resto de información)</ion-label>
+                  <ion-label position="floating">Dirección (resto de información)</ion-label>
                   <ion-input #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
-                  <ion-label floating>Código Postal</ion-label>
+                  <ion-label position="floating">Código Postal</ion-label>
                   <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
-                  <ion-label floating>Población</ion-label>
+                  <ion-label position="floating">Población</ion-label>
                   <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
-                  <ion-label floating>Provincia</ion-label>
+                  <ion-label position="floating">Provincia</ion-label>
                   <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
-                  <ion-label floating>Teléfono</ion-label>
+                  <ion-label position="floating">Teléfono</ion-label>
                   <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
           </ion-list>

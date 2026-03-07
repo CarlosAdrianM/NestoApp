@@ -45,7 +45,7 @@
   <ion-list *ngIf="!cargando && productosFiltrados.length > 0">
     <ion-item *ngFor="let producto of productosFiltrados" class="producto-item">
       <ion-thumbnail slot="start" class="producto-foto">
-        <ion-img *ngIf="producto.UrlFoto" [src]="producto.UrlFoto" ionImgViewer></ion-img>
+        <ion-img *ngIf="producto.UrlFoto" [src]="producto.UrlFoto"></ion-img>
         <ion-icon *ngIf="!producto.UrlFoto" name="image-outline" class="placeholder-icon"></ion-icon>
       </ion-thumbnail>
 

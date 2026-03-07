@@ -85,8 +85,8 @@
           <p slot="end">{{stock.CantidadDisponible}}</p>
         </ion-item>
       </ion-list>
-      <div text-center>
-        <ion-img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" ionImgViewer ></ion-img>
+      <div class="ion-text-center">
+        <ion-img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}"></ion-img>
       </div>
     </div>
     <div>
@@ -94,13 +94,13 @@
       <ion-list>
         <ion-item *ngFor="let cliente of clientes">
           <ion-label class="ion-text-wrap">
-            <p text-wrap><i>{{ cliente.Cliente }}/{{ cliente.Contacto }}</i></p>
-            <h2 text-wrap>{{ cliente.Nombre }}</h2>
-            <h3 text-wrap>{{ cliente.Direccion }}</h3>
-            <p text-wrap>{{ cliente.CodigoPostal }} {{ cliente.Poblacion }}</p>
-            <p text-wrap>Cantidad: {{ cliente.Cantidad }}</p>
-            <p text-wrap>Última compra: {{ cliente.UltimaCompra | date: 'dd/MM/yy' }}</p>
-            <p text-wrap>Estados: {{ cliente.EstadoMinimo }}/{{ cliente.EstadoMaximo }} </p>
+            <p class="ion-text-wrap"><i>{{ cliente.Cliente }}/{{ cliente.Contacto }}</i></p>
+            <h2 class="ion-text-wrap">{{ cliente.Nombre }}</h2>
+            <h3 class="ion-text-wrap">{{ cliente.Direccion }}</h3>
+            <p class="ion-text-wrap">{{ cliente.CodigoPostal }} {{ cliente.Poblacion }}</p>
+            <p class="ion-text-wrap">Cantidad: {{ cliente.Cantidad }}</p>
+            <p class="ion-text-wrap">Última compra: {{ cliente.UltimaCompra | date: 'dd/MM/yy' }}</p>
+            <p class="ion-text-wrap">Estados: {{ cliente.EstadoMinimo }}/{{ cliente.EstadoMaximo }} </p>
           </ion-label>
         </ion-item>
       </ion-list>
