@@ -626,7 +626,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
     // Slide 1: Productos
     if (this.indexActivo === 1) {
-      return this._selectorPlantillaVenta.hayAlgunProducto();
+      return this._selectorPlantillaVenta?.hayAlgunProducto() ?? false;
     }
     // Slide 2: Resumen
     if (this.indexActivo === this.indexSlideResumen) {
