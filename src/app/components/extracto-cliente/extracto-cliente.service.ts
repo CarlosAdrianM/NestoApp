@@ -53,8 +53,8 @@ export class ExtractoClienteService {
     return this.http.get(Configuracion.API_URL + '/PedidosVenta', { params });
   }
 
-  public async descargarFactura(empresa: string, numeroFactura: string): Promise<string> {
-    const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + numeroFactura.trim();
+  public async descargarFactura(empresa: string, numeroFactura: string, mostrarImagenes: boolean = false): Promise<string> {
+    const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + numeroFactura.trim() + "&mostrarImagenes=" + mostrarImagenes;
     const nombreArchivo = numeroFactura.trim() + '.pdf';
     const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
     await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });

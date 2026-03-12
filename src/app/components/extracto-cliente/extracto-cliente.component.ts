@@ -34,6 +34,7 @@ export class ExtractoClienteComponent {
   public movimientosSeleccionados: any[] = [];
   public mostrarBannerModelo347: boolean = false;
   public annoModelo347: number;
+  public mostrarImagenes: boolean = false;
 
   @ViewChild('selector') selectorClientes: any;
 
@@ -175,12 +176,12 @@ export class ExtractoClienteComponent {
 
   public async descargarFactura(movimiento: any): Promise<void> {
       let loading: any = await this.loadingCtrl.create({
-          message: 'Generando factura en PDF...',
+          message: this.mostrarImagenes ? 'Generando factura con imágenes...' : 'Generando factura en PDF...',
       });
 
       loading.present();
 
-      this.servicio.descargarFactura(movimiento.empresa, movimiento.documento).then(
+      this.servicio.descargarFactura(movimiento.empresa, movimiento.documento, this.mostrarImagenes).then(
           async (rutaArchivo: string) => {
               this.firebaseAnalytics.logEvent("descargar_factura", {empresa: movimiento.empresa, factura: movimiento.documento});
               await loading.dismiss();

@@ -30,6 +30,7 @@ export class SelectorRegalosComponent {
   private _almacen: string;
   private _baseImponibleBonificable: number;
   private _servirJunto: boolean = true;
+  private _productosEnPedido: any[] = [];
 
   @Input()
   set empresa(value: string) {
@@ -78,6 +79,16 @@ export class SelectorRegalosComponent {
   }
   get servirJunto(): boolean {
     return this._servirJunto;
+  }
+
+  // Input para recibir productos ya en el pedido (para excluirlos de la lista)
+  @Input()
+  set productosEnPedido(value: any[]) {
+    this._productosEnPedido = value || [];
+    this.aplicarFiltroProductosEnPedido();
+  }
+  get productosEnPedido(): any[] {
+    return this._productosEnPedido;
   }
 
   // Input para recibir regalos ya seleccionados (para restaurar estado)
@@ -150,8 +161,11 @@ export class SelectorRegalosComponent {
         this.productosFiltrados = response.Productos;
         this.cargando = false;
 
+        // Excluir productos que ya están en el pedido
+        this.aplicarFiltroProductosEnPedido();
+
         // Notificar al padre cuántos productos hay disponibles
-        this.productosCargados.emit(response.Productos.length);
+        this.productosCargados.emit(this.productosFiltrados.length);
 
         // Cargar imágenes desde Prestashop (en paralelo, sin bloquear)
         this.cargarImagenesProductos();
@@ -234,16 +248,33 @@ export class SelectorRegalosComponent {
     this.regalosChange.emit(regalos);
   }
 
+  private aplicarFiltroProductosEnPedido(): void {
+    if (!this.productosBonificables || this.productosBonificables.length === 0) return;
+    const idsEnPedido = new Set(
+      this._productosEnPedido
+        .filter(p => p.cantidad > 0 || p.cantidadOferta > 0)
+        .map(p => p.producto?.toString())
+    );
+    this.productosFiltrados = this.productosBonificables.filter(
+      p => !idsEnPedido.has(p.ProductoId)
+    );
+  }
+
   public filtrarBusqueda(event: any): void {
     const filtro = event.target.value?.toUpperCase() || '';
-    if (!filtro) {
-      this.productosFiltrados = this.productosBonificables;
-    } else {
-      this.productosFiltrados = this.productosBonificables.filter(p =>
+    const idsEnPedido = new Set(
+      this._productosEnPedido
+        .filter(p => p.cantidad > 0 || p.cantidadOferta > 0)
+        .map(p => p.producto?.toString())
+    );
+    let productos = this.productosBonificables.filter(p => !idsEnPedido.has(p.ProductoId));
+    if (filtro) {
+      productos = productos.filter(p =>
         p.ProductoNombre.toUpperCase().includes(filtro) ||
         p.ProductoId.toUpperCase().includes(filtro)
       );
     }
+    this.productosFiltrados = productos;
   }
 
   public limpiarSeleccion(): void {

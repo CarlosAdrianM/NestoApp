@@ -116,6 +116,10 @@
           </ion-list>
       </div>
       <ion-list *ngSwitchCase="'comentarios'">
+          <ion-item *ngIf="pedido.suPedido">
+              <ion-label position="floating">Su Pedido / P.O.</ion-label>
+              <ion-input [(ngModel)]="pedido.suPedido" maxlength="50"></ion-input>
+          </ion-item>
           <ion-item>
               <ion-label position="floating">Comentarios Ruta</ion-label>
               <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>

@@ -36,8 +36,8 @@ export class ListaPedidosVentaService {
       return this.http.get(this._baseUrl, { params });
   }
 
-  public async descargarPedido(empresa: string, pedido: number): Promise<string> {
-      const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + pedido.toString().trim();
+  public async descargarPedido(empresa: string, pedido: number, mostrarImagenes: boolean = false): Promise<string> {
+      const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + pedido.toString().trim() + "&mostrarImagenes=" + mostrarImagenes;
       const nombreArchivo = pedido.toString().trim() + '.pdf';
       const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
       await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });

@@ -85,6 +85,8 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         this.cargarDatos();
     }
 
+    public mostrarImagenes: boolean = false;
+
     @ViewChild('filtro') selectorPedidos: any;
 
     ngOnInit(): void {
@@ -176,12 +178,12 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
     public async descargarPedido(event: Event, pedido: any): Promise<void> {
         event.stopPropagation();
         let loading: any = await this.loadingCtrl.create({
-            message: 'Generando PDF pedido...',
+            message: this.mostrarImagenes ? 'Generando PDF con imágenes...' : 'Generando PDF pedido...',
         });
 
         await loading.present();
 
-        this.servicio.descargarPedido(pedido.empresa, pedido.numero).then(
+        this.servicio.descargarPedido(pedido.empresa, pedido.numero, this.mostrarImagenes).then(
             async (rutaArchivo: string) => {
                 this.firebaseAnalytics.logEvent("descargar_pedido", {empresa: pedido.empresa, pedido: pedido.numero});
                 await loading.dismiss();

@@ -37,6 +37,7 @@ export class PedidoVenta {
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;
+    public suPedido: string;
 
     public Lineas: Array<LineaVenta>;
 

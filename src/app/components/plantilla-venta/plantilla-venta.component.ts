@@ -329,6 +329,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public formaPago: any;
   public plazosPago: any;
   public esPresupuesto: boolean = false;
+  public suPedido: string = '';
   public respuestaGlovo: any;
   public sePuedeServirPorGlovo: boolean = false;
   public sePodriaServirConGlovoEnPrepago: boolean = false;
@@ -341,6 +342,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public listaPedidosPendientes: any;
   public totalPedidoPlazosPago: number;
   public almacenEntregaUrgente: string;
+
+  // Portes
+  public resultadoPortes: any = null; // Resultado cacheado de la API
+  public textoPortes: string = '';
+  public portesGratis: boolean = false;
 
   // Ganavisiones / Regalos
   public regalosSeleccionados: RegaloSeleccionado[] = [];
@@ -576,9 +582,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 this.swiper.update();
             }, 100);
         }
+
+        // Actualizar portes localmente (si ya tenemos resultado cacheado del API)
+        this.actualizarTextoPortes();
     } else if (this.indexActivo === this.indexSlidePago && indexPrevio === this.indexSlideDireccion) {
         console.log("Finalizar");
         this.comprobarSiSePuedeServirPorGlovo();
+        this.calcularPortes();
+    }
+
+    // Al entrar en el resumen desde cualquier otra slide (volviendo atrás), actualizar portes
+    if (this.indexActivo === 2 && indexPrevio !== 1) {
+        this.actualizarTextoPortes();
     }
   }
   
@@ -613,6 +628,61 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         () => {
         }
     );
+  }
+
+  private calcularPortes(): void {
+    if (!this.direccionSeleccionada || !this.productosResumen || this.productosResumen.length === 0) {
+      this.textoPortes = '';
+      return;
+    }
+
+    const formaPago = this.extraerCodigoFormaPago();
+    const plazosPago = this.extraerCodigoPlazosPago();
+
+    const input = {
+      CodigoPostal: this.direccionSeleccionada.codigoPostal || '',
+      Ruta: this.servirPorGlovo ? 'GLV' : (this.direccionSeleccionada.ruta || ''),
+      FormaPago: formaPago,
+      PlazosPago: plazosPago,
+      CCC: formaPago === 'RCB' ? this.direccionSeleccionada.ccc : null,
+      PeriodoFacturacion: this.direccionSeleccionada.periodoFacturacion || 'NRM',
+      NotaEntrega: false,
+      EsTiendaOnline: false,
+      EsPrecioPublicoFinal: false,
+      Iva: this.direccionSeleccionada.iva || '',
+      BaseImponibleProductos: this._selectorPlantillaVenta?.baseImponibleParaPortes || 0,
+      AnadirPortes: true
+    };
+
+    this.servicio.calcularPortes(input).subscribe(
+      (resultado: any) => {
+        this.resultadoPortes = resultado;
+        this.actualizarTextoPortes();
+      },
+      error => {
+        console.error('Error calculando portes:', error);
+        this.textoPortes = '';
+      }
+    );
+  }
+
+  private actualizarTextoPortes(): void {
+    if (!this.resultadoPortes || !this.productosResumen || this.productosResumen.length === 0) {
+      this.textoPortes = '';
+      return;
+    }
+
+    const baseParaPortes = this._selectorPlantillaVenta?.baseImponibleParaPortes || 0;
+    const umbral = this.resultadoPortes.ImporteMinimoPedidoSinPortes;
+    const importeFalta = umbral - baseParaPortes;
+
+    if (importeFalta <= 0) {
+      this.portesGratis = true;
+      this.textoPortes = 'Pedido con portes pagados';
+    } else {
+      this.portesGratis = false;
+      this.textoPortes = `Faltan ${importeFalta.toFixed(2)}€ para portes pagados`;
+    }
   }
 
   public sePuedeAvanzar(): boolean {
@@ -655,6 +725,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public seleccionarCliente(cliente: any): void {
       this.direccionSeleccionada = cliente;
       this.iva = cliente.iva;
+      // Inicializar formaPago/plazosPago desde los defaults de la dirección
+      // para que estén disponibles antes de llegar a la slide de pago
+      if (cliente.formaPago) {
+          this.formaPago = cliente.formaPago;
+      }
+      if (cliente.plazosPago) {
+          this.plazosPago = cliente.plazosPago;
+      }
+      this.calcularPortes();
   }
 
   private prepararPedido(): any {
@@ -682,6 +761,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
           'servirJunto': this.direccionSeleccionada.servirJunto,
           'EsPresupuesto': this.esPresupuesto,
+          'suPedido': this.suPedido ? this.suPedido.trim() : null,
           'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
           'Lineas': [],
       };
@@ -845,6 +925,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.listaPedidosPendientes = undefined;
       this.regalosSeleccionados = [];
       this.productosBonificablesCount = -1; // Resetear verificación de productos bonificables
+      this.suPedido = '';
+      this.resultadoPortes = null;
+      this.textoPortes = '';
+      this.portesGratis = false;
   }
       
   get totalPedido(): number {
@@ -861,6 +945,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   public cambiarIVA(): void {
       this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
+      this.calcularPortes();
   }
 
   /*
@@ -1012,6 +1097,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.formaPagoProtegida = null;
     }
     this.formaPago = nuevaFormaPago;
+    this.calcularPortes();
   }
 
   public cambiarPlazosPago(nuevosPlazos: string) {
@@ -1025,6 +1111,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
     this.plazosPago = nuevosPlazos;
     this.comprobarSiSePuedeServirPorGlovo();
+    this.calcularPortes();
   }
 
   public mandarCobroTarjeta: boolean;
@@ -1180,6 +1267,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
       servirJunto: this.direccionSeleccionada?.servirJunto || false,
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
+      suPedido: this.suPedido || '',
 
       // Total
       total: this.baseImponiblePedido || 0,
@@ -1557,6 +1645,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     // Restaurar comentarioPicking en clienteSeleccionado
     if (this.clienteSeleccionado && borrador.comentarioPicking) {
       this.clienteSeleccionado.comentarioPicking = borrador.comentarioPicking;
+    }
+
+    // Restaurar suPedido
+    if (borrador.suPedido) {
+      this.suPedido = borrador.suPedido;
     }
 
     // NO limpiar contactoParaRestaurar aquí - las direcciones pueden no estar cargadas aún

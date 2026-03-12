@@ -116,6 +116,12 @@ export class PlantillaVentaService {
     return this.http.get<ProductosBonificablesResponse>(url, { params });
   }
 
+  public calcularPortes(input: any): Observable<any> {
+    const url = Configuracion.API_URL + '/PedidosVenta/CalcularPortes';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post(url, JSON.stringify(input), { headers });
+  }
+
   public validarServirJunto(
     almacen: string,
     productosBonificados: string[]

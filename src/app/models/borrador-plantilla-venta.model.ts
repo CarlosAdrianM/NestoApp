@@ -77,6 +77,7 @@ export interface BorradorPlantillaVenta {
   mantenerJunto: boolean;
   servirJunto: boolean;
   comentarioPicking?: string;
+  suPedido?: string;
 
   // Total
   total: number;
