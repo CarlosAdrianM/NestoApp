@@ -41,6 +41,19 @@ POST /api/Ganavisiones/ValidarServirJunto
 - `selector-formas-pago/` - Formas de pago
 - `selector-plazos-pago/` - Plazos de pago
 
+## Antes de hacer push
+
+Siempre que se vaya a hacer push, hay que:
+
+1. **Actualizar el número de versión** en estos 3 ficheros:
+   - `package.json`
+   - `config.xml`
+   - `src/app/components/configuracion/configuracion.component.ts` (constante `Configuracion.VERSION`)
+
+2. **Actualizar el changelog** en `src/app/components/profile/profile/profile.component.html`:
+   - Añadir las nuevas características/correcciones
+   - Quitar las más antiguas para que la lista tenga siempre entre 6 y 10 entradas
+
 ## Comandos útiles
 
 ```bash
