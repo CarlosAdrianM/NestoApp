@@ -423,11 +423,18 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
       ExtractoClienteId: mov.id || 0,
       Importe: mov.importePendiente,
       Documento: mov.documento?.trim(),
-      Efecto: mov.efecto?.trim()
+      Efecto: mov.efecto?.trim(),
+      Contacto: mov.contacto?.toString().trim(),
+      Vendedor: mov.vendedor?.trim(),
+      FormaVenta: mov.formaVenta?.trim(),
+      Delegacion: mov.delegacion?.trim(),
+      TipoApunte: mov.tipoApunte?.toString()
     }));
 
     this.servicio.crearPago({
-      Cliente: this.cliente.cliente,
+      Empresa: this.cliente.empresa?.trim(),
+      Cliente: this.cliente.cliente?.trim(),
+      Contacto: this.cliente.contacto?.toString().trim(),
       Importe: this.importe,
       Descripcion: this.concepto,
       Correo: this.correo,
@@ -443,7 +450,13 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
       },
       async error => {
         this.enviando = false;
-        const mensaje = error?.error?.ExceptionMessage || error?.error?.Message || 'Error desconocido';
+        // El interceptor envuelve errores en ProcessedApiError
+        const originalError = error?.originalError || error;
+        const mensaje = error?.apiError?.error?.message
+          || originalError?.error?.ExceptionMessage
+          || originalError?.error?.Message
+          || originalError?.message
+          || 'Error desconocido';
         const alert = await this.alertCtrl.create({
           header: 'Error',
           message: 'No se pudo crear el enlace de pago: ' + mensaje,

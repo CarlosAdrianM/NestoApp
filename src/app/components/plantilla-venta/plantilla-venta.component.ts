@@ -860,7 +860,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 numeroPedido = data.numero;
                 if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
                   this.servicio.crearPago({
+                    Empresa: this.clienteSeleccionado.empresa?.trim(),
                     Cliente: this.clienteSeleccionado.cliente.trim(),
+                    Contacto: this.direccionSeleccionada.contacto?.toString().trim(),
                     Importe: this.redondea(this.totalPedido),
                     Descripcion: 'Pedido ' + numeroPedido + ' de Nueva Visión',
                     Correo: this.cobroTarjetaCorreo
