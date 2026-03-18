@@ -4,7 +4,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 
 import { SelectorPlantillaVentaDetalleComponent } from './selector-plantilla-venta-detalle.component';
 

@@ -4,9 +4,9 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
-import { Storage } from '@ionic/storage';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { AppVersion } from '@ionic-native/app-version/ngx';
+import { Storage } from '@ionic/storage-angular';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { MsalService } from '@azure/msal-angular';
 
 import { ProfileComponent } from './profile.component';

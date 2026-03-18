@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 
 import { AlertController, Platform, ToastController } from '@ionic/angular';
-import { SplashScreen } from '@ionic-native/splash-screen/ngx';
-import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { SplashScreen } from '@awesome-cordova-plugins/splash-screen/ngx';
+import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
 import { ProfileComponent } from './components/profile/profile/profile.component';
 import { Usuario } from './models/Usuario';
-import { FCM } from '@ionic-native/fcm/ngx';
+import { FCM } from '@awesome-cordova-plugins/fcm/ngx';
 import { HttpClient } from '@angular/common/http';
 import { CacheService } from "./services/cache.service";
 import { Configuracion } from './components/configuracion/configuracion/configuracion.component';

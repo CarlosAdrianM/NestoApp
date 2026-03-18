@@ -51,8 +51,9 @@ Siempre que se vaya a hacer push, hay que:
    - `src/app/components/configuracion/configuracion.component.ts` (constante `Configuracion.VERSION`)
 
 2. **Actualizar el changelog** en `src/app/components/profile/profile/profile.component.html`:
-   - Añadir las nuevas características/correcciones
-   - Quitar las más antiguas para que la lista tenga siempre entre 6 y 10 entradas
+   - Los nuevos `<ion-item>` se añaden **arriba** de la lista (justo después del `<h1>Hola...`)
+   - Se quitan los últimos `<ion-item>` (los de abajo) para mantener entre 6 y 10 entradas
+   - El contenido debe describir las funcionalidades nuevas visibles para el usuario (ej: portes, mensajes de Ganavisiones, PDF con imágenes), no cambios internos como migraciones o fixes de build
 
 ## Comandos útiles
 

@@ -3,8 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { File } from '@ionic-native/file/ngx';
+import { File } from '@awesome-cordova-plugins/file/ngx';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
+import { SolicitudPagoTPV, RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
 import { AuthService } from 'src/app/services/auth/auth.service';
 
 @Injectable({
@@ -71,21 +72,10 @@ export class ExtractoClienteService {
     return this.http.get(url, { params: params });
   }
 
-  public mandarEnlaceCobro(cliente: string, correo: string, movil: string, importe: number, asunto: string, textoSMS: string): Observable<ReclamacionDeuda> {
-    const url = Configuracion.API_URL + "/ReclamacionDeuda";
-    let headers: HttpHeaders = new HttpHeaders();
-    headers = headers.append('Content-Type', 'application/json');
-
-    const parametro = {
-      Cliente: cliente,
-      Correo: correo,
-      Movil: movil,
-      Importe: importe,
-      Asunto: asunto,
-      TextoSMS: textoSMS
-    };
-
-    return this.http.post<ReclamacionDeuda>(url, JSON.stringify(parametro), { headers: headers });
+  public crearPago(solicitud: SolicitudPagoTPV): Observable<RespuestaIniciarPago> {
+    const url = Configuracion.API_URL + '/Pagos';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<RespuestaIniciarPago>(url, solicitud, { headers });
   }
 
   public async descargarModelo347(empresa: string, cliente: string, anno?: number): Promise<string> {

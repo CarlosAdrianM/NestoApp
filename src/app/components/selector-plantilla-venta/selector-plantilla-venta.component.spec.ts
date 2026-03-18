@@ -5,8 +5,8 @@ import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 
 import { SelectorPlantillaVentaComponent } from './selector-plantilla-venta.component';
 

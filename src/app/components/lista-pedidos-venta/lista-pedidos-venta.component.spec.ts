@@ -3,10 +3,10 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
-import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { FileTransfer } from '@ionic-native/file-transfer/ngx';
-import { File } from '@ionic-native/file/ngx';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
+import { File } from '@awesome-cordova-plugins/file/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { Usuario } from 'src/app/models/Usuario';
 
 import { ListaPedidosVentaComponent } from './lista-pedidos-venta.component';

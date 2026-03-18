@@ -125,9 +125,13 @@
         </div>
       </swiper-slide>
       <swiper-slide *ngIf="productosResumen" scrollY="true">
+        <ion-item *ngIf="importePortesMostrar > 0">
+            <div>Portes:</div>
+            <div slot="end" class="ion-text-right">{{importePortesMostrar | currency:'EUR'}}</div>
+        </ion-item>
         <ion-item>
             <div>Total pedido:</div>
-            <div slot="end" class="ion-text-right">{{totalPedido | currency:'EUR'}}</div>
+            <div slot="end" class="ion-text-right"><strong>{{totalPedido | currency:'EUR'}}</strong></div>
         </ion-item>
         <ion-item *ngIf="textoPortes" [color]="portesGratis ? 'success' : 'warning'">
             <ion-label class="ion-text-center"><strong>{{textoPortes}}</strong></ion-label>
@@ -162,7 +166,7 @@
         </ion-item>
         <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo">
             <ion-label>Servir en 2 horas <ion-img src="https://static.vecteezy.com/system/resources/previews/008/786/429/non_2x/express-delivery-icon-fast-delivery-express-and-urgent-delivery-services-stopwatch-sign-timer-and-express-delivery-inscription-fast-delivery-logo-design-vector.jpg"></ion-img></ion-label>
-            <ion-toggle [(ngModel)]="servirPorGlovo"></ion-toggle>
+            <ion-toggle [(ngModel)]="servirPorGlovo" (ngModelChange)="calcularPortes()"></ion-toggle>
         </ion-item>
         <ion-item *ngIf="direccionSeleccionada.iva && !sePuedeServirPorGlovo && sePodriaServirConGlovoEnPrepago">
             <ion-label color="danger">Si hay PREPAGO podría servirse en 2 horas</ion-label>

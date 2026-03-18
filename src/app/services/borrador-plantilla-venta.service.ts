@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Storage } from '@ionic/storage';
+import { Storage } from '@ionic/storage-angular';
 import { BorradorPlantillaVenta, BorradorMetadata } from '../models/borrador-plantilla-venta.model';
 
 /**

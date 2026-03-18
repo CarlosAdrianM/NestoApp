@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { NavController, AlertController, ToastController, NavParams } from '@ionic/angular';
 import { Events } from 'src/app/services/events.service';
 import { SelectorPlantillaVentaDetalleService } from './selector-plantilla-venta-detalle.service';

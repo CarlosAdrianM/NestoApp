@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, NavController, ModalController } from '@ionic/angular';
 import { ExtractoClienteService } from './extracto-cliente.service';
-import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
 
 @Component({
   selector: 'app-extracto-cliente',
@@ -331,7 +331,7 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
   concepto: string;
   correo: string;
   movil: string;
-  resultado: ReclamacionDeuda;
+  resultado: { TramitadoOK: boolean; Enlace: string };
   enviando: boolean = false;
 
   constructor(
@@ -419,32 +419,34 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
     this.enviando = true;
     this.firebaseAnalytics.logEvent("enviar_enlace_cobro", {cliente: this.cliente.cliente, importe: this.importe});
 
-    const asunto = this.concepto + ' - Nueva Visión';
-    const textoSMS = 'Este es un mensaje de @COMERCIO@. Puede pagar ' + this.concepto + ' de @IMPORTE@ @MONEDA@ aquí: @URL@';
+    const efectos: EfectoAPagar[] = this.movimientosSeleccionados.map(mov => ({
+      ExtractoClienteId: mov.id || 0,
+      Importe: mov.importePendiente,
+      Documento: mov.documento?.trim(),
+      Efecto: mov.efecto?.trim()
+    }));
 
-    this.servicio.mandarEnlaceCobro(
-      this.cliente.cliente,
-      this.correo,
-      this.movil,
-      this.importe,
-      asunto,
-      textoSMS
-    ).subscribe(
-      async (resultado: ReclamacionDeuda) => {
-        this.resultado = resultado;
+    this.servicio.crearPago({
+      Cliente: this.cliente.cliente,
+      Importe: this.importe,
+      Descripcion: this.concepto,
+      Correo: this.correo,
+      Efectos: efectos.length > 0 ? efectos : undefined
+    }).subscribe(
+      async (respuesta: RespuestaIniciarPago) => {
+        this.resultado = {
+          TramitadoOK: true,
+          Enlace: respuesta.UrlPaginaPago
+        };
         this.enviando = false;
-
-        if (resultado.TramitadoOK) {
-          this.firebaseAnalytics.logEvent("enlace_cobro_enviado_ok", {cliente: this.cliente.cliente});
-        } else {
-          this.firebaseAnalytics.logEvent("enlace_cobro_error", {cliente: this.cliente.cliente});
-        }
+        this.firebaseAnalytics.logEvent("enlace_cobro_enviado_ok", {cliente: this.cliente.cliente});
       },
       async error => {
         this.enviando = false;
+        const mensaje = error?.error?.ExceptionMessage || error?.error?.Message || 'Error desconocido';
         const alert = await this.alertCtrl.create({
           header: 'Error',
-          message: 'No se pudo enviar el enlace: ' + error,
+          message: 'No se pudo crear el enlace de pago: ' + mensaje,
           buttons: ['OK']
         });
         await alert.present();

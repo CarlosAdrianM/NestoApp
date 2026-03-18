@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
 
 @Component({

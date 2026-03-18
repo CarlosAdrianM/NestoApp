@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
@@ -630,9 +630,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     );
   }
 
-  private calcularPortes(): void {
+  public calcularPortes(): void {
     if (!this.direccionSeleccionada || !this.productosResumen || this.productosResumen.length === 0) {
       this.textoPortes = '';
+      return;
+    }
+
+    if (!this.direccionSeleccionada.codigoPostal) {
+      this.textoPortes = '';
+      this.resultadoPortes = null;
       return;
     }
 
@@ -669,6 +675,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private actualizarTextoPortes(): void {
     if (!this.resultadoPortes || !this.productosResumen || this.productosResumen.length === 0) {
       this.textoPortes = '';
+      this.portesGratis = false;
       return;
     }
 
@@ -681,7 +688,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.textoPortes = 'Pedido con portes pagados';
     } else {
       this.portesGratis = false;
-      this.textoPortes = `Faltan ${importeFalta.toFixed(2)}€ para portes pagados`;
+      const portes = this.resultadoPortes.ImportePortes || 0;
+      this.textoPortes = portes > 0
+        ? `Portes: ${portes.toFixed(2)}€ (faltan ${importeFalta.toFixed(2)}€ para gratis)`
+        : `Faltan ${importeFalta.toFixed(2)}€ para portes pagados`;
     }
   }
 
@@ -849,7 +859,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
                 numeroPedido = data.numero;
                 if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
-                  this.servicio.mandarCobroTarjeta(this.cobroTarjetaCorreo, this.cobroTarjetaMovil, this.redondea(this.totalPedido), numeroPedido, this.clienteSeleccionado.cliente.trim()).subscribe(
+                  this.servicio.crearPago({
+                    Cliente: this.clienteSeleccionado.cliente.trim(),
+                    Importe: this.redondea(this.totalPedido),
+                    Descripcion: 'Pedido ' + numeroPedido + ' de Nueva Visión',
+                    Correo: this.cobroTarjetaCorreo
+                  }).subscribe(
                       d => {
                           this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
                       },
@@ -931,8 +946,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.portesGratis = false;
   }
       
+  get importePortesMostrar(): number {
+      if (!this.resultadoPortes || this.portesGratis) return 0;
+      return this.resultadoPortes.ImportePortes || 0;
+  }
+
   get totalPedido(): number {
-      return this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
+      const subtotal = this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
+      const portes = this.importePortesMostrar;
+      if (portes <= 0) return subtotal;
+      const portesConIva = this.direccionSeleccionada.iva ? portes * 1.21 : portes;
+      return subtotal + portesConIva;
   }
 
   get baseImponiblePedido(): number {

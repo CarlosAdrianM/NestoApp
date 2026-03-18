@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { NavController, NavParams, AlertController, LoadingController } from '@ionic/angular';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { NavController, NavParams, AlertController, LoadingController, IonicSafeString } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { ComisionesService } from './comisiones.service';
 import { ResumenComisionesMes, IEtiquetaComisionAcumulada, IEtiquetaComision } from './comisiones.interfaces';
@@ -249,7 +249,7 @@ export class ComisionesComponent implements OnInit {
     
     const alert = await this.alertCtrl.create({
       header: `Detalle: ${etiqueta.Nombre}`,
-      message: mensajeInfo,
+      message: new IonicSafeString(mensajeInfo),
       buttons: ['Cerrar'],
       cssClass: 'comisiones-detalle-alert'
     });

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { ProductosBonificablesResponse, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
+import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 
 @Injectable({
   providedIn: 'root'
@@ -114,6 +115,12 @@ export class PlantillaVentaService {
       .set('cliente', cliente);
 
     return this.http.get<ProductosBonificablesResponse>(url, { params });
+  }
+
+  public crearPago(solicitud: SolicitudPagoTPV): Observable<RespuestaIniciarPago> {
+    const url = Configuracion.API_URL + '/Pagos';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<RespuestaIniciarPago>(url, solicitud, { headers });
   }
 
   public calcularPortes(input: any): Observable<any> {

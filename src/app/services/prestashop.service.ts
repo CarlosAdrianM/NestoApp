@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { HTTP } from '@ionic-native/http/ngx';
+import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { environment } from '../../environments/environment';
 
 const IMAGEN_POR_DEFECTO = 'https://www.productosdeesteticaypeluqueriaprofesional.com/img/p/es-default-home_default.jpg';

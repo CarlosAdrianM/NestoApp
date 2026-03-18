@@ -7,7 +7,7 @@ import { User } from './user';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
-import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
+import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
 import { filter } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'

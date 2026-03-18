@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Storage } from '@ionic/storage';
+import { Storage } from '@ionic/storage-angular';
 import { BorradorPlantillaVentaService } from './borrador-plantilla-venta.service';
 import { BorradorPlantillaVenta, BorradorMetadata } from '../models/borrador-plantilla-venta.model';
 

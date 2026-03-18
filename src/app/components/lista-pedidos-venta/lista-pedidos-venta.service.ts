@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { File } from '@ionic-native/file/ngx';
+import { File } from '@awesome-cordova-plugins/file/ngx';
 
 @Injectable({
   providedIn: 'root'

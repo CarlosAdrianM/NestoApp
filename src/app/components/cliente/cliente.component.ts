@@ -5,10 +5,10 @@ import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { ClienteService } from './cliente.service';
 import { ClientesMismoTelefonoComponent } from './clientes-mismo-telefono';
-import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@ionic-native/native-geocoder/ngx';
-import { Geolocation } from '@ionic-native/geolocation/ngx';
+import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
+import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 
 @Component({
   selector: 'app-cliente',

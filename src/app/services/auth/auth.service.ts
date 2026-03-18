@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { Storage } from '@ionic/storage';
+import { Storage } from '@ionic/storage-angular';
 import { Observable, from, of, throwError } from 'rxjs';
 import { switchMap, tap, catchError } from 'rxjs/operators';
 import { Configuracion } from '../../components/configuracion/configuracion/configuracion.component';

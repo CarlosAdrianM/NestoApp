@@ -8,7 +8,7 @@ import {
 } from '@angular/common/http';
 import { Observable, from, throwError } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
-import { Storage } from '@ionic/storage';
+import { Storage } from '@ionic/storage-angular';
 import { Usuario } from '../models/Usuario';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 import { ApiErrorResponse, ProcessedApiError } from '../models/api-error.model';

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { AlertController, IonicModule, IonicSafeString } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ComisionesComponent } from './comisiones.component';
 import { ComisionesService } from './comisiones.service';
 import { Usuario } from 'src/app/models/Usuario';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { of, throwError } from 'rxjs';
 import { ResumenComisionesMes, IEtiquetaComisionAcumulada, IEtiquetaComisionVenta } from './comisiones.interfaces';
 
@@ -130,5 +130,23 @@ describe('ComisionesComponent', () => {
     const initialMonth = component['mesSeleccionado'];
     // Este test se puede expandir cuando implementemos la funcionalidad del selector de mes
     expect(initialMonth).toBeDefined();
+  });
+
+  it('should show detail dialog with IonicSafeString for HTML rendering', async () => {
+    const alertSpy = jasmine.createSpyObj('HTMLIonAlertElement', ['present']);
+    const alertCtrl = TestBed.inject(AlertController);
+    spyOn(alertCtrl, 'create').and.returnValue(Promise.resolve(alertSpy));
+
+    const etiqueta = mockResumen.Etiquetas[0];
+    await component.mostrarDetalleEtiqueta(etiqueta);
+
+    expect(alertCtrl.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        header: `Detalle: ${etiqueta.Nombre}`,
+        message: jasmine.any(IonicSafeString),
+        cssClass: 'comisiones-detalle-alert'
+      })
+    );
+    expect(alertSpy.present).toHaveBeenCalled();
   });
 });

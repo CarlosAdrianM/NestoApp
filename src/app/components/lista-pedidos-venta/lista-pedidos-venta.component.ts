@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FileOpener } from '@ionic-native/file-opener/ngx';
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaPedidosVentaService } from './lista-pedidos-venta.service';

@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/cor
 import { LoadingController, AlertController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorClientesService } from './selector-clientes.service';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { Events } from 'src/app/services/events.service';
 import { Router } from '@angular/router';
 

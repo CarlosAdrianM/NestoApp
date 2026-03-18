@@ -1,19 +1,19 @@
-import { CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 
 import { IonicModule, IonicRouteStrategy, NavParams } from '@ionic/angular';
-import { SplashScreen } from '@ionic-native/splash-screen/ngx';
-import { StatusBar } from '@ionic-native/status-bar/ngx';
+import { SplashScreen } from '@awesome-cordova-plugins/splash-screen/ngx';
+import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { Usuario } from './models/Usuario';
-import { FCM } from '@ionic-native/fcm/ngx';
+import { FCM } from '@awesome-cordova-plugins/fcm/ngx';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
-import { IonicStorageModule } from '@ionic/storage';
-import { Storage } from '@ionic/storage'
+import { IonicStorageModule } from '@ionic/storage-angular';
+import { Storage } from '@ionic/storage-angular'
 import { JwtHelperService, JWT_OPTIONS } from '@auth0/angular-jwt';
 import { CommonModule } from '@angular/common';
 import { ProfileComponent } from './components/profile/profile/profile.component';
@@ -23,8 +23,8 @@ import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { SelectorVendedoresComponent } from './components/selector-vendedores/selector-vendedores.component';
-import { Geolocation } from '@ionic-native/geolocation/ngx';
-import { NativeGeocoder } from '@ionic-native/native-geocoder/ngx';
+import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
+import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { ClienteComponent } from './components/cliente/cliente.component';
 import { SelectorFormasPagoComponent } from './components/selector-formas-pago/selector-formas-pago.component';
 import { SelectorPlazosPagoComponent } from './components/selector-plazos-pago/selector-plazos-pago.component';
@@ -34,12 +34,12 @@ import { SelectorAlmacenesComponent } from './components/selector-almacenes/sele
 import { SelectorDireccionesEntregaComponent } from './components/selector-direcciones-entrega/selector-direcciones-entrega.component';
 import { SelectorProductosComponent } from './components/selector-productos/selector-productos.component';
 import { ComisionesDetalleComponent } from './components/comisiones-detalle/comisiones-detalle.component';
-import { FileTransfer } from '@ionic-native/file-transfer/ngx';
-import { File } from '@ionic-native/file/ngx';
-import { FileOpener } from '@ionic-native/file-opener/ngx';
+import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
+import { File } from '@awesome-cordova-plugins/file/ngx';
+import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { ExtractoClienteComponent, ModalEnviarEnlaceCobroComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { SelectorClientesComponent } from './components/selector-clientes/selector-clientes.component';
-import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
 import { ListaRapportsComponent } from './components/lista-rapports/lista-rapports.component';
 import { RapportComponent } from './components/rapport/rapport.component';
@@ -55,8 +55,8 @@ import { ModalResumenVentasComponent } from './components/resumen-ventas/modal-r
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "./services/cache.service";
-import { FirebaseAnalytics } from '@ionic-native/firebase-analytics/ngx';
-import { AppVersion } from '@ionic-native/app-version/ngx';
+import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { IPublicClientApplication,
          PublicClientApplication,
          BrowserCacheLocation } from '@azure/msal-browser';
@@ -65,14 +65,18 @@ import { MsalModule,
          MSAL_INSTANCE } from '@azure/msal-angular';
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
-import { InAppBrowser } from '@ionic-native/in-app-browser/ngx';
-import { HTTP } from '@ionic-native/http/ngx';
+import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
+import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 
 
 registerLocaleData(localeEs);
 
-let storage = new Storage({}, {});
+let storage = new Storage();
+
+export function initializeStorage(storage: Storage) {
+  return () => storage.create();
+}
 
 let msalInstance: IPublicClientApplication | undefined = undefined;
 
@@ -163,6 +167,12 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         InAppBrowser,
         HTTP,
         FCM,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeStorage,
+            deps: [Storage],
+            multi: true
+        },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
