@@ -859,16 +859,31 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
                 numeroPedido = data.numero;
                 if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
+                  const descripcionPago = 'Pedido ' + numeroPedido + ' de Nueva Visión';
                   this.servicio.crearPago({
                     Empresa: this.clienteSeleccionado.empresa?.trim(),
                     Cliente: this.clienteSeleccionado.cliente.trim(),
                     Contacto: this.direccionSeleccionada.contacto?.toString().trim(),
                     Importe: this.redondea(this.totalPedido),
-                    Descripcion: 'Pedido ' + numeroPedido + ' de Nueva Visión',
-                    Correo: this.cobroTarjetaCorreo
+                    Descripcion: descripcionPago,
+                    Correo: this.cobroTarjetaCorreo,
+                    Movil: this.cobroTarjetaMovil
                   }).subscribe(
                       d => {
                           this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
+                          if (this.usuario.motorPagos !== 'NestoPago') {
+                            // Motor Paygold: enviar también por P2F
+                            this.servicio.mandarCobroTarjeta(
+                              this.cobroTarjetaCorreo,
+                              this.cobroTarjetaMovil,
+                              this.redondea(this.totalPedido),
+                              numeroPedido,
+                              this.clienteSeleccionado.cliente.trim()
+                            ).subscribe(
+                              () => {},
+                              err => console.log('Error enviando por Paygold:', err)
+                            );
+                          }
                       },
                       e => {
                           console.log(e);

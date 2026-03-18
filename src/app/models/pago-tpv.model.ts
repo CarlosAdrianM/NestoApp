@@ -5,6 +5,7 @@ export interface SolicitudPagoTPV {
     Importe: number;
     Descripcion: string;
     Correo: string;
+    Movil?: string;
     Efectos?: EfectoAPagar[];
 }
 

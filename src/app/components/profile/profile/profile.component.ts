@@ -227,6 +227,16 @@ private cargarParametros(): void {
             console.log('No se ha podido cargar el parámetro PermitirCrearPedidoConErroresValidacion');
         }
     );
+
+    this.parametros.leer('MotorPagos').subscribe(
+        data => {
+            self.usuario.motorPagos = data || 'Paygold';
+        },
+        error => {
+            self.usuario.motorPagos = 'Paygold';
+            console.log('No se ha podido cargar el parámetro MotorPagos');
+        }
+    );
 }
 
     async olvideMiContrasenna(correo: string) {

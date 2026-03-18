@@ -22,4 +22,5 @@ export class Usuario {
     public permitirVerClientesTodosLosVendedores: boolean = false;
     public permitirVerTodosLosVendedores: boolean = false;
     public permitirCrearPedidoConErroresValidacion: boolean = false;
+    public motorPagos: string = 'Paygold';
 }

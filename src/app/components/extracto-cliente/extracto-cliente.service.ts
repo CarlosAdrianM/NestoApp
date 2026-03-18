@@ -78,6 +78,12 @@ export class ExtractoClienteService {
     return this.http.post<RespuestaIniciarPago>(url, solicitud, { headers });
   }
 
+  public mandarReclamacionDeuda(reclamacion: ReclamacionDeuda): Observable<ReclamacionDeuda> {
+    const url = Configuracion.API_URL + '/ReclamacionDeuda';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<ReclamacionDeuda>(url, reclamacion, { headers });
+  }
+
   public async descargarModelo347(empresa: string, cliente: string, anno?: number): Promise<string> {
     const ejercicio = anno || new Date().getFullYear() - 1;
     const url = Configuracion.API_URL + "/ExtractosCliente/Modelo347Pdf" +

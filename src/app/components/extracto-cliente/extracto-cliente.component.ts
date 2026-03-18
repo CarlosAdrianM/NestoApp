@@ -4,6 +4,8 @@ import { ExtractoClienteService } from './extracto-cliente.service';
 import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
+import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
+import { Usuario } from 'src/app/models/Usuario';
 
 @Component({
   selector: 'app-extracto-cliente',
@@ -334,12 +336,15 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
   resultado: { TramitadoOK: boolean; Enlace: string };
   enviando: boolean = false;
 
+  private clienteCompleto: any;
+
   constructor(
     private modalCtrl: ModalController,
     private servicio: ExtractoClienteService,
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
-    private firebaseAnalytics: FirebaseAnalytics
+    private firebaseAnalytics: FirebaseAnalytics,
+    private usuario: Usuario
   ) {}
 
   async ngOnInit() {
@@ -355,23 +360,23 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
         this.cliente.contacto
       ).toPromise();
 
-      const clienteCompleto = data;
+      this.clienteCompleto = data;
 
       // Buscar móvil en los teléfonos
-      if (clienteCompleto.Telefono) {
-        const telefonos = clienteCompleto.Telefono.split("/");
+      if (this.clienteCompleto.Telefono) {
+        const telefonos = this.clienteCompleto.Telefono.split("/");
         this.movil = telefonos.find(x => x.startsWith("6") || x.startsWith("7") || x.startsWith("8")) || '';
       }
 
       // Buscar correo en personas de contacto
-      if (clienteCompleto.PersonasContacto && clienteCompleto.PersonasContacto.length > 0) {
-        const personaContactoFacturacion = clienteCompleto.PersonasContacto.find(x => x.FacturacionElectronica);
+      if (this.clienteCompleto.PersonasContacto && this.clienteCompleto.PersonasContacto.length > 0) {
+        const personaContactoFacturacion = this.clienteCompleto.PersonasContacto.find(x => x.FacturacionElectronica);
         if (personaContactoFacturacion && personaContactoFacturacion.CorreoElectronico) {
           this.correo = personaContactoFacturacion.CorreoElectronico;
         }
 
         if (!this.correo) {
-          const personaContactoCorreo = clienteCompleto.PersonasContacto.find(x => x.CorreoElectronico);
+          const personaContactoCorreo = this.clienteCompleto.PersonasContacto.find(x => x.CorreoElectronico);
           if (personaContactoCorreo && personaContactoCorreo.CorreoElectronico) {
             this.correo = personaContactoCorreo.CorreoElectronico;
           }
@@ -425,10 +430,10 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
       Documento: mov.documento?.trim(),
       Efecto: mov.efecto?.trim(),
       Contacto: mov.contacto?.toString().trim(),
-      Vendedor: mov.vendedor?.trim(),
-      FormaVenta: mov.formaVenta?.trim(),
-      Delegacion: mov.delegacion?.trim(),
-      TipoApunte: mov.tipoApunte?.toString()
+      Vendedor: mov.vendedor?.trim() || this.usuario.vendedor,
+      FormaVenta: mov.formaVenta?.trim() || this.usuario.formaVenta,
+      Delegacion: mov.delegacion?.trim() || this.usuario.delegacion,
+      TipoApunte: mov.tipo?.toString().trim()
     }));
 
     this.servicio.crearPago({
@@ -438,25 +443,55 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
       Importe: this.importe,
       Descripcion: this.concepto,
       Correo: this.correo,
+      Movil: this.movil,
       Efectos: efectos.length > 0 ? efectos : undefined
     }).subscribe(
       async (respuesta: RespuestaIniciarPago) => {
-        this.resultado = {
-          TramitadoOK: true,
-          Enlace: respuesta.UrlPaginaPago
-        };
-        this.enviando = false;
+        if (this.usuario.motorPagos === 'NestoPago') {
+          // Motor NestoPago: usar URL de la página propia
+          this.resultado = {
+            TramitadoOK: true,
+            Enlace: respuesta.UrlPaginaPago
+          };
+          this.enviando = false;
+        } else {
+          // Motor Paygold: enviar también por P2F para que el cliente reciba SMS/correo
+          this.servicio.mandarReclamacionDeuda({
+            Cliente: this.cliente.cliente?.trim(),
+            Correo: this.correo,
+            Movil: this.movil,
+            Importe: this.importe,
+            Asunto: this.concepto,
+            Nombre: this.clienteCompleto?.Nombre || '',
+            Direccion: this.clienteCompleto?.Direccion || '',
+            TextoSMS: 'Este es un mensaje de @COMERCIO@. Puede pagar el importe pendiente de @IMPORTE@ @MONEDA@ aquí: @URL@',
+            TramitadoOK: false,
+            Enlace: ''
+          }).subscribe(
+            (reclamacion: ReclamacionDeuda) => {
+              this.resultado = {
+                TramitadoOK: reclamacion.TramitadoOK,
+                Enlace: reclamacion.Enlace
+              };
+              this.enviando = false;
+            },
+            async error => {
+              this.enviando = false;
+              const mensaje = this.extraerMensajeError(error);
+              const alert = await this.alertCtrl.create({
+                header: 'Error',
+                message: 'Se creó el pago pero falló el envío por Paygold: ' + mensaje,
+                buttons: ['OK']
+              });
+              await alert.present();
+            }
+          );
+        }
         this.firebaseAnalytics.logEvent("enlace_cobro_enviado_ok", {cliente: this.cliente.cliente});
       },
       async error => {
         this.enviando = false;
-        // El interceptor envuelve errores en ProcessedApiError
-        const originalError = error?.originalError || error;
-        const mensaje = error?.apiError?.error?.message
-          || originalError?.error?.ExceptionMessage
-          || originalError?.error?.Message
-          || originalError?.message
-          || 'Error desconocido';
+        const mensaje = this.extraerMensajeError(error);
         const alert = await this.alertCtrl.create({
           header: 'Error',
           message: 'No se pudo crear el enlace de pago: ' + mensaje,
@@ -485,6 +520,15 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
         }
       }
     }
+  }
+
+  private extraerMensajeError(error: any): string {
+    const originalError = error?.originalError || error;
+    return error?.apiError?.error?.message
+      || originalError?.error?.ExceptionMessage
+      || originalError?.error?.Message
+      || originalError?.message
+      || 'Error desconocido';
   }
 
   cerrar(): void {
