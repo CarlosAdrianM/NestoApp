@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { SelectorPlazosPagoComponent } from './selector-plazos-pago.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('SelectorPlazosPagoComponent', () => {
   let component: SelectorPlazosPagoComponent;
@@ -12,10 +13,11 @@ describe('SelectorPlazosPagoComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SelectorPlazosPagoComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+    declarations: [SelectorPlazosPagoComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SelectorPlazosPagoComponent);
     component = fixture.componentInstance;

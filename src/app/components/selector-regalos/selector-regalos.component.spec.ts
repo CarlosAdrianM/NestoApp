@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { IonicModule, NavController } from '@ionic/angular';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 
 import { SelectorRegalosComponent, RegaloSeleccionado } from './selector-regalos.component';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { PrestashopService } from '../../services/prestashop.service';
 import { ProductoBonificable, ProductosBonificablesResponse } from '../../models/ganavisiones.model';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('SelectorRegalosComponent', () => {
   let component: SelectorRegalosComponent;
@@ -59,14 +60,16 @@ describe('SelectorRegalosComponent', () => {
     mockPrestashop.obtenerUrlImagen.and.returnValue(Promise.resolve('https://example.com/img.jpg'));
 
     await TestBed.configureTestingModule({
-      declarations: [SelectorRegalosComponent],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule],
-      providers: [
+    declarations: [SelectorRegalosComponent],
+    imports: [IonicModule.forRoot()],
+    providers: [
         { provide: PlantillaVentaService, useValue: mockService },
         { provide: NavController, useValue: mockNav },
-        { provide: PrestashopService, useValue: mockPrestashop }
-      ]
-    }).compileComponents();
+        { provide: PrestashopService, useValue: mockPrestashop },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SelectorRegalosComponent);
     component = fixture.componentInstance;

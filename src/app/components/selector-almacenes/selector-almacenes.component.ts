@@ -4,9 +4,10 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorAlmacenesService } from './selector-almacenes.service';
 
 @Component({
-  selector: 'selector-almacenes',
-  templateUrl: './selector-almacenes.component.html',
-  styleUrls: ['./selector-almacenes.component.scss'],
+    selector: 'selector-almacenes',
+    templateUrl: './selector-almacenes.component.html',
+    styleUrls: ['./selector-almacenes.component.scss'],
+    standalone: false
 })
 export class SelectorAlmacenesComponent extends SelectorBase implements OnInit {
   @Input() public cliente: any;

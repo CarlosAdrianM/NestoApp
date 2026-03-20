@@ -3,9 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { UltimasVentasProductoClienteService } from './ultimas-ventas-producto-cliente.service';
 
 @Component({
-  selector: 'app-ultimas-ventas-producto-cliente',
-  templateUrl: './ultimas-ventas-producto-cliente.component.html',
-  styleUrls: ['./ultimas-ventas-producto-cliente.component.scss'],
+    selector: 'app-ultimas-ventas-producto-cliente',
+    templateUrl: './ultimas-ventas-producto-cliente.component.html',
+    styleUrls: ['./ultimas-ventas-producto-cliente.component.scss'],
+    standalone: false
 })
 export class UltimasVentasProductoClienteComponent {
 

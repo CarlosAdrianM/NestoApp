@@ -5,8 +5,8 @@ import { BorradorMetadata } from 'src/app/models/borrador-plantilla-venta.model'
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 
 @Component({
-  selector: 'modal-lista-borradores',
-  template: `
+    selector: 'modal-lista-borradores',
+    template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>Borradores Guardados</ion-title>
@@ -58,7 +58,7 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
       </div>
     </ion-content>
   `,
-  styles: [`
+    styles: [`
     .fecha {
       color: var(--ion-color-medium);
       font-size: 0.8rem;
@@ -83,7 +83,8 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
       font-size: 64px;
       margin-bottom: 16px;
     }
-  `]
+  `],
+    standalone: false
 })
 export class ModalListaBorradoresComponent implements OnInit {
   @Input() borradores: BorradorMetadata[] = [];

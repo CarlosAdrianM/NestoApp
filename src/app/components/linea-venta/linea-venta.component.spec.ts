@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -9,6 +9,7 @@ import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
 
 import { LineaVentaComponent } from './linea-venta.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('LineaVentaComponent', () => {
   let component: LineaVentaComponent;
@@ -16,16 +17,18 @@ describe('LineaVentaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ LineaVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [LineaVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: CacheService, useValue: { setDefaultTTL: () => {}, loadFromObservable: (k, obs) => obs } },
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParams: { linea: { DescuentoLinea: 0, Cantidad: 0 }, cliente: '0', contacto: '0' } } } },
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(LineaVentaComponent);
     component = fixture.componentInstance;

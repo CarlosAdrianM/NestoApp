@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -8,6 +8,7 @@ import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
 
 import { SelectorProductosComponent } from './selector-productos.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('SelectorProductosComponent', () => {
   let component: SelectorProductosComponent;
@@ -15,15 +16,17 @@ describe('SelectorProductosComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SelectorProductosComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [SelectorProductosComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: CacheService, useValue: { setDefaultTTL: () => {}, loadFromObservable: (k, obs) => obs } },
-        { provide: Keyboard, useValue: { show: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
+        { provide: Keyboard, useValue: { show: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SelectorProductosComponent);
     component = fixture.componentInstance;

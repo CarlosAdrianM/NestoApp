@@ -8,9 +8,10 @@ import { ComisionesHelper } from './comisiones.helper';
 import { esEtiquetaAcumulada } from './comisiones.interfaces';
 
 @Component({
-  selector: 'app-comisiones',
-  templateUrl: './comisiones.component.html',
-  styleUrls: ['./comisiones.component.scss'],
+    selector: 'app-comisiones',
+    templateUrl: './comisiones.component.html',
+    styleUrls: ['./comisiones.component.scss'],
+    standalone: false
 })
 export class ComisionesComponent implements OnInit {
   public resumen: ResumenComisionesMes;

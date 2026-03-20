@@ -3,6 +3,7 @@ import { ModalController, NavController, NavParams } from '@ionic/angular';
 
 @Component({
     templateUrl: 'clientes-mismo-telefono.html',
+    standalone: false
 })
 export class ClientesMismoTelefonoComponent {
 

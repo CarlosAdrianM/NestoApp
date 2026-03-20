@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,6 +10,7 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { CacheService } from '../../services/cache.service';
 
 import { ListaRapportsComponent } from './lista-rapports.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ListaRapportsComponent', () => {
   let component: ListaRapportsComponent;
@@ -17,17 +18,19 @@ describe('ListaRapportsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ListaRapportsComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [ListaRapportsComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: CacheService, useValue: { setDefaultTTL: () => {}, loadFromObservable: (k, obs) => obs } },
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: Geolocation, useValue: {} },
         { provide: NativeGeocoder, useValue: {} },
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(ListaRapportsComponent);
     component = fixture.componentInstance;

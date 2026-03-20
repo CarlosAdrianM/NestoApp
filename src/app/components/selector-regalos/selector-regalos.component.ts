@@ -10,9 +10,10 @@ export interface RegaloSeleccionado {
 }
 
 @Component({
-  selector: 'selector-regalos',
-  templateUrl: './selector-regalos.component.html',
-  styleUrls: ['./selector-regalos.component.scss']
+    selector: 'selector-regalos',
+    templateUrl: './selector-regalos.component.html',
+    styleUrls: ['./selector-regalos.component.scss'],
+    standalone: false
 })
 export class SelectorRegalosComponent {
 

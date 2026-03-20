@@ -4,10 +4,11 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorVendedoresService } from './selector-vendedores.service';
 
 @Component({
-  selector: 'selector-vendedores',
-  templateUrl: './selector-vendedores.component.html',
-  styleUrls: ['./selector-vendedores.component.scss'],
-  outputs: ['seleccionar'],
+    selector: 'selector-vendedores',
+    templateUrl: './selector-vendedores.component.html',
+    styleUrls: ['./selector-vendedores.component.scss'],
+    outputs: ['seleccionar'],
+    standalone: false
 })
 @Injectable()
 export class SelectorVendedoresComponent extends SelectorBase implements OnInit {

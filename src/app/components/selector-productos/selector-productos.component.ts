@@ -5,9 +5,10 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorProductosService } from './selector-productos.service';
 
 @Component({
-  selector: 'selector-productos',
-  templateUrl: './selector-productos.component.html',
-  styleUrls: ['./selector-productos.component.scss'],
+    selector: 'selector-productos',
+    templateUrl: './selector-productos.component.html',
+    styleUrls: ['./selector-productos.component.scss'],
+    standalone: false
 })
 export class SelectorProductosComponent extends SelectorBase {
   @Output() seleccionar = new EventEmitter();

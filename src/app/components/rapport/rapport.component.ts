@@ -17,9 +17,10 @@ import { InteractionStatus } from '@azure/msal-browser';
 */
 
 @Component({
-  selector: 'app-rapport',
-  templateUrl: './rapport.component.html',
-  styleUrls: ['./rapport.component.scss'],
+    selector: 'app-rapport',
+    templateUrl: './rapport.component.html',
+    styleUrls: ['./rapport.component.scss'],
+    standalone: false
 })
 export class RapportComponent {
   public rapport: any;

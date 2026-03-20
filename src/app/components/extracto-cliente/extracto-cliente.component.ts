@@ -8,9 +8,10 @@ import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { Usuario } from 'src/app/models/Usuario';
 
 @Component({
-  selector: 'app-extracto-cliente',
-  templateUrl: './extracto-cliente.component.html',
-  styleUrls: ['./extracto-cliente.component.scss'],
+    selector: 'app-extracto-cliente',
+    templateUrl: './extracto-cliente.component.html',
+    styleUrls: ['./extracto-cliente.component.scss'],
+    standalone: false
 })
 export class ExtractoClienteComponent {
 
@@ -230,8 +231,8 @@ export class ExtractoClienteComponent {
 }
 
 @Component({
-  selector: 'modal-enviar-enlace-cobro',
-  template: `
+    selector: 'modal-enviar-enlace-cobro',
+    template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>Enviar Enlace de Cobro</ion-title>
@@ -319,12 +320,13 @@ export class ExtractoClienteComponent {
       </ion-toolbar>
     </ion-footer>
   `,
-  styles: [`
+    styles: [`
     ion-card-content p {
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-  `]
+  `],
+    standalone: false
 })
 export class ModalEnviarEnlaceCobroComponent implements OnInit {
   cliente: any;

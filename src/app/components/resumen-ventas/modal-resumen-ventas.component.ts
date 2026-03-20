@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 
 @Component({
-  selector: 'modal-resumen-ventas',
-  template: `
+    selector: 'modal-resumen-ventas',
+    template: `
     <ion-header>
       <ion-toolbar>
         <ion-title>Resumen de Ventas</ion-title>
@@ -21,7 +21,8 @@ import { ModalController } from '@ionic/angular';
         [contacto]="contacto">
       </app-resumen-ventas>
     </ion-content>
-  `
+  `,
+    standalone: false
 })
 export class ModalResumenVentasComponent {
   @Input() cliente: string = '';

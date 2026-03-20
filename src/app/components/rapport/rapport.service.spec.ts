@@ -1,23 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Usuario } from '../../models/Usuario';
 import { AuthService } from '../../auth.service';
 import { AlertsService } from '../../alerts.service';
 
 import { RapportService } from './rapport.service';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('RapportService', () => {
   let service: RapportService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
+    imports: [],
+    providers: [
         Usuario,
         { provide: AuthService, useValue: {} },
-        AlertsService
-      ]
-    });
+        AlertsService,
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     service = TestBed.inject(RapportService);
   });
 

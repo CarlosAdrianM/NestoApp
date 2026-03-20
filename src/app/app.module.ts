@@ -10,7 +10,7 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { Usuario } from './models/Usuario';
 import { FCM } from '@awesome-cordova-plugins/fcm/ngx';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { Storage } from '@ionic/storage-angular'
@@ -96,8 +96,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 }
 
 
-@NgModule({
-    declarations: [
+@NgModule({ declarations: [
         AppComponent,
         ProfileComponent,
         ProductoComponent,
@@ -131,18 +130,15 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         SelectorRegalosComponent,
         ModalResumenVentasComponent
     ],
-    imports: [
-        BrowserModule,
+    bootstrap: [AppComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA], imports: [BrowserModule,
         IonicModule.forRoot({ innerHTMLTemplatesEnabled: true }),
         AppRoutingModule,
-        HttpClientModule,
         IonicStorageModule.forRoot(),
         CommonModule,
         FormsModule,
         CacheModule.forRoot({ keyPrefix: 'NestoApp' }),
-        MsalModule
-    ],
-    providers: [
+        MsalModule], providers: [
         StatusBar,
         SplashScreen,
         { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
@@ -177,9 +173,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
             multi: true
-        }
-    ],
-    bootstrap: [AppComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
-})
+        },
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class AppModule {}

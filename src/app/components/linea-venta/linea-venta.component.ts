@@ -7,9 +7,10 @@ import { LineaVenta } from './linea-venta';
 import { LineaVentaService } from './linea-venta.service';
 
 @Component({
-  selector: 'app-linea-venta',
-  templateUrl: './linea-venta.component.html',
-  styleUrls: ['./linea-venta.component.scss'],
+    selector: 'app-linea-venta',
+    templateUrl: './linea-venta.component.html',
+    styleUrls: ['./linea-venta.component.scss'],
+    standalone: false
 })
 export class LineaVentaComponent implements OnInit {
     

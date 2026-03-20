@@ -7,9 +7,10 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
 
 @Component({
-  selector: 'selector-plantilla-venta',
-  templateUrl: './selector-plantilla-venta.component.html',
-  styleUrls: ['./selector-plantilla-venta.component.scss'],
+    selector: 'selector-plantilla-venta',
+    templateUrl: './selector-plantilla-venta.component.html',
+    styleUrls: ['./selector-plantilla-venta.component.scss'],
+    standalone: false
 })
 export class SelectorPlantillaVentaComponent extends SelectorBase {
 

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -8,6 +8,7 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { Storage } from '@ionic/storage-angular';
 
 import { PlantillaVentaComponent } from './plantilla-venta.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PlantillaVentaComponent', () => {
   let component: PlantillaVentaComponent;
@@ -15,15 +16,17 @@ describe('PlantillaVentaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ PlantillaVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [PlantillaVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } },
-        { provide: Storage, useValue: {} }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PlantillaVentaComponent);
     component = fixture.componentInstance;
@@ -40,15 +43,17 @@ describe('Portes en PlantillaVenta (#94)', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ PlantillaVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [PlantillaVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } },
-        { provide: Storage, useValue: {} }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PlantillaVentaComponent);
     component = fixture.componentInstance;

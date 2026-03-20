@@ -7,9 +7,10 @@ import { Events } from 'src/app/services/events.service';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'selector-clientes',
-  templateUrl: './selector-clientes.component.html',
-  styleUrls: ['./selector-clientes.component.scss'],
+    selector: 'selector-clientes',
+    templateUrl: './selector-clientes.component.html',
+    styleUrls: ['./selector-clientes.component.scss'],
+    standalone: false
 })
 export class SelectorClientesComponent extends SelectorBase {
 

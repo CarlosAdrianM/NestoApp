@@ -6,9 +6,10 @@ import { Events } from 'src/app/services/events.service';
 import { SelectorPlantillaVentaDetalleService } from './selector-plantilla-venta-detalle.service';
 
 @Component({
-  selector: 'selector-plantilla-venta-detalle',
-  templateUrl: './selector-plantilla-venta-detalle.component.html',
-  styleUrls: ['./selector-plantilla-venta-detalle.component.scss'],
+    selector: 'selector-plantilla-venta-detalle',
+    templateUrl: './selector-plantilla-venta-detalle.component.html',
+    styleUrls: ['./selector-plantilla-venta-detalle.component.scss'],
+    standalone: false
 })
 export class SelectorPlantillaVentaDetalleComponent {
 

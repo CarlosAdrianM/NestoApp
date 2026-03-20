@@ -6,9 +6,10 @@ import { ProductoService } from './producto.service';
 
 
 @Component({
-  selector: 'producto',
-  templateUrl: './producto.component.html',
-  styleUrls: ['./producto.component.scss'],
+    selector: 'producto',
+    templateUrl: './producto.component.html',
+    styleUrls: ['./producto.component.scss'],
+    standalone: false
 })
 export class ProductoComponent implements OnInit {
   public productoActual: string = "39813";

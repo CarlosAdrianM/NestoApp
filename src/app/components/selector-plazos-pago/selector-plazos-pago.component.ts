@@ -7,9 +7,10 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @Component({
-  selector: 'selector-plazos-pago',
-  templateUrl: './selector-plazos-pago.component.html',
-  styleUrls: ['./selector-plazos-pago.component.scss'],
+    selector: 'selector-plazos-pago',
+    templateUrl: './selector-plazos-pago.component.html',
+    styleUrls: ['./selector-plazos-pago.component.scss'],
+    standalone: false
 })
 export class SelectorPlazosPagoComponent extends SelectorBase implements OnInit, OnChanges {
   @Input() public cliente: any;

@@ -4,10 +4,11 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorDireccionesEntregaService } from './selector-direcciones-entrega.service';
 
 @Component({
-  selector: 'selector-direcciones-entrega',
-  templateUrl: './selector-direcciones-entrega.component.html',
-  styleUrls: ['./selector-direcciones-entrega.component.scss'],
-  inputs: ['cliente', 'seleccionado', 'totalPedido', 'forzarEstado'],
+    selector: 'selector-direcciones-entrega',
+    templateUrl: './selector-direcciones-entrega.component.html',
+    styleUrls: ['./selector-direcciones-entrega.component.scss'],
+    inputs: ['cliente', 'seleccionado', 'totalPedido', 'forzarEstado'],
+    standalone: false
 })
 export class SelectorDireccionesEntregaComponent extends SelectorBase {
   private servicio: SelectorDireccionesEntregaService;

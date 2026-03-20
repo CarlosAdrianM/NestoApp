@@ -11,9 +11,10 @@ import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 
 @Component({
-  selector: 'app-cliente',
-  templateUrl: './cliente.component.html',
-  styleUrls: ['./cliente.component.scss'],
+    selector: 'app-cliente',
+    templateUrl: './cliente.component.html',
+    styleUrls: ['./cliente.component.scss'],
+    standalone: false
 })
 export class ClienteComponent {
 

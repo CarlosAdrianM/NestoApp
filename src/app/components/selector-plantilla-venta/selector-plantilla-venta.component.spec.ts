@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -9,6 +9,7 @@ import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 
 import { SelectorPlantillaVentaComponent } from './selector-plantilla-venta.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('SelectorPlantillaVentaComponent', () => {
   let component: SelectorPlantillaVentaComponent;
@@ -16,16 +17,18 @@ describe('SelectorPlantillaVentaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SelectorPlantillaVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [SelectorPlantillaVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: CacheService, useValue: { setDefaultTTL: () => {}, loadFromObservable: (k, obs) => obs } },
-        { provide: Keyboard, useValue: { show: () => {} } },
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
+        { provide: Keyboard, useValue: { show: () => { } } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(SelectorPlantillaVentaComponent);
     component = fixture.componentInstance;

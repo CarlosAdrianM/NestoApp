@@ -3,9 +3,10 @@ import { AlertsService } from '../alerts.service';
 import { Alert } from '../alert';
 
 @Component({
-  selector: 'app-alerts',
-  templateUrl: './alerts.component.html',
-  styleUrls: ['./alerts.component.scss']
+    selector: 'app-alerts',
+    templateUrl: './alerts.component.html',
+    styleUrls: ['./alerts.component.scss'],
+    standalone: false
 })
 export class AlertsComponent implements OnInit {
 

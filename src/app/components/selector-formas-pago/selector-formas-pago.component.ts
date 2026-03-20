@@ -5,9 +5,10 @@ import { SelectorFormasPagoService } from './selector-formas-pago.service';
 import { FormaPago } from 'src/app/models/forma-pago.model';
 
 @Component({
-  selector: 'selector-formas-pago',
-  templateUrl: './selector-formas-pago.component.html',
-  styleUrls: ['./selector-formas-pago.component.scss'],
+    selector: 'selector-formas-pago',
+    templateUrl: './selector-formas-pago.component.html',
+    styleUrls: ['./selector-formas-pago.component.scss'],
+    standalone: false
 })
 export class SelectorFormasPagoComponent extends SelectorBase implements OnInit {
 

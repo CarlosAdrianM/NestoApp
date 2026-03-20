@@ -19,9 +19,10 @@ import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaReg
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 
 @Component({
-  selector: 'app-plantilla-venta',
-  templateUrl: './plantilla-venta.component.html',
-  styleUrls: ['./plantilla-venta.component.scss'],
+    selector: 'app-plantilla-venta',
+    templateUrl: './plantilla-venta.component.html',
+    styleUrls: ['./plantilla-venta.component.scss'],
+    standalone: false
 })
 export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit, AfterViewInit  {
   private ultimoClienteAbierto: string = "";

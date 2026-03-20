@@ -1,24 +1,27 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Usuario } from '../models/Usuario';
 import { ErrorHandlerService } from './error-handler.service';
 import { AlertController, ToastController } from '@ionic/angular';
 
 import { Parametros } from './parametros.service';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('Parametros', () => {
   let service: Parametros;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [
+    imports: [],
+    providers: [
         Usuario,
         ErrorHandlerService,
         { provide: AlertController, useValue: {} },
-        { provide: ToastController, useValue: {} }
-      ]
-    });
+        { provide: ToastController, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+});
     service = TestBed.inject(Parametros);
   });
 

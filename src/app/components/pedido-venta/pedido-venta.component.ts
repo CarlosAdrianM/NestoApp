@@ -12,9 +12,10 @@ import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 
 @Component({
-  selector: 'app-pedido-venta',
-  templateUrl: './pedido-venta.component.html',
-  styleUrls: ['./pedido-venta.component.scss'],
+    selector: 'app-pedido-venta',
+    templateUrl: './pedido-venta.component.html',
+    styleUrls: ['./pedido-venta.component.scss'],
+    standalone: false
 })
 export class PedidoVentaComponent  {
 

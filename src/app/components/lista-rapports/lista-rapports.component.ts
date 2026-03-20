@@ -12,9 +12,10 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 
 
 @Component({
-  selector: 'app-lista-rapports',
-  templateUrl: './lista-rapports.component.html',
-  styleUrls: ['./lista-rapports.component.scss'],
+    selector: 'app-lista-rapports',
+    templateUrl: './lista-rapports.component.html',
+    styleUrls: ['./lista-rapports.component.scss'],
+    standalone: false
 })
 export class ListaRapportsComponent extends SelectorBase {
   @ViewChild('clienteInput') myClienteInput;

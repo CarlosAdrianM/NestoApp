@@ -6,9 +6,10 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { Usuario } from 'src/app/models/Usuario';
 
 @Component({
-  selector: 'app-resumen-ventas',
-  templateUrl: './resumen-ventas.component.html',
-  styleUrls: ['./resumen-ventas.component.scss']
+    selector: 'app-resumen-ventas',
+    templateUrl: './resumen-ventas.component.html',
+    styleUrls: ['./resumen-ventas.component.scss'],
+    standalone: false
 })
 export class ResumenVentasComponent implements OnInit {
   @Input() cliente: string = '';

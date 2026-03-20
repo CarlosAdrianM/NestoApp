@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -8,6 +8,7 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 
 import { PedidoVentaComponent } from './pedido-venta.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PedidoVentaComponent', () => {
   let component: PedidoVentaComponent;
@@ -15,14 +16,16 @@ describe('PedidoVentaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ PedidoVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [PedidoVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(PedidoVentaComponent);
     component = fixture.componentInstance;

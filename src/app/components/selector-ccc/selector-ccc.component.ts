@@ -5,9 +5,10 @@ import { CCC, CCC_SIN_CCC } from 'src/app/models/ccc.model';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Component({
-  selector: 'selector-ccc',
-  templateUrl: './selector-ccc.component.html',
-  styleUrls: ['./selector-ccc.component.scss'],
+    selector: 'selector-ccc',
+    templateUrl: './selector-ccc.component.html',
+    styleUrls: ['./selector-ccc.component.scss'],
+    standalone: false
 })
 export class SelectorCCCComponent implements OnInit, OnChanges {
 

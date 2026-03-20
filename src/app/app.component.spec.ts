@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { Platform, ToastController } from '@ionic/angular';
@@ -11,6 +11,7 @@ import { Usuario } from './models/Usuario';
 import { CacheService } from './services/cache.service';
 
 import { AppComponent } from './app.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('AppComponent', () => {
 
@@ -26,19 +27,21 @@ describe('AppComponent', () => {
     platformSpy = jasmine.createSpyObj('Platform', { ready: platformReadySpy, is: false });
 
     TestBed.configureTestingModule({
-      declarations: [AppComponent],
-      imports: [HttpClientTestingModule, RouterTestingModule],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      providers: [
+    declarations: [AppComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [RouterTestingModule],
+    providers: [
         { provide: StatusBar, useValue: statusBarSpy },
         { provide: SplashScreen, useValue: splashScreenSpy },
         { provide: Platform, useValue: platformSpy },
         { provide: ToastController, useValue: jasmine.createSpyObj('ToastController', ['create']) },
         { provide: FCM, useValue: jasmine.createSpyObj('FCM', ['getToken', 'onTokenRefresh', 'onNotification']) },
         Usuario,
-        { provide: CacheService, useValue: { setDefaultTTL: () => {} } },
-      ],
-    }).compileComponents();
+        { provide: CacheService, useValue: { setDefaultTTL: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting(),
+    ]
+}).compileComponents();
   }));
 
   it('should create the app', () => {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,6 +10,7 @@ import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { MsalService } from '@azure/msal-angular';
 
 import { ProfileComponent } from './profile.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
@@ -17,17 +18,19 @@ describe('ProfileComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProfileComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [ProfileComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
         { provide: Storage, useValue: {} },
-        { provide: FirebaseAnalytics, useValue: { setUserId: () => {}, logEvent: () => {} } },
+        { provide: FirebaseAnalytics, useValue: { setUserId: () => { }, logEvent: () => { } } },
         { provide: AppVersion, useValue: { getVersionNumber: () => Promise.resolve('0.0.0') } },
-        { provide: MsalService, useValue: { instance: { getAllAccounts: () => [] } } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: MsalService, useValue: { instance: { getAllAccounts: () => [] } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;

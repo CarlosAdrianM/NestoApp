@@ -5,9 +5,10 @@ import { NavController, AlertController, LoadingController } from '@ionic/angula
 import { ComisionesDetalleService } from './comisiones-detalle.service';
 
 @Component({
-  selector: 'comisiones-detalle',
-  templateUrl: './comisiones-detalle.component.html',
-  styleUrls: ['./comisiones-detalle.component.scss'],
+    selector: 'comisiones-detalle',
+    templateUrl: './comisiones-detalle.component.html',
+    styleUrls: ['./comisiones-detalle.component.scss'],
+    standalone: false
 })
 export class ComisionesDetalleComponent {
   public listaDetalleComision: any;

@@ -11,9 +11,10 @@ import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { ProfileService } from './profile.service';
 
 @Component({
-  selector: 'app-profile',
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss'],
+    selector: 'app-profile',
+    templateUrl: './profile.component.html',
+    styleUrls: ['./profile.component.scss'],
+    standalone: false
 })
 export class ProfileComponent {
 

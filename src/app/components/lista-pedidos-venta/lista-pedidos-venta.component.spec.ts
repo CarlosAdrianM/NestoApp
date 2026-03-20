@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,6 +10,7 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { Usuario } from 'src/app/models/Usuario';
 
 import { ListaPedidosVentaComponent } from './lista-pedidos-venta.component';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ListaPedidosVentaComponent', () => {
   let component: ListaPedidosVentaComponent;
@@ -17,17 +18,19 @@ describe('ListaPedidosVentaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ListaPedidosVentaComponent ],
-      imports: [IonicModule.forRoot(), HttpClientTestingModule, RouterTestingModule],
-      providers: [
+    declarations: [ListaPedidosVentaComponent],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    imports: [IonicModule.forRoot(), RouterTestingModule],
+    providers: [
         Usuario,
         { provide: FileOpener, useValue: {} },
-        { provide: FileTransfer, useValue: { create: () => {} } },
+        { provide: FileTransfer, useValue: { create: () => { } } },
         { provide: File, useValue: { dataDirectory: '' } },
-        { provide: FirebaseAnalytics, useValue: { logEvent: () => {} } }
-      ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    }).compileComponents();
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+    ]
+}).compileComponents();
 
     fixture = TestBed.createComponent(ListaPedidosVentaComponent);
     component = fixture.componentInstance;

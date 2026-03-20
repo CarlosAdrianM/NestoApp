@@ -6,9 +6,10 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaPedidosVentaService } from './lista-pedidos-venta.service';
 
 @Component({
-  selector: 'app-lista-pedidos-venta',
-  templateUrl: './lista-pedidos-venta.component.html',
-  styleUrls: ['./lista-pedidos-venta.component.scss'],
+    selector: 'app-lista-pedidos-venta',
+    templateUrl: './lista-pedidos-venta.component.html',
+    styleUrls: ['./lista-pedidos-venta.component.scss'],
+    standalone: false
 })
 export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
     // private listaPedidos: any[];
