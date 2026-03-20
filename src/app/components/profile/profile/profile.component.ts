@@ -9,6 +9,7 @@ import { Storage } from '@ionic/storage-angular';
 import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { ProfileService } from './profile.service';
+import { AppComponent } from 'src/app/app.component';
 
 @Component({
     selector: 'app-profile',
@@ -46,6 +47,7 @@ export class ProfileComponent {
       private appVersion: AppVersion,
       private servicio: ProfileService,
       private nav: NavController,
+      private appComponent: AppComponent,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
@@ -74,6 +76,7 @@ export class ProfileComponent {
                 this.firebaseAnalytics.setUserId(this.usuario.nombre);
                 this.cargarParametros();
                 this.cargarSeEstaVendiendo(null);
+                this.appComponent.registrarDispositivoPush();
             }
         }).catch(error => {
             console.log(error);
@@ -117,6 +120,7 @@ export class ProfileComponent {
             let datos: any = data;
             this.authSuccess(datos.access_token);
             this.cargarParametros();
+            this.appComponent.registrarDispositivoPush();
         },
         async err => {
             this.error = 'Se ha producido un error al intentar iniciar sesión',
@@ -292,13 +296,13 @@ private cargarParametros(): void {
                 this.mostrarOlvideMiContrasenna = false;
             },
             async () => {
-                this.loadingCtrl.dismiss();
+                await loading.dismiss();
                 this.error = 'No se ha podido conectar con el servidor para recuperar la contraseña';
             },
             async () => {
-                this.loadingCtrl.dismiss();
+                await loading.dismiss();
             }
-        );        
+        );
     }
 
     mostrarOcultarOlvideContrasenna() {

@@ -21,6 +21,7 @@ import { Router } from '@angular/router';
 export class AppComponent {
   rootPage : any;
   pages: Array<{ title: string, url: string, icon: string }>;
+  public tokenFCM: string = null;
   constructor(
     private platform: Platform,
     private splashScreen: SplashScreen,
@@ -67,10 +68,10 @@ export class AppComponent {
       return;
     }
 
-    // Obtener token FCM y registrarlo en el backend
+    // Guardar el token FCM para registrarlo después del login
     this.fcm.getToken().then(token => {
       console.log('FCM token obtenido:', token);
-      this.registrarTokenEnBackend(token);
+      this.tokenFCM = token;
     }).catch(err => {
       console.log('Error al obtener token FCM:', err);
     });
@@ -78,7 +79,11 @@ export class AppComponent {
     // Escuchar renovación de token
     this.fcm.onTokenRefresh().subscribe(token => {
       console.log('FCM token renovado:', token);
-      this.registrarTokenEnBackend(token);
+      this.tokenFCM = token;
+      // Si ya hay usuario logueado, registrar inmediatamente
+      if (this.usuario && this.usuario.nombre) {
+        this.registrarTokenEnBackend(token);
+      }
     });
 
     // Escuchar notificaciones
@@ -107,15 +112,26 @@ export class AppComponent {
     });
   }
 
+  public registrarDispositivoPush() {
+    if (this.tokenFCM) {
+      this.registrarTokenEnBackend(this.tokenFCM);
+    }
+  }
+
   private registrarTokenEnBackend(token: string) {
     const url = Configuracion.API_URL + '/Notificaciones/RegistrarDispositivo';
-    this.http.post(url, {
-      token: token,
-      plataforma: 'android',
-      aplicacion: 'NestoApp'
-    }).subscribe(
-      () => console.log('Token FCM registrado en backend'),
-      (err) => console.log('No se pudo registrar el token FCM (endpoint aún no disponible):', err.status)
+    const body = {
+      Token: token,
+      Plataforma: 'android',
+      Aplicacion: 'NestoApp'
+    };
+    console.log('Registrando dispositivo FCM:', JSON.stringify(body));
+    this.http.post(url, body).subscribe(
+      (response) => console.log('Token FCM registrado en backend. Respuesta:', JSON.stringify(response)),
+      (err) => {
+        console.error('Error registrando token FCM:', err.status, err.statusText);
+        console.error('Error body:', JSON.stringify(err.error));
+      }
     );
   }
 }

@@ -78,35 +78,41 @@
 
   <div *ngIf="(usuario && usuario.nombre)">
       <div class="ion-padding">
-          <h4 *ngIf="listaSeEstaVendiendo && listaSeEstaVendiendo.length > 0">Hoy se están vendiendo bien estos productos...</h4>
+          <h1 class="bienvenida">Hola, {{ usuario.nombre }}</h1>
+
+          <h4 class="seccion-titulo" *ngIf="listaSeEstaVendiendo && listaSeEstaVendiendo.length > 0">Hoy se están vendiendo bien...</h4>
           <swiper-container pagination="true" autoplay-delay="2000" speed="400" initial-slide="1">
             <swiper-slide *ngFor="let producto of listaSeEstaVendiendo">
-                <ion-card>
+                <ion-card class="producto-card">
                     <ion-img [src]="producto.RutaImagen" (click)="abrirEnlace(producto.RutaEnlace)"></ion-img>
                     <ion-card-header (click)="abrirFichaProducto(producto)">
                         <ion-card-subtitle>Ref. {{producto.Producto}}</ion-card-subtitle>
                         <ion-card-title>{{producto.Nombre}}</ion-card-title>
                     </ion-card-header>
                     <ion-card-content>
-                        Este producto se está vendiendo bien en las últimas 24 horas. 
-                        Para ver qué clientes lo han comprado alguna haz clic en el nombre del producto y después en <b>VER CLIENTES CON COMPRA</b>
+                        Toca el nombre para ver clientes con compra.
                     </ion-card-content>
-                </ion-card>        
+                </ion-card>
             </swiper-slide>
           </swiper-container>
-          <h1>Hola, {{ usuario.nombre }}</h1>
-          <ion-item>Enlace de cobro por tarjeta mejorado</ion-item>
-          <ion-item><strong>Portes incluidos en el total del pedido</strong></ion-item>
-          <ion-item>Cálculo de portes en plantilla de venta</ion-item>
-          <ion-item>Descarga de PDF con imágenes</ion-item>
-          <ion-item>Eliminado mensaje de Ganavisiones en plantilla venta</ion-item>
-          <ion-item>Campo "Su Pedido / P.O." en plantilla</ion-item>
-          <ion-item>Estadísticas de venta cliente con detalle de producto</ion-item>
-          
-          <p></p>
+
+          <h4 class="seccion-titulo">Novedades</h4>
+          <ion-list class="changelog-list">
+            <ion-item>Enlace de cobro por tarjeta mejorado</ion-item>
+            <ion-item><strong>Portes incluidos en el total del pedido</strong></ion-item>
+            <ion-item>Cálculo de portes en plantilla de venta</ion-item>
+            <ion-item>Descarga de PDF con imágenes</ion-item>
+            <ion-item>Eliminado mensaje de Ganavisiones en plantilla venta</ion-item>
+            <ion-item>Campo "Su Pedido / P.O." en plantilla</ion-item>
+            <ion-item>Estadísticas de venta cliente con detalle de producto</ion-item>
+          </ion-list>
+
           <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>
-          <h4>Versión actualización {{ numeroVersionActualizacion }}</h4>
-          <h4>Versión binarios {{ numeroVersionBinarios }}</h4>
+
+          <div class="version-info">
+            <p>Versión actualización {{ numeroVersionActualizacion }}</p>
+            <p>Versión binarios {{ numeroVersionBinarios }}</p>
+          </div>
       </div>
   </div>
 </ion-content>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
 import { AlertController, LoadingController } from '@ionic/angular';
@@ -11,12 +11,13 @@ import { ProductoService } from './producto.service';
     styleUrls: ['./producto.component.scss'],
     standalone: false
 })
-export class ProductoComponent implements OnInit {
+export class ProductoComponent implements OnInit, OnDestroy {
   public productoActual: string = "39813";
   public producto: any;
   public clientes: any;
   public videos: any[] = [];
   public vistaSeleccionada: string = "info";
+  private loadingActivo: HTMLIonLoadingElement | null = null;
 
 
   constructor(private servicio: ProductoService, 
@@ -34,10 +35,18 @@ export class ProductoComponent implements OnInit {
     this.cargar();
   };
 
+  ngOnDestroy() {
+    if (this.loadingActivo) {
+      this.loadingActivo.dismiss().catch(() => {});
+      this.loadingActivo = null;
+    }
+  }
+
   async cargar() {
-    let loading: any = await this.loadingCtrl.create({
+    let loading = await this.loadingCtrl.create({
       message: 'Cargando Producto...',
-    })
+    });
+    this.loadingActivo = loading;
 
     await loading.present();
     this.servicio.cargar("1", this.productoActual, true)
@@ -58,17 +67,20 @@ export class ProductoComponent implements OnInit {
         },
         async error => {
           await loading.dismiss();
+          this.loadingActivo = null;
         },
         async () => {
           await loading.dismiss();
+          this.loadingActivo = null;
         }
       );
   }
 
   async cargarClientes() {
-    let loading: any = await this.loadingCtrl.create({
+    let loading = await this.loadingCtrl.create({
       message: 'Cargando Clientes...',
     });
+    this.loadingActivo = loading;
     await loading.present();
     this.servicio.cargarClientes("1", this.productoActual)
       .subscribe(
@@ -87,9 +99,11 @@ export class ProductoComponent implements OnInit {
         },
         async error => {
           await loading.dismiss();
+          this.loadingActivo = null;
         },
         async () => {
           await loading.dismiss();
+          this.loadingActivo = null;
         }
       );
   }

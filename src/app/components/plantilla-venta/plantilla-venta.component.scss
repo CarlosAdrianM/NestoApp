@@ -7,15 +7,17 @@ selector-almacenes {
 }
 
 .swiper-slide {
-    display: block;    
+    display: block;
+}
+
+.slide-content {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    width: 100%;
 }
 
 .swiper-zoom-container {
     text-align:left !important;
-}
-
-.conscroll {
-    overflow-y: scroll !important;
 }
 
 .ion-text-right {

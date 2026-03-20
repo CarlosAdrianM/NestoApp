@@ -331,6 +331,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public plazosPago: any;
   public esPresupuesto: boolean = false;
   public suPedido: string = '';
+  public recogerProducto: boolean = false;
   public respuestaGlovo: any;
   public sePuedeServirPorGlovo: boolean = false;
   public sePodriaServirConGlovoEnPrepago: boolean = false;
@@ -465,6 +466,36 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   // Getter para usar en template (el operador ?? no está soportado en templates Angular)
   get servirJuntoParaRegalos(): boolean {
     return this.direccionSeleccionada ? this.direccionSeleccionada.servirJunto : true;
+  }
+
+  public async onServirJuntoChange(event: any): Promise<void> {
+    const nuevoValor = event.detail.checked;
+
+    // Si se está desmarcando "Servir Junto", validar con el servidor
+    if (!nuevoValor) {
+      const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
+        ProductoId: r.producto.ProductoId,
+        Cantidad: r.cantidad
+      }));
+
+      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad).subscribe(
+        async (response) => {
+          if (!response.PuedeDesmarcar) {
+            // No se puede desmarcar: revertir el toggle y mostrar mensaje
+            this.direccionSeleccionada.servirJunto = true;
+            const alert = await this.alertCtrl.create({
+              header: 'No se puede desmarcar',
+              message: response.Mensaje || 'No se puede desmarcar "Servir Junto" porque hay productos de regalo que lo requieren.',
+              buttons: ['Ok']
+            });
+            await alert.present();
+          }
+        },
+        async (error) => {
+          console.error('Error validando ServirJunto:', error);
+        }
+      );
+    }
   }
 
   public actualizarRegalos(regalos: RegaloSeleccionado[]): void {
@@ -891,6 +922,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                       }
                   )
                 }
+                if (this.recogerProducto) {
+                  this.servicio.crearEtiquetaPendiente(
+                    this.clienteSeleccionado.empresa.trim(),
+                    +numeroPedido,
+                    1,
+                    1
+                  ).subscribe(
+                    () => console.log('Etiqueta pendiente con recogida creada para pedido', numeroPedido),
+                    err => console.error('Error creando etiqueta pendiente:', err)
+                  );
+                }
                 let alert = await this.alertCtrl.create({
                     header: 'Creado',
                     message: 'Pedido ' + numeroPedido + ' creado correctamente',
@@ -962,6 +1004,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.resultadoPortes = null;
       this.textoPortes = '';
       this.portesGratis = false;
+      this.recogerProducto = false;
   }
       
   get importePortesMostrar(): number {

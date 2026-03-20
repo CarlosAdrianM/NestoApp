@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -12,11 +12,12 @@ import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.mod
     styleUrls: ['./selector-plantilla-venta.component.scss'],
     standalone: false
 })
-export class SelectorPlantillaVentaComponent extends SelectorBase {
+export class SelectorPlantillaVentaComponent extends SelectorBase implements OnDestroy {
 
   @Input() public cliente: any;
   @Input() public estadoCliente: number;
   @Input() public almacen: any;
+  private loadingActivo: HTMLIonLoadingElement | null = null;
 
   // Output para notificar cuando los productos terminan de cargar (Issue #77)
   @Output() productosCargados = new EventEmitter<void>();
@@ -39,17 +40,26 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
       }, 500);
   }
 
+  ngOnDestroy() {
+    if (this.loadingActivo) {
+      this.loadingActivo.dismiss().catch(() => {});
+      this.loadingActivo = null;
+    }
+  }
+
   public async cargarDatos(cliente: any): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      let loading = await this.loadingCtrl.create({
           message: 'Cargando Productos...',
       });
+      this.loadingActivo = loading;
 
       await loading.present();
 
       this.servicio.getProductos(cliente).subscribe(
-          async data => {              
+          async data => {
               if (data.length === 0) {
                 await loading.dismiss();
+                this.loadingActivo = null;
                   let alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'Este cliente no tiene histórico de compras',
@@ -73,10 +83,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
                     },
                     async error =>{
                         await loading.dismiss();
+                        this.loadingActivo = null;
                         this.errorMessage = <any>error
                     },
                     async () => {
                         await loading.dismiss();
+                        this.loadingActivo = null;
                         this.setFocus();
                     }
                 )
@@ -84,12 +96,10 @@ export class SelectorPlantillaVentaComponent extends SelectorBase {
           },
           async error => {
               await loading.dismiss();
+              this.loadingActivo = null;
               this.errorMessage = <any>error;
-              //this.myProductoSearchBar.setFocus();
           },
-
       );
-      //this.myProductoSearchBar.setFocus();
   }
 
   public abrirDetalle(producto: any, almacen: any): void {

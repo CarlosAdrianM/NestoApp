@@ -21,9 +21,14 @@ export interface StockAlmacen {
   cantidadDisponible: number;
 }
 
+export interface ProductoBonificadoConCantidad {
+  ProductoId: string;
+  Cantidad: number;
+}
+
 export interface ValidarServirJuntoRequest {
   Almacen: string;
-  ProductosBonificados: string[];
+  ProductosBonificadosConCantidad: ProductoBonificadoConCantidad[];
 }
 
 export interface ValidarServirJuntoResponse {

@@ -13,44 +13,35 @@
 </ion-header>
 
 <ion-content>
-  <ion-card>
+  <ion-card class="detalle-card">
     <ion-card-content>
-      <ion-card-title>
+      <ion-card-title class="producto-titulo">
         {{ producto.texto }}
       </ion-card-title>
-      <ion-list>
-        <ion-row>
-          <ion-col width-50>
-            <ion-item>
-              <ion-label [color]="producto.colorStock">Cantidad</ion-label>
-              <ion-input #txtCantidad type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
-            </ion-item>
-          </ion-col>
-          <ion-col width-50>
-            <ion-item>
-              <ion-label [color]="producto.colorStock">Oferta</ion-label>
-              <ion-input type="number" min="0" disabled="{{!producto.aplicarDescuentoFicha}}" [(ngModel)]="producto.cantidadOferta" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
-            </ion-item>
-          </ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col width-50>
-            <ion-item>
-              <ion-label [color]="producto.colorStock">Precio</ion-label>
-              <ion-input type="number" disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (change)="actualizarPrecio()" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
-            </ion-item>
-          </ion-col>
-          <ion-col width-50>
-            <ion-item>
-              <ion-label [color]="producto.colorStock">Descuento</ion-label>
-              <ion-input disabled="{{!sePuedeHacerDescuento(producto)}}" [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
-            </ion-item>
-          </ion-col>
-        </ion-row>
-      </ion-list>
+
+      <div class="campos-grid">
+        <div class="campo-grupo">
+          <ion-label class="campo-label" [color]="producto.colorStock">Cantidad</ion-label>
+          <ion-input #txtCantidad class="campo-input" type="number" min="0" [(ngModel)]="producto.cantidad" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+        <div class="campo-grupo">
+          <ion-label class="campo-label" [color]="producto.colorStock">Oferta</ion-label>
+          <ion-input class="campo-input" type="number" min="0" disabled="{{!producto.aplicarDescuentoFicha}}" [(ngModel)]="producto.cantidadOferta" (change)="actualizarCantidad(producto)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+        <div class="campo-grupo">
+          <ion-label class="campo-label" [color]="producto.colorStock">Precio</ion-label>
+          <ion-input class="campo-input" type="number" disabled="{{!sePuedeHacerDescuento(producto)}}" [(ngModel)]="producto.precio" (change)="actualizarPrecio()" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+        <div class="campo-grupo">
+          <ion-label class="campo-label" [color]="producto.colorStock">Descuento</ion-label>
+          <ion-input class="campo-input" disabled="{{!sePuedeHacerDescuento(producto)}}" [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+      </div>
     </ion-card-content>
-    <ion-button expand="block" (click)="mostrarStock(producto)">Ver Stock</ion-button>
-    <ion-button expand="block" (click)="abrirProducto()">Abrir Ficha Producto</ion-button>
+    <div class="botones-accion">
+      <ion-button expand="block" (click)="mostrarStock(producto)">Ver Stock</ion-button>
+      <ion-button expand="block" (click)="abrirProducto()">Abrir Ficha Producto</ion-button>
+    </div>
     <ion-img *ngIf="producto.urlImagen" src="{{producto.urlImagen}}"></ion-img>
   </ion-card>
 </ion-content>

@@ -35,12 +35,14 @@
         </ion-item>
         <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
       </swiper-slide>
-      <swiper-slide *ngIf="clienteSeleccionado" scrollY="false">
+      <swiper-slide *ngIf="clienteSeleccionado">
+        <div class="slide-content">
           <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" (productosCargados)="onProductosCargados()"></selector-plantilla-venta>
+        </div>
       </swiper-slide>
-      <swiper-slide scrollY="true" class="conscroll">
-          <div class="conscroll" scrollY="true" *ngIf="productosResumen">
-            <ion-list  scrollY="true">
+      <swiper-slide>
+        <div class="slide-content" *ngIf="productosResumen">
+            <ion-list>
                 <ion-item color="{{producto.colorSobrePedido}}" *ngFor="let producto of productosResumen" (click)="abrirDetalle(producto, almacen)">
                     <ion-avatar slot="start">
                         <img src="{{producto.urlImagen}}">
@@ -73,22 +75,24 @@
         </div>
       </swiper-slide>
       <!-- Slide Regalos (Ganavisiones) - Solo si hay ganavisiones disponibles -->
-      <swiper-slide *ngIf="hayGanavisionesDisponibles" scrollY="true" class="conscroll">
-        <selector-regalos
-          [empresa]="clienteSeleccionado.empresa"
-          [cliente]="clienteSeleccionado.cliente"
-          [almacen]="almacen"
-          [baseImponibleBonificable]="baseImponibleBonificable"
-          [servirJunto]="servirJuntoParaRegalos"
-          [regalosSeleccionados]="regalosSeleccionados"
-          [productosEnPedido]="productosResumen"
-          (regalosChange)="actualizarRegalos($event)"
-          (regalosInvalidados)="onRegalosInvalidados($event)"
-          (productosCargados)="onProductosBonificablesCargados($event)">
-        </selector-regalos>
+      <swiper-slide *ngIf="hayGanavisionesDisponibles">
+        <div class="slide-content">
+          <selector-regalos
+            [empresa]="clienteSeleccionado.empresa"
+            [cliente]="clienteSeleccionado.cliente"
+            [almacen]="almacen"
+            [baseImponibleBonificable]="baseImponibleBonificable"
+            [servirJunto]="servirJuntoParaRegalos"
+            [regalosSeleccionados]="regalosSeleccionados"
+            [productosEnPedido]="productosResumen"
+            (regalosChange)="actualizarRegalos($event)"
+            (regalosInvalidados)="onRegalosInvalidados($event)"
+            (productosCargados)="onProductosBonificablesCargados($event)">
+          </selector-regalos>
+        </div>
       </swiper-slide>
-      <swiper-slide *ngIf="clienteSeleccionado" scrollY="true" class="conscroll">
-        <div scrollY="true">
+      <swiper-slide *ngIf="clienteSeleccionado">
+        <div class="slide-content">
             <selector-direcciones-entrega cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="seleccionarCliente($event)" [totalPedido]="totalPedidoPlazosPago" [seleccionado]="contactoParaRestaurar"></selector-direcciones-entrega>
             <ion-list *ngIf="direccionSeleccionada">
                 <ion-item>
@@ -102,11 +106,15 @@
                 </ion-item>
                 <ion-item>
                     <ion-label>Servir Junto</ion-label>
-                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto"></ion-toggle>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto" (ionChange)="onServirJuntoChange($event)"></ion-toggle>
                 </ion-item>
                 <ion-item>
                     <ion-label>Mantener Junto</ion-label>
                     <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
+                </ion-item>
+                <ion-item>
+                    <ion-label>Recoger Producto</ion-label>
+                    <ion-toggle [(ngModel)]="recogerProducto"></ion-toggle>
                 </ion-item>
                 <ion-item>
                     <strong>{{textoFacturacionElectronica}}</strong>
@@ -124,7 +132,8 @@
             </ion-list>
         </div>
       </swiper-slide>
-      <swiper-slide *ngIf="productosResumen" scrollY="true">
+      <swiper-slide *ngIf="productosResumen">
+        <div class="slide-content">
         <ion-item *ngIf="importePortesMostrar > 0">
             <div>Portes:</div>
             <div slot="end" class="ion-text-right">{{importePortesMostrar | currency:'EUR'}}</div>
@@ -189,6 +198,7 @@
             </ion-select>
         </ion-item>
         <ion-button expand="block" [disabled]="noSePuedeCrearPedido()" (click)="crearPedido()">{{textoBotonCrearPedido}}</ion-button>
+        </div>
       </swiper-slide>
   </swiper-container>
 </ion-content>

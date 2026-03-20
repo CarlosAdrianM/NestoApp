@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { LoadingController, AlertController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -10,12 +10,13 @@ import { SelectorProductosService } from './selector-productos.service';
     styleUrls: ['./selector-productos.component.scss'],
     standalone: false
 })
-export class SelectorProductosComponent extends SelectorBase {
+export class SelectorProductosComponent extends SelectorBase implements OnDestroy {
   @Output() seleccionar = new EventEmitter();
 
   public filtroNombre: string;
   public filtroFamilia: string;
   public filtroSubgrupo: string;
+  private loadingActivo: HTMLIonLoadingElement | null = null;
 
   constructor(
     private servicio: SelectorProductosService, 
@@ -33,6 +34,12 @@ export class SelectorProductosComponent extends SelectorBase {
     this.setFocus();
   }
 
+  ngOnDestroy() {
+    if (this.loadingActivo) {
+      this.loadingActivo.dismiss().catch(() => {});
+      this.loadingActivo = null;
+    }
+  }
 
   public setFocus(): void {
     setTimeout(() => {
@@ -42,16 +49,10 @@ export class SelectorProductosComponent extends SelectorBase {
   }
 
   protected async cargarDatos(filtro: string): Promise<void> {
-    /*
-    let filtros: string[];
-    filtros.push(this.filtroNombre);
-    filtros.push(this.filtroFamilia);
-    filtros.push(this.filtroSubgrupo);
-    */
-
-    let loading: any = await this.loadingCtrl.create({
+    let loading = await this.loadingCtrl.create({
       message: 'Cargando Productos...',
     });
+    this.loadingActivo = loading;
 
     await loading.present();
 
@@ -67,15 +68,13 @@ export class SelectorProductosComponent extends SelectorBase {
         } else {
           this.inicializarDatos(data);
         }
-        loading.dismiss();
+        await loading.dismiss();
+        this.loadingActivo = null;
       },
       async error => {
-        // loading.dismiss();
         this.errorMessage = <any>error;
         await loading.dismiss();
-      },
-      () => {
-
+        this.loadingActivo = null;
       }
     );
   }

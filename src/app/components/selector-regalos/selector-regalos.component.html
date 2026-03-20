@@ -83,4 +83,11 @@
       </div>
     </ion-item>
   </ion-list>
+
+  <!-- Indicador de fin de lista -->
+  <ion-item *ngIf="!cargando && productosFiltrados.length > 0" lines="none" class="fin-lista">
+    <ion-label class="ion-text-center">
+      <ion-text color="medium"><small>No hay más Ganavisiones</small></ion-text>
+    </ion-label>
+  </ion-item>
 </div>

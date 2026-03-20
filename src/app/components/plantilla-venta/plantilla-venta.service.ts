@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { ProductosBonificablesResponse, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
+import { ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 
 @Injectable({
@@ -131,12 +131,24 @@ export class PlantillaVentaService {
 
   public validarServirJunto(
     almacen: string,
-    productosBonificados: string[]
+    productosBonificadosConCantidad: ProductoBonificadoConCantidad[]
   ): Observable<ValidarServirJuntoResponse> {
     const url = Configuracion.API_URL + '/Ganavisiones/ValidarServirJunto';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
-    const body = { Almacen: almacen, ProductosBonificados: productosBonificados };
+    const body = { Almacen: almacen, ProductosBonificadosConCantidad: productosBonificadosConCantidad };
 
     return this.http.post<ValidarServirJuntoResponse>(url, body, { headers });
+  }
+
+  public crearEtiquetaPendiente(
+    empresa: string,
+    pedido: number,
+    agencia: number,
+    retorno: number
+  ): Observable<any> {
+    const url = Configuracion.API_URL + '/EnviosAgencias/CrearEtiquetaPendiente';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    const body = { Empresa: empresa, Pedido: pedido, Agencia: agencia, Retorno: retorno };
+    return this.http.post(url, body, { headers });
   }
 }

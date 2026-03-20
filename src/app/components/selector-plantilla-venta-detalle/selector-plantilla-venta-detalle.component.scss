@@ -1,0 +1,58 @@
+.detalle-card {
+  margin: 8px;
+
+  ion-card-content {
+    padding: 16px;
+  }
+}
+
+.producto-titulo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.campos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.campo-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 8px;
+}
+
+.campo-input {
+  --background: var(--ion-color-light);
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  min-height: 44px;
+}
+
+.botones-accion {
+  padding: 0 16px 8px;
+
+  ion-button {
+    margin-bottom: 8px;
+  }
+}
+
+ion-img {
+  padding: 8px;
+}

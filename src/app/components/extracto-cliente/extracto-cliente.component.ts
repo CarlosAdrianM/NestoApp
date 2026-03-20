@@ -225,6 +225,7 @@ export class ExtractoClienteComponent {
       const { data } = await modal.onWillDismiss();
       if (data && data.enviado) {
           // Limpiar selección después de enviar
+          this.movimientosSeleccionados.forEach(mov => mov.seleccionado = false);
           this.movimientosSeleccionados = [];
       }
   }
