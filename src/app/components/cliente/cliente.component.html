@@ -14,12 +14,10 @@
       </ion-card-header>
       <ion-card-content>
           <ion-item *ngIf="!cliente.nifValidado || cliente.nif">
-              <ion-label>NIF</ion-label>
-              <ion-input #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              <ion-input label="NIF" label-placement="start" #nif [disabled]="cliente.nifValidado" type="text" [(ngModel)]="cliente.nif" name="nif" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
           </ion-item>
           <ion-item *ngIf="!nombreDisabled()">
-              <ion-label position="floating">Nombre</ion-label>
-              <ion-input type="text" [(ngModel)]="cliente.nombre" name="nombre" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              <ion-input label="Nombre" label-placement="floating" type="text" [(ngModel)]="cliente.nombre" name="nombre" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
           </ion-item>
           <ion-label *ngIf="mensajeDatosFiscales" color="danger" class="ion-text-wrap">
           {{mensajeDatosFiscales}}
@@ -42,35 +40,28 @@
           </ion-card-title>
           <ion-list>
             <ion-item *ngIf="cliente.direccion">
-                <ion-label position="floating">Dirección actual</ion-label>
-                <ion-input #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" disabled></ion-input>
+                <ion-input label="Dirección actual" label-placement="floating" #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" [disabled]="true"></ion-input>
             </ion-item>
             <ion-fab *ngIf="cliente.direccion" horizontal="end" vertical="center" edge>
                 <ion-fab-button size="small" (click)="editarDireccion()" horizontal="end"><ion-icon name="create"></ion-icon></ion-fab-button>
             </ion-fab>
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-label position="floating">Dirección (solo calle y número)</ion-label>
-                  <ion-input #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-label position="floating">Dirección (resto de información)</ion-label>
-                  <ion-input #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Dirección (resto de información)" label-placement="floating" #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
-                  <ion-label position="floating">Código Postal</ion-label>
-                  <ion-input type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Código Postal" label-placement="floating" type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
-                  <ion-label position="floating">Población</ion-label>
-                  <ion-input type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Población" label-placement="floating" type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
-                  <ion-label position="floating">Provincia</ion-label>
-                  <ion-input type="text" [(ngModel)]="cliente.provincia" name="provincia" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Provincia" label-placement="floating" type="text" [(ngModel)]="cliente.provincia" name="provincia" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
-                  <ion-label position="floating">Teléfono</ion-label>
-                  <ion-input type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Teléfono" label-placement="floating" type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
           </ion-list>
           <ion-button expand="block" (click)="slideActual = DATOS_FISCALES">&lt; Volver a Datos Fiscales</ion-button>
@@ -82,14 +73,10 @@
       <ion-card-header>Datos Comisiones</ion-card-header>
       <ion-card-content>
           <ion-item *ngIf="!cliente.esUnaModificacion">
-              <ion-label>¿Tiene Estética?</ion-label>
-              <ion-toggle [(ngModel)]="cliente.estetica"></ion-toggle>
-              <ion-label color="success" *ngIf="cliente.estetica">({{cliente.vendedorEstetica}})</ion-label>
+              <ion-toggle [(ngModel)]="cliente.estetica">¿Tiene Estética? <span *ngIf="cliente.estetica" style="color: var(--ion-color-success)">({{cliente.vendedorEstetica}})</span></ion-toggle>
           </ion-item>
           <ion-item *ngIf="!cliente.esUnaModificacion">
-              <ion-label>¿Tiene Peluquería?</ion-label>
-              <ion-toggle [(ngModel)]="cliente.peluqueria"></ion-toggle>
-              <ion-label color="success" *ngIf="cliente.peluqueria">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</ion-label>
+              <ion-toggle [(ngModel)]="cliente.peluqueria">¿Tiene Peluquería? <span *ngIf="cliente.peluqueria" style="color: var(--ion-color-success)">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</span></ion-toggle>
           </ion-item>
           <ion-item>
               <p></p>
@@ -117,8 +104,7 @@
       <ion-card-content>
           <selector-formas-pago seleccionado="{{cliente.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
           <ion-item *ngIf="cliente.formaPago == 'RCB'">
-              <ion-label>IBAN</ion-label>
-              <ion-input #iban [(ngModel)]="cliente.iban"></ion-input>
+              <ion-input label="IBAN" label-placement="start" #iban [(ngModel)]="cliente.iban"></ion-input>
           </ion-item>
           <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
       </ion-card-content>
@@ -135,16 +121,13 @@
                 <ion-fab-button size="small" (click)="borrarPersonaContacto(persona)"><ion-icon name="trash"></ion-icon></ion-fab-button>
             </ion-fab>
             <ion-item>
-                <ion-label>Nombre</ion-label>
-                <ion-input type="text" [(ngModel)]="persona.nombre" name="nombre"></ion-input>
+                <ion-input label="Nombre" label-placement="start" type="text" [(ngModel)]="persona.nombre" name="nombre"></ion-input>
             </ion-item>
             <ion-item>
-                <ion-label>Correo-e</ion-label>
-                <ion-input type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
+                <ion-input label="Correo-e" label-placement="start" type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
             </ion-item>
             <ion-item>
-                <ion-label>Facturación Electrónica</ion-label>
-                <ion-toggle [(ngModel)]="persona.facturacionElectronica"></ion-toggle>
+                <ion-toggle [(ngModel)]="persona.facturacionElectronica">Facturación Electrónica</ion-toggle>
             </ion-item>
         </ion-card>
         <ion-fab vertical="bottom" horizontal="end">
@@ -159,18 +142,15 @@
             </ion-card-header>
             <ion-card-content>
             <ion-item>
-                <ion-label position="stacked">Comentarios</ion-label>
-                <ion-textarea [(ngModel)]="cliente.comentarios" placeholder="Escribe los comentarios aquí..." auto-grow="true"></ion-textarea>
+                <ion-textarea label="Comentarios" label-placement="stacked" [(ngModel)]="cliente.comentarios" placeholder="Escribe los comentarios aquí..." auto-grow="true"></ion-textarea>
             </ion-item>
-        
+
             <ion-item>
-                <ion-label position="stacked">Comentarios Picking</ion-label>
-                <ion-textarea [(ngModel)]="cliente.comentariosPicking" placeholder="Escribe los comentarios sobre picking aquí..." auto-grow="true"></ion-textarea>
+                <ion-textarea label="Comentarios Picking" label-placement="stacked" [(ngModel)]="cliente.comentariosPicking" placeholder="Escribe los comentarios sobre picking aquí..." auto-grow="true"></ion-textarea>
             </ion-item>
-        
+
             <ion-item>
-                <ion-label position="stacked">Comentarios Ruta</ion-label>
-                <ion-textarea [(ngModel)]="cliente.comentariosRuta" placeholder="Escribe los comentarios sobre la ruta aquí..." auto-grow="true"></ion-textarea>
+                <ion-textarea label="Comentarios Ruta" label-placement="stacked" [(ngModel)]="cliente.comentariosRuta" placeholder="Escribe los comentarios sobre la ruta aquí..." auto-grow="true"></ion-textarea>
             </ion-item>
             </ion-card-content>
         </ion-card>

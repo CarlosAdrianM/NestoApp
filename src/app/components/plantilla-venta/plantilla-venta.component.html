@@ -30,10 +30,12 @@
     </ion-fab>
   <swiper-container #slider>
       <swiper-slide>
-        <ion-item>
-            <selector-almacenes seleccionado="{{almacen}}" (seleccionar)="almacen = $event"></selector-almacenes>
-        </ion-item>
-        <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
+        <div class="slide-content">
+          <ion-item>
+              <selector-almacenes seleccionado="{{almacen}}" (seleccionar)="almacen = $event"></selector-almacenes>
+          </ion-item>
+          <selector-clientes #inputCliente (seleccionar)="cargarProductos($event)"></selector-clientes>
+        </div>
       </swiper-slide>
       <swiper-slide *ngIf="clienteSeleccionado">
         <div class="slide-content">
@@ -66,8 +68,7 @@
                     <ion-label class="ion-text-center"><strong>{{textoPortes}}</strong></ion-label>
                 </ion-item>
                 <ion-item>
-                    <ion-label position="floating">Comentarios Picking (los ven en almacén)</ion-label>
-                    <ion-textarea [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
+                    <ion-textarea label="Comentarios Picking (los ven en almacén)" label-placement="floating" [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
                 </ion-item>
                 <ion-item></ion-item>
                 <ion-item></ion-item>
@@ -105,16 +106,13 @@
                     </ion-modal>
                 </ion-item>
                 <ion-item>
-                    <ion-label>Servir Junto</ion-label>
-                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto" (ionChange)="onServirJuntoChange($event)"></ion-toggle>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto" (ionChange)="onServirJuntoChange($event)">Servir Junto</ion-toggle>
                 </ion-item>
                 <ion-item>
-                    <ion-label>Mantener Junto</ion-label>
-                    <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
+                    <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto">Mantener Junto</ion-toggle>
                 </ion-item>
                 <ion-item>
-                    <ion-label>Recoger Producto</ion-label>
-                    <ion-toggle [(ngModel)]="recogerProducto"></ion-toggle>
+                    <ion-toggle [(ngModel)]="recogerProducto">Recoger Producto</ion-toggle>
                 </ion-item>
                 <ion-item>
                     <strong>{{textoFacturacionElectronica}}</strong>
@@ -124,8 +122,7 @@
                     <ion-label slot="end" class="ion-text-right">{{clienteSeleccionado.periodoFacturacion}}</ion-label>
                 </ion-item>
                 <ion-item>
-                    <ion-label position="floating">Comentarios Ruta (los ve el cliente y la agencia)</ion-label>
-                    <ion-textarea [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
+                    <ion-textarea label="Comentarios Ruta (los ve el cliente y la agencia)" label-placement="floating" [(ngModel)]="direccionSeleccionada.comentarioRuta"></ion-textarea>
                 </ion-item>
                 <ion-item></ion-item>
                 <ion-item></ion-item>
@@ -151,31 +148,25 @@
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
         <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
-            <ion-label>¿Mandar cobro por tarjeta?</ion-label>
-            <ion-toggle [(ngModel)]="mandarCobroTarjeta"></ion-toggle>
+            <ion-toggle [(ngModel)]="mandarCobroTarjeta">¿Mandar cobro por tarjeta?</ion-toggle>
         </ion-item>
         <ion-item *ngIf="esTarjetaPrepago() && mandarCobroTarjeta">
-            <ion-label position="floating">Correo tarjeta</ion-label>
-            <ion-input type="email" [(ngModel)]="cobroTarjetaCorreo"></ion-input>
+            <ion-input label="Correo tarjeta" label-placement="floating" type="email" [(ngModel)]="cobroTarjetaCorreo"></ion-input>
         </ion-item>
         <ion-item *ngIf="esTarjetaPrepago() && mandarCobroTarjeta">
-            <ion-label position="floating">Móvil tarjeta</ion-label>
-            <ion-input type="tel" [(ngModel)]="cobroTarjetaMovil"></ion-input>
+            <ion-input label="Móvil tarjeta" label-placement="floating" type="tel" [(ngModel)]="cobroTarjetaMovil"></ion-input>
         </ion-item>
         <div>
             <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
         </div>
         <ion-item>
-            <ion-label position="floating">Su Pedido / P.O.</ion-label>
-            <ion-input [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente"></ion-input>
+            <ion-input label="Su Pedido / P.O." label-placement="floating" [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente"></ion-input>
         </ion-item>
         <ion-item>
-            <ion-label>Crear como presupuesto</ion-label>
-            <ion-toggle [(ngModel)]="esPresupuesto"></ion-toggle>
+            <ion-toggle [(ngModel)]="esPresupuesto">Crear como presupuesto</ion-toggle>
         </ion-item>
         <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo">
-            <ion-label>Servir en 2 horas <ion-img src="https://static.vecteezy.com/system/resources/previews/008/786/429/non_2x/express-delivery-icon-fast-delivery-express-and-urgent-delivery-services-stopwatch-sign-timer-and-express-delivery-inscription-fast-delivery-logo-design-vector.jpg"></ion-img></ion-label>
-            <ion-toggle [(ngModel)]="servirPorGlovo" (ngModelChange)="calcularPortes()"></ion-toggle>
+            <ion-toggle [(ngModel)]="servirPorGlovo" (ngModelChange)="calcularPortes()">Servir en 2 horas <ion-img src="https://static.vecteezy.com/system/resources/previews/008/786/429/non_2x/express-delivery-icon-fast-delivery-express-and-urgent-delivery-services-stopwatch-sign-timer-and-express-delivery-inscription-fast-delivery-logo-design-vector.jpg"></ion-img></ion-toggle>
         </ion-item>
         <ion-item *ngIf="direccionSeleccionada.iva && !sePuedeServirPorGlovo && sePodriaServirConGlovoEnPrepago">
             <ion-label color="danger">Si hay PREPAGO podría servirse en 2 horas</ion-label>
@@ -191,8 +182,7 @@
             <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 
         </ion-item>
         <ion-item *ngIf="listaPedidosPendientes && listaPedidosPendientes.length > 0">
-            <ion-label slot="start">Ampliar en pedido</ion-label>
-            <ion-select slot="end"  [(ngModel)]="pedidoPendienteSeleccionado">
+            <ion-select label="Ampliar en pedido" label-placement="start" [(ngModel)]="pedidoPendienteSeleccionado">
                 <ion-select-option *ngFor="let pedido of listaPedidosPendientes" value="{{pedido}}">{{pedido}}</ion-select-option>
                 <ion-select-option value="">Crear Pedido</ion-select-option>
             </ion-select>

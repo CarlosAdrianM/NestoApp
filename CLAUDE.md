@@ -55,6 +55,33 @@ Siempre que se vaya a hacer push, hay que:
    - Se quitan los últimos `<ion-item>` (los de abajo) para mantener entre 6 y 10 entradas
    - El contenido debe describir las funcionalidades nuevas visibles para el usuario (ej: portes, mensajes de Ganavisiones, PDF con imágenes), no cambios internos como migraciones o fixes de build
 
+## Reglas Ionic 8
+
+### Controles en ion-item
+`ion-select`, `ion-toggle` e `ion-checkbox` dentro de `ion-item` **requieren `slot="end"`** para alinearse a la derecha. En Ionic 5 era automático, en Ionic 8 no.
+
+`ion-input` e `ion-textarea` **NO usan `slot="end"`** (los empuja demasiado lejos del label).
+
+```html
+<!-- CORRECTO -->
+<ion-item>
+  <ion-label>Etiqueta</ion-label>
+  <ion-toggle slot="end" [(ngModel)]="valor"></ion-toggle>
+</ion-item>
+
+<!-- INCORRECTO (se centra en vez de ir a la derecha) -->
+<ion-item>
+  <ion-label>Etiqueta</ion-label>
+  <ion-toggle [(ngModel)]="valor"></ion-toggle>
+</ion-item>
+```
+
+### Swiper y position:fixed
+`<swiper-container>` usa `transform: translate3d()` que rompe `position: fixed` en cualquier elemento hijo. **No usar FABs flotantes dentro de slides.** Usar botones inline en su lugar.
+
+### No cambiar la paleta de colores
+Los colores de Ionic por defecto (azul=primary, verde=success, rojo=danger) están asociados a funciones para los vendedores. No cambiarlos.
+
 ## Comandos útiles
 
 ```bash

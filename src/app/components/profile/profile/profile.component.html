@@ -23,13 +23,11 @@
       
       <form *ngSwitchCase="'login'" #loginCreds="ngForm" (ngSubmit)="login(loginCreds.value)">
           <ion-item>
-              <ion-label>Nombre de usuario</ion-label>
-              <ion-input type="text" name="username" ngModel></ion-input>
+              <ion-input label="Nombre de usuario" label-placement="start" type="text" name="username" ngModel></ion-input>
           </ion-item>
 
           <ion-item>
-              <ion-label>Contraseña</ion-label>
-              <ion-input type="password" name="password" ngModel></ion-input>
+              <ion-input label="Contraseña" label-placement="start" type="password" name="password" ngModel></ion-input>
           </ion-item>
 
           <div class="ion-padding">
@@ -39,8 +37,7 @@
           <a (click)="mostrarOcultarOlvideContrasenna()">¿Has olvidado tu contraseña?</a>
           <div *ngIf="mostrarOlvideMiContrasenna">
               <ion-item>
-                  <ion-label>Correo-e:</ion-label>
-                  <ion-input #inputCorreoContrasenna [(ngModel)]="correoContrasennaOlvidada" [ngModelOptions]="{standalone: true}"></ion-input>
+                  <ion-input label="Correo-e:" label-placement="start" #inputCorreoContrasenna [(ngModel)]="correoContrasennaOlvidada" [ngModelOptions]="{standalone: true}"></ion-input>
               </ion-item>
               <ion-button expand="block" (click)="olvideMiContrasenna(correoContrasennaOlvidada)">Cambiar contraseña</ion-button>
           </div>
@@ -55,13 +52,11 @@
 
       <form *ngSwitchCase="'signup'" #signupCreds="ngForm" (ngSubmit)="signup(signupCreds.value)">
           <ion-item>
-              <ion-label>Nombre de Usuario</ion-label>
-              <ion-input type="text" name="username" ngModel></ion-input>
+              <ion-input label="Nombre de Usuario" label-placement="start" type="text" name="username" ngModel></ion-input>
           </ion-item>
 
           <ion-item>
-              <ion-label>Contraseña</ion-label>
-              <ion-input type="password" name="password" ngModel></ion-input>
+              <ion-input label="Contraseña" label-placement="start" type="password" name="password" ngModel></ion-input>
           </ion-item>
 
           <div class="ion-padding">
@@ -98,13 +93,13 @@
 
           <h4 class="seccion-titulo">Novedades</h4>
           <ion-list class="changelog-list">
+            <ion-item>Formularios modernizados para Ionic 8</ion-item>
+            <ion-item>Modo oscuro/claro automático según ajustes del dispositivo</ion-item>
+            <ion-item>Enlace de cobro NestoPago visible al crear pedido</ion-item>
+            <ion-item>Combos y controles alineados correctamente</ion-item>
             <ion-item>Opción "Recoger Producto" al crear pedido</ion-item>
             <ion-item>Corregida selección de efectos en extracto cliente</ion-item>
-            <ion-item>Rediseño página de perfil y detalle de producto</ion-item>
             <ion-item>Corregido scroll en selección de productos y Ganavisiones</ion-item>
-            <ion-item>Enlace de cobro por tarjeta mejorado</ion-item>
-            <ion-item><strong>Portes incluidos en el total del pedido</strong></ion-item>
-            <ion-item>Cálculo de portes en plantilla de venta</ion-item>
           </ion-list>
 
           <ion-button expand="block" (click)="logout()">Cerrar Sesión</ion-button>

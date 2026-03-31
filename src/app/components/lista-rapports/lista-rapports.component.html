@@ -69,8 +69,7 @@
       <selector-clientes *ngIf="!numeroCliente" (seleccionar)="seleccionarCliente($event.cliente)"></selector-clientes>
       <form (ngSubmit)="actualizarCliente()">
         <ion-item>
-          <ion-label for="cliente">Cliente</ion-label>
-          <ion-input #clienteInput class="form-control" id="cliente" required
+          <ion-input label="Cliente" label-placement="start" #clienteInput required
                     [(ngModel)]="numeroCliente"
                     name="cliente" (ionFocus)="seleccionarTexto($event); mostrarDirecciones = true;"></ion-input>
         </ion-item>
@@ -112,8 +111,7 @@
     <div *ngSwitchCase="'codigoPostal'">
       <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
       <ion-item>
-        <ion-label>Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}</ion-label>
-        <ion-select [(ngModel)]="codigoPostalSeleccionado">
+        <ion-select label="Código Postal {{codigosPostalesSinVisitar && vendedorSeleccionado ? '('+codigosPostalesSinVisitar.length.toString()+')' : ''}}" label-placement="start" [(ngModel)]="codigoPostalSeleccionado">
           <ion-select-option *ngFor="let codPostal of codigosPostalesSinVisitar" [value]="codPostal.CodigoPostal">{{codPostal.CodigoPostal}} {{codPostal.Poblacion}}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -121,8 +119,7 @@
     <div *ngSwitchCase="'buscar'">
     <form (ngSubmit)="buscarRapports()">
       <ion-item>
-        <ion-label for="buscar">Buscar</ion-label>
-        <ion-input #buscarInput class="form-control" id="buscar" required
+        <ion-input label="Buscar" label-placement="start" #buscarInput required
                   [(ngModel)]="filtroBuscar"
                   name="buscar" (ionFocus)="seleccionarTexto($event)"></ion-input>
       </ion-item>

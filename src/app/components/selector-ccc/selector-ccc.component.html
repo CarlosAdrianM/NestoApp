@@ -1,6 +1,7 @@
 <ion-item>
-  <ion-label>Cuenta Bancaria</ion-label>
   <ion-select
+    label="Cuenta Bancaria"
+    label-placement="start"
     *ngIf="cccs.length > 0"
     [(ngModel)]="seleccionado"
     (ionChange)="seleccionarCCC(seleccionado)"

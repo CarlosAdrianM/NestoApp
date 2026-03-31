@@ -102,6 +102,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             role: 'cancel',
             handler: () => {
               this.firebaseAnalytics.logEvent('plantilla_venta_cancelar_salida', {});
+              this.comprobarCanDeactivate = false;
               resolve(false);
               return false;
             }
@@ -901,9 +902,26 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                     Correo: this.cobroTarjetaCorreo,
                     Movil: this.cobroTarjetaMovil
                   }).subscribe(
-                      d => {
+                      async d => {
                           this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
-                          if (this.usuario.motorPagos !== 'NestoPago') {
+                          if (this.usuario.motorPagos === 'NestoPago') {
+                            // Motor NestoPago: mostrar URL de pago al usuario
+                            const enlace = d.UrlPaginaPago;
+                            const alertCobro = await this.alertCtrl.create({
+                              header: 'Enlace de cobro',
+                              message: enlace,
+                              buttons: [
+                                {
+                                  text: 'Copiar',
+                                  handler: () => {
+                                    navigator.clipboard.writeText(enlace);
+                                  }
+                                },
+                                { text: 'Cerrar' }
+                              ]
+                            });
+                            await alertCobro.present();
+                          } else {
                             // Motor Paygold: enviar también por P2F
                             this.servicio.mandarCobroTarjeta(
                               this.cobroTarjetaCorreo,

@@ -72,11 +72,11 @@
               </ion-row>
               <ion-item>
                   <ion-label>Servir Junto</ion-label>
-                  <ion-toggle [(ngModel)]="pedido.servirJunto"></ion-toggle>
+                  <ion-toggle slot="end" [(ngModel)]="pedido.servirJunto"></ion-toggle>
               </ion-item>
               <ion-item>
                   <ion-label>Mantener Junto</ion-label>
-                  <ion-toggle [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
+                  <ion-toggle slot="end" [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
               </ion-item>
               <ion-item>
                   <ion-button expand="block" *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</ion-button>
@@ -117,16 +117,13 @@
       </div>
       <ion-list *ngSwitchCase="'comentarios'">
           <ion-item *ngIf="pedido.suPedido">
-              <ion-label position="floating">Su Pedido / P.O.</ion-label>
-              <ion-input [(ngModel)]="pedido.suPedido" maxlength="50"></ion-input>
+              <ion-input label="Su Pedido / P.O." label-placement="floating" [(ngModel)]="pedido.suPedido" maxlength="50"></ion-input>
           </ion-item>
           <ion-item>
-              <ion-label position="floating">Comentarios Ruta</ion-label>
-              <ion-textarea [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
+              <ion-textarea label="Comentarios Ruta" label-placement="floating" [(ngModel)]="pedido.comentarios" ngDefaultControl></ion-textarea>
           </ion-item>
           <ion-item>
-              <ion-label position="floating">Comentarios Picking</ion-label>
-              <ion-input [(ngModel)]="pedido.comentarioPicking"></ion-input>
+              <ion-input label="Comentarios Picking" label-placement="floating" [(ngModel)]="pedido.comentarioPicking"></ion-input>
           </ion-item>
           <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">
               <ion-item>

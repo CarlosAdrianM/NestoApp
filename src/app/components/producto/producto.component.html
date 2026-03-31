@@ -24,8 +24,7 @@
   <div *ngIf="vistaSeleccionada === 'info'">    
     <ion-list>
       <ion-item>
-        <ion-label>Referencia</ion-label>
-        <ion-input type="text" [(ngModel)]="productoActual" (keyup.enter)="cargar()" (ionFocus)="seleccionarTexto($event)"></ion-input>
+        <ion-input label="Referencia" label-placement="start" type="text" [(ngModel)]="productoActual" (keyup.enter)="cargar()" (ionFocus)="seleccionarTexto($event)"></ion-input>
       </ion-item>
     </ion-list>
     <ion-list *ngIf="producto">

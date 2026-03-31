@@ -34,12 +34,12 @@
 }
 
 .campo-input {
-  --background: var(--ion-color-light);
+  --background: var(--ion-item-background, var(--ion-background-color-step-50, #f4f5f8));
   --padding-start: 8px;
   --padding-end: 8px;
   --padding-top: 10px;
   --padding-bottom: 10px;
-  border: 1px solid var(--ion-color-light-shade);
+  border: 1px solid var(--ion-border-color, var(--ion-background-color-step-150, #d7d8da));
   border-radius: 8px;
   font-size: 1.1rem;
   min-height: 44px;

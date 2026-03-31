@@ -1,5 +1,19 @@
-.fija {
-    position: fixed;
+.barra-busqueda {
+    display: flex;
+    align-items: center;
+}
+
+.barra-busqueda ion-searchbar {
+    flex: 1;
+    min-width: 0;
+    --padding-end: 0;
+}
+
+.barra-busqueda ion-button {
+    flex-shrink: 0;
+    margin: 0 4px 0 0;
+    --padding-start: 8px;
+    --padding-end: 8px;
 }
 
 #myFixZone {
