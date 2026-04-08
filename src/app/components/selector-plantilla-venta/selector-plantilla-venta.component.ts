@@ -17,6 +17,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
   @Input() public cliente: any;
   @Input() public estadoCliente: number;
   @Input() public almacen: any;
+  @Input() public servirJunto: boolean = true;
   private loadingActivo: HTMLIonLoadingElement | null = null;
 
   // Output para notificar cuando los productos terminan de cargar (Issue #77)
@@ -126,9 +127,10 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
               } else {
                   value.colorSobrePedido = 'none';
               }
-              this.baseImponiblePedido += value.cantidad * value.precio * (1 - value.descuento);
-              if (!value.esSobrePedido) {
-                  this.baseImponibleParaPortes += value.cantidad * value.precio * (1 - value.descuento);
+              const importeLinea = value.cantidad * value.precio * (1 - value.descuento);
+              this.baseImponiblePedido += importeLinea;
+              if (!this.esSobrePedidoParaPortes(value)) {
+                  this.baseImponibleParaPortes += importeLinea;
               }
 
           }
@@ -137,7 +139,19 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       return productosResumen;
   }
 
+  private esSobrePedidoParaPortes(linea: any): boolean {
+      if (linea.estado === 0) return false;
+      if (!linea.stockActualizado) return true;
+      const stockRelevante = this.servirJunto
+          ? (linea.stocks?.reduce((sum, s) => sum + s.cantidadDisponible, 0) ?? linea.cantidadDisponible)
+          : linea.cantidadDisponible;
+      return stockRelevante < (+linea.cantidad + linea.cantidadOferta);
+  }
+
   public ngOnChanges(changes): void {
+      if (changes.servirJunto && Object.keys(changes).length === 1) {
+          return; // servirJunto solo afecta al cálculo de portes, no recargar productos
+      }
       if (this.estadoCliente != 5)
       {
           this.cargarDatos(this.cliente);

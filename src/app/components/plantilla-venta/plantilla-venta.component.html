@@ -39,7 +39,7 @@
       </swiper-slide>
       <swiper-slide *ngIf="clienteSeleccionado">
         <div class="slide-content">
-          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" (productosCargados)="onProductosCargados()"></selector-plantilla-venta>
+          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" [servirJunto]="servirJuntoParaRegalos" (productosCargados)="onProductosCargados()"></selector-plantilla-venta>
         </div>
       </swiper-slide>
       <swiper-slide>

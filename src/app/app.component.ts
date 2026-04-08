@@ -63,9 +63,22 @@ export class AppComponent {
     });
   }
 
-  private inicializarNotificacionesPush() {
+  private async inicializarNotificacionesPush() {
     if (!this.platform.is('cordova')) {
       return;
+    }
+
+    // Android 13+ (API 33+) requiere solicitar permiso POST_NOTIFICATIONS en runtime
+    try {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        const permiso = await Notification.requestPermission();
+        console.log('Permiso de notificaciones:', permiso);
+        if (permiso !== 'granted') {
+          console.log('Permiso de notificaciones denegado por el usuario');
+        }
+      }
+    } catch (err) {
+      console.log('Error solicitando permiso de notificaciones:', err);
     }
 
     // Guardar el token FCM para registrarlo después del login
