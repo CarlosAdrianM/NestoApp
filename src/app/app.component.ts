@@ -69,25 +69,8 @@ export class AppComponent {
     }
 
     // Android 13+ (API 33+) requiere solicitar permiso POST_NOTIFICATIONS en runtime
-    try {
-      const permissions = (window as any).cordova?.plugins?.permissions;
-      if (permissions) {
-        const POST_NOTIFICATIONS = 'android.permission.POST_NOTIFICATIONS';
-        permissions.checkPermission(POST_NOTIFICATIONS, (status) => {
-          if (!status.hasPermission) {
-            permissions.requestPermission(POST_NOTIFICATIONS,
-              (result) => console.log('Permiso notificaciones:', result.hasPermission ? 'concedido' : 'denegado'),
-              () => console.log('Error solicitando permiso de notificaciones')
-            );
-          }
-        }, () => {
-          // checkPermission falla en Android < 13, ignorar (no necesita el permiso)
-          console.log('checkPermission no soportado, Android < 13');
-        });
-      }
-    } catch (err) {
-      console.log('Error solicitando permiso de notificaciones:', err);
-    }
+    // Esperamos a que se resuelva el permiso antes de pedir el token FCM
+    await this.solicitarPermisoNotificaciones();
 
     // Guardar el token FCM para registrarlo después del login
     this.fcm.getToken().then(token => {
@@ -137,6 +120,41 @@ export class AppComponent {
     if (this.tokenFCM) {
       this.registrarTokenEnBackend(this.tokenFCM);
     }
+  }
+
+  private solicitarPermisoNotificaciones(): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        const permissions = (window as any).cordova?.plugins?.permissions;
+        if (!permissions) {
+          console.log('Plugin de permisos no disponible');
+          resolve();
+          return;
+        }
+        const POST_NOTIFICATIONS = 'android.permission.POST_NOTIFICATIONS';
+        permissions.checkPermission(POST_NOTIFICATIONS, (status) => {
+          if (status.hasPermission) {
+            console.log('Permiso notificaciones: ya concedido');
+            resolve();
+          } else {
+            permissions.requestPermission(POST_NOTIFICATIONS,
+              (result) => {
+                console.log('Permiso notificaciones:', result.hasPermission ? 'concedido' : 'denegado');
+                resolve();
+              },
+              () => { console.log('Error solicitando permiso'); resolve(); }
+            );
+          }
+        }, () => {
+          // Android < 13: no necesita este permiso
+          console.log('checkPermission no soportado, Android < 13');
+          resolve();
+        });
+      } catch (err) {
+        console.log('Error en solicitarPermisoNotificaciones:', err);
+        resolve();
+      }
+    });
   }
 
   private registrarTokenEnBackend(token: string) {
