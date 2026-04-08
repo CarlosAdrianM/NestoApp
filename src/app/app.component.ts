@@ -70,12 +70,20 @@ export class AppComponent {
 
     // Android 13+ (API 33+) requiere solicitar permiso POST_NOTIFICATIONS en runtime
     try {
-      if ('Notification' in window && Notification.permission !== 'granted') {
-        const permiso = await Notification.requestPermission();
-        console.log('Permiso de notificaciones:', permiso);
-        if (permiso !== 'granted') {
-          console.log('Permiso de notificaciones denegado por el usuario');
-        }
+      const permissions = (window as any).cordova?.plugins?.permissions;
+      if (permissions) {
+        const POST_NOTIFICATIONS = 'android.permission.POST_NOTIFICATIONS';
+        permissions.checkPermission(POST_NOTIFICATIONS, (status) => {
+          if (!status.hasPermission) {
+            permissions.requestPermission(POST_NOTIFICATIONS,
+              (result) => console.log('Permiso notificaciones:', result.hasPermission ? 'concedido' : 'denegado'),
+              () => console.log('Error solicitando permiso de notificaciones')
+            );
+          }
+        }, () => {
+          // checkPermission falla en Android < 13, ignorar (no necesita el permiso)
+          console.log('checkPermission no soportado, Android < 13');
+        });
       }
     } catch (err) {
       console.log('Error solicitando permiso de notificaciones:', err);

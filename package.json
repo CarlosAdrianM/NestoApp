@@ -1,6 +1,6 @@
 {
   "name": "nestoapp",
-  "version": "2.16.1",
+  "version": "2.16.2",
   "author": "Grupo Nueva Visión",
   "homepage": "http://www.nuevavision.es/",
   "scripts": {
@@ -44,6 +44,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.0",
     "cordova-plugin-add-swift-support": "^2.0.2",
     "cordova-plugin-advanced-http": "^3.3.1",
+    "cordova-plugin-android-permissions": "^1.1.1",
     "cordova-plugin-device": "^2.0.2",
     "cordova-plugin-fcm-with-dependecy-updated": "^7.3.1",
     "cordova-plugin-file": "^6.0.2",
@@ -103,6 +104,7 @@
   "cordova": {
     "plugins": {
       "cordova-plugin-fcm-with-dependecy-updated": {},
+      "cordova-plugin-android-permissions": {},
       "cordova-plugin-ionic-keyboard": {},
       "cordova-plugin-nativegeocoder": {},
       "cordova-plugin-geolocation": {},
