@@ -135,6 +135,19 @@
             <div>Portes:</div>
             <div slot="end" class="ion-text-right">{{importePortesMostrar | currency:'EUR'}}</div>
         </ion-item>
+        <ion-item *ngIf="esContraReembolso && !noCobrarComisionReembolso" color="warning">
+            <ion-label class="ion-text-wrap ion-text-center"><strong>{{textoReembolso}}</strong></ion-label>
+        </ion-item>
+        <ion-item *ngIf="esContraReembolso && !noCobrarComisionReembolso && importeComisionReembolso > 0">
+            <div>Comisión contra reembolso:</div>
+            <div slot="end" class="ion-text-right">{{importeComisionReembolso | currency:'EUR'}}</div>
+        </ion-item>
+        <ion-item *ngIf="permitirNoCobrarComisionReembolso">
+            <ion-toggle slot="end" [(ngModel)]="noCobrarComisionReembolso" (ionChange)="calcularPortes()">No cobrar comisión por contra reembolso en este pedido</ion-toggle>
+        </ion-item>
+        <ion-item *ngIf="permitirNoCobrarComisionReembolso" lines="none">
+            <ion-label class="ion-text-wrap ion-text-center" style="font-style: italic; font-size: 0.85em; color: var(--ion-color-medium);">A partir del 1 de septiembre de 2026 esta casilla ya no estará disponible y la comisión se aplicará siempre.</ion-label>
+        </ion-item>
         <ion-item>
             <div>Total pedido:</div>
             <div slot="end" class="ion-text-right"><strong>{{totalPedido | currency:'EUR'}}</strong></div>

@@ -351,6 +351,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public textoPortes: string = '';
   public portesGratis: boolean = false;
 
+  // Comisión contra reembolso
+  public noCobrarComisionReembolso: boolean = false;
+
   // Ganavisiones / Regalos
   public regalosSeleccionados: RegaloSeleccionado[] = [];
   private readonly GRUPOS_BONIFICABLES = ['COS', 'ACC', 'PEL'];
@@ -690,7 +693,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       EsPrecioPublicoFinal: false,
       Iva: this.direccionSeleccionada.iva || '',
       BaseImponibleProductos: this._selectorPlantillaVenta?.baseImponibleParaPortes || 0,
-      AnadirPortes: true
+      AnadirPortes: this.almacen !== 'REI' && this.almacen !== 'ALC',
+      NoCobrarComisionReembolso: this.noCobrarComisionReembolso
     };
 
     this.servicio.calcularPortes(input).subscribe(
@@ -804,6 +808,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
           'servirJunto': this.direccionSeleccionada.servirJunto,
           'EsPresupuesto': this.esPresupuesto,
+          'NoCobrarComisionReembolso': this.noCobrarComisionReembolso,
           'suPedido': this.suPedido ? this.suPedido.trim() : null,
           'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
           'Lineas': [],
@@ -1022,6 +1027,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.resultadoPortes = null;
       this.textoPortes = '';
       this.portesGratis = false;
+      this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
   }
       
@@ -1030,12 +1036,40 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       return this.resultadoPortes.ImportePortes || 0;
   }
 
+  get esContraReembolso(): boolean {
+      return this.resultadoPortes?.EsContraReembolso === true;
+  }
+
+  get importeComisionReembolso(): number {
+      return this.resultadoPortes?.ComisionReembolso || 0;
+  }
+
+  get permitirNoCobrarComisionReembolso(): boolean {
+      return this.esContraReembolso && new Date() < new Date(2026, 8, 1); // Antes de 2026-09-01
+  }
+
+  get textoReembolso(): string {
+      const comision = this.importeComisionReembolso;
+      if (comision > 0) {
+          return `Comisión contra reembolso: ${comision.toFixed(2)}€`;
+      }
+      return 'Pedido con pago contra reembolso';
+  }
+
   get totalPedido(): number {
       const subtotal = this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
+      let total = subtotal;
       const portes = this.importePortesMostrar;
-      if (portes <= 0) return subtotal;
-      const portesConIva = this.direccionSeleccionada.iva ? portes * 1.21 : portes;
-      return subtotal + portesConIva;
+      if (portes > 0) {
+          const portesConIva = this.direccionSeleccionada.iva ? portes * 1.21 : portes;
+          total += portesConIva;
+      }
+      const comision = this.noCobrarComisionReembolso ? 0 : this.importeComisionReembolso;
+      if (comision > 0) {
+          const comisionConIva = this.direccionSeleccionada.iva ? comision * 1.21 : comision;
+          total += comisionConIva;
+      }
+      return total;
   }
 
   get baseImponiblePedido(): number {

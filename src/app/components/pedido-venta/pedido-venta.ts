@@ -38,6 +38,7 @@ export class PedidoVenta {
     public notaEntrega: boolean;
     public usuario: string;
     public suPedido: string;
+    public noCobrarComisionReembolso: boolean;
 
     public Lineas: Array<LineaVenta>;
 
