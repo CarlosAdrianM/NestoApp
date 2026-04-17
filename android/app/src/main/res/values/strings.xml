@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nesto</string>
+    <string name="title_activity_main">Nesto</string>
+    <string name="package_name">com.ionicframework.nestoapp958858</string>
+    <string name="custom_url_scheme">com.ionicframework.nestoapp958858</string>
+</resources>

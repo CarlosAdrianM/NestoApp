@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "206513477970",
+    "firebase_url": "https://nestoapp-c9c4c.firebaseio.com",
+    "project_id": "nestoapp-c9c4c",
+    "storage_bucket": "nestoapp-c9c4c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:206513477970:android:fdc5b6da7c85f43d",
+        "android_client_info": {
+          "package_name": "com.ionicframework.nestoapp958858"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "206513477970-vhkkoipva56urgriapp5tjb03e56r0ns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9N2bUY69d6_JD1OFhMOW2gT_GgQyZ3cs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "206513477970-vhkkoipva56urgriapp5tjb03e56r0ns.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
