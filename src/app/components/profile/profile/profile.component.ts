@@ -114,11 +114,11 @@ export class ProfileComponent {
             headers: this.contentHeader,
         })
         .subscribe(
-        data => {
+        async data => {
             this.usuario.nombre = credentials.username;
             this.firebaseAnalytics.logEvent("login", {nombre: this.usuario.nombre});
             let datos: any = data;
-            this.authSuccess(datos.access_token);
+            await this.authSuccess(datos.access_token);
             this.cargarParametros();
             this.appComponent.registrarDispositivoPush();
         },
@@ -150,11 +150,11 @@ public logout(): void {
     this.usuario.nombre = null;
 }
 
-private authSuccess(token: any): void {
+private async authSuccess(token: any): Promise<void> {
     this.error = null;
-    this.local.set('id_token', token);
+    await this.local.set('id_token', token);
     // this.usuario.nombre = this.jwtHelper.decodeToken(token).unique_name;
-    this.local.set('profile', this.usuario.nombre.trim());
+    await this.local.set('profile', this.usuario.nombre.trim());
 }
 
 private cargarParametros(): void {
