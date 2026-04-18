@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavParams, AlertController, LoadingController, NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';

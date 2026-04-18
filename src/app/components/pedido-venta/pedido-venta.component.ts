@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavController, AlertController, LoadingController, NavParams } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';

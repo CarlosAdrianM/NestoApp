@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, NavController, ModalController } from '@ionic/angular';
 import { ExtractoClienteService } from './extracto-cliente.service';
-import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FileOpener } from 'src/app/services/file-opener.service';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { Usuario } from 'src/app/models/Usuario';

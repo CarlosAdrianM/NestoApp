@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';

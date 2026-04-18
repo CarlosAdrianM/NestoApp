@@ -8,7 +8,7 @@ import { ClientesMismoTelefonoComponent } from './clientes-mismo-telefono';
 import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 
 @Component({
     selector: 'app-cliente',

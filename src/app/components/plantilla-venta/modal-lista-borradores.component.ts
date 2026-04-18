@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AlertController, ModalController } from '@ionic/angular';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { BorradorMetadata } from 'src/app/models/borrador-plantilla-venta.model';
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 

@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 
 import { AlertController, Platform, ToastController } from '@ionic/angular';
-import { SplashScreen } from '@awesome-cordova-plugins/splash-screen/ngx';
-import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { ProfileComponent } from './components/profile/profile/profile.component';
 import { Usuario } from './models/Usuario';
-import { FCM } from '@awesome-cordova-plugins/fcm/ngx';
 import { HttpClient } from '@angular/common/http';
 import { CacheService } from "./services/cache.service";
 import { Configuracion } from './components/configuracion/configuracion/configuracion.component';
@@ -24,12 +25,9 @@ export class AppComponent {
   public tokenFCM: string = null;
   constructor(
     private platform: Platform,
-    private splashScreen: SplashScreen,
-    private statusBar: StatusBar,
     public usuario: Usuario,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
-    private fcm: FCM,
     private http: HttpClient,
     private router: Router,
     cache: CacheService
@@ -56,105 +54,77 @@ export class AppComponent {
   }
 
   initializeApp() {
-    this.platform.ready().then(() => {
-      this.statusBar.styleDefault();
-      this.splashScreen.hide();
+    this.platform.ready().then(async () => {
+      if (Capacitor.isNativePlatform()) {
+        await StatusBar.setStyle({ style: Style.Default });
+        await SplashScreen.hide();
+      }
       this.inicializarNotificacionesPush();
     });
   }
 
   private async inicializarNotificacionesPush() {
-    if (!this.platform.is('cordova')) {
+    if (!Capacitor.isNativePlatform()) {
       return;
     }
 
-    // Android 13+ (API 33+) requiere solicitar permiso POST_NOTIFICATIONS en runtime
-    // Esperamos a que se resuelva el permiso antes de pedir el token FCM
-    await this.solicitarPermisoNotificaciones();
+    try {
+      // Solicitar permiso (Capacitor gestiona POST_NOTIFICATIONS de Android 13+ automáticamente)
+      const permiso = await FirebaseMessaging.requestPermissions();
+      if (permiso.receive !== 'granted') {
+        console.log('Permiso de notificaciones denegado');
+        return;
+      }
 
-    // Guardar el token FCM para registrarlo después del login
-    this.fcm.getToken().then(token => {
+      // Obtener token FCM inicial
+      const { token } = await FirebaseMessaging.getToken();
       console.log('FCM token obtenido:', token);
       this.tokenFCM = token;
-    }).catch(err => {
-      console.log('Error al obtener token FCM:', err);
-    });
 
-    // Escuchar renovación de token
-    this.fcm.onTokenRefresh().subscribe(token => {
-      console.log('FCM token renovado:', token);
-      this.tokenFCM = token;
-      // Si ya hay usuario logueado, registrar inmediatamente
-      if (this.usuario && this.usuario.nombre) {
-        this.registrarTokenEnBackend(token);
-      }
-    });
-
-    // Escuchar notificaciones
-    this.fcm.onNotification().subscribe(async (payload: any) => {
-      if (payload.wasTapped) {
-        // El usuario tocó la notificación desde la bandeja → navegar
-        if (payload.ruta) {
-          this.router.navigateByUrl(payload.ruta);
+      // Escuchar renovación de token
+      FirebaseMessaging.addListener('tokenReceived', (event) => {
+        console.log('FCM token renovado:', event.token);
+        this.tokenFCM = event.token;
+        if (this.usuario && this.usuario.nombre) {
+          this.registrarTokenEnBackend(event.token);
         }
-      } else {
-        // Notificación recibida en foreground → mostrar toast
+      });
+
+      // Escuchar notificaciones recibidas en foreground
+      FirebaseMessaging.addListener('notificationReceived', async (event) => {
+        const notification = event.notification;
+        const ruta = notification.data?.['ruta'] as string | undefined;
         const toast = await this.toastCtrl.create({
-          header: payload.title,
-          message: payload.body,
+          header: notification.title,
+          message: notification.body,
           duration: 5000,
           position: 'top',
-          buttons: payload.ruta ? [{
+          buttons: ruta ? [{
             text: 'Ver',
             handler: () => {
-              this.router.navigateByUrl(payload.ruta);
+              this.router.navigateByUrl(ruta);
             }
           }] : []
         });
         await toast.present();
-      }
-    });
+      });
+
+      // Escuchar pulsaciones sobre notificaciones (foreground o background)
+      FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+        const ruta = event.notification.data?.['ruta'] as string | undefined;
+        if (ruta) {
+          this.router.navigateByUrl(ruta);
+        }
+      });
+    } catch (err) {
+      console.log('Error inicializando notificaciones push:', err);
+    }
   }
 
   public registrarDispositivoPush() {
     if (this.tokenFCM) {
       this.registrarTokenEnBackend(this.tokenFCM);
     }
-  }
-
-  private solicitarPermisoNotificaciones(): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        const permissions = (window as any).cordova?.plugins?.permissions;
-        if (!permissions) {
-          console.log('Plugin de permisos no disponible');
-          resolve();
-          return;
-        }
-        const POST_NOTIFICATIONS = 'android.permission.POST_NOTIFICATIONS';
-        permissions.checkPermission(POST_NOTIFICATIONS, (status) => {
-          if (status.hasPermission) {
-            console.log('Permiso notificaciones: ya concedido');
-            resolve();
-          } else {
-            permissions.requestPermission(POST_NOTIFICATIONS,
-              (result) => {
-                console.log('Permiso notificaciones:', result.hasPermission ? 'concedido' : 'denegado');
-                resolve();
-              },
-              () => { console.log('Error solicitando permiso'); resolve(); }
-            );
-          }
-        }, () => {
-          // Android < 13: no necesita este permiso
-          console.log('checkPermission no soportado, Android < 13');
-          resolve();
-        });
-      } catch (err) {
-        console.log('Error en solicitarPermisoNotificaciones:', err);
-        resolve();
-      }
-    });
   }
 
   private registrarTokenEnBackend(token: string) {

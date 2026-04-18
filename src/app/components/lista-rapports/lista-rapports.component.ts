@@ -8,7 +8,7 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaRapportsService } from './lista-rapports.service';
 import { ModalResumenVentasComponent } from '../resumen-ventas/modal-resumen-ventas.component';
 import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 
 
 @Component({

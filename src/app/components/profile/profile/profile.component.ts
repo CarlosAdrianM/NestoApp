@@ -6,8 +6,8 @@ import { AuthService } from 'src/app/services/auth/auth.service';
 import { Parametros } from 'src/app/services/parametros.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { Storage } from '@ionic/storage-angular';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
-import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavController, NavParams, AlertController, LoadingController, IonicSafeString } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { ComisionesService } from './comisiones.service';
