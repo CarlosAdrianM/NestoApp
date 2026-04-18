@@ -29,7 +29,7 @@
   
   <div *ngIf="resumen">
     <ion-list *ngFor="let etiqueta of resumen.Etiquetas">
-      <ion-item-divider color="light">
+      <ion-item-divider>
         <ion-label>{{etiqueta.Nombre}}</ion-label>
         <!-- CAMBIO: Botón de información para TODAS las etiquetas -->
         <ion-button 
@@ -70,7 +70,7 @@
     </ion-list>
     
     <!-- Sección Total - SIMPLIFICADA -->
-    <ion-item-divider color="light">Total</ion-item-divider>
+    <ion-item-divider>Total</ion-item-divider>
     
     <!-- Range visual del tramo -->
     <ion-item *ngIf="etiquetaGeneral">
