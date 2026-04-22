@@ -131,11 +131,16 @@ export class PlantillaVentaService {
 
   public validarServirJunto(
     almacen: string,
-    productosBonificadosConCantidad: ProductoBonificadoConCantidad[]
+    productosBonificadosConCantidad: ProductoBonificadoConCantidad[],
+    lineasPedido: ProductoBonificadoConCantidad[]
   ): Observable<ValidarServirJuntoResponse> {
-    const url = Configuracion.API_URL + '/Ganavisiones/ValidarServirJunto';
+    const url = Configuracion.API_URL + '/PedidosVenta/ValidarServirJunto';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
-    const body = { Almacen: almacen, ProductosBonificadosConCantidad: productosBonificadosConCantidad };
+    const body = {
+      Almacen: almacen,
+      ProductosBonificadosConCantidad: productosBonificadosConCantidad,
+      LineasPedido: lineasPedido
+    };
 
     return this.http.post<ValidarServirJuntoResponse>(url, body, { headers });
   }

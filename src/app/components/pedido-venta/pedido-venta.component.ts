@@ -7,6 +7,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { PedidoVenta } from './pedido-venta';
 import { PedidoVentaService } from './pedido-venta.service';
+import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
@@ -51,7 +52,8 @@ export class PedidoVentaComponent  {
     private usuario: Usuario,
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private plantillaVentaService: PlantillaVentaService
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -116,6 +118,33 @@ export class PedidoVentaComponent  {
       );
   }
   
+  public async onServirJuntoChange(event: any): Promise<void> {
+      const nuevoValor = event.detail.checked;
+      if (nuevoValor || !this.pedido) return;
+
+      const lineasPedido = (this.pedido.Lineas || [])
+          .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0)
+          .map(l => ({ ProductoId: l.Producto, Cantidad: l.Cantidad }));
+      const almacen = this.pedido.Lineas?.[0]?.almacen || 'ALG';
+
+      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido).subscribe(
+          async (response) => {
+              if (!response.PuedeDesmarcar) {
+                  this.pedido.servirJunto = true;
+                  const alert = await this.alertCtrl.create({
+                      header: 'No se puede desmarcar',
+                      message: response.Mensaje || 'No se puede desmarcar "Servir Junto" porque hay productos que se quedarían pendientes.',
+                      buttons: ['Ok']
+                  });
+                  await alert.present();
+              }
+          },
+          (error) => {
+              console.error('Error validando ServirJunto:', error);
+          }
+      );
+  }
+
   public seleccionarFormaPago(evento: any): void {
       this.firebaseAnalytics.logEvent("pedido_seleccionar_forma_pago", {pedido:this.pedido.numero, formaPago: evento});
       this.pedido.formaPago = evento;

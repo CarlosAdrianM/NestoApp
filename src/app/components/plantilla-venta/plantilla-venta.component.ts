@@ -482,7 +482,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         Cantidad: r.cantidad
       }));
 
-      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad).subscribe(
+      const lineasPedido = (this.productosResumen || [])
+        .filter(l => l.producto && l.cantidad > 0)
+        .map(l => ({ ProductoId: l.producto, Cantidad: l.cantidad }));
+
+      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido).subscribe(
         async (response) => {
           if (!response.PuedeDesmarcar) {
             // No se puede desmarcar: revertir el toggle y mostrar mensaje

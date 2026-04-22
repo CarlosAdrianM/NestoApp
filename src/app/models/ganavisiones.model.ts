@@ -29,6 +29,7 @@ export interface ProductoBonificadoConCantidad {
 export interface ValidarServirJuntoRequest {
   Almacen: string;
   ProductosBonificadosConCantidad: ProductoBonificadoConCantidad[];
+  LineasPedido?: ProductoBonificadoConCantidad[];
 }
 
 export interface ValidarServirJuntoResponse {
