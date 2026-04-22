@@ -34,7 +34,6 @@ import { ComisionesDetalleComponent } from './components/comisiones-detalle/comi
 import { File } from '@awesome-cordova-plugins/file/ngx';
 import { ExtractoClienteComponent, ModalEnviarEnlaceCobroComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { SelectorClientesComponent } from './components/selector-clientes/selector-clientes.component';
-import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
 import { ListaRapportsComponent } from './components/lista-rapports/lista-rapports.component';
 import { RapportComponent } from './components/rapport/rapport.component';
@@ -140,7 +139,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         NativeGeocoder,
         NavParams,
         File,
-        Keyboard,
         CanDeactivateGuard,
         {
             provide: MSAL_INSTANCE,

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
+import { Keyboard } from '../../services/keyboard.service';
 import { AlertController, LoadingController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
