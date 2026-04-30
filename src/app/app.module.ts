@@ -20,7 +20,6 @@ import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { SelectorVendedoresComponent } from './components/selector-vendedores/selector-vendedores.component';
-import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
 import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { ClienteComponent } from './components/cliente/cliente.component';
 import { SelectorFormasPagoComponent } from './components/selector-formas-pago/selector-formas-pago.component';
@@ -135,7 +134,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         { provide: LOCALE_ID, useValue: 'es' },
         Usuario,
         JwtHelperService,
-        Geolocation,
         NativeGeocoder,
         NavParams,
         File,

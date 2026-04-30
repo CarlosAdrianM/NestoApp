@@ -6,7 +6,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { ClienteService } from './cliente.service';
 import { ClientesMismoTelefonoComponent } from './clientes-mismo-telefono';
 import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
-import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
+import { Geolocation } from '../../services/geolocation.service';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 
