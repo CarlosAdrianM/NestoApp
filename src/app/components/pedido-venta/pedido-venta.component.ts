@@ -124,7 +124,11 @@ export class PedidoVentaComponent  {
 
       const lineasPedido = (this.pedido.Lineas || [])
           .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0)
-          .map(l => ({ ProductoId: l.Producto, Cantidad: l.Cantidad }));
+          .map(l => ({
+              ProductoId: l.Producto,
+              Cantidad: l.Cantidad,
+              EsBonificadoGanavisiones: l.DescuentoLinea === 1 && l.AplicarDescuento === false
+          }));
       const almacen = this.pedido.Lineas?.[0]?.almacen || 'ALG';
 
       this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido).subscribe(

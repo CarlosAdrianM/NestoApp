@@ -24,6 +24,7 @@ export interface StockAlmacen {
 export interface ProductoBonificadoConCantidad {
   ProductoId: string;
   Cantidad: number;
+  EsBonificadoGanavisiones?: boolean;
 }
 
 export interface ValidarServirJuntoRequest {
