@@ -74,13 +74,13 @@
     
     <!-- Range visual del tramo -->
     <ion-item *ngIf="etiquetaGeneral">
-      <ion-range 
-        min="{{etiquetaGeneral.InicioTramo}}" 
-        max="{{etiquetaGeneral.FinalTramo}}" 
-        color="{{colorRangoGeneral}}" 
+      <ion-range
+        [min]="etiquetaGeneral.InicioTramo"
+        [max]="etiquetaGeneral.FinalTramo === -1 ? etiquetaGeneral.Proyeccion : etiquetaGeneral.FinalTramo"
+        color="{{colorRangoGeneral}}"
         [(ngModel)]="etiquetaGeneral.Proyeccion">
         <ion-label slot="start">{{etiquetaGeneral.InicioTramo | currency:'EUR'}}</ion-label>
-        <ion-label slot="end">{{etiquetaGeneral.FinalTramo | currency:'EUR'}}</ion-label>
+        <ion-label slot="end">{{etiquetaGeneral.FinalTramo | importeOTexto:'Sin importe final'}}</ion-label>
       </ion-range>
     </ion-item>
     
