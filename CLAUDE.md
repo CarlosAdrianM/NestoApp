@@ -24,8 +24,9 @@ Aplicación móvil Ionic/Angular para gestión de ventas y pedidos.
 ### Endpoints API
 ```
 GET  /api/Ganavisiones/ProductosBonificables
-POST /api/Ganavisiones/ValidarServirJunto
+POST /api/PedidosVenta/ValidarServirJunto
 ```
+> El endpoint antiguo `POST /api/Ganavisiones/ValidarServirJunto` está marcado `[Obsolete]` en NestoAPI. Usar el canónico, que además detecta muestras MMP vía `LineasPedido` (NestoAPI#161, NestoApp#112).
 
 ### Referencias de implementación
 - NestoAPI#94 - Backend de Ganavisiones

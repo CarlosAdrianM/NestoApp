@@ -1,5 +1,7 @@
 import { IEtiquetaComisionAcumulada, ResumenComisionesMes } from './comisiones.interfaces';
 
+const SIN_LIMITE_TRAMO = -1;
+
 export class ComisionesHelper {
   /**
    * Obtiene la etiqueta "General" del resumen
@@ -35,6 +37,17 @@ export class ComisionesHelper {
       maximumFractionDigits: 2,
       useGrouping: true  // Forzar separador de miles
     }).format(value);
+  }
+
+  /**
+   * Formatea un importe, devolviendo un texto fallback cuando el API emite
+   * el centinela -1 (tramo sin límite superior — NestoAPI#185).
+   */
+  static formatCurrencyOrText(value: number | undefined | null, textoFallback: string): string {
+    if (value === SIN_LIMITE_TRAMO) {
+      return textoFallback;
+    }
+    return ComisionesHelper.formatCurrency(value);
   }
 
   /**

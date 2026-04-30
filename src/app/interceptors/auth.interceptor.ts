@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
 import { Observable, from, throwError } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
-import { Storage } from '@ionic/storage-angular';
 import { Usuario } from '../models/Usuario';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 import { ApiErrorResponse, ProcessedApiError } from '../models/api-error.model';
@@ -13,82 +12,57 @@ import { AuthService } from '../services/auth/auth.service';
 export class AuthInterceptor implements HttpInterceptor {
 
   constructor(
-    private storage: Storage,
     private usuario: Usuario,
     private errorHandler: ErrorHandlerService,
     private authService: AuthService
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Solo interceptar peticiones a nuestra API
     if (!request.url.startsWith(Configuracion.URL_SERVIDOR)) {
       return next.handle(request);
     }
 
-    return from(this.storage.get('id_token')).pipe(
+    // /oauth/token nunca debe llevar Authorization (login y refresh son anónimos).
+    // Excluirlo también evita recursión si el refresh devuelve 401.
+    if (request.url.includes('/oauth/token')) {
+      return next.handle(request);
+    }
+
+    return from(this.authService.getValidToken()).pipe(
       switchMap(token => {
-        let clonedRequest = request;
-
-        // Preparar headers adicionales
-        const headers: { [key: string]: string } = {};
-
-        // Añadir token de autorización si existe
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        // Añadir usuario en header personalizado para logging en NestoAPI
-        if (this.usuario?.nombre) {
-          headers['X-Usuario'] = this.usuario.nombre;
-        }
-
-        // Clonar la petición con los nuevos headers
-        if (Object.keys(headers).length > 0) {
-          clonedRequest = request.clone({
-            setHeaders: headers
-          });
-        }
-
+        const clonedRequest = this.clonarConHeaders(request, token);
         return next.handle(clonedRequest).pipe(
           catchError((error: HttpErrorResponse) => {
-            // Si es 401 y no es la petición de refresh, intentar refrescar el token
-            if (error.status === 401 && !request.url.includes('/auth/refreshOAuthToken')) {
-              return this.authService.refreshToken().pipe(
-                switchMap(newToken => {
-                  // Reintentar la petición original con el nuevo token
-                  const retryRequest = request.clone({
-                    setHeaders: {
-                      'Authorization': `Bearer ${newToken}`,
-                      ...(this.usuario?.nombre ? { 'X-Usuario': this.usuario.nombre } : {})
-                    }
-                  });
-                  return next.handle(retryRequest);
-                }),
-                catchError(refreshError => {
-                  // Si falla el refresh, devolver el error original procesado
-                  const processedError = this.processError(error);
-                  return throwError(processedError);
-                })
+            if (error.status === 401) {
+              return from(this.authService.refreshAccessToken()).pipe(
+                switchMap(newToken => next.handle(this.clonarConHeaders(request, newToken))),
+                catchError(() => throwError(this.processError(error)))
               );
             }
-            const processedError = this.processError(error);
-            return throwError(processedError);
+            return throwError(this.processError(error));
           })
         );
       })
     );
   }
 
-  /**
-   * Procesa un error HTTP y lo convierte en un ProcessedApiError estructurado
-   */
+  private clonarConHeaders(request: HttpRequest<unknown>, token: string | null): HttpRequest<unknown> {
+    const headers: { [key: string]: string } = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (this.usuario?.nombre) {
+      headers['X-Usuario'] = this.usuario.nombre;
+    }
+    return Object.keys(headers).length > 0 ? request.clone({ setHeaders: headers }) : request;
+  }
+
   private processError(error: HttpErrorResponse): ProcessedApiError {
     const isBusinessError = error.status === 400 || error.status === 409;
     const isServerError = error.status >= 500;
 
     let apiError: ApiErrorResponse | undefined;
 
-    // Verificar si es un error estructurado de NestoAPI
     if (this.errorHandler.isApiErrorResponse(error.error)) {
       apiError = error.error;
     }

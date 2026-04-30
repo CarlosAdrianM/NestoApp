@@ -3,13 +3,10 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 
 import { IonicModule, IonicRouteStrategy, NavParams } from '@ionic/angular';
-import { SplashScreen } from '@awesome-cordova-plugins/splash-screen/ngx';
-import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { Usuario } from './models/Usuario';
-import { FCM } from '@awesome-cordova-plugins/fcm/ngx';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { IonicStorageModule } from '@ionic/storage-angular';
@@ -23,7 +20,6 @@ import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { SelectorVendedoresComponent } from './components/selector-vendedores/selector-vendedores.component';
-import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
 import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { ClienteComponent } from './components/cliente/cliente.component';
 import { SelectorFormasPagoComponent } from './components/selector-formas-pago/selector-formas-pago.component';
@@ -34,12 +30,9 @@ import { SelectorAlmacenesComponent } from './components/selector-almacenes/sele
 import { SelectorDireccionesEntregaComponent } from './components/selector-direcciones-entrega/selector-direcciones-entrega.component';
 import { SelectorProductosComponent } from './components/selector-productos/selector-productos.component';
 import { ComisionesDetalleComponent } from './components/comisiones-detalle/comisiones-detalle.component';
-import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { File } from '@awesome-cordova-plugins/file/ngx';
-import { FileOpener } from '@awesome-cordova-plugins/file-opener/ngx';
 import { ExtractoClienteComponent, ModalEnviarEnlaceCobroComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { SelectorClientesComponent } from './components/selector-clientes/selector-clientes.component';
-import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
 import { ListaRapportsComponent } from './components/lista-rapports/lista-rapports.component';
 import { RapportComponent } from './components/rapport/rapport.component';
@@ -55,8 +48,6 @@ import { ModalResumenVentasComponent } from './components/resumen-ventas/modal-r
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { CacheModule } from "./services/cache.service";
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
-import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
 import { IPublicClientApplication,
          PublicClientApplication,
          BrowserCacheLocation } from '@azure/msal-browser';
@@ -68,6 +59,7 @@ import { AlertsComponent } from '../app/alerts/alerts.component';
 import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
+import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
 
 
 registerLocaleData(localeEs);
@@ -128,7 +120,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         AlertsComponent,
         ResumenVentasComponent,
         SelectorRegalosComponent,
-        ModalResumenVentasComponent
+        ModalResumenVentasComponent,
+        ImporteOTextoPipe
     ],
     bootstrap: [AppComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA], imports: [BrowserModule,
@@ -139,22 +132,14 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         FormsModule,
         CacheModule.forRoot({ keyPrefix: 'NestoApp' }),
         MsalModule], providers: [
-        StatusBar,
-        SplashScreen,
         { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
         { provide: LOCALE_ID, useValue: 'es' },
         Usuario,
         JwtHelperService,
-        Geolocation,
         NativeGeocoder,
         NavParams,
-        FileTransfer,
         File,
-        FileOpener,
-        Keyboard,
         CanDeactivateGuard,
-        FirebaseAnalytics,
-        AppVersion,
         {
             provide: MSAL_INSTANCE,
             useFactory: MSALInstanceFactory
@@ -162,7 +147,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         MsalService,
         InAppBrowser,
         HTTP,
-        FCM,
         {
             provide: APP_INITIALIZER,
             useFactory: initializeStorage,

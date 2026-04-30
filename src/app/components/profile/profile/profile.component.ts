@@ -6,8 +6,8 @@ import { AuthService } from 'src/app/services/auth/auth.service';
 import { Parametros } from 'src/app/services/parametros.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { Storage } from '@ionic/storage-angular';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
-import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 
@@ -118,7 +118,7 @@ export class ProfileComponent {
             this.usuario.nombre = credentials.username;
             this.firebaseAnalytics.logEvent("login", {nombre: this.usuario.nombre});
             let datos: any = data;
-            await this.authSuccess(datos.access_token);
+            await this.authSuccess(datos.access_token, datos.refresh_token);
             this.cargarParametros();
             this.appComponent.registrarDispositivoPush();
         },
@@ -145,15 +145,20 @@ public signup(credentials: any): void {
 
 public logout(): void {
     this.local.remove('id_token');
+    this.local.remove('refresh_token');
     this.local.remove('profile');
     this.firebaseAnalytics.logEvent("logout", {nombre: this.usuario.nombre});
     this.usuario.nombre = null;
 }
 
-private async authSuccess(token: any): Promise<void> {
+private async authSuccess(token: any, refreshToken?: any): Promise<void> {
     this.error = null;
     await this.local.set('id_token', token);
-    // this.usuario.nombre = this.jwtHelper.decodeToken(token).unique_name;
+    if (refreshToken) {
+        await this.local.set('refresh_token', refreshToken);
+    } else {
+        await this.local.remove('refresh_token');
+    }
     await this.local.set('profile', this.usuario.nombre.trim());
 }
 

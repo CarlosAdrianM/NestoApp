@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AlertController, NavController } from '@ionic/angular';
 import { ProductoComponent } from '../producto/producto.component';
 import { LineaVenta } from './linea-venta';

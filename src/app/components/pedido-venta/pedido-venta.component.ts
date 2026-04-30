@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavController, AlertController, LoadingController, NavParams } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { PedidoVenta } from './pedido-venta';
 import { PedidoVentaService } from './pedido-venta.service';
+import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
@@ -51,7 +52,8 @@ export class PedidoVentaComponent  {
     private usuario: Usuario,
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private plantillaVentaService: PlantillaVentaService
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -116,6 +118,61 @@ export class PedidoVentaComponent  {
       );
   }
   
+  public async onServirJuntoChange(event: any): Promise<void> {
+      const nuevoValor = event.detail.checked;
+      if (nuevoValor || !this.pedido) return;
+
+      const lineasPedido = (this.pedido.Lineas || [])
+          .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0)
+          .map(l => ({
+              ProductoId: l.Producto,
+              Cantidad: l.Cantidad,
+              EsBonificadoGanavisiones: l.DescuentoLinea === 1 && l.AplicarDescuento === false
+          }));
+      const almacen = this.pedido.Lineas?.[0]?.almacen || 'ALG';
+      const datosPedido = {
+          formaPago: this.pedido.formaPago,
+          plazosPago: this.pedido.plazosPago,
+          ccc: this.pedido.formaPago === 'RCB' ? this.pedido.ccc : null,
+          periodoFacturacion: this.pedido.periodoFacturacion,
+          notaEntrega: this.pedido.notaEntrega
+      };
+
+      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido).subscribe(
+          async (response) => {
+              if (!response.PuedeDesmarcar) {
+                  this.pedido.servirJunto = true;
+                  const alert = await this.alertCtrl.create({
+                      header: 'No se puede desmarcar',
+                      message: response.Mensaje || 'No se puede desmarcar "Servir Junto" porque hay productos que se quedarían pendientes.',
+                      buttons: ['Ok']
+                  });
+                  await alert.present();
+                  return;
+              }
+
+              if (response.Aviso) {
+                  const confirm = await this.alertCtrl.create({
+                      header: 'Comisión contra reembolso',
+                      message: response.Aviso,
+                      buttons: [
+                          { text: 'Cancelar', role: 'cancel' },
+                          { text: 'Continuar', role: 'confirm' }
+                      ]
+                  });
+                  await confirm.present();
+                  const { role } = await confirm.onDidDismiss();
+                  if (role === 'cancel') {
+                      this.pedido.servirJunto = true;
+                  }
+              }
+          },
+          (error) => {
+              console.error('Error validando ServirJunto:', error);
+          }
+      );
+  }
+
   public seleccionarFormaPago(evento: any): void {
       this.firebaseAnalytics.logEvent("pedido_seleccionar_forma_pago", {pedido:this.pedido.numero, formaPago: evento});
       this.pedido.formaPago = evento;

@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NavController } from '@ionic/angular';
 import { ResumenVentasService } from './resumen-ventas.service';
 import { DetalleProducto, ResumenVentas } from './resumen-ventas.model';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { Usuario } from 'src/app/models/Usuario';
 
 @Component({

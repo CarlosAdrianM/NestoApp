@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavController, NavParams, AlertController, LoadingController, IonicSafeString } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { ComisionesService } from './comisiones.service';
@@ -321,7 +321,7 @@ export class ComisionesComponent implements OnInit {
       
       lineas.push(`  <tr>`);
       lineas.push(`    <td style="padding: 4px 8px 4px 0; vertical-align: top;">Tramo actual:</td>`);
-      lineas.push(`    <td style="padding: 4px 0; font-weight: bold; text-align: right; white-space: nowrap;">${ComisionesHelper.formatCurrency(etiquetaAcumulada.InicioTramo)} - ${ComisionesHelper.formatCurrency(etiquetaAcumulada.FinalTramo)}</td>`);
+      lineas.push(`    <td style="padding: 4px 0; font-weight: bold; text-align: right; white-space: nowrap;">${ComisionesHelper.formatCurrency(etiquetaAcumulada.InicioTramo)} - ${ComisionesHelper.formatCurrencyOrText(etiquetaAcumulada.FinalTramo, 'Sin importe final')}</td>`);
       lineas.push(`  </tr>`);
       
       lineas.push(`  <tr>`);
@@ -331,7 +331,7 @@ export class ComisionesComponent implements OnInit {
       
       lineas.push(`  <tr>`);
       lineas.push(`    <td style="padding: 4px 8px 4px 0; vertical-align: top;">Falta para salto:</td>`);
-      lineas.push(`    <td style="padding: 4px 0; font-weight: bold; text-align: right; white-space: nowrap;">${ComisionesHelper.formatCurrency(etiquetaAcumulada.FaltaParaSalto)}</td>`);
+      lineas.push(`    <td style="padding: 4px 0; font-weight: bold; text-align: right; white-space: nowrap;">${ComisionesHelper.formatCurrencyOrText(etiquetaAcumulada.FaltaParaSalto, 'No hay más saltos')}</td>`);
       lineas.push(`  </tr>`);
       
       lineas.push(`  <tr>`);
