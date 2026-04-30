@@ -31,12 +31,18 @@ export interface ValidarServirJuntoRequest {
   Almacen: string;
   ProductosBonificadosConCantidad: ProductoBonificadoConCantidad[];
   LineasPedido?: ProductoBonificadoConCantidad[];
+  FormaPago?: string;
+  PlazosPago?: string;
+  CCC?: string;
+  PeriodoFacturacion?: string;
+  NotaEntrega?: boolean;
 }
 
 export interface ValidarServirJuntoResponse {
   PuedeDesmarcar: boolean;
   ProductosProblematicos: ProductoSinStock[];
   Mensaje: string | null;
+  Aviso?: string | null;
 }
 
 export interface ProductoSinStock {

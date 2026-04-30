@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
+import { ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 
 @Injectable({
@@ -132,14 +132,26 @@ export class PlantillaVentaService {
   public validarServirJunto(
     almacen: string,
     productosBonificadosConCantidad: ProductoBonificadoConCantidad[],
-    lineasPedido: ProductoBonificadoConCantidad[]
+    lineasPedido: ProductoBonificadoConCantidad[],
+    datosPedido?: {
+      formaPago?: string;
+      plazosPago?: string;
+      ccc?: string;
+      periodoFacturacion?: string;
+      notaEntrega?: boolean;
+    }
   ): Observable<ValidarServirJuntoResponse> {
     const url = Configuracion.API_URL + '/PedidosVenta/ValidarServirJunto';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
-    const body = {
+    const body: ValidarServirJuntoRequest = {
       Almacen: almacen,
       ProductosBonificadosConCantidad: productosBonificadosConCantidad,
-      LineasPedido: lineasPedido
+      LineasPedido: lineasPedido,
+      FormaPago: datosPedido?.formaPago,
+      PlazosPago: datosPedido?.plazosPago,
+      CCC: datosPedido?.ccc,
+      PeriodoFacturacion: datosPedido?.periodoFacturacion,
+      NotaEntrega: datosPedido?.notaEntrega
     };
 
     return this.http.post<ValidarServirJuntoResponse>(url, body, { headers });

@@ -486,7 +486,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         .filter(l => l.producto && l.cantidad > 0)
         .map(l => ({ ProductoId: l.producto, Cantidad: l.cantidad }));
 
-      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido).subscribe(
+      const formaPago = this.extraerCodigoFormaPago();
+      const plazosPago = this.extraerCodigoPlazosPago();
+      const datosPedido = {
+        formaPago,
+        plazosPago,
+        ccc: formaPago === 'RCB' ? this.direccionSeleccionada.ccc : null,
+        periodoFacturacion: this.direccionSeleccionada.periodoFacturacion,
+        notaEntrega: false
+      };
+
+      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido).subscribe(
         async (response) => {
           if (!response.PuedeDesmarcar) {
             // No se puede desmarcar: revertir el toggle y mostrar mensaje
@@ -497,6 +507,23 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               buttons: ['Ok']
             });
             await alert.present();
+            return;
+          }
+
+          if (response.Aviso) {
+            const confirm = await this.alertCtrl.create({
+              header: 'Comisión contra reembolso',
+              message: response.Aviso,
+              buttons: [
+                { text: 'Cancelar', role: 'cancel' },
+                { text: 'Continuar', role: 'confirm' }
+              ]
+            });
+            await confirm.present();
+            const { role } = await confirm.onDidDismiss();
+            if (role === 'cancel') {
+              this.direccionSeleccionada.servirJunto = true;
+            }
           }
         },
         async (error) => {

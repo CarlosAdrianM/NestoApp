@@ -130,8 +130,15 @@ export class PedidoVentaComponent  {
               EsBonificadoGanavisiones: l.DescuentoLinea === 1 && l.AplicarDescuento === false
           }));
       const almacen = this.pedido.Lineas?.[0]?.almacen || 'ALG';
+      const datosPedido = {
+          formaPago: this.pedido.formaPago,
+          plazosPago: this.pedido.plazosPago,
+          ccc: this.pedido.formaPago === 'RCB' ? this.pedido.ccc : null,
+          periodoFacturacion: this.pedido.periodoFacturacion,
+          notaEntrega: this.pedido.notaEntrega
+      };
 
-      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido).subscribe(
+      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido).subscribe(
           async (response) => {
               if (!response.PuedeDesmarcar) {
                   this.pedido.servirJunto = true;
@@ -141,6 +148,23 @@ export class PedidoVentaComponent  {
                       buttons: ['Ok']
                   });
                   await alert.present();
+                  return;
+              }
+
+              if (response.Aviso) {
+                  const confirm = await this.alertCtrl.create({
+                      header: 'Comisión contra reembolso',
+                      message: response.Aviso,
+                      buttons: [
+                          { text: 'Cancelar', role: 'cancel' },
+                          { text: 'Continuar', role: 'confirm' }
+                      ]
+                  });
+                  await confirm.present();
+                  const { role } = await confirm.onDidDismiss();
+                  if (role === 'cancel') {
+                      this.pedido.servirJunto = true;
+                  }
               }
           },
           (error) => {
