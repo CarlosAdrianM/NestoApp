@@ -46,15 +46,51 @@ POST /api/PedidosVenta/ValidarServirJunto
 
 Siempre que se vaya a hacer push, hay que:
 
-1. **Actualizar el número de versión** en estos 3 ficheros:
+1. **Actualizar el número de versión** en estos 4 ficheros (los 3 del bundle web + el nativo):
    - `package.json`
    - `config.xml`
    - `src/app/components/configuracion/configuracion.component.ts` (constante `Configuracion.VERSION`)
+   - `android/app/build.gradle` (`versionName` y `versionCode`). El `versionCode` es entero, conviene usar `MAJOR*10000 + MINOR*100 + PATCH` (ej: `21703` para 2.17.3). Si solo se publica un bundle web por Live Updates y los binarios no cambian, este fichero **no hace falta** subirlo. Solo cuando se vaya a generar APK release nuevo.
 
 2. **Actualizar el changelog** en `src/app/components/profile/profile/profile.component.html`:
    - Los nuevos `<ion-item>` se añaden **arriba** de la lista (justo después del `<h1>Hola...`)
    - Se quitan los últimos `<ion-item>` (los de abajo) para mantener entre 6 y 10 entradas
    - El contenido debe describir las funcionalidades nuevas visibles para el usuario (ej: portes, mensajes de Ganavisiones, PDF con imágenes), no cambios internos como migraciones o fixes de build
+
+## Build local de APK release firmado (WSL2)
+
+Requisitos (una sola vez):
+- JDK 21 en `/usr/lib/jvm/java-21-openjdk-amd64` (Capacitor 8 lo exige por `@capacitor/filesystem`)
+- Android SDK en `~/Android` con `build-tools/29.0.2/apksigner` y `platforms` android-26+
+- WSL2 con al menos 5 GB de RAM (configurar `.wslconfig` en Windows)
+- Keystore en `/mnt/c/Users/Usuario/OneDrive - NUEVA VISION/Escritorio/my-release-key.keystore` (alias `nestoapp`)
+- `scripts/local-env.sh` que exporta JAVA_HOME, ANDROID_HOME, PATH y nvm 22 (no se commitea, está en .gitignore)
+
+Pasos para generar APK release firmado:
+
+```bash
+source scripts/local-env.sh
+npx ng build
+npx cap sync android
+cd android && ./gradlew assembleRelease
+
+# Firmar con apksigner (la contraseña del keystore va inline; pedírsela a Carlos)
+/home/carlos/Android/build-tools/29.0.2/apksigner sign \
+  --ks "/mnt/c/Users/Usuario/OneDrive - NUEVA VISION/Escritorio/my-release-key.keystore" \
+  --ks-key-alias nestoapp \
+  --ks-pass pass:<contraseña> \
+  --key-pass pass:<contraseña> \
+  --out app/build/outputs/apk/release/NestoApp-<version>-<canal>.apk \
+  app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+### Canales Master vs Production en `capacitor.config.ts`
+
+El campo `LiveUpdates.channel` se compila DENTRO del APK. Lo que decide a qué canal se suscribe cada dispositivo es el APK que tiene instalado, no el bundle. Entonces:
+- APK con `channel: 'Master'` → tu móvil (recibe builds desde push a master de git)
+- APK con `channel: 'Production'` → vendedores (recibe builds promocionados manualmente desde la UI de AppFlow)
+
+Para construir los dos APKs hay que cambiar el canal en `capacitor.config.ts` antes de cada build, hacer `cap sync` y `gradlew assembleRelease`. El cambio de canal NO se commitea — el repo siempre tiene `channel: 'Master'` por defecto.
 
 ## Reglas Ionic 8
 
