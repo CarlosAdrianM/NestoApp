@@ -27,6 +27,11 @@ export class ErrorHandlerService {
    * Maneja un error de la API y muestra el mensaje apropiado al usuario
    */
   async handleApiError(error: ProcessedApiError): Promise<void> {
+    // Cancelaciones (request abortada por el cliente) no son errores que deba ver el usuario
+    if (error.isCancelled) {
+      return;
+    }
+
     if (error.isBusinessError && error.apiError) {
       await this.handleBusinessError(error.apiError);
     } else if (error.isServerError) {

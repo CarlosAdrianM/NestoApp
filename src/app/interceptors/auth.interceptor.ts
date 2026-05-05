@@ -58,6 +58,11 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private processError(error: HttpErrorResponse): ProcessedApiError {
+    // status 0 con error.url null típicamente significa request cancelada por el cliente
+    // (navegación, componente destruido, cambio de red en móvil). NestoAPI ya filtra
+    // OperationCanceledException de ELMAH (NestoAPI#183); aquí evitamos mostrar al
+    // usuario un "error de conexión" cuando en realidad fue una cancelación local.
+    const isCancelled = error.status === 0 && !error.url;
     const isBusinessError = error.status === 400 || error.status === 409;
     const isServerError = error.status >= 500;
 
@@ -70,6 +75,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return {
       isBusinessError,
       isServerError,
+      isCancelled,
       apiError,
       originalError: error,
       statusCode: error.status
