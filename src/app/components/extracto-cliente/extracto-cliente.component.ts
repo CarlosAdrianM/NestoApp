@@ -141,7 +141,17 @@ export class ExtractoClienteComponent {
                   anno: this.annoModelo347
               });
               await loading.dismiss();
-              this.fileOpener.open(rutaArchivo, 'application/pdf');
+              try {
+                  await this.fileOpener.open(rutaArchivo, 'application/pdf');
+              } catch (errorOpen) {
+                  const msgOpen = errorOpen?.message || errorOpen?.body || JSON.stringify(errorOpen);
+                  const alertOpen = await this.alertCtrl.create({
+                      header: 'No se pudo abrir el PDF',
+                      message: 'El archivo se descargó pero no se pudo abrir: ' + msgOpen,
+                      buttons: ['Ok']
+                  });
+                  await alertOpen.present();
+              }
           },
           async error => {
               await loading.dismiss();
@@ -188,11 +198,28 @@ export class ExtractoClienteComponent {
           async (rutaArchivo: string) => {
               this.firebaseAnalytics.logEvent("descargar_factura", {empresa: movimiento.empresa, factura: movimiento.documento});
               await loading.dismiss();
-              this.fileOpener.open(rutaArchivo, 'application/pdf');
+              try {
+                  await this.fileOpener.open(rutaArchivo, 'application/pdf');
+              } catch (errorOpen) {
+                  const msgOpen = errorOpen?.message || errorOpen?.body || JSON.stringify(errorOpen);
+                  const alertOpen = await this.alertCtrl.create({
+                      header: 'No se pudo abrir el PDF',
+                      message: 'El archivo se descargó pero no se pudo abrir: ' + msgOpen,
+                      buttons: ['Ok']
+                  });
+                  await alertOpen.present();
+              }
           },
           async error => {
               await loading.dismiss();
               this.errorMessage = <any>error;
+              const msg = error?.message || error?.body || error?.http_status || error?.code || JSON.stringify(error);
+              const alert = await this.alertCtrl.create({
+                  header: 'Error al descargar la factura',
+                  message: msg,
+                  buttons: ['Ok']
+              });
+              await alert.present();
           }
       );
   }
