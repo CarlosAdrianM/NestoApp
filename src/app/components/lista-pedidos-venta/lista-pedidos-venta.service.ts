@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { File } from '@awesome-cordova-plugins/file/ngx';
+import { PdfStorage } from 'src/app/services/pdf-storage.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +15,7 @@ export class ListaPedidosVentaService {
   constructor(
       private http: HttpClient,
       usuario: Usuario,
-      private file: File
+      private pdfStorage: PdfStorage
   ) {
       this.usuario = usuario;
   }
@@ -40,7 +40,6 @@ export class ListaPedidosVentaService {
       const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + pedido.toString().trim() + "&mostrarImagenes=" + mostrarImagenes;
       const nombreArchivo = pedido.toString().trim() + '.pdf';
       const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
-      await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
-      return this.file.externalDataDirectory + nombreArchivo;
+      return this.pdfStorage.savePdfBlob(blob, nombreArchivo);
    }
 }
