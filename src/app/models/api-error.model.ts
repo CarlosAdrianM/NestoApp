@@ -63,6 +63,12 @@ export enum ApiErrorCode {
 export interface ProcessedApiError {
   isBusinessError: boolean;
   isServerError: boolean;
+  /**
+   * true cuando la request fue cancelada por el cliente (status 0, sin respuesta del servidor).
+   * Típicamente ocurre por navegación, componente destruido o cambio de red en móvil.
+   * No es un error funcional: NO debe mostrarse al usuario ni reportarse.
+   */
+  isCancelled: boolean;
   apiError?: ApiErrorResponse;
   originalError: any;
   statusCode: number;

@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { File } from '@awesome-cordova-plugins/file/ngx';
+import { PdfStorage } from 'src/app/services/pdf-storage.service';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { SolicitudPagoTPV, RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
 import { AuthService } from 'src/app/services/auth/auth.service';
@@ -14,7 +14,7 @@ import { AuthService } from 'src/app/services/auth/auth.service';
 export class ExtractoClienteService {
   constructor(
     private http: HttpClient,
-    private file: File,
+    private pdfStorage: PdfStorage,
     private usuario: Usuario,
     private authService: AuthService
   ) { }
@@ -58,8 +58,7 @@ export class ExtractoClienteService {
     const url = Configuracion.API_URL + "/Facturas?empresa=" + empresa.trim() + "&numeroFactura=" + numeroFactura.trim() + "&mostrarImagenes=" + mostrarImagenes;
     const nombreArchivo = numeroFactura.trim() + '.pdf';
     const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
-    await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
-    return this.file.externalDataDirectory + nombreArchivo;
+    return this.pdfStorage.savePdfBlob(blob, nombreArchivo);
   }
 
   public leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
@@ -94,7 +93,6 @@ export class ExtractoClienteService {
     // Refrescar token proactivamente antes de la petición
     await this.authService.getValidToken();
     const blob = await this.http.get(url, { responseType: 'blob' }).toPromise();
-    await this.file.writeFile(this.file.externalDataDirectory, nombreArchivo, blob, { replace: true });
-    return this.file.externalDataDirectory + nombreArchivo;
+    return this.pdfStorage.savePdfBlob(blob, nombreArchivo);
   }
 }

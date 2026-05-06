@@ -37,4 +37,6 @@ npm-debug.log*
 /android/build
 /android/app/release
 /android/capacitor-cordova-android-plugins/build
+/android/local.properties
+/scripts/local-env.sh
 .claude
