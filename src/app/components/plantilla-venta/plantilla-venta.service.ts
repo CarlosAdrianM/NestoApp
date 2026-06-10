@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
+import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 
 @Injectable({
@@ -107,12 +107,15 @@ export class PlantillaVentaService {
     cliente: string
   ): Observable<ProductosBonificablesResponse> {
     const url = Configuracion.API_URL + '/Ganavisiones/ProductosBonificables';
+    // Issue #126: incluirBloqueados=true para mostrar también los que aún no se pueden canjear
+    // pero faltan pocos euros (el backend ya filtra los sin stock).
     let params = new HttpParams()
       .set('empresa', empresa)
       .set('baseImponibleBonificable', baseImponibleBonificable.toString())
       .set('almacen', almacen)
       .set('servirJunto', servirJunto.toString())
-      .set('cliente', cliente);
+      .set('cliente', cliente)
+      .set('incluirBloqueados', 'true');
 
     return this.http.get<ProductosBonificablesResponse>(url, { params });
   }
@@ -139,7 +142,8 @@ export class PlantillaVentaService {
       ccc?: string;
       periodoFacturacion?: string;
       notaEntrega?: boolean;
-    }
+    },
+    lineasParaPortes?: LineaPortesServirJunto[]
   ): Observable<ValidarServirJuntoResponse> {
     const url = Configuracion.API_URL + '/PedidosVenta/ValidarServirJunto';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
@@ -147,6 +151,7 @@ export class PlantillaVentaService {
       Almacen: almacen,
       ProductosBonificadosConCantidad: productosBonificadosConCantidad,
       LineasPedido: lineasPedido,
+      LineasParaPortes: lineasParaPortes,
       FormaPago: datosPedido?.formaPago,
       PlazosPago: datosPedido?.plazosPago,
       CCC: datosPedido?.ccc,

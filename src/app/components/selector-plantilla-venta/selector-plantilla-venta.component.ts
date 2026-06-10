@@ -76,6 +76,10 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                             let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                             clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                             clone.esSobrePedido = clone.estado != 0;
+                            // Issue #127: personalización de unidad de oferta (default = gratis).
+                            clone.personalizarOferta = false;
+                            clone.precioOferta = 0;
+                            clone.descuentoOferta = 0;
                             return clone;
                         });
                         this.inicializarDatos(data);
@@ -103,6 +107,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       );
   }
 
+  public colorFondo(producto: any): string {
+      if (producto.estado === 4) return 'warning';
+      if (producto.estado === 0) return '';
+      return 'light';
+  }
+
   public abrirDetalle(producto: any, almacen: any): void {
       if (this.agregarDato(producto)) {
           console.log("Agregado dato");
@@ -128,9 +138,13 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                   value.colorSobrePedido = 'none';
               }
               const importeLinea = value.cantidad * value.precio * (1 - value.descuento);
-              this.baseImponiblePedido += importeLinea;
+              // Issue #127: la unidad de oferta personalizada deja de ser gratis y aporta a los totales.
+              const importeOferta = value.personalizarOferta
+                  ? (+value.cantidadOferta) * (+value.precioOferta || 0) * (1 - (+value.descuentoOferta || 0))
+                  : 0;
+              this.baseImponiblePedido += importeLinea + importeOferta;
               if (!this.esSobrePedidoParaPortes(value)) {
-                  this.baseImponibleParaPortes += importeLinea;
+                  this.baseImponibleParaPortes += importeLinea + importeOferta;
               }
 
           }
@@ -139,13 +153,15 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       return productosResumen;
   }
 
+  // Issue #122: réplica de GestorPortes.CalcularBaseImponibleProductos (NestoAPI#211).
+  // - Servir junto MARCADO: única entrega → ninguna línea es sobre pedido (todas cuentan).
+  // - Servir junto DESMARCADO: estado 0 nunca es sobre pedido; las demás son sobre pedido
+  //   si no hay stock suficiente en el almacén del pedido.
   private esSobrePedidoParaPortes(linea: any): boolean {
+      if (this.servirJunto) return false;
       if (linea.estado === 0) return false;
       if (!linea.stockActualizado) return true;
-      const stockRelevante = this.servirJunto
-          ? (linea.stocks?.reduce((sum, s) => sum + s.cantidadDisponible, 0) ?? linea.cantidadDisponible)
-          : linea.cantidadDisponible;
-      return stockRelevante < (+linea.cantidad + linea.cantidadOferta);
+      return linea.cantidadDisponible < (+linea.cantidad + linea.cantidadOferta);
   }
 
   public ngOnChanges(changes): void {
@@ -226,8 +242,12 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                             let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                             clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                             clone.esSobrePedido = clone.estado != 0;
+                            // Issue #127: personalización de unidad de oferta (default = gratis).
+                            clone.personalizarOferta = false;
+                            clone.precioOferta = 0;
+                            clone.descuentoOferta = 0;
                             return clone;
-                        });  
+                        });
                         this.inicializarDatosFiltrados(data);
                     },
                     error => this.errorMessage = <any>error
@@ -334,7 +354,11 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       esSobrePedido: true,  // Productos externos siempre como "sobre pedido"
       esProductoExterno: true,  // Flag para identificar
       stockActualizado: false,
-      estado: 1  // Estado diferente de 0 para marcar como sobre pedido
+      estado: 1,  // Estado diferente de 0 para marcar como sobre pedido
+      // Issue #127: restaurar personalización de oferta desde el borrador.
+      personalizarOferta: lineaBorrador.personalizarOferta || false,
+      precioOferta: lineaBorrador.precioOferta || 0,
+      descuentoOferta: lineaBorrador.descuentoOferta || 0
     };
 
     this.agregarDato(productoNuevo);

@@ -18,6 +18,7 @@
       <ion-card-title class="producto-titulo">
         {{ producto.texto }}
       </ion-card-title>
+      <ion-badge *ngIf="producto.estado === 4" color="warning">A extinguir</ion-badge>
 
       <div class="campos-grid">
         <div class="campo-grupo">
@@ -35,6 +36,22 @@
         <div class="campo-grupo">
           <ion-label class="campo-label" [color]="producto.colorStock">Descuento</ion-label>
           <ion-input class="campo-input" disabled="{{!sePuedeHacerDescuento(producto)}}" [ngModel]="descuentoMostrar" (change)="actualizarDescuento($event.target.value)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+      </div>
+
+      <!-- Issue #127: personalizar la unidad de oferta (p. ej. 2ª al 50%). -->
+      <ion-item *ngIf="+producto.cantidadOferta > 0" lines="none" class="personalizar-oferta-item">
+        <ion-label>Personalizar oferta</ion-label>
+        <ion-toggle slot="end" [(ngModel)]="producto.personalizarOferta" (ionChange)="actualizarOferta()"></ion-toggle>
+      </ion-item>
+      <div class="campos-grid" *ngIf="+producto.cantidadOferta > 0 && producto.personalizarOferta">
+        <div class="campo-grupo">
+          <ion-label class="campo-label">Precio oferta</ion-label>
+          <ion-input class="campo-input" type="number" min="0" [(ngModel)]="producto.precioOferta" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+        </div>
+        <div class="campo-grupo">
+          <ion-label class="campo-label">Dto oferta</ion-label>
+          <ion-input class="campo-input" [ngModel]="descuentoOfertaMostrar" (change)="actualizarDescuentoOferta($event.target.value)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
         </div>
       </div>
     </ion-card-content>

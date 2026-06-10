@@ -36,7 +36,13 @@ export class AuthInterceptor implements HttpInterceptor {
             if (error.status === 401) {
               return from(this.authService.refreshAccessToken()).pipe(
                 switchMap(newToken => next.handle(this.clonarConHeaders(request, newToken))),
-                catchError(() => throwError(this.processError(error)))
+                catchError(() => {
+                  // Refresh tampoco funciona (no hay refresh_token, ya caducó o el servidor lo rechazó):
+                  // avisamos al usuario y le mandamos a re-loguear. Si caen varias llamadas a la vez,
+                  // handleSessionExpired es idempotente y solo muestra el toast una vez.
+                  this.authService.handleSessionExpired();
+                  return throwError(this.processError(error));
+                })
               );
             }
             return throwError(this.processError(error));

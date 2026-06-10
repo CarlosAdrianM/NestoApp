@@ -58,8 +58,9 @@
   <ion-button expand="block" color="medium" *ngIf="datosFiltrados && datosFiltrados.length > 5" (click)="ordenarPorNombre()">Ordenar por nombre</ion-button>
   <div id="myFixZone">
     <ion-list>
-      <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="producto.estado == 0 ? '' : 'light'">
+      <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="colorFondo(producto)">
         <ion-label class="ion-text-wrap">
+          <ion-badge *ngIf="producto.estado === 4" color="warning">A extinguir</ion-badge>
           <h2>{{producto.texto}}</h2>
           <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
           <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>

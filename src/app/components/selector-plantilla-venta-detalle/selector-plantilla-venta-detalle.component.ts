@@ -40,7 +40,8 @@ export class SelectorPlantillaVentaDetalleComponent {
           this.actualizarCantidad(this.producto);
       } 
       this.actualizarDescuento(this.producto.descuento * 100);
-
+      // Issue #127: inicializar visualización del descuento de la oferta (si está personalizada).
+      this.descuentoOfertaMostrar = ((this.producto.descuentoOferta || 0) * 100) + '%';
   }
 
   @ViewChild('txtCantidad') myTxtCantidad;
@@ -63,6 +64,7 @@ export class SelectorPlantillaVentaDetalleComponent {
   public producto: any;
   private cliente: any;
   public descuentoMostrar: string;
+  public descuentoOfertaMostrar: string;
   private alertCtrl: AlertController;
   private toastCtrl: ToastController;
   public almacen: any;
@@ -169,6 +171,27 @@ export class SelectorPlantillaVentaDetalleComponent {
   public actualizarDescuento(descuento: number): void {
       this.producto.descuento = descuento / 100;
       this.descuentoMostrar = descuento + '%';
+  }
+
+  // Issue #127: gestión de la oferta personalizada (precio + dto sobre la unidad de oferta).
+  public actualizarOferta(): void {
+      if (!this.producto.personalizarOferta) {
+          this.producto.precioOferta = 0;
+          this.producto.descuentoOferta = 0;
+          this.descuentoOfertaMostrar = '0%';
+      } else if (this.producto.precioOferta == null || this.producto.precioOferta === 0) {
+          this.producto.precioOferta = +this.producto.precio || 0;
+      }
+  }
+
+  public actualizarDescuentoOferta(descuento: any): void {
+      let dto = descuento;
+      if (isNaN(dto)) {
+          dto = String(dto).replace(/[^\d.-]/g, '');
+      }
+      const num = +dto || 0;
+      this.producto.descuentoOferta = num / 100;
+      this.descuentoOfertaMostrar = num + '%';
   }
 
   public seleccionarTexto(evento: any): void {

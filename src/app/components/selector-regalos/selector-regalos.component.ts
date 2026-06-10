@@ -206,6 +206,9 @@ export class SelectorRegalosComponent {
   }
 
   public incrementarCantidad(producto: ProductoBonificable): void {
+    // Issue #126: los productos bloqueados (faltan euros para canjearlos) no se pueden seleccionar.
+    if (producto.Bloqueado) return;
+
     const cantidadActual = this.getCantidad(producto.ProductoId);
     const ganavisionesNecesarios = producto.Ganavisiones;
 
@@ -232,6 +235,7 @@ export class SelectorRegalosComponent {
   }
 
   public puedeIncrementar(producto: ProductoBonificable): boolean {
+    if (producto.Bloqueado) return false;
     const cantidadActual = this.getCantidad(producto.ProductoId);
     const tieneStock = cantidadActual < producto.StockTotal;
     const tieneGanavisiones = this.ganavisionesRestantes >= producto.Ganavisiones;

@@ -3,7 +3,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { Storage } from '@ionic/storage-angular';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
+import { ToastController } from '@ionic/angular';
 import { Configuracion } from '../../components/configuracion/configuracion/configuracion.component';
+import { Usuario } from '../../models/Usuario';
 
 @Injectable({
   providedIn: 'root'
@@ -15,10 +18,14 @@ export class AuthService {
 
   private jwtHelper = new JwtHelperService();
   private refreshInFlight: Promise<string> | null = null;
+  private sessionExpiredHandling: boolean = false;
 
   constructor(
     private http: HttpClient,
-    private storage: Storage
+    private storage: Storage,
+    private router: Router,
+    private toastCtrl: ToastController,
+    private usuario: Usuario
   ) { }
 
   public async authenticated(): Promise<boolean> {
@@ -117,5 +124,44 @@ export class AuthService {
       return true;
     }
     return expDate.getTime() - Date.now() < AuthService.REFRESH_MARGIN_MS;
+  }
+
+  /**
+   * Issue #125 (UX): se llama cuando el interceptor recibe un 401 y el refresh tampoco funciona
+   * (no hay refresh_token o también caducó). Limpia la sesión, avisa al usuario con un toast y
+   * navega a la pantalla de perfil para que vuelva a loguearse. Idempotente: aunque caigan a la
+   * vez varias llamadas, el toast/navegación solo ocurre una vez.
+   */
+  public async handleSessionExpired(): Promise<void> {
+    if (this.sessionExpiredHandling) return;
+    this.sessionExpiredHandling = true;
+
+    try {
+      await this.storage.remove('id_token');
+      await this.storage.remove('refresh_token');
+      await this.storage.remove('profile');
+    } catch { }
+
+    this.usuario.nombre = null;
+
+    try {
+      const toast = await this.toastCtrl.create({
+        header: 'Sesión expirada',
+        message: 'Vuelve a iniciar sesión para continuar.',
+        duration: 5000,
+        position: 'top',
+        color: 'warning'
+      });
+      await toast.present();
+    } catch { }
+
+    try {
+      await this.router.navigateByUrl('/profile');
+    } catch { }
+  }
+
+  /** Permite reanudar el manejo de expiración tras un login correcto. */
+  public resetSessionExpiredFlag(): void {
+    this.sessionExpiredHandling = false;
   }
 }

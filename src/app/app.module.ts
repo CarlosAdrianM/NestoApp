@@ -1,4 +1,5 @@
-import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
+import { GlobalErrorHandler } from './services/global-error-handler';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
 
@@ -158,6 +159,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             useClass: AuthInterceptor,
             multi: true
         },
+        { provide: ErrorHandler, useClass: GlobalErrorHandler },
         provideHttpClient(withInterceptorsFromDi())
     ] })
 export class AppModule {}

@@ -5,6 +5,7 @@ import { AlertController, NavController } from '@ionic/angular';
 import { ProductoComponent } from '../producto/producto.component';
 import { LineaVenta } from './linea-venta';
 import { LineaVentaService } from './linea-venta.service';
+import { ProcessedApiError } from 'src/app/models/api-error.model';
 
 @Component({
     selector: 'app-linea-venta',
@@ -64,7 +65,7 @@ constructor(
     this.cantidadAnterior = this.linea.Cantidad;
   }
 
-  public cambiarProducto(nuevoProducto: string): void {    
+  public cambiarProducto(nuevoProducto: string): void {
     if (nuevoProducto == this.linea.Producto)  {
       return;
     }
@@ -88,14 +89,45 @@ constructor(
                   console.log("Producto cambiado");
               }
           },
-          error => {
-              // loading.dismiss();
+          async (error: ProcessedApiError) => {
+              // Issue #124: si el código de barras está en varios productos, el backend
+              // devuelve 409 con la lista de candidatos. Mostrar selector y reintentar
+              // con el número del producto elegido.
+              if (error?.statusCode === 409 && Array.isArray(error.originalError?.error)) {
+                  const elegido = await this.elegirProductoCandidato(error.originalError.error);
+                  if (elegido) {
+                      this.cambiarProducto(elegido);
+                  }
+                  return;
+              }
               this.errorMessage = <any>error;
           },
           () => {
               // loading.dismiss();
           }
       );
+  }
+
+  private async elegirProductoCandidato(candidatos: { producto: string; nombre: string }[]): Promise<string | null> {
+    if (!candidatos || candidatos.length === 0) return null;
+    return new Promise<string | null>(async resolve => {
+      const alert = await this.alertCtrl.create({
+        header: 'Código de barras compartido',
+        message: 'Elige el producto:',
+        inputs: candidatos.map((c, i) => ({
+          name: 'producto',
+          type: 'radio' as const,
+          label: `${c.producto} - ${c.nombre}`,
+          value: c.producto,
+          checked: i === 0
+        })),
+        buttons: [
+          { text: 'Cancelar', role: 'cancel', handler: () => resolve(null) },
+          { text: 'Aceptar', handler: (value: string) => resolve(value || null) }
+        ]
+      });
+      await alert.present();
+    });
   }
 
   public abrirProducto(): void {

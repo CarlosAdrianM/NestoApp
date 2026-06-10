@@ -160,6 +160,8 @@ private async authSuccess(token: any, refreshToken?: any): Promise<void> {
         await this.local.remove('refresh_token');
     }
     await this.local.set('profile', this.usuario.nombre.trim());
+    // Tras un login correcto, reanudar el manejo de sesión expirada para futuras caducidades.
+    this.auth.resetSessionExpiredFlag();
 }
 
 private cargarParametros(): void {

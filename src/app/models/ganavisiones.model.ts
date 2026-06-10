@@ -13,6 +13,8 @@ export interface ProductoBonificable {
   UrlFoto?: string;
   Stocks: StockAlmacen[];
   StockTotal: number;
+  Bloqueado?: boolean;
+  ImporteParaDesbloquear?: number;
 }
 
 export interface StockAlmacen {
@@ -27,10 +29,19 @@ export interface ProductoBonificadoConCantidad {
   EsBonificadoGanavisiones?: boolean;
 }
 
+export interface LineaPortesServirJunto {
+  ProductoId: string;
+  Almacen: string;
+  Estado: number;
+  Cantidad: number;
+  BaseImponible: number;
+}
+
 export interface ValidarServirJuntoRequest {
   Almacen: string;
   ProductosBonificadosConCantidad: ProductoBonificadoConCantidad[];
   LineasPedido?: ProductoBonificadoConCantidad[];
+  LineasParaPortes?: LineaPortesServirJunto[];
   FormaPago?: string;
   PlazosPago?: string;
   CCC?: string;
@@ -43,6 +54,7 @@ export interface ValidarServirJuntoResponse {
   ProductosProblematicos: ProductoSinStock[];
   Mensaje: string | null;
   Aviso?: string | null;
+  BaseImponibleSinServirJunto?: number;
 }
 
 export interface ProductoSinStock {

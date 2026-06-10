@@ -1,12 +1,13 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { IDeactivatableComponent } from 'src/app/utils/ideactivatable-component';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVentaComponent } from '../pedido-venta/pedido-venta.component';
+import { PedidoVentaService } from '../pedido-venta/pedido-venta.service';
 import { SelectorClientesComponent } from '../selector-clientes/selector-clientes.component';
 import { SelectorPlantillaVentaComponent } from '../selector-plantilla-venta/selector-plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
@@ -40,7 +41,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private errorHandler: ErrorHandlerService,
     private actionSheetCtrl: ActionSheetController,
     private modalCtrl: ModalController,
-    private borradorService: BorradorPlantillaVentaService
+    private borradorService: BorradorPlantillaVentaService,
+    private pedidoVentaService: PedidoVentaService
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
@@ -373,7 +375,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (!this.productosResumen) return 0;
     return this.productosResumen
       .filter(p => p.grupo && this.GRUPOS_BONIFICABLES.includes(p.grupo.trim().toUpperCase()))
-      .reduce((sum, p) => sum + (p.cantidad * p.precio * (1 - p.descuento)), 0);
+      .reduce((sum, p) => {
+        const base = p.cantidad * p.precio * (1 - p.descuento);
+        // Issue #127: la unidad de oferta personalizada también aporta a la base bonificable.
+        const baseOferta = p.personalizarOferta
+          ? (+p.cantidadOferta) * (+p.precioOferta || 0) * (1 - (+p.descuentoOferta || 0))
+          : 0;
+        return sum + base + baseOferta;
+      }, 0);
   }
 
   get ganavisionesDisponibles(): number {
@@ -475,6 +484,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public async onServirJuntoChange(event: any): Promise<void> {
     const nuevoValor = event.detail.checked;
 
+    // Issue #122: al marcar volvemos a recalcular base de portes y portes
+    // (con servir junto cambia qué líneas cuentan para la base).
+    if (nuevoValor) {
+      this.recalcularPortesTrasServirJunto();
+      return;
+    }
+
     // Si se está desmarcando "Servir Junto", validar con el servidor
     if (!nuevoValor) {
       const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
@@ -486,6 +502,19 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         .filter(l => l.producto && l.cantidad > 0)
         .map(l => ({ ProductoId: l.producto, Cantidad: l.cantidad }));
 
+      // Issue #122 / NestoAPI#211: líneas de producto para que el backend calcule la base de
+      // portes que quedaría al desmarcar servir junto (excluyendo las líneas sobre pedido).
+      const almacenLineas = this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen;
+      const lineasParaPortes = (this.productosResumen || [])
+        .filter(l => l.producto && l.cantidad > 0)
+        .map(l => ({
+          ProductoId: l.producto,
+          Almacen: almacenLineas,
+          Estado: l.estado,
+          Cantidad: +l.cantidad,
+          BaseImponible: (+l.cantidad) * (+l.precio) * (1 - (+l.descuento || 0))
+        }));
+
       const formaPago = this.extraerCodigoFormaPago();
       const plazosPago = this.extraerCodigoPlazosPago();
       const datosPedido = {
@@ -496,7 +525,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         notaEntrega: false
       };
 
-      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido).subscribe(
+      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido, lineasParaPortes).subscribe(
         async (response) => {
           if (!response.PuedeDesmarcar) {
             // No se puede desmarcar: revertir el toggle y mostrar mensaje
@@ -507,13 +536,26 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               buttons: ['Ok']
             });
             await alert.present();
+            this.recalcularPortesTrasServirJunto();
             return;
           }
 
-          if (response.Aviso) {
+          // Avisos no-bloqueantes al desmarcar: comisión contra reembolso (NestoAPI#187) y
+          // aparición de portes por líneas sobre pedido (NestoAPI#211). Se muestran juntos
+          // en una sola confirmación; si el usuario cancela, se revierte el desmarcado.
+          const baseConServirJunto = this._selectorPlantillaVenta?.baseImponibleParaPortes || 0;
+          const umbral = this.resultadoPortes?.ImporteMinimoPedidoSinPortes;
+          const avisoPortes = PlantillaVentaComponent.construirAvisoPortesAlDesmarcar(
+            response.BaseImponibleSinServirJunto, baseConServirJunto, umbral
+          );
+          const avisos: string[] = [];
+          if (response.Aviso) avisos.push(response.Aviso);
+          if (avisoPortes) avisos.push(avisoPortes);
+
+          if (avisos.length > 0) {
             const confirm = await this.alertCtrl.create({
-              header: 'Comisión contra reembolso',
-              message: response.Aviso,
+              header: 'Servir Junto',
+              message: avisos.join('\n\n'),
               buttons: [
                 { text: 'Cancelar', role: 'cancel' },
                 { text: 'Continuar', role: 'confirm' }
@@ -525,12 +567,51 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               this.direccionSeleccionada.servirJunto = true;
             }
           }
+          // Tras procesar el cambio (sea desmarcado aceptado, revertido o sin avisos),
+          // recalcular base de portes y el texto de portes a mostrar.
+          this.recalcularPortesTrasServirJunto();
         },
         async (error) => {
           console.error('Error validando ServirJunto:', error);
+          // Si el servidor falla revertimos al estado seguro (servir junto marcado)
+          // y recalculamos para que la UI quede coherente.
+          this.direccionSeleccionada.servirJunto = true;
+          this.recalcularPortesTrasServirJunto();
         }
       );
     }
+  }
+
+  /**
+   * Issue #122: tras cambiar "Servir Junto" hay que recalcular qué líneas cuentan
+   * para la base de portes y volver a pedir los portes al servidor. Empujamos el
+   * valor al selector explícitamente porque el @Input puede no haber propagado aún
+   * cuando llegamos aquí (especialmente al MARCAR, donde no hay awaits previos).
+   */
+  private recalcularPortesTrasServirJunto(): void {
+    if (this._selectorPlantillaVenta) {
+      this._selectorPlantillaVenta.servirJunto = this.direccionSeleccionada?.servirJunto ?? true;
+      this._selectorPlantillaVenta.cargarResumen();
+    }
+    this.calcularPortes();
+  }
+
+  /**
+   * Issue #122 / NestoAPI#211: devuelve el aviso si al desmarcar "servir junto" el pedido pasa de
+   * "portes pagados" a llevar gastos de envío, porque las líneas sobre pedido dejan de contar
+   * para la base de portes. Cadena vacía si no hay que avisar. Función pura (testeable).
+   */
+  public static construirAvisoPortesAlDesmarcar(
+    baseSinServirJunto: number | undefined,
+    baseConServirJunto: number,
+    umbral: number | undefined
+  ): string {
+    if (baseSinServirJunto === undefined || baseSinServirJunto === null) return '';
+    if (umbral === undefined || umbral === null) return '';
+    if (baseConServirJunto >= umbral && baseSinServirJunto < umbral) {
+      return `Al desmarcar 'Servir junto', las líneas sobre pedido dejan de contar para portes y el pedido pasaría a llevar gastos de envío (base ${baseSinServirJunto.toFixed(2)}€ de ${umbral.toFixed(2)}€ necesarios para portes pagados). ¿Quieres continuar?`;
+    }
+    return '';
   }
 
   public actualizarRegalos(regalos: RegaloSeleccionado[]): void {
@@ -876,7 +957,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           if (linea.cantidadOferta) {
               lineaPedidoOferta = Object.assign({}, nuevaLinea);
               lineaPedidoOferta.Cantidad = linea.cantidadOferta;
-              lineaPedidoOferta.PrecioUnitario = 0;
+              // Issue #127: si la oferta se personaliza, la 2ª línea va con el precio/dto introducidos
+              // y AplicarDescuento=false (el dto efectivo es exactamente descuentoOferta).
+              if (linea.personalizarOferta) {
+                  lineaPedidoOferta.PrecioUnitario = +linea.precioOferta || 0;
+                  lineaPedidoOferta.DescuentoLinea = +linea.descuentoOferta || 0;
+                  lineaPedidoOferta.AplicarDescuento = false;
+              } else {
+                  lineaPedidoOferta.PrecioUnitario = 0;
+              }
               lineaPedidoOferta.oferta = nuevaLinea.oferta;
               pedido.Lineas.push(lineaPedidoOferta);
           }
@@ -1004,11 +1093,37 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             }
         );
       } else {
+        // Issue #121: avisar si la ampliación lleva fechas de entrega que no coinciden con
+        // las del pedido existente, para que el usuario no mezcle fechas sin darse cuenta.
+        const ampliacion = this.prepararPedido();
+        try {
+          const pedidoExistente: any = await firstValueFrom(
+            this.pedidoVentaService.cargarPedido(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado)
+          );
+          const fechasExistente = (pedidoExistente?.Lineas || []).filter(l => l.tipoLinea === 1).map(l => l.fechaEntrega);
+          const fechasAmpliacion = (ampliacion.Lineas || []).filter(l => l.tipoLinea === 1).map(l => l.fechaEntrega);
+          const conflicto = PlantillaVentaComponent.detectarConflictoFechasUnion(
+            this.pedidoPendienteSeleccionado, fechasExistente, fechasAmpliacion
+          );
+          if (conflicto.hayConflicto) {
+            const unificar = await this.confirmarUnificarFechas(conflicto.mensaje);
+            if (unificar) {
+              for (const linea of ampliacion.Lineas) {
+                linea.fechaEntrega = conflicto.fechaDestino;
+              }
+            }
+          }
+        } catch (e) {
+          // Si falla la carga del pedido existente, seguimos con el flujo de unir
+          // (el backend devolverá el error original, sin pisar el comportamiento previo).
+          console.warn('No se pudo comprobar fechas del pedido existente:', e);
+        }
+
         let loading: any = await this.loadingCtrl.create({
             message: 'Ampliando Pedido...',
-        });  
+        });
         await loading.present();
-        this.servicio.unirPedidos(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado, this.prepararPedido()).subscribe(
+        this.servicio.unirPedidos(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado, ampliacion).subscribe(
             async data => {
                 this.firebaseAnalytics.logEvent("plantilla_venta_ampliar_pedido", {pedido: data.numero});
                 numeroPedido = data.numero;
@@ -1040,6 +1155,69 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   public hayAlgunProducto(): boolean {
       return false;
+  }
+
+  /**
+   * Issue #121: comprueba si la ampliación lleva fechas de entrega que no coinciden con ninguna
+   * del pedido existente al que se va a unir. Función pura (sin estado) para poder testarla.
+   * Las fechas se comparan normalizadas a YYYY-MM-DD (se ignora la parte horaria).
+   */
+  public static detectarConflictoFechasUnion(
+    numeroPedidoExistente: number,
+    fechasExistente: (string | Date)[],
+    fechasAmpliacion: (string | Date)[]
+  ): { hayConflicto: boolean; fechaDestino?: string; mensaje?: string } {
+    const normalizar = (f: string | Date): string => {
+      const d = f instanceof Date ? f : new Date(f);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const formatear = (iso: string): string => {
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y.slice(-2)}`;
+    };
+    const unicas = (arr: (string | Date)[]) =>
+      Array.from(new Set((arr || []).filter(f => !!f).map(normalizar))).sort();
+
+    const existentes = unicas(fechasExistente);
+    const ampliacion = unicas(fechasAmpliacion);
+
+    if (existentes.length === 0) return { hayConflicto: false };
+
+    const noCoinciden = ampliacion.filter(f => !existentes.includes(f));
+    if (noCoinciden.length === 0) return { hayConflicto: false };
+
+    const fechaDestinoSoloFecha = existentes[0];
+    const fechaDestino = `${fechaDestinoSoloFecha}T00:00:00`;
+    const fechaDestinoTxt = formatear(fechaDestinoSoloFecha);
+    const noCoincidenTxt = noCoinciden.map(formatear).join(', ');
+    const opciones = `\n(Sí: poner todas las líneas para el ${fechaDestinoTxt} / No: dejar cada línea con su fecha)`;
+
+    let mensaje: string;
+    if (existentes.length === 1) {
+      mensaje = `Todas las líneas del pedido ${numeroPedidoExistente} tienen fecha de entrega para el ${fechaDestinoTxt}, pero hay líneas para el ${noCoincidenTxt} en la ampliación. ¿Desea poner todas para el ${fechaDestinoTxt}?` + opciones;
+    } else {
+      const existentesTxt = existentes.map(formatear).join(', ');
+      mensaje = `El pedido ${numeroPedidoExistente} tiene líneas con fechas de entrega ${existentesTxt} y la ampliación añade líneas para el ${noCoincidenTxt}, que no coinciden. ¿Desea poner las líneas de la ampliación para el ${fechaDestinoTxt}?` + opciones;
+    }
+
+    return { hayConflicto: true, fechaDestino, mensaje };
+  }
+
+  private async confirmarUnificarFechas(mensaje: string): Promise<boolean> {
+    return new Promise<boolean>(async resolve => {
+      const alert = await this.alertCtrl.create({
+        header: 'Fechas de entrega distintas',
+        message: mensaje,
+        buttons: [
+          { text: 'No', role: 'cancel', handler: () => resolve(false) },
+          { text: 'Sí', handler: () => resolve(true) }
+        ]
+      });
+      await alert.present();
+    });
   }
 
   public reinicializar(): void {
@@ -1496,7 +1674,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         tamanno: p.tamanno,
         unidadMedida: p.unidadMedida,
         urlImagen: p.urlImagen,
-        aplicarDescuentoFicha: p.aplicarDescuentoFicha
+        aplicarDescuentoFicha: p.aplicarDescuentoFicha,
+        // Issue #127: persistir la personalización de la oferta en el borrador.
+        personalizarOferta: p.personalizarOferta || false,
+        precioOferta: +p.precioOferta || 0,
+        descuentoOferta: +p.descuentoOferta || 0
       }));
   }
 
@@ -1744,6 +1926,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         if (lineaBorrador.urlImagen && !productoEncontrado.urlImagen) {
           productoEncontrado.urlImagen = lineaBorrador.urlImagen;
         }
+        // Issue #127: restaurar personalización de oferta.
+        productoEncontrado.personalizarOferta = lineaBorrador.personalizarOferta || false;
+        productoEncontrado.precioOferta = lineaBorrador.precioOferta || 0;
+        productoEncontrado.descuentoOferta = lineaBorrador.descuentoOferta || 0;
       } else {
         // Producto no está en la plantilla - agregarlo
         productosNoEncontrados.push(lineaBorrador.texto);

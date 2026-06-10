@@ -26,6 +26,10 @@ export interface LineaPlantillaVenta {
   aplicarDescuentoFicha?: boolean;
   stock?: number;
   cantidadDisponible?: number;
+  // Issue #127: personalización de la unidad de oferta (2ª al X%).
+  personalizarOferta?: boolean;
+  precioOferta?: number;
+  descuentoOferta?: number;
 }
 
 /**

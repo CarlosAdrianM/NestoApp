@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { CacheService } from "./services/cache.service";
 import { Configuracion } from './components/configuracion/configuracion/configuracion.component';
 import { Router } from '@angular/router';
+import { ErroresService } from './services/errores.service';
 
 
 @Component({
@@ -30,9 +31,11 @@ export class AppComponent {
     private toastCtrl: ToastController,
     private http: HttpClient,
     private router: Router,
+    private erroresService: ErroresService,
     cache: CacheService
   ) {
     this.initializeApp();
+    this.registrarCapturaPromesasRechazadas();
 
     this.pages = [
       { title: 'Plantilla Venta', url: '/plantilla-venta', icon: 'pencil' },
@@ -51,6 +54,18 @@ export class AppComponent {
       this.rootPage = ProfileComponent;
     }
 
+  }
+
+  // Issue #123: ErrorHandler de Angular sólo cubre lo que pasa por Zone; las promesas
+  // rechazadas fuera de Zone (p. ej. en plugins nativos) hay que pillarlas aparte.
+  private registrarCapturaPromesasRechazadas(): void {
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    window.addEventListener('unhandledrejection', (event) => {
+      try {
+        const motivo = event?.reason;
+        this.erroresService.reportar(motivo, 'unhandledrejection ' + (this.router?.url || ''));
+      } catch { }
+    });
   }
 
   initializeApp() {
