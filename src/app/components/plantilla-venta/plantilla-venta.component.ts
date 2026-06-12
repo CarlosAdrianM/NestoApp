@@ -587,13 +587,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * para la base de portes y volver a pedir los portes al servidor. Empujamos el
    * valor al selector explícitamente porque el @Input puede no haber propagado aún
    * cuando llegamos aquí (especialmente al MARCAR, donde no hay awaits previos).
+   *
+   * Issue #128: lo diferimos al siguiente microtask para no mutar estado leído por
+   * la template durante el mismo ciclo de change detection del ionChange (NG0100).
    */
   private recalcularPortesTrasServirJunto(): void {
-    if (this._selectorPlantillaVenta) {
-      this._selectorPlantillaVenta.servirJunto = this.direccionSeleccionada?.servirJunto ?? true;
-      this._selectorPlantillaVenta.cargarResumen();
-    }
-    this.calcularPortes();
+    Promise.resolve().then(() => {
+      if (this._selectorPlantillaVenta) {
+        this._selectorPlantillaVenta.servirJunto = this.direccionSeleccionada?.servirJunto ?? true;
+        this._selectorPlantillaVenta.cargarResumen();
+      }
+      this.calcularPortes();
+    });
   }
 
   /**
@@ -1004,8 +1009,41 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       return pedido;
   }
 
+  /**
+   * Issue #129: localiza líneas con oferta personalizada que no aporta beneficio
+   * (precio efectivo de la unidad de oferta >= precio efectivo de la línea normal).
+   * Lógica pura. Devuelve la lista de productos problemáticos para el aviso.
+   */
+  private detectarOfertasSinBeneficio(): { producto: string; texto: string }[] {
+      const lineas = this.productosResumen || [];
+      return lineas
+          .filter(l => l.producto && +l.cantidad > 0)
+          .filter(l => {
+              if (!l.personalizarOferta) return false;
+              if (!(+l.cantidadOferta > 0)) return false;
+              const efectivoOferta = (+l.precioOferta || 0) * (1 - (+l.descuentoOferta || 0));
+              const efectivoNormal = (+l.precio || 0) * (1 - (+l.descuento || 0));
+              return efectivoOferta >= efectivoNormal;
+          })
+          .map(l => ({ producto: l.producto, texto: l.texto }));
+  }
+
   public async crearPedido(): Promise<void> {
       let numeroPedido: string;
+
+      // Issue #129: backstop "oferta sin beneficio" (regresión #127). El servidor lo rechazaría
+      // (NestoAPI ValidadorOfertaSinBeneficio) pero avisamos antes para no llegar hasta allí.
+      const sinBeneficio = this.detectarOfertasSinBeneficio();
+      if (sinBeneficio.length > 0) {
+          const productos = sinBeneficio.map(p => `${p.producto} - ${p.texto}`).join('\n');
+          const alert = await this.alertCtrl.create({
+              header: 'Oferta sin beneficio',
+              message: `La oferta personalizada no aplica ningún descuento en:\n${productos}\n\nSi quieres todas las unidades a ese precio, mételas sin oferta.`,
+              buttons: ['Ok']
+          });
+          await alert.present();
+          return;
+      }
 
       if (!this.pedidoPendienteSeleccionado) {
         let loading: any = await this.loadingCtrl.create({
@@ -1266,6 +1304,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   get totalPedido(): number {
+      // Issue #130: los getters expuestos al template tienen que ser robustos a estados
+      // intermedios (sin dirección/selector aún). Cualquier excepción aquí se repite en
+      // bucle por change detection y, con #123 activo, inunda ELMAH (1200 errores/min).
+      if (!this.direccionSeleccionada || !this._selectorPlantillaVenta) return 0;
       const subtotal = this.direccionSeleccionada.iva ? this._selectorPlantillaVenta.totalPedido : this._selectorPlantillaVenta.baseImponiblePedido;
       let total = subtotal;
       const portes = this.importePortesMostrar;
@@ -1282,11 +1324,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   get baseImponiblePedido(): number {
-      return this._selectorPlantillaVenta.baseImponiblePedido;
+      return this._selectorPlantillaVenta?.baseImponiblePedido ?? 0;
   }
 
   get baseImponibleParaPortes(): number {
-      return this._selectorPlantillaVenta.baseImponibleParaPortes;
+      return this._selectorPlantillaVenta?.baseImponibleParaPortes ?? 0;
   }
 
   public cambiarIVA(): void {

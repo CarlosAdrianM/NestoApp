@@ -54,6 +54,10 @@
           <ion-input class="campo-input" [ngModel]="descuentoOfertaMostrar" (change)="actualizarDescuentoOferta($event.target.value)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
         </div>
       </div>
+      <!-- Issue #129: aviso si la oferta personalizada no aporta beneficio (no descuenta). -->
+      <ion-text color="danger" *ngIf="ofertaSinBeneficio()" class="aviso-oferta-sin-beneficio">
+        <p><strong>La oferta no aplica ningún descuento.</strong> Si quieres todas las unidades a este precio, mételas sin oferta.</p>
+      </ion-text>
     </ion-card-content>
     <div class="botones-accion">
       <ion-button expand="block" (click)="mostrarStock(producto)">Ver Stock</ion-button>

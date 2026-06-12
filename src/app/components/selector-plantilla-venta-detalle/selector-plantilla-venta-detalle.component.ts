@@ -194,6 +194,24 @@ export class SelectorPlantillaVentaDetalleComponent {
       this.descuentoOfertaMostrar = num + '%';
   }
 
+  /**
+   * Issue #129: la unidad de oferta personalizada debe ser estrictamente más barata
+   * que la línea normal del mismo producto. Si no, no aporta beneficio y el pedido
+   * sería una "falsa oferta" (regresión de #127). El servidor también la rechazaría
+   * (NestoAPI ValidadorOfertaSinBeneficio), pero avisamos en cliente para no llegar.
+   */
+  public ofertaSinBeneficio(): boolean {
+      return SelectorPlantillaVentaDetalleComponent.ofertaSinBeneficio(this.producto);
+  }
+
+  public static ofertaSinBeneficio(producto: any): boolean {
+      if (!producto?.personalizarOferta) return false;
+      if (!(+producto.cantidadOferta > 0)) return false;
+      const efectivoOferta = (+producto.precioOferta || 0) * (1 - (+producto.descuentoOferta || 0));
+      const efectivoNormal = (+producto.precio || 0) * (1 - (+producto.descuento || 0));
+      return efectivoOferta >= efectivoNormal;
+  }
+
   public seleccionarTexto(evento: any): void {
     var nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(

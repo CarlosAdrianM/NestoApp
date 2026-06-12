@@ -18,7 +18,7 @@ export class Configuracion implements OnInit {
   public static NOMBRE_DOMINIO: string = 'NUEVAVISION';
   public static VENDEDOR_GENERAL: string = "NV";
 
-  public static VERSION: string = "2.17.6";
+  public static VERSION: string = "2.17.7";
 
   ngOnInit() {}
 
