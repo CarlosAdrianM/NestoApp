@@ -120,7 +120,10 @@ export abstract class SelectorBase {
   }
 
   protected datosIniciales(): any[] {
-      return this.datosInicial;
+      // Issue #131: blindaje para clientes sin histórico de compras. cargarDatos no llama a
+      // inicializarDatos cuando getProductos devuelve [], así que datosInicial queda null y
+      // sus consumidores (cargarResumen, hayAlgunProducto, obtenerDatosIniciales) petaban.
+      return this.datosInicial ?? [];
   }
 
   public resetearFiltros(): void {
@@ -129,6 +132,13 @@ export abstract class SelectorBase {
   }
 
   protected agregarDato(dato: any): boolean {
+      // Issue #131: si el cliente no tenía histórico, datosInicial está sin inicializar.
+      // Ocurre típicamente al restaurar borrador con productos no presentes en la plantilla
+      // (agregarProductoExterno) sobre un cliente sin compras previas.
+      if (!this.datosInicial) {
+          this.datosInicial = [];
+          this.datosFiltrados = this.datosInicial;
+      }
       if (this.datosInicial.indexOf(dato) === -1) {
           this.datosInicial.push(dato);
           return true;
