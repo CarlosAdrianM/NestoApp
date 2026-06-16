@@ -22,6 +22,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Issue #88: deep link MSAL para Outlook. Microsoft redirige el código de autorización
+                 a esta URL y Android entrega el intent a esta Activity. La signature hash en el path
+                 va sin URL-encode (Android decodifica antes de matchear); coincide con el hash que
+                 Azure tiene registrado para el keystore release. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="msauth"
+                    android:host="com.ionicframework.nestoapp958858"
+                    android:path="/eVhDwk8/APaxvGr+8otrC1djq7Q=" />
+            </intent-filter>
+
         </activity>
 
         <provider

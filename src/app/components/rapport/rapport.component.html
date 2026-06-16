@@ -82,6 +82,41 @@
                  name="Usuario" [disabled]="true"></ion-input>
     </ion-item>
 
+    <!-- Issue #88: integración Outlook (Microsoft Graph). El flujo requiere el binario nativo
+         con el deep link msauth:// registrado, así que crearCita() consulta primero la
+         salvaguarda VersionNativoService. -->
+    <ion-list-header>
+      <ion-label>Cita en Outlook</ion-label>
+    </ion-list-header>
+
+    <ion-item *ngIf="authenticated">
+      <ion-label>Fecha de la cita</ion-label>
+      <ion-datetime-button datetime="fechaCita"></ion-datetime-button>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime id="fechaCita" presentation="date-time" [(ngModel)]="fechaCita" [locale]="'es-ES'"></ion-datetime>
+        </ng-template>
+      </ion-modal>
+    </ion-item>
+
+    <ion-item *ngIf="authenticated" lines="none">
+      <ion-button expand="block" (click)="crearCita()" [disabled]="!fechaCita">
+        Crear cita {{ user?.displayName ? ('('+user.displayName+')') : '' }}
+      </ion-button>
+    </ion-item>
+
+    <ion-item *ngIf="authenticated" lines="none">
+      <ion-button expand="block" fill="outline" color="medium" (click)="signOut()">
+        Cerrar sesión de Office
+      </ion-button>
+    </ion-item>
+
+    <ion-item *ngIf="!authenticated" lines="none">
+      <ion-button expand="block" fill="outline" (click)="signIn()">
+        Iniciar sesión en Office para crear citas
+      </ion-button>
+    </ion-item>
+
   </form>
   {{errorMessage}}
 </ion-content>

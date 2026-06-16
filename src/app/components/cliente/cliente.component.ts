@@ -111,7 +111,9 @@ export class ClienteComponent {
   ngAfterViewInit() {
       setTimeout(()=>{
           if (this.slideActual == this.DATOS_FISCALES){
-              this.inputNif.setFocus();
+              // Issue #134: el input #nif está bajo *ngIf, puede no existir en modificación
+              // de cliente ya validado. Sin guard, casca con setFocus sobre undefined.
+              this.inputNif?.setFocus();
           }
       },500)
   }
@@ -181,7 +183,9 @@ export class ClienteComponent {
   private pasarADatosGenerales() {
       this.slideActual = this.DATOS_GENERALES;
       setTimeout(() => {
-          this.inputDireccion.setFocus();
+          // Issue #134: input #direccion está bajo *ngIf="!cliente.direccion"; no se
+          // renderiza cuando se modifica un cliente que ya tiene dirección.
+          this.inputDireccion?.setFocus();
       }, 500);
   }
 
@@ -390,7 +394,9 @@ export class ClienteComponent {
       this.cliente.formaPago = event;
       if (this.cliente.formaPago == "RCB") {
           setTimeout(() => {
-              this.inputIban.setFocus();
+              // Issue #134: input #iban está bajo *ngIf="cliente.formaPago == 'RCB'",
+              // tarda en renderizar; el setTimeout no garantiza que ya esté en el DOM.
+              this.inputIban?.setFocus();
           }, 500);
       }
   }
@@ -398,7 +404,8 @@ export class ClienteComponent {
   editarDireccion() {
       this.cliente.direccion = "";
       setTimeout(() => {
-        this.inputDireccion.setFocus();
+        // Issue #134: protegemos por consistencia con los demás setFocus del componente.
+        this.inputDireccion?.setFocus();
     }, 500);
   }
 

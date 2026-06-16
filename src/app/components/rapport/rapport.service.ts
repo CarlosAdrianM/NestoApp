@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { CapacitorHttp } from '@capacitor/core';
 import { Observable } from 'rxjs';
-import { AlertsService } from 'src/app/alerts.service';
 import { AuthService } from 'src/app/auth.service';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -14,10 +14,9 @@ export class RapportService {
 
   static ngInjectableDef = undefined;
 
-  constructor(private http: HttpClient, 
-    private usuario: Usuario, 
-    private authService: AuthService,
-    private alertsService: AlertsService) {    }
+  constructor(private http: HttpClient,
+    private usuario: Usuario,
+    private authService: AuthService) {    }
 
   private _baseUrl: string = Configuracion.API_URL + '/SeguimientosClientes';
   private _clientesUrl: string = Configuracion.API_URL + '/Clientes';
@@ -61,19 +60,27 @@ export class RapportService {
       return this.http.put(this._clientesUrl+'/DejarDeVisitar', JSON.stringify(clienteCrear), { headers: headers });
   }
 
-  async addEventToCalendar(newEvent: microsoftgraph.Event): Promise<void> {
-    if (!this.authService.graphClient) {
-      this.alertsService.addError('Graph client is not initialized.');
-      return undefined;
-    }
-
-    try {
-      // POST /me/events
-      await this.authService.graphClient
-        .api('/me/events')
-        .post(newEvent);
-    } catch (error) {
-      throw Error(JSON.stringify(error, null, 2));
+  /**
+   * Issue #88: crea el evento en el calendario del usuario via Graph API. Llama a fetch
+   * directamente (sin SDK Microsoft Graph) usando el access_token gestionado por AuthService.
+   * Si el token está caducado, AuthService.getAccessToken() lo refresca de forma transparente.
+   */
+  async addEventToCalendar(newEvent: Event): Promise<void> {
+    const accessToken = await this.authService.getAccessToken();
+    // CapacitorHttp en vez de fetch: la request sale desde Java nativo sin cabecera Origin,
+    // que Microsoft rechaza en clientes registrados como Android (no SPA).
+    const resp = await CapacitorHttp.post({
+      url: 'https://graph.microsoft.com/v1.0/me/events',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      data: newEvent
+    });
+    if (resp.status < 200 || resp.status >= 300) {
+      const detalle = typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data);
+      throw new Error('Microsoft Graph rechazó la cita (HTTP ' + resp.status + '): ' + detalle);
     }
   }
 

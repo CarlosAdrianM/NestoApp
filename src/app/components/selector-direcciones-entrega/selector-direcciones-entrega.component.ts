@@ -92,6 +92,11 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
                             this.direccionSeleccionada = this.direccionesEntrega.find(d => d.esDireccionPorDefecto);
                         }
                   }
+                  // Issue #136: si hay direcciones pero ninguna cumple los criterios, caemos a la
+                  // primera para no emitir undefined (que reventaba seleccionarCliente en el padre).
+                  if (!this.direccionSeleccionada && this.direccionesEntrega.length > 0) {
+                      this.direccionSeleccionada = this.direccionesEntrega[0];
+                  }
                   this.seleccionarDato(this.direccionSeleccionada);
 
                   // Si no había seleccionado al cargar, volver a verificar después de un tick

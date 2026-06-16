@@ -887,6 +887,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   public seleccionarCliente(cliente: any): void {
+      // Issue #136: defensa contra emit con undefined desde selector-direcciones-entrega.
+      // Sin guard, accedíamos a cliente.iva y reventábamos toda la pantalla.
+      if (!cliente) return;
       this.direccionSeleccionada = cliente;
       this.iva = cliente.iva;
       // Inicializar formaPago/plazosPago desde los defaults de la dirección

@@ -18,7 +18,13 @@ export class Configuracion implements OnInit {
   public static NOMBRE_DOMINIO: string = 'NUEVAVISION';
   public static VENDEDOR_GENERAL: string = "NV";
 
-  public static VERSION: string = "2.17.8";
+  public static VERSION: string = "2.18.3";
+
+  // Issue #88: versionCode mínimo del APK release (build.gradle) que incluye el intent-filter
+  // msauth:// en AndroidManifest necesario para Outlook. Bundles web Live-Update con la feature
+  // activa pero APK más antiguo verán el aviso de actualización en VersionNativoService.
+  public static MIN_VERSION_CODE_OUTLOOK: number = 21802;
+  public static MIN_VERSION_NAME_OUTLOOK: string = '2.18.2';
 
   ngOnInit() {}
 

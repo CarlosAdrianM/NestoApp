@@ -6,15 +6,10 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { RapportService } from './rapport.service';
-import { AuthService } from '../../auth.service';
+import { AuthService, SesionOutlookCaducadaError } from '../../auth.service';
 import { User } from '../../user';
+import { VersionNativoService } from 'src/app/services/version-nativo.service';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
-/*
-import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
-import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
-import { InteractionStatus } from '@azure/msal-browser';
-*/
 
 @Component({
     selector: 'app-rapport',
@@ -38,18 +33,22 @@ export class RapportComponent {
 
   */
   constructor(
-    private servicio: RapportService, 
-    private alertCtrl: AlertController, 
-    private loadingCtrl: LoadingController, 
-    private usuario: Usuario, 
-    public events: Events, 
+    private servicio: RapportService,
+    private alertCtrl: AlertController,
+    private loadingCtrl: LoadingController,
+    private usuario: Usuario,
+    public events: Events,
     private nav: NavController,
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
     private authService: AuthService,
-    //private msalBroadcastService: MsalBroadcastService
+    private versionNativo: VersionNativoService
     ) {
-      this.rapport = this.route.snapshot.queryParams.rapport;
+      // Issue #135: en build Web los queryParams se serializan a string. Si llega "[object Object]"
+      // (porque navegaron con un objeto como queryParam) el código de abajo casca al intentar
+      // crear propiedades sobre un string. Caemos a un rapport vacío para no reventar la pantalla.
+      const rapportParam = this.route.snapshot.queryParams.rapport;
+      this.rapport = (rapportParam && typeof rapportParam === 'object') ? rapportParam : {};
       this.numeroCliente = this.rapport.Cliente;
       if (!this.rapport.Id) {
           this.rapport.Tipo = usuario.ultimoTipoRapport;
@@ -253,6 +252,14 @@ export class RapportComponent {
   }
 
   public async crearCita() {
+    // Issue #88: la cita en Outlook necesita el binario nativo con el deep link msauth:// registrado.
+    const apto = await this.versionNativo.cumpleVersionMinima(
+      Configuracion.MIN_VERSION_CODE_OUTLOOK,
+      'Crear cita en Outlook',
+      Configuracion.MIN_VERSION_NAME_OUTLOOK
+    );
+    if (!apto) return;
+
     const timeZone = this.authService.user?.timeZone ?? 'UTC';
     const graphEvent: MicrosoftGraph.Event = {
         subject: "Aviso del cliente " + this.rapport.Cliente.trim() + "/" + this.rapport.Contacto.trim(),
@@ -265,8 +272,7 @@ export class RapportComponent {
           timeZone: timeZone
         }
       };
-    
-      // If there is a body, add it as plain text
+
       if (this.rapport.Comentarios && this.rapport.Comentarios.length > 0) {
         graphEvent.body = {
           contentType: 'text',
@@ -278,18 +284,30 @@ export class RapportComponent {
       graphEvent.reminderMinutesBeforeStart = 0;
 
       try {
-        this.servicio.addEventToCalendar(graphEvent);
+        await this.servicio.addEventToCalendar(graphEvent);
+        this.firebaseAnalytics.logEvent("rapport_crear_cita", { cliente: this.rapport.Cliente, contacto: this.rapport.Contacto });
         let alert: any = await this.alertCtrl.create({
             header: 'Aviso',
             message: 'Se ha creado correctamente la cita del cliente ' + this.rapport.Cliente.trim(),
             buttons: ['Ok'],
         });
         await alert.present();
-      } catch (error) {
-        let alert: any = await this.alertCtrl.create({
+      } catch (error: any) {
+        if (error instanceof SesionOutlookCaducadaError) {
+          const alert = await this.alertCtrl.create({
+            header: 'Sesión de Office caducada',
+            message: 'Tu sesión de Office ha caducado. Vuelve a iniciar sesión para crear la cita.',
+            buttons: [
+              { text: 'Cancelar', role: 'cancel' },
+              { text: 'Iniciar sesión', handler: () => this.signIn() }
+            ]
+          });
+          await alert.present();
+          return;
+        }
+        const alert = await this.alertCtrl.create({
             header: 'Error',
-            subHeader: error,
-            message: 'Se ha producido un error al crear la cita del cliente ' + this.rapport.Cliente.trim(),
+            message: 'No se ha podido crear la cita del cliente ' + this.rapport.Cliente.trim() + '.\n' + (error?.message || error),
             buttons: ['Ok'],
         });
         await alert.present();
@@ -320,17 +338,29 @@ export class RapportComponent {
   }
 
   async signIn(): Promise<void> {
-    await this.authService.signIn();
+    // Issue #88: la salvaguarda comprueba que el APK trae el intent-filter msauth:// necesario.
+    const apto = await this.versionNativo.cumpleVersionMinima(
+      Configuracion.MIN_VERSION_CODE_OUTLOOK,
+      'Iniciar sesión en Office',
+      Configuracion.MIN_VERSION_NAME_OUTLOOK
+    );
+    if (!apto) return;
+
+    try {
+      await this.authService.signIn();
+      this.firebaseAnalytics.logEvent("outlook_sign_in", { usuario: this.usuario.nombre });
+    } catch (e: any) {
+      const alert = await this.alertCtrl.create({
+        header: 'No se pudo iniciar sesión',
+        message: e?.message || 'Error desconocido al autenticar con Microsoft.',
+        buttons: ['Ok']
+      });
+      await alert.present();
+    }
   }
 
-  signOut(): void {
-    this.authService.signOut();
+  async signOut(): Promise<void> {
+    await this.authService.signOut();
+    this.firebaseAnalytics.logEvent("outlook_sign_out", { usuario: this.usuario.nombre });
   }
-
-  /*
-  ngOnDestroy(): void {
-    this._destroying$.next(null);
-    this._destroying$.complete();
-  }
-  */
 }
