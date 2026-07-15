@@ -1658,6 +1658,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
       servirJunto: this.direccionSeleccionada?.servirJunto || false,
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
+      recogerProducto: this.recogerProducto || false,
       suPedido: this.suPedido || '',
 
       // Total
@@ -2044,6 +2045,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     // Restaurar comentarioPicking en clienteSeleccionado
     if (this.clienteSeleccionado && borrador.comentarioPicking) {
       this.clienteSeleccionado.comentarioPicking = borrador.comentarioPicking;
+    }
+
+    // Restaurar recogerProducto (Issue #133)
+    if (borrador.recogerProducto !== undefined) {
+      this.recogerProducto = borrador.recogerProducto;
     }
 
     // Restaurar suPedido

@@ -302,7 +302,7 @@ export class ExtractoClienteComponent {
 
         <ion-item>
           <ion-label position="stacked">Concepto</ion-label>
-          <ion-input [(ngModel)]="concepto" placeholder="Ej: Señal aparato estética"></ion-input>
+          <ion-input [(ngModel)]="concepto" placeholder="Ej: Pago pedido 123456, Señal curso quiromasaje"></ion-input>
         </ion-item>
 
         <ion-item>
