@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Usuario } from '../../models/Usuario';
-import { FileTransfer } from '@awesome-cordova-plugins/file-transfer/ngx';
 import { File } from '@awesome-cordova-plugins/file/ngx';
 
 import { ListaPedidosVentaService } from './lista-pedidos-venta.service';
@@ -13,7 +12,7 @@ describe('ListaPedidosVentaService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
     imports: [],
-    providers: [Usuario, FileTransfer, File, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    providers: [Usuario, File, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 });
     service = TestBed.inject(ListaPedidosVentaService);
   });
