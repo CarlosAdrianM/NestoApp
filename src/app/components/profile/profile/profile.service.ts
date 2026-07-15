@@ -12,8 +12,9 @@ import { Configuracion } from "../../configuracion/configuracion/configuracion.c
     private _seEstaVendiendoUrl: string = Configuracion.API_URL + '/SeEstaVendiendo';
 
     public getSeEstaVendiendo(): Observable<any> {
-        // El usuario lo lee NestoAPI del JWT (User.Identity.Name) tras NestoAPI#186/#183.
-        // El interceptor de auth ya añade el Authorization Bearer.
+        // El usuario lo lee NestoAPI del JWT (User.Identity.Name). El interceptor ya añade el
+        // Authorization Bearer. Ver NestoAPI: migrar SeEstaVendiendoController a leer el usuario
+        // del token (hoy aún exige ?usuario= y por eso la lista venía vacía).
         return this.http.get(this._seEstaVendiendoUrl);
     }
   }
