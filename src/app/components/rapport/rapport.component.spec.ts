@@ -5,9 +5,8 @@ import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Usuario } from 'src/app/models/Usuario';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
-import { MsalService, MsalBroadcastService } from '@azure/msal-angular';
-import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
+import { Storage } from '@ionic/storage-angular';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 
 import { RapportComponent } from './rapport.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -25,9 +24,7 @@ describe('RapportComponent', () => {
         Usuario,
         { provide: ActivatedRoute, useValue: { snapshot: { queryParams: { rapport: { Cliente: '0', Contacto: '', Id: 0, Tipo: '' } } } } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
-        { provide: MsalService, useValue: { instance: { getAllAccounts: () => [] } } },
-        { provide: MsalBroadcastService, useValue: { inProgress$: { pipe: () => ({ subscribe: () => { } }) } } },
-        { provide: InAppBrowser, useValue: {} },
+        { provide: Storage, useValue: { get: () => Promise.resolve(null) } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]

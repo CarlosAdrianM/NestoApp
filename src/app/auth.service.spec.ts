@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MsalService, MsalBroadcastService } from '@azure/msal-angular';
-import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
+import { Storage } from '@ionic/storage-angular';
 
 import { AuthService } from './auth.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -13,9 +12,7 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
     imports: [],
     providers: [
-        { provide: MsalService, useValue: { instance: { getAllAccounts: () => [] } } },
-        { provide: MsalBroadcastService, useValue: {} },
-        { provide: InAppBrowser, useValue: {} },
+        { provide: Storage, useValue: { get: () => Promise.resolve(null) } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]

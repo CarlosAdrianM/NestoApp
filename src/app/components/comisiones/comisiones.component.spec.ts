@@ -6,7 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ComisionesComponent } from './comisiones.component';
 import { ComisionesService } from './comisiones.service';
 import { Usuario } from 'src/app/models/Usuario';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { of, throwError } from 'rxjs';
 import { ResumenComisionesMes, IEtiquetaComisionAcumulada, IEtiquetaComisionVenta } from './comisiones.interfaces';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';

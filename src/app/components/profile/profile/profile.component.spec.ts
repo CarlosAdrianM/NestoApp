@@ -3,11 +3,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
+import { ToastController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Storage } from '@ionic/storage-angular';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
-import { AppVersion } from '@awesome-cordova-plugins/app-version/ngx';
-import { MsalService } from '@azure/msal-angular';
+import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { AppVersion } from 'src/app/services/app-version.service';
+import { AppComponent } from 'src/app/app.component';
 
 import { ProfileComponent } from './profile.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -23,10 +24,11 @@ describe('ProfileComponent', () => {
     imports: [IonicModule.forRoot(), RouterTestingModule],
     providers: [
         Usuario,
-        { provide: Storage, useValue: {} },
+        { provide: Storage, useValue: { get: () => Promise.resolve(null) } },
         { provide: FirebaseAnalytics, useValue: { setUserId: () => { }, logEvent: () => { } } },
         { provide: AppVersion, useValue: { getVersionNumber: () => Promise.resolve('0.0.0') } },
-        { provide: MsalService, useValue: { instance: { getAllAccounts: () => [] } } },
+        { provide: ToastController, useValue: {} },
+        { provide: AppComponent, useValue: { registrarDispositivoPush: () => { } } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]

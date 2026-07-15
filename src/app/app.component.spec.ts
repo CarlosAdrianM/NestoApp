@@ -3,25 +3,20 @@ import { TestBed, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 
-import { Platform, ToastController } from '@ionic/angular';
-import { SplashScreen } from '@awesome-cordova-plugins/splash-screen/ngx';
-import { StatusBar } from '@awesome-cordova-plugins/status-bar/ngx';
+import { AlertController, Platform, ToastController } from '@ionic/angular';
 import { Usuario } from './models/Usuario';
 import { CacheService } from './services/cache.service';
+import { ErroresService } from './services/errores.service';
 
 import { AppComponent } from './app.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('AppComponent', () => {
 
-  let statusBarSpy;
-  let splashScreenSpy;
   let platformReadySpy;
   let platformSpy;
 
   beforeEach(waitForAsync(() => {
-    statusBarSpy = jasmine.createSpyObj('StatusBar', ['styleDefault']);
-    splashScreenSpy = jasmine.createSpyObj('SplashScreen', ['hide']);
     platformReadySpy = Promise.resolve();
     platformSpy = jasmine.createSpyObj('Platform', { ready: platformReadySpy, is: false });
 
@@ -30,12 +25,12 @@ describe('AppComponent', () => {
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [RouterTestingModule],
     providers: [
-        { provide: StatusBar, useValue: statusBarSpy },
-        { provide: SplashScreen, useValue: splashScreenSpy },
         { provide: Platform, useValue: platformSpy },
         { provide: ToastController, useValue: jasmine.createSpyObj('ToastController', ['create']) },
+        { provide: AlertController, useValue: jasmine.createSpyObj('AlertController', ['create']) },
         Usuario,
         { provide: CacheService, useValue: { setDefaultTTL: () => { } } },
+        { provide: ErroresService, useValue: { reportar: () => { } } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting(),
     ]
@@ -48,12 +43,15 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
+  // Tras la migración Cordova -> Capacitor, initializeApp() sólo llama a
+  // StatusBar.setStyle()/SplashScreen.hide() (plugins de @capacitor/*) cuando
+  // Capacitor.isNativePlatform() es true. En el entorno de test (web) es false,
+  // así que esos plugins no se invocan. El comportamiento observable que sí
+  // ocurre siempre es platform.ready().
   it('should initialize the app', async () => {
     TestBed.createComponent(AppComponent);
     expect(platformSpy.ready).toHaveBeenCalled();
     await platformReadySpy;
-    expect(statusBarSpy.styleDefault).toHaveBeenCalled();
-    expect(splashScreenSpy.hide).toHaveBeenCalled();
   });
 
   // TODO: add more tests!
