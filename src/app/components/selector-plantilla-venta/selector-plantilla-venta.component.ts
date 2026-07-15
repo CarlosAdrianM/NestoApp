@@ -5,6 +5,7 @@ import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
+import { Usuario } from 'src/app/models/Usuario';
 
 @Component({
     selector: 'selector-plantilla-venta',
@@ -29,7 +30,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       private loadingCtrl: LoadingController, 
       private nav: NavController, 
       private keyboard: Keyboard,
-      private firebaseAnalytics: FirebaseAnalytics
+      private firebaseAnalytics: FirebaseAnalytics,
+      private usuario: Usuario
       ) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
@@ -70,7 +72,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                   await alert.onDidDismiss();
                   this.setFocus();
               } else {
-                this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+                this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                     async data => {
                         data = data.map(function (item): any {
                             let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
@@ -203,14 +205,14 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                 });
                 await alert.present();
             } else {
-              this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+              this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                   async data => {
                       data = data.map(function (item): any {
                           let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                           clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                           clone.esSobrePedido = clone.estado != 0;
                           return clone;
-                      });  
+                      });
                       this.inicializarDatosFiltrados(data);
                   },
                   error => this.errorMessage = <any>error
@@ -236,7 +238,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                   });
                   await alert.present();
               } else {
-                this.servicio.ponerStocks(data, this.almacen, false).subscribe(
+                this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                     async data => {
                         data = data.map(function (item): any {
                             let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
@@ -276,7 +278,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
   }
 
   public ponerStocks(ordenar: boolean): void {
-      this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar).subscribe(
+      this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
           async data => {
               this.datosFiltrados = data;
           },

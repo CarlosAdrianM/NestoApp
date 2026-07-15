@@ -33,4 +33,25 @@ export class Parametros {
         })
     );
   }
+
+  public escribir(clave: string, valor: string): Observable<any> {
+    let _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
+
+    // El backend hace EntityState.Modified, hay que enviar la entidad completa (6 campos).
+    let parametro: any = {
+      Empresa: Configuracion.EMPRESA_POR_DEFECTO,
+      Clave: clave,
+      Usuario: this.usuario.nombre,
+      Valor: valor,
+      Usuario2: this.usuario.nombre,
+      'Fecha_Modificación': new Date().toISOString()
+    };
+
+    return this.http.put(_baseUrl, parametro).pipe(
+        catchError((error: ProcessedApiError) => {
+          this.errorHandler.handleApiError(error);
+          return throwError(() => error);
+        })
+    );
+  }
 }

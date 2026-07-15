@@ -250,6 +250,35 @@ private cargarParametros(): void {
             console.log('No se ha podido cargar el parámetro MotorPagos');
         }
     );
+
+    this.parametros.leer('AlmacenesPlantillaVenta').subscribe(
+        data => {
+            if (data) {
+                self.usuario.almacenesPlantillaVenta = data;
+            }
+        },
+        error => {
+            console.log('No se ha podido cargar el parámetro AlmacenesPlantillaVenta');
+        }
+    );
+}
+
+public cambiarVerStockTresAlmacenes(verTres: boolean): void {
+    const valorAnterior: string = this.usuario.almacenesPlantillaVenta;
+    const nuevoCsv: string = verTres ? 'ALG,ALC,REI' : (this.usuario.almacen || 'ALG');
+    this.usuario.almacenesPlantillaVenta = nuevoCsv;
+
+    this.parametros.escribir('AlmacenesPlantillaVenta', nuevoCsv).subscribe(
+        () => {
+            // Guardado correctamente.
+        },
+        error => {
+            // Revertir el valor si falla el guardado.
+            this.usuario.almacenesPlantillaVenta = valorAnterior;
+            console.log('No se ha podido guardar el parámetro AlmacenesPlantillaVenta', error);
+            this.error = 'No se ha podido guardar la preferencia de stock';
+        }
+    );
 }
 
     async olvideMiContrasenna(correo: string) {

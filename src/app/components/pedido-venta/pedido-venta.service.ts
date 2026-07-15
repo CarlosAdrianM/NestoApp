@@ -54,6 +54,22 @@ export class PedidoVentaService {
     return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
   }
 
+  // Crea una etiqueta de recogida pendiente (EnviosAgencia con Retorno=1, Estado<0).
+  // Para "Recoger Producto" se usa Agencia=1, Retorno=1 (igual que plantilla-venta).
+  // El backend responde 409 si ya existe otra etiqueta pendiente del pedido.
+  public crearEtiquetaPendiente(empresa: string, pedido: number, agencia: number, retorno: number): Observable<any> {
+    const url = Configuracion.API_URL + '/EnviosAgencias/CrearEtiquetaPendiente';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    const body = { Empresa: empresa, Pedido: pedido, Agencia: agencia, Retorno: retorno };
+    return this.http.post(url, body, { headers });
+  }
+
+  // Cancela una etiqueta pendiente. 'numeroEnvio' es el EnviosAgencia.Numero (campo Numero
+  // del DTO). El backend solo la borra si Estado<0 (pendiente).
+  public cancelarEtiquetaPendiente(numeroEnvio: number): Observable<any> {
+    return this.http.delete(Configuracion.API_URL + '/EnviosAgencias/' + numeroEnvio);
+  }
+
   public cargarParametrosIva(empresa: string, ivaCabecera: string): Observable<ParametrosIva[]> {
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);

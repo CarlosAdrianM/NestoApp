@@ -30,6 +30,10 @@ export class PedidoVentaComponent  {
   private loadingCtrl: LoadingController;
   private _fechaEntrega: string;
   public listaEnlacesSeguimiento;
+  public recogerProducto: boolean = false;
+  // Recuerda la etiqueta de recogida pendiente detectada al cargar (Retorno=1, Estado<0),
+  // para saber si al sincronizar hay que crearla o cancelarla.
+  private envioRecogidaExistente: any = null;
   get fechaEntrega() {
       return this._fechaEntrega;
   }
@@ -231,6 +235,9 @@ export class PedidoVentaComponent  {
                       this.servicio.modificarPedido(this.pedido).subscribe(
                           async data => {
                               this.firebaseAnalytics.logEvent("modificar_pedido_venta", {pedido: this.pedido.numero});
+                              // Sincronizar la etiqueta de recogida según el checkbox, igual que
+                              // plantilla-venta crea la etiqueta tras crear el pedido.
+                              await this.sincronizarRecogerProducto();
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
                               let alert = await this.alertCtrl.create({
                                   header: 'Modificado',
@@ -336,6 +343,15 @@ export class PedidoVentaComponent  {
       this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
           data => {
               this.listaEnlacesSeguimiento = data;
+              // Detectar etiqueta de recogida pendiente (Retorno=1, Estado<0).
+              const recogida = (data || []).find((e: any) => e.Retorno === 1 && e.Estado < 0);
+              if (recogida) {
+                  this.recogerProducto = true;
+                  this.envioRecogidaExistente = recogida;
+              } else {
+                  this.recogerProducto = false;
+                  this.envioRecogidaExistente = null;
+              }
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
@@ -348,6 +364,53 @@ export class PedidoVentaComponent  {
               await alert.present();
           }
       );
+  }
+
+  // Aplica el cambio del checkbox "Recoger Producto" contra el backend:
+  // - marcado y sin etiqueta previa -> crea etiqueta pendiente (Agencia=1, Retorno=1)
+  // - desmarcado y con etiqueta previa -> cancela la etiqueta pendiente
+  // Tras éxito recarga seguimientos; en error avisa y revierte el checkbox visual.
+  public async sincronizarRecogerProducto(): Promise<void> {
+      if (!this.pedido) {
+          return;
+      }
+      const debeCrear = this.recogerProducto && !this.envioRecogidaExistente;
+      const debeCancelar = !this.recogerProducto && this.envioRecogidaExistente;
+      if (!debeCrear && !debeCancelar) {
+          return;
+      }
+
+      const peticion = debeCrear
+          ? this.servicio.crearEtiquetaPendiente(this.pedido.empresa, this.pedido.numero, 1, 1)
+          : this.servicio.cancelarEtiquetaPendiente(this.envioRecogidaExistente.Numero);
+
+      return new Promise<void>((resolve) => {
+          peticion.subscribe(
+              () => {
+                  this.firebaseAnalytics.logEvent(
+                      debeCrear ? "pedido_venta_recoger_producto_crear" : "pedido_venta_recoger_producto_cancelar",
+                      { pedido: this.pedido.numero }
+                  );
+                  // Recargar desde el backend refresca listaEnlacesSeguimiento y
+                  // recalcula recogerProducto/envioRecogidaExistente.
+                  this.cargarSeguimientos(this.pedido.empresa, this.pedido.numero);
+                  resolve();
+              },
+              async error => {
+                  // Revertir el checkbox visual al estado real (había/no había etiqueta).
+                  this.recogerProducto = !!this.envioRecogidaExistente;
+                  const mensaje = this.errorHandler.extractErrorMessage(error);
+                  let alert = await this.alertCtrl.create({
+                      header: 'Error',
+                      subHeader: 'No se ha podido actualizar "Recoger Producto"',
+                      message: mensaje,
+                      buttons: ['Ok'],
+                  });
+                  await alert.present();
+                  resolve();
+              }
+          );
+      });
   }
 
   // Estados canónicos de agencia (Constantes.Agencias en NestoAPI):
@@ -470,6 +533,7 @@ export class PedidoVentaComponent  {
       this.servicio.modificarPedido(this.pedido, true).subscribe(
           async data => {
               this.firebaseAnalytics.logEvent("modificar_pedido_venta_forzado", { pedido: this.pedido.numero });
+              await this.sincronizarRecogerProducto();
               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
               const alert = await this.alertCtrl.create({
                   header: 'Modificado',

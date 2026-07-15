@@ -125,6 +125,9 @@
           <ion-item>
               <ion-input label="Comentarios Picking" label-placement="floating" [(ngModel)]="pedido.comentarioPicking"></ion-input>
           </ion-item>
+          <ion-item>
+              <ion-checkbox slot="end" [(ngModel)]="recogerProducto">Recoger Producto</ion-checkbox>
+          </ion-item>
           <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">
               <ion-item>
                 <ion-label class="ion-text-wrap">

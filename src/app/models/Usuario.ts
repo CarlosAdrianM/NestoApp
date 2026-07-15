@@ -23,4 +23,9 @@ export class Usuario {
     public permitirVerTodosLosVendedores: boolean = false;
     public permitirCrearPedidoConErroresValidacion: boolean = false;
     public motorPagos: string = 'Paygold';
+    public almacenesPlantillaVenta: string = 'ALG,ALC,REI';
+
+    get verStockTresAlmacenes(): boolean {
+        return this.almacenesPlantillaVenta.split(',').length > 1;
+    }
 }
