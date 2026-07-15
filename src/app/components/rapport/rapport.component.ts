@@ -90,7 +90,7 @@ export class RapportComponent {
                   await alert.present();
               } else {
                   this.rapport.Cliente = data.cliente;
-                  //this.rapport.Contacto = data.contacto;
+                  this.rapport.Contacto = data.contacto;
                   this.rapport.Direccion = data.direccion;
                   this.rapport.Nombre = data.nombre;
                   this.rapport.EstadoCliente = data.estado;

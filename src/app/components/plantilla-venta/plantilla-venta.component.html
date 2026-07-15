@@ -76,7 +76,7 @@
         </div>
       </swiper-slide>
       <!-- Slide Regalos (Ganavisiones) - Solo si hay ganavisiones disponibles -->
-      <swiper-slide *ngIf="hayGanavisionesDisponibles">
+      <swiper-slide *ngIf="hayGanavisionesDisponibles && clienteSeleccionado">
         <div class="slide-content">
           <selector-regalos
             [empresa]="clienteSeleccionado.empresa"

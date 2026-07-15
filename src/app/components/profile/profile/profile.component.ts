@@ -86,15 +86,16 @@ export class ProfileComponent {
   }
 
     cargarSeEstaVendiendo(event: any) {
-        this.servicio.getSeEstaVendiendo().subscribe(
-            data => {this.listaSeEstaVendiendo = data},
-            error => {},
-            () => {
-                if (event) {
-                    event.target.complete();
-                }
+        this.servicio.getSeEstaVendiendo().subscribe({
+            next: data => { this.listaSeEstaVendiendo = Array.isArray(data) ? data : []; },
+            error: err => {
+                console.error('SeEstaVendiendo error:', err);
+                event?.target?.complete();
+            },
+            complete: () => {
+                event?.target?.complete();
             }
-        );
+        });
     }
 
   async login(credentials: any) {

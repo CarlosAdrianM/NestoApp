@@ -52,10 +52,10 @@ export class ListaRapportsComponent extends SelectorBase {
   public contactoSeleccionado: string = "";
   public mostrarDirecciones: boolean;
 
-  public codigosPostalesSinVisitar: any;
+  public codigosPostalesSinVisitar: any[] = [];
   public vendedorSeleccionado: string;
-  public listadoClientesSinVisitar: any;
-  public listadoClientesSinVisitarFiltrado: any;
+  public listadoClientesSinVisitar: any[] = [];
+  public listadoClientesSinVisitarFiltrado: any[] = [];
   private _codigoPostalSeleccionado: any;
   public filtro: string = "";
   public filtroBuscar: string = "";
@@ -286,12 +286,13 @@ export class ListaRapportsComponent extends SelectorBase {
 
       this.servicio.cargarCodigosPostalesSinVisitar(this.vendedorSeleccionado, forzarTodos).subscribe(
           async data => {
-              if (data.length === 0) {
+              if (!Array.isArray(data) || data.length === 0) {
                   let alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún código postal sin visitar',
                       buttons: ['Ok'],
                   });
+                  this.codigosPostalesSinVisitar = [];
                   await alert.present();
               } else {
                   this.codigosPostalesSinVisitar = data;
@@ -300,6 +301,7 @@ export class ListaRapportsComponent extends SelectorBase {
           },
           async error => {
               await loading.dismiss();
+              this.codigosPostalesSinVisitar = [];
               this.errorMessage = <any>error;
           },
           async () => {
@@ -322,7 +324,7 @@ export class ListaRapportsComponent extends SelectorBase {
 
       this.servicio.cargarClientesSinVisitar(this.vendedorSeleccionado, this.codigoPostalSeleccionado).subscribe(
           async data => {
-              if (data.length === 0) {
+              if (!Array.isArray(data) || data.length === 0) {
                   let alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún cliente sin visitar',
@@ -338,6 +340,8 @@ export class ListaRapportsComponent extends SelectorBase {
           },
           async error => {
               await loading.dismiss();
+              this.listadoClientesSinVisitar = [];
+              this.listadoClientesSinVisitarFiltrado = [];
               this.errorMessage = <any>error;
           },
           async () => {
@@ -413,13 +417,21 @@ export class ListaRapportsComponent extends SelectorBase {
   
 
   cambiaFiltro(event: any) {
-      var filtro = this.filtro.toUpperCase();      
+      if (!Array.isArray(this.listadoClientesSinVisitar)) {
+          this.listadoClientesSinVisitarFiltrado = [];
+          return;
+      }
+      var filtro = this.filtro.toUpperCase();
       this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(
         c => c.Cliente == filtro || c.Nombre.toUpperCase().includes(filtro) || c.Direccion.toUpperCase().includes(filtro)
       )
   }
 
   public aplicarFiltroClientes(): void {
+    if (!Array.isArray(this.listadoClientesSinVisitar)) {
+      this.listadoClientesSinVisitarFiltrado = [];
+      return;
+    }
     if (this.filtroClientesSinVisitar === 'visitables') {
       this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(
         c => c.Estado === 0 || c.Estado === 5
