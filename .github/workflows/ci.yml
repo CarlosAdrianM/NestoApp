@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test-build:
+    name: Tests y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # npm ci instala puppeteer (^24), que descarga Chrome a ~/.cache/puppeteer;
+      # karma.conf.js lo detecta ahí para ChromeHeadlessNoSandbox.
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Tests (Karma headless)
+        run: npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox
+      - name: Build (producción)
+        run: npx ng build
+
+  version-changelog:
+    name: Verificar versión y changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determinar rango de diff
+        id: range
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
+          echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+      - name: Comprobar bump de versión y changelog
+        env:
+          BASE: ${{ steps.range.outputs.base }}
+          HEAD: ${{ steps.range.outputs.head }}
+        run: |
+          set -euo pipefail
+
+          # Push inicial / force-push / base inexistente: no hay con qué comparar.
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "Base ($BASE) no disponible; se salta la verificación."
+            exit 0
+          fi
+
+          # Cambios de código de app que se publican a los usuarios (excluye tests, CI y docs).
+          CODE_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep '^src/' | grep -v '\.spec\.ts$' || true)
+
+          if [ -z "$CODE_CHANGED" ]; then
+            echo "Sin cambios de código en src/ (solo tests/infra/docs): no se exige bump ni changelog."
+            exit 0
+          fi
+
+          echo "Cambios de código detectados:"
+          echo "$CODE_CHANGED"
+
+          FALLO=0
+
+          # 1) La versión de package.json debe haber cambiado.
+          BASE_VER=$(git show "${BASE}:package.json" | jq -r '.version')
+          HEAD_VER=$(git show "${HEAD}:package.json" | jq -r '.version')
+          if [ "$BASE_VER" = "$HEAD_VER" ]; then
+            echo "::error::Cambió código en src/ pero NO se subió la versión (package.json sigue en $HEAD_VER). Acuérdate de package.json, config.xml y Configuracion.VERSION."
+            FALLO=1
+          else
+            echo "Versión: $BASE_VER -> $HEAD_VER ✓"
+          fi
+
+          # 2) El changelog (novedades del perfil) debe haberse tocado.
+          if echo "$CODE_CHANGED" | grep -q 'src/app/components/profile/profile/profile.component.html'; then
+            echo "Changelog actualizado ✓"
+          else
+            echo "::error::Cambió código en src/ pero NO se actualizó el changelog (src/app/components/profile/profile/profile.component.html)."
+            FALLO=1
+          fi
+
+          exit $FALLO
