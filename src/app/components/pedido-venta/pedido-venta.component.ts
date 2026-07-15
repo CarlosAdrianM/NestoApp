@@ -84,22 +84,7 @@ export class PedidoVentaComponent  {
               }
               // Cargar parámetros de IVA y asignarlos a las líneas
               this.cargarParametrosIva();
-              this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
-                  data => {
-                      this.listaEnlacesSeguimiento = data;
-                  },
-                  async error => {
-                      const mensaje = this.errorHandler.extractErrorMessage(error);
-                      let alert = await this.alertCtrl.create({
-                          header: 'Error',
-                          subHeader: 'No se han podido cargar los seguimientos del pedido',
-                          message: mensaje,
-                          buttons: ['Ok'],
-                      });
-                      await alert.present();
-                      await loading.dismiss();
-                  }
-              )
+              this.cargarSeguimientos(empresa, numero);
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
@@ -345,6 +330,72 @@ export class PedidoVentaComponent  {
   public abrirEnlace(urlDestino: string): void {
       this.firebaseAnalytics.logEvent("pedido_venta_abrir_enlace", {enlace: urlDestino});
       window.open(urlDestino, '_system', 'location=yes');
+  }
+
+  private cargarSeguimientos(empresa: string, numero: number): void {
+      this.servicio.cargarEnlacesSeguimiento(empresa, numero).subscribe(
+          data => {
+              this.listaEnlacesSeguimiento = data;
+          },
+          async error => {
+              const mensaje = this.errorHandler.extractErrorMessage(error);
+              let alert = await this.alertCtrl.create({
+                  header: 'Error',
+                  subHeader: 'No se han podido cargar los seguimientos del pedido',
+                  message: mensaje,
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
+      );
+  }
+
+  // Estados canónicos de agencia (Constantes.Agencias en NestoAPI):
+  // -1 Pendiente, 0 En curso, 1 Tramitado, 2 Entregado, 3 Incidentado, 4 Devuelto.
+  public textoEstadoEnvio(estado: number): string {
+      switch (estado) {
+          case -1: return 'Pendiente';
+          case 0: return 'En curso';
+          case 1: return 'Tramitado';
+          case 2: return 'Entregado';
+          case 3: return 'Incidentado';
+          case 4: return 'Devuelto';
+          default: return 'Desconocido';
+      }
+  }
+
+  public colorEstadoEnvio(estado: number): string {
+      switch (estado) {
+          case 2: return 'success';    // Entregado
+          case 3: return 'danger';     // Incidentado
+          case 4: return 'warning';    // Devuelto
+          case 1: return 'primary';    // Tramitado
+          default: return 'medium';    // Pendiente / En curso / Desconocido
+      }
+  }
+
+  public async actualizarSeguimiento(enlace: any): Promise<void> {
+      const loading: any = await this.loadingCtrl.create({ message: 'Consultando la agencia...' });
+      await loading.present();
+      this.firebaseAnalytics.logEvent("pedido_venta_actualizar_seguimiento", {envio: enlace.Numero});
+      this.servicio.actualizarSeguimientoEnvio(enlace.Numero).subscribe(
+          async () => {
+              await loading.dismiss();
+              // Recargar desde el DTO persistido para reflejar el nuevo Estado en el badge.
+              this.cargarSeguimientos(this.pedido.empresa, this.pedido.numero);
+          },
+          async error => {
+              await loading.dismiss();
+              const mensaje = this.errorHandler.extractErrorMessage(error);
+              let alert = await this.alertCtrl.create({
+                  header: 'Error',
+                  subHeader: 'No se ha podido actualizar el estado del envío',
+                  message: mensaje,
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
+      );
   }
 
   private cargarParametrosIva(): void {

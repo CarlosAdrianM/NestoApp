@@ -32,6 +32,14 @@ export class PedidoVentaService {
       return this.http.get(Configuracion.API_URL+'/EnviosAgencias', { params: params });
   }
 
+  // Actualiza a demanda el estado de UN envío contra su agencia (sin esperar al job cada 2h).
+  // 'numeroEnvio' es el EnviosAgencia.Numero (campo Numero del DTO). Devuelve el seguimiento
+  // (Estado/FechaEntrega/Detalle); tras llamarlo conviene recargar cargarEnlacesSeguimiento.
+  public actualizarSeguimientoEnvio(numeroEnvio: number): Observable<any> {
+      const url = Configuracion.API_URL + '/EnviosAgencias/' + numeroEnvio + '/ActualizarSeguimiento';
+      return this.http.post(url, null);
+  }
+
   public modificarPedido(pedido: any, saltarValidacion: boolean = false): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');

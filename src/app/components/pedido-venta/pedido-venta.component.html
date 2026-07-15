@@ -129,9 +129,14 @@
               <ion-item>
                 <ion-label class="ion-text-wrap">
                   <h2>{{enlace.Fecha | date}}</h2>
-                  <h3>{{enlace.AgenciaNombre}}</h3>
+                  <h3>{{enlace.AgenciaNombre}}
+                    <ion-badge [color]="colorEstadoEnvio(enlace.Estado)">{{textoEstadoEnvio(enlace.Estado)}}</ion-badge>
+                  </h3>
                   <a href="#" (click)="abrirEnlace(enlace.EnlaceSeguimiento)">{{enlace.EnlaceSeguimiento}}</a>
                 </ion-label>
+                <ion-button slot="end" fill="clear" (click)="actualizarSeguimiento(enlace)">
+                  <ion-icon slot="icon-only" name="refresh"></ion-icon>
+                </ion-button>
               </ion-item>
           </ion-list>
       </ion-list>
