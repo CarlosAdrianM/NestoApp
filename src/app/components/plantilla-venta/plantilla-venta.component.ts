@@ -1160,38 +1160,70 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           console.warn('No se pudo comprobar fechas del pedido existente:', e);
         }
 
-        let loading: any = await this.loadingCtrl.create({
-            message: 'Ampliando Pedido...',
-        });
-        await loading.present();
-        this.servicio.unirPedidos(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado, ampliacion).subscribe(
-            async data => {
-                this.firebaseAnalytics.logEvent("plantilla_venta_ampliar_pedido", {pedido: data.numero});
-                numeroPedido = data.numero;
-                let alert = await this.alertCtrl.create({
-                    header: 'Ampliado',
-                    message: 'Pedido ' + numeroPedido + ' ampliado correctamente',
-                    buttons: ['Ok'],
-                });
-                await alert.present();
-                this.reinicializar();
-            },
-            async error => {
-                const mensaje = this.errorHandler.extractErrorMessage(error);
-                let alert = await this.alertCtrl.create({
-                    header: 'Error',
-                    subHeader: 'No se ha podido ampliar el pedido',
-                    message: mensaje,
-                    buttons: ['Ok'],
-                });
-                await alert.present();
-                await loading.dismiss();
-            },
-            async () => {
-                await loading.dismiss();
-            }
-        );
+        await this.ejecutarAmpliacion(ampliacion, false);
       }
+  }
+
+  /**
+   * Issue #156: ejecuta la unión (ampliación) de un pedido. Si el backend responde con un
+   * error de validación de precios/descuentos y el usuario tiene permiso, ofrece
+   * "¿Desea ampliar el pedido de todas formas?" y reintenta con CreadoSinPasarValidacion=true,
+   * igual que hace el flujo de crear pedido. Requiere el fix de servidor NestoAPI#324.
+   */
+  private async ejecutarAmpliacion(ampliacion: any, yaForzado: boolean): Promise<void> {
+    const loading: any = await this.loadingCtrl.create({
+      message: yaForzado ? 'Ampliando Pedido (sin validar)...' : 'Ampliando Pedido...',
+    });
+    await loading.present();
+    this.servicio.unirPedidos(this.clienteSeleccionado.empresa, this.pedidoPendienteSeleccionado, ampliacion, yaForzado).subscribe(
+      async data => {
+        this.firebaseAnalytics.logEvent(yaForzado ? "plantilla_venta_ampliar_pedido_forzado" : "plantilla_venta_ampliar_pedido", { pedido: data.numero });
+        await loading.dismiss();
+        const alert = await this.alertCtrl.create({
+          header: 'Ampliado',
+          message: 'Pedido ' + data.numero + ' ampliado correctamente',
+          buttons: ['Ok'],
+        });
+        await alert.present();
+        this.reinicializar();
+      },
+      async error => {
+        await loading.dismiss();
+        await this.manejarErrorAmpliacionPedido(error, ampliacion, yaForzado);
+      },
+      async () => {
+        await loading.dismiss();
+      }
+    );
+  }
+
+  /**
+   * Issue #156: gestiona el error al ampliar. Espejo de manejarErrorCreacionPedido.
+   */
+  private async manejarErrorAmpliacionPedido(error: ProcessedApiError, ampliacion: any, yaForzado: boolean): Promise<void> {
+    const mensaje = this.errorHandler.extractErrorMessage(error);
+    const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
+    const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;
+
+    if (esErrorValidacion && puedeForzar) {
+      const alert = await this.alertCtrl.create({
+        header: 'Error de Validación',
+        message: mensaje + '\n\n¿Desea ampliar el pedido de todas formas?',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          { text: 'Ampliar sin validar', handler: () => { this.ejecutarAmpliacion(ampliacion, true); } }
+        ]
+      });
+      await alert.present();
+    } else {
+      const alert = await this.alertCtrl.create({
+        header: 'Error',
+        subHeader: 'No se ha podido ampliar el pedido',
+        message: mensaje,
+        buttons: ['Ok'],
+      });
+      await alert.present();
+    }
   }
 
   public hayAlgunProducto(): boolean {

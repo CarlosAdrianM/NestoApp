@@ -75,14 +75,21 @@ export class PlantillaVentaService {
     return this.http.get(url, { params: params });
   }
 
-  public unirPedidos(empresa: string, numeroPedidoOriginal: number, pedidoAmpliacion: any): Observable<any> {
+  public unirPedidos(empresa: string, numeroPedidoOriginal: number, pedidoAmpliacion: any, saltarValidacion: boolean = false): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
     var url = Configuracion.API_URL + "/PedidosVenta/UnirPedidos";
+
+    // Issue #156 / NestoAPI#324: al forzar, el flag viaja en la ampliación y el
+    // servidor lo propaga al pedido original y al PUT interno de la unión.
+    const ampliacionAEnviar = saltarValidacion
+      ? { ...pedidoAmpliacion, CreadoSinPasarValidacion: true }
+      : pedidoAmpliacion;
+
     var pedido = {
       "Empresa": empresa,
       "NumeroPedidoOriginal": numeroPedidoOriginal.toString(),
-      "PedidoAmpliacion": pedidoAmpliacion
+      "PedidoAmpliacion": ampliacionAEnviar
     }
 
     return this.http.post(url, JSON.stringify(pedido), { headers: headers });
