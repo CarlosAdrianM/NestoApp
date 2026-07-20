@@ -937,6 +937,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'vendedor': this.direccionSeleccionada.vendedor,
           'comentarios': this.direccionSeleccionada.comentarioRuta,
           'comentarioPicking': this.clienteSeleccionado.comentarioPicking ? this.clienteSeleccionado.comentarioPicking.trim() : null,
+          'avisarConImporteAlCogerPicking': !!this.clienteSeleccionado.avisarConImporteAlCogerPicking, // NestoApp#140
+
           'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
           'ruta': this.servirPorGlovo ? "GLV" : this.direccionSeleccionada.ruta,
           'serie': 'NV', // calcular
@@ -1801,6 +1803,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
       servirJunto: this.direccionSeleccionada?.servirJunto || false,
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
+      avisarConImporteAlCogerPicking: this.clienteSeleccionado?.avisarConImporteAlCogerPicking || false,
       recogerProducto: this.recogerProducto || false,
       suPedido: this.suPedido || '',
 
@@ -2313,6 +2316,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     // Restaurar comentarioPicking en clienteSeleccionado
     if (this.clienteSeleccionado && borrador.comentarioPicking) {
       this.clienteSeleccionado.comentarioPicking = borrador.comentarioPicking;
+    }
+
+    // Restaurar la casilla de aviso con importe al coger picking (Issue #140)
+    if (this.clienteSeleccionado) {
+      this.clienteSeleccionado.avisarConImporteAlCogerPicking = borrador.avisarConImporteAlCogerPicking || false;
     }
 
     // Restaurar recogerProducto (Issue #133)

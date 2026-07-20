@@ -81,6 +81,7 @@ export interface BorradorPlantillaVenta {
   mantenerJunto: boolean;
   servirJunto: boolean;
   comentarioPicking?: string;
+  avisarConImporteAlCogerPicking?: boolean; // Issue #140: persistir la casilla de aviso con importe
   recogerProducto?: boolean;     // Issue #133: persistir la casilla "Recoger Producto"
   suPedido?: string;
 

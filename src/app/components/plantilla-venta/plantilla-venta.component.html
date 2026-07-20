@@ -70,6 +70,9 @@
                 <ion-item>
                     <ion-textarea label="Comentarios Picking (los ven en almacén)" label-placement="floating" [(ngModel)]="clienteSeleccionado.comentarioPicking"></ion-textarea>
                 </ion-item>
+                <ion-item>
+                    <ion-checkbox slot="end" [(ngModel)]="clienteSeleccionado.avisarConImporteAlCogerPicking">Avisar con importe cuando coja picking</ion-checkbox>
+                </ion-item>
                 <ion-item></ion-item>
                 <ion-item></ion-item>
             </ion-list>

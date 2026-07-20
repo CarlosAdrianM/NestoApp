@@ -24,6 +24,8 @@ export class PedidoVenta {
     public vendedor: string;
     public comentarios: string;
     public comentarioPicking: string;
+    // NestoApp#140 / NestoAPI#253: avisar por correo con el importe cuando el pedido coja picking.
+    public avisarConImporteAlCogerPicking: boolean;
     public periodoFacturacion: string;
     public ruta: string;
     public serie: string;
