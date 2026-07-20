@@ -46,13 +46,23 @@
                 <ion-fab-button size="small" (click)="editarDireccion()" horizontal="end"><ion-icon name="create"></ion-icon></ion-fab-button>
             </ion-fab>
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionInput)="buscarDireccion($event)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
+              <!-- Issue #152/#153: sugerencias de Google Places (proxy de NestoAPI) -->
+              <ion-list *ngIf="!cliente.direccion && sugerenciasDireccion.length > 0" class="sugerencias-direccion">
+                  <ion-item *ngFor="let sugerencia of sugerenciasDireccion" button detail="false" (click)="seleccionarSugerenciaDireccion(sugerencia)">
+                      <ion-icon name="location-outline" slot="start"></ion-icon>
+                      <ion-label class="ion-text-wrap">{{ sugerencia.descripcion }}</ion-label>
+                  </ion-item>
+                  <ion-item lines="none" class="powered-by-google">
+                      <ion-note slot="end">Powered by Google</ion-note>
+                  </ion-item>
+              </ion-list>
               <ion-item *ngIf="!cliente.direccion">
                   <ion-input label="Dirección (resto de información)" label-placement="floating" #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item>
-                  <ion-input label="Código Postal" label-placement="floating" type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Código Postal" label-placement="floating" type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" [readonly]="cliente.direccionVerificada" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
                   <ion-input label="Población" label-placement="floating" type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>

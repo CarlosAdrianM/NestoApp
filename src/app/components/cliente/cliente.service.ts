@@ -32,12 +32,44 @@ export class ClienteService {
     params = params.append('direccion', cliente.direccionCalleNumero);
     params = params.append('codigoPostal', cliente.codigoPostal);
     params = params.append('telefono', cliente.telefono);
+    // Issue #153 / NestoAPI#306: si la dirección viene del combo de Places, el backend
+    // se salta el geocoding de validación (que daba falsos positivos con calles homónimas).
+    params = params.append('direccionVerificada', cliente.direccionVerificada ? 'true' : 'false');
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(
         map(response => this.toCamelCase(response))
       );
 
+  }
+
+  /**
+   * Issue #152/#153 (NestoAPI#306): autocompletado de direcciones vía proxy de Google Places.
+   * El sessionToken (GUID por sesión de tecleo) agrupa las Sugerencias + su Detalle para la
+   * facturación de Google. La API key vive solo en el servidor.
+   */
+  buscarSugerenciasDireccion(texto: string, sessionToken: string): Observable<any> {
+    const urlLlamada: string = Configuracion.API_URL + '/Direcciones/Sugerencias';
+    let params: HttpParams = new HttpParams();
+    params = params.append('texto', texto);
+    params = params.append('sessionToken', sessionToken);
+
+    return this.http.get(urlLlamada, { params: params })
+      .pipe(
+        map(response => this.toCamelCase(response))
+      );
+  }
+
+  leerDetalleDireccion(placeId: string, sessionToken: string): Observable<any> {
+    const urlLlamada: string = Configuracion.API_URL + '/Direcciones/Detalle';
+    let params: HttpParams = new HttpParams();
+    params = params.append('placeId', placeId);
+    params = params.append('sessionToken', sessionToken);
+
+    return this.http.get(urlLlamada, { params: params })
+      .pipe(
+        map(response => this.toCamelCase(response))
+      );
   }
 
   validarDatosPago(datosPago: any): Observable<any> {

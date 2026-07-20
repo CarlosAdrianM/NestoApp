@@ -9,6 +9,8 @@ import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@aw
 import { Geolocation } from '../../services/geolocation.service';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'app-cliente',
@@ -74,8 +76,15 @@ export class ClienteComponent {
           this.cliente.nif = this.route.snapshot.queryParams.nif;
           this.cliente.nombre = this.route.snapshot.queryParams.nombre;
           this.goToDatosGenerales();
-      } 
+      }
+
+      this.configurarBusquedaDireccion();
   }
+
+  // Issue #152/#153: autocompletado de direcciones (Google Places vía proxy de NestoAPI).
+  public sugerenciasDireccion: any[] = [];
+  private terminoBusquedaDireccion$ = new Subject<string>();
+  private sessionTokenDireccion: string = null;
 
   @ViewChild('iban') inputIban;
   @ViewChild('nif') inputNif;
@@ -403,10 +412,77 @@ export class ClienteComponent {
 
   editarDireccion() {
       this.cliente.direccion = "";
+      // Issue #153: al reeditar la dirección se pierde la verificación de Places.
+      this.cliente.direccionVerificada = false;
+      this.sugerenciasDireccion = [];
+      this.sessionTokenDireccion = null;
       setTimeout(() => {
         // Issue #134: protegemos por consistencia con los demás setFocus del componente.
         this.inputDireccion?.setFocus();
     }, 500);
+  }
+
+  /**
+   * Issue #152/#153: cada pulsación de tecla en la dirección lanza (con debounce) una
+   * búsqueda de sugerencias en Places. Al teclear a mano la dirección deja de estar
+   * verificada, de modo que el backend vuelve a validar con geocoding si no se elige nada.
+   */
+  public buscarDireccion(evento: any): void {
+      const texto = evento?.detail?.value ?? '';
+      this.cliente.direccionVerificada = false;
+      this.terminoBusquedaDireccion$.next(texto);
+  }
+
+  private configurarBusquedaDireccion(): void {
+      this.terminoBusquedaDireccion$.pipe(
+          debounceTime(300),
+          distinctUntilChanged(),
+          switchMap((texto: string) => {
+              if (!texto || texto.trim().length < 3) {
+                  return of([]);
+              }
+              if (!this.sessionTokenDireccion) {
+                  this.sessionTokenDireccion = this.generarSessionToken();
+              }
+              return this.servicio.buscarSugerenciasDireccion(texto.trim(), this.sessionTokenDireccion)
+                  .pipe(catchError(() => of([])));
+          })
+      ).subscribe((sugerencias: any[]) => {
+          this.sugerenciasDireccion = sugerencias || [];
+      });
+  }
+
+  public seleccionarSugerenciaDireccion(sugerencia: any): void {
+      this.servicio.leerDetalleDireccion(sugerencia.placeId, this.sessionTokenDireccion).subscribe(
+          (detalle: any) => {
+              this.cliente.direccionCalleNumero = [detalle.calle, detalle.numero].filter(Boolean).join(' ').trim();
+              this.cliente.codigoPostal = detalle.codigoPostal;
+              // Población/provincia de Google, normalizadas a MAYÚSCULAS (cubre CPs con varias poblaciones).
+              if (detalle.poblacion) { this.cliente.poblacion = detalle.poblacion.toUpperCase(); }
+              if (detalle.provincia) { this.cliente.provincia = detalle.provincia.toUpperCase(); }
+              this.cliente.direccionVerificada = true;
+              this.sugerenciasDireccion = [];
+              // La sesión de Places termina con el Detalle: la próxima búsqueda abre una nueva.
+              this.sessionTokenDireccion = null;
+              this.firebaseAnalytics.logEvent('cliente_direccion_places_seleccionada', {});
+          },
+          async error => {
+              const alert = await this.alertCtrl.create({
+                  header: 'Error',
+                  message: 'No se ha podido obtener el detalle de la dirección',
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
+      );
+  }
+
+  private generarSessionToken(): string {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+      });
   }
 
   // Funciones de geolocalización

@@ -1,0 +1,15 @@
+// Issue #152/#153: desplegable de sugerencias de direcciones (Google Places).
+.sugerencias-direccion {
+  margin-top: -8px;
+  border-left: 2px solid var(--ion-color-primary);
+
+  ion-item {
+    --min-height: 40px;
+    font-size: 0.9rem;
+  }
+
+  .powered-by-google ion-note {
+    font-size: 0.7rem;
+    color: var(--ion-color-medium);
+  }
+}
