@@ -9,6 +9,7 @@ import { RapportService } from './rapport.service';
 import { AuthService, SesionOutlookCaducadaError } from '../../auth.service';
 import { User } from '../../user';
 import { VersionNativoService } from 'src/app/services/version-nativo.service';
+import { objetoDeQueryParam } from '../../utils/query-param';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 
 @Component({
@@ -44,11 +45,10 @@ export class RapportComponent {
     private authService: AuthService,
     private versionNativo: VersionNativoService
     ) {
-      // Issue #135: en build Web los queryParams se serializan a string. Si llega "[object Object]"
-      // (porque navegaron con un objeto como queryParam) el código de abajo casca al intentar
-      // crear propiedades sobre un string. Caemos a un rapport vacío para no reventar la pantalla.
-      const rapportParam = this.route.snapshot.queryParams.rapport;
-      this.rapport = (rapportParam && typeof rapportParam === 'object') ? rapportParam : {};
+      // Issue #135 / #155: en build Web los queryParams se serializan a string. Si llega
+      // "[object Object]" el código de abajo casca al crear propiedades sobre un string.
+      // Caemos a un rapport vacío para no reventar la pantalla (helper compartido).
+      this.rapport = objetoDeQueryParam(this.route.snapshot.queryParams.rapport) || {};
       this.numeroCliente = this.rapport.Cliente;
       if (!this.rapport.Id) {
           this.rapport.Tipo = usuario.ultimoTipoRapport;

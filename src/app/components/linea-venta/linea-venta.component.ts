@@ -6,6 +6,7 @@ import { ProductoComponent } from '../producto/producto.component';
 import { LineaVenta } from './linea-venta';
 import { LineaVentaService } from './linea-venta.service';
 import { ProcessedApiError } from 'src/app/models/api-error.model';
+import { objetoDeQueryParam } from 'src/app/utils/query-param';
 
 @Component({
     selector: 'app-linea-venta',
@@ -29,9 +30,15 @@ constructor(
   private route: ActivatedRoute,
   private firebaseAnalytics: FirebaseAnalytics
   ) {
-      this.linea = this.route.snapshot.queryParams.linea;
+      this.linea = objetoDeQueryParam(this.route.snapshot.queryParams.linea);
       this.cliente = this.route.snapshot.queryParams.cliente;
       this.contacto = this.route.snapshot.queryParams.contacto;
+      // Issue #155: en build Web, tras recargar el WebView, la línea puede llegar
+      // como "[object Object]". Si se perdió, volvemos atrás en vez de reventar.
+      if (!this.linea) {
+          this.nav.pop();
+          return;
+      }
       this.actualizarDescuento(this.linea.DescuentoLinea * 100);
       this.cantidadAnterior = this.linea.Cantidad;
   }

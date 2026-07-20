@@ -4,6 +4,7 @@ import { Keyboard } from '../../services/keyboard.service';
 import { NavController, AlertController, ToastController, NavParams } from '@ionic/angular';
 import { Events } from 'src/app/services/events.service';
 import { SelectorPlantillaVentaDetalleService } from './selector-plantilla-venta-detalle.service';
+import { objetoDeQueryParam } from '../../utils/query-param';
 
 @Component({
     selector: 'selector-plantilla-venta-detalle',
@@ -23,12 +24,20 @@ export class SelectorPlantillaVentaDetalleComponent {
     public events: Events
     ) {
       this.nav = nav;
-      this.producto = this.route.snapshot.queryParams.producto;
-      this.cliente = this.route.snapshot.queryParams.cliente;
-      this.almacen = this.route.snapshot.queryParams.almacen;
+      this.producto = objetoDeQueryParam(this.route.snapshot.queryParams.producto);
+      this.cliente = objetoDeQueryParam(this.route.snapshot.queryParams.cliente) || this.route.snapshot.queryParams.cliente;
+      this.almacen = objetoDeQueryParam(this.route.snapshot.queryParams.almacen) || this.route.snapshot.queryParams.almacen;
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
       this.toastCtrl = toastCtrl;
+
+      // Issue #155: en build Web, tras recargar el WebView, el producto puede llegar
+      // como "[object Object]" y romper todo el constructor. Si se perdió, volvemos
+      // atrás para que el vendedor reabra el detalle en vez de ver una pantalla rota.
+      if (!this.producto) {
+          this.nav.pop();
+          return;
+      }
 
       if (!this.producto.stockActualizado) {
           console.log("comprobar si existe el producto");
