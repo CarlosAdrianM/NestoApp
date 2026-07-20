@@ -18,7 +18,7 @@ export class Configuracion implements OnInit {
   public static NOMBRE_DOMINIO: string = 'NUEVAVISION';
   public static VENDEDOR_GENERAL: string = "NV";
 
-  public static VERSION: string = "2.18.5";
+  public static VERSION: string = "2.18.6";
 
   // Issue #88: versionCode mínimo del APK release (build.gradle) que incluye el intent-filter
   // msauth:// en AndroidManifest necesario para Outlook. Bundles web Live-Update con la feature
