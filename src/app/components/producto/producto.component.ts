@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { AlertController, LoadingController } from '@ionic/angular';
+import { AlertController, LoadingController, ModalController } from '@ionic/angular';
 import { ProductoService } from './producto.service';
+import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
 
 
 @Component({
@@ -20,11 +21,12 @@ export class ProductoComponent implements OnInit, OnDestroy {
   private loadingActivo: HTMLIonLoadingElement | null = null;
 
 
-  constructor(private servicio: ProductoService, 
-    public loadingCtrl: LoadingController, 
+  constructor(private servicio: ProductoService,
+    public loadingCtrl: LoadingController,
     public alertCtrl: AlertController,
     private route: ActivatedRoute,
-    private firebaseAnalytics: FirebaseAnalytics
+    private firebaseAnalytics: FirebaseAnalytics,
+    private modalCtrl: ModalController
     ) {
     if (this.route.snapshot.queryParams.producto) {
       this.productoActual = this.route.snapshot.queryParams.producto;
@@ -40,6 +42,18 @@ export class ProductoComponent implements OnInit, OnDestroy {
       this.loadingActivo.dismiss().catch(() => {});
       this.loadingActivo = null;
     }
+  }
+
+  // Issue #154: tap en la foto (o miniatura de vídeo) la abre a pantalla completa
+  // con pinch-to-zoom y doble tap, sustituyendo a la librería muerta ngx-ionic-image-viewer.
+  async ampliarImagen(urlImagen: string): Promise<void> {
+    if (!urlImagen) { return; }
+    this.firebaseAnalytics.logEvent("ampliar_imagen", { imagen: urlImagen });
+    const modal = await this.modalCtrl.create({
+      component: VisorImagenComponent,
+      componentProps: { imgSrc: urlImagen }
+    });
+    await modal.present();
   }
 
   async cargar() {

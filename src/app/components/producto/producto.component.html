@@ -85,7 +85,7 @@
         </ion-item>
       </ion-list>
       <div class="ion-text-center">
-        <ion-img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}"></ion-img>
+        <ion-img *ngIf="producto.UrlFoto" src="{{producto.UrlFoto}}" (click)="ampliarImagen(producto.UrlFoto)" class="foto-ampliable"></ion-img>
       </div>
     </div>
     <div>
@@ -110,7 +110,7 @@
   <div *ngIf="vistaSeleccionada === 'videos'">
     <ion-list>
       <ion-item *ngFor="let video of videos" (click)="abrirVideo(video)">
-        <ion-thumbnail slot="start">
+        <ion-thumbnail slot="start" (click)="$event.stopPropagation(); ampliarImagen(video.UrlImagen)">
           <ion-img [src]="video.UrlImagen || 'assets/img/sin-imagen.png'"></ion-img>
         </ion-thumbnail>
         <ion-label>
