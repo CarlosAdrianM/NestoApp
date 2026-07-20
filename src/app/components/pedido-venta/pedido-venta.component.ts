@@ -330,6 +330,80 @@ export class PedidoVentaComponent  {
   }
 
 
+  /**
+   * Issue #151: el botón "Pasar a presupuesto" se muestra cuando el pedido NO es
+   * presupuesto y tiene alguna línea pendiente (-1) o en curso (1) sin picking.
+   * (Réplica de CanPasarAPresupuesto de Nesto#356.)
+   */
+  public puedePasarAPresupuesto(): boolean {
+      if (!this.pedido || this.pedido.EsPresupuesto) {
+          return false;
+      }
+      return (this.pedido.Lineas || []).some(l => l.picking == 0 && (l.estado == -1 || l.estado == 1));
+  }
+
+  /**
+   * Issue #151: convierte el pedido en presupuesto. Pasa las líneas pendientes/en curso
+   * sin picking a estado -3 (presupuesto) y marca la cabecera con EsPresupuesto=true (flag
+   * que NestoAPI#193 usa para distinguir "pasar a presupuesto" de "aceptar presupuesto").
+   * Las líneas facturadas o con picking no se tocan. Guarda con modificarPedido.
+   */
+  public async pasarAPresupuesto(): Promise<void> {
+      const confirm = await this.alertCtrl.create({
+          header: 'Confirmar',
+          message: '¿Desea pasar el pedido a presupuesto?',
+          buttons: [
+              {
+                  text: 'Sí',
+                  handler: async () => {
+                      const loading: any = await this.loadingCtrl.create({
+                          message: 'Pasando a presupuesto...',
+                      });
+                      this.firebaseAnalytics.logEvent("pedido_venta_pasar_a_presupuesto", { pedido: this.pedido.numero });
+                      await loading.present();
+
+                      this.pedido.Lineas.forEach(l => {
+                          if (l.picking == 0 && (l.estado == -1 || l.estado == 1)) {
+                              l.estado = -3;
+                          }
+                      });
+                      this.pedido.EsPresupuesto = true;
+
+                      this.servicio.modificarPedido(this.pedido).subscribe(
+                          async data => {
+                              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
+                              const alert = await this.alertCtrl.create({
+                                  header: 'Presupuesto',
+                                  message: 'Pedido pasado a presupuesto correctamente',
+                                  buttons: ['Ok'],
+                              });
+                              await alert.present();
+                              await loading.dismiss();
+                          },
+                          async error => {
+                              await loading.dismiss();
+                              // Recargar para descartar los cambios locales que no se guardaron.
+                              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
+                              const mensaje = this.errorHandler.extractErrorMessage(error);
+                              const alert = await this.alertCtrl.create({
+                                  header: 'Error',
+                                  subHeader: 'No se ha podido pasar el pedido a presupuesto',
+                                  message: mensaje,
+                                  buttons: ['Ok'],
+                              });
+                              await alert.present();
+                          },
+                          () => { }
+                      );
+                  }
+              },
+              { text: 'No', handler: () => { return; } }
+          ]
+      });
+
+      await confirm.present();
+  }
+
   public cadenaFecha(cadena: string): Date {
       return new Date(cadena);
   }

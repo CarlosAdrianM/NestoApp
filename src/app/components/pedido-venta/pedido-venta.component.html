@@ -81,6 +81,9 @@
               <ion-item>
                   <ion-button expand="block" *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</ion-button>
               </ion-item>
+              <ion-item>
+                  <ion-button expand="block" color="warning" *ngIf="puedePasarAPresupuesto()" (click)="pasarAPresupuesto()">Pasar a presupuesto</ion-button>
+              </ion-item>
           </ion-list>
       </div>
       <div *ngSwitchCase="'lineas'">
