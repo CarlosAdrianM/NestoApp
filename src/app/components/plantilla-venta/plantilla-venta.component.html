@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button (click)="comprobarCanDeactivate=true;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Plantilla Venta</ion-title>
+    <ion-title>{{ pedidoEnEdicionNumero != null ? 'Modificando pedido ' + pedidoEnEdicionNumero : 'Plantilla Venta' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="abrirMenuBorradores()" title="Borradores">
         <ion-icon slot="icon-only" name="folder-outline"></ion-icon>
@@ -194,7 +194,7 @@
             <ion-label slot="start">Portes</ion-label>
             <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 
         </ion-item>
-        <ion-item *ngIf="listaPedidosPendientes && listaPedidosPendientes.length > 0">
+        <ion-item *ngIf="pedidoEnEdicionNumero == null && listaPedidosPendientes && listaPedidosPendientes.length > 0">
             <ion-select label="Ampliar en pedido" label-placement="start" [(ngModel)]="pedidoPendienteSeleccionado">
                 <ion-select-option *ngFor="let pedido of listaPedidosPendientes" value="{{pedido}}">{{pedido}}</ion-select-option>
                 <ion-select-option value="">Crear Pedido</ion-select-option>

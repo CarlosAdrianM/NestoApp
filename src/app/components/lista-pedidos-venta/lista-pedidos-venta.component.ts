@@ -105,6 +105,12 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         this.nav.navigateForward('pedido-venta', {queryParams:{ empresa: "1", numero: +numeroPedido }});
     }
 
+    // Issue #150: abre el pedido en la plantilla de venta en modo edición (Nesto#397 Parte 2).
+    public modificarConPlantilla(pedido: any): void {
+        this.firebaseAnalytics.logEvent("modificar_pedido_con_plantilla", { empresa: pedido.empresa, pedido: pedido.numero });
+        this.nav.navigateForward('plantilla-venta', { queryParams: { empresa: pedido.empresa, numero: pedido.numero }});
+    }
+
     public async cargarDatos(): Promise<void> {
         let loading: any = await this.loadingCtrl.create({
             message: 'Cargando Pedidos...',

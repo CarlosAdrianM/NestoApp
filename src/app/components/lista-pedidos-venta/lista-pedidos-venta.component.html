@@ -19,21 +19,29 @@
     <ion-toggle [(ngModel)]="mostrarImagenes" slot="end"></ion-toggle>
   </ion-item>
   <ion-list>
-      <ion-item *ngFor="let pedido of datosFiltrados"  (click)="abrirPedido(pedido)">
-        <ion-icon name="download" (click)="descargarPedido($event, pedido)" slot="start"></ion-icon>
-        <ion-label class="ion-text-wrap">
-          <h2>{{pedido.nombre}}</h2>
-          <h3>{{pedido.direccion}}</h3>
-          <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR' }})</p>
-          <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
-          <ion-badge color="success" *ngIf="pedido.tienePicking">Picking</ion-badge>
-          <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
-          <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
-          <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
-          <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>          
-        </ion-label>
-        <ion-icon name="arrow-forward" slot="end"></ion-icon>
-      </ion-item>
+      <ion-item-sliding *ngFor="let pedido of datosFiltrados">
+        <ion-item (click)="abrirPedido(pedido)">
+          <ion-icon name="download" (click)="descargarPedido($event, pedido)" slot="start"></ion-icon>
+          <ion-label class="ion-text-wrap">
+            <h2>{{pedido.nombre}}</h2>
+            <h3>{{pedido.direccion}}</h3>
+            <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR' }})</p>
+            <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
+            <ion-badge color="success" *ngIf="pedido.tienePicking">Picking</ion-badge>
+            <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>
+            <ion-badge color="light" *ngIf="!pedido.tieneProductos">Sin Productos</ion-badge>
+            <ion-badge color="light" *ngIf="pedido.tienePresupuesto">Presupuesto</ion-badge>
+            <ion-badge color="dark" *ngIf="pedido.ultimoSeguimiento">Seguimientos</ion-badge>
+          </ion-label>
+          <ion-icon name="arrow-forward" slot="end"></ion-icon>
+        </ion-item>
+        <!-- Issue #150: modificar el pedido con la plantilla de venta (Nesto#397 Parte 2) -->
+        <ion-item-options side="end">
+          <ion-item-option color="primary" (click)="modificarConPlantilla(pedido)">
+            <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
   </ion-list>
   <ion-button expand="block" *ngIf="numeroDeDatos() <= 0 && filtro" (click)="abrirPedidoNumero(filtro.value)">Abrir El Pedido {{filtro.value}}</ion-button>
 </ion-content>

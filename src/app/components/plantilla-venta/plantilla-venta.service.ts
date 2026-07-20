@@ -30,6 +30,36 @@ export class PlantillaVentaService {
     return this.http.post(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
   }
 
+  /**
+   * Issue #150 (Nesto#397 Parte 2): trae el pedido YA en forma de plantilla
+   * (ConvertidorPedidoAPlantilla en NestoAPI): ofertas colapsadas, regalos Ganavisiones
+   * confirmados, ids de línea preservados y flags de picking. Solo pedidos no facturados.
+   */
+  public cargarPedidoParaPlantilla(empresa: string, numero: number): Observable<any> {
+    const url = this._baseUrl + '/ParaPlantilla';
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('numero', numero.toString());
+
+    return this.http.get(url, { params: params });
+  }
+
+  /**
+   * Issue #150: guarda el pedido en modo edición con PUT (los ids de línea viajan en las
+   * líneas y el número en la cabecera). El servidor conserva las líneas en albarán/factura
+   * aunque no vengan en el payload y bloquea las líneas con picking modificadas.
+   */
+  public modificarPedido(pedido: any, saltarValidacion: boolean = false): Observable<any> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    const pedidoAEnviar = saltarValidacion
+      ? { ...pedido, CreadoSinPasarValidacion: true }
+      : pedido;
+
+    return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
+  }
+
   public sePuedeServirPorGlovo(pedido: any): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');

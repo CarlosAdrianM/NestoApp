@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -42,7 +43,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private actionSheetCtrl: ActionSheetController,
     private modalCtrl: ModalController,
     private borradorService: BorradorPlantillaVentaService,
-    private pedidoVentaService: PedidoVentaService
+    private pedidoVentaService: PedidoVentaService,
+    private route: ActivatedRoute
     ) {
       this.almacen = this.usuario.almacen;
       events.subscribe('clienteModificado', (clienteModificado: any) => {
@@ -128,12 +130,29 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     swiperEl.addEventListener('swiperslidechangetransitionend', () => this.haAvanzado());
   }
 
+  // ========================================
+  // Issue #150: modificar un pedido existente con la plantilla (Nesto#397 Parte 2).
+  // ========================================
+  // Nº del pedido en edición (null = alta normal). Cuando está fijado, guardar hace PUT.
+  public pedidoEnEdicionNumero: number | null = null;
+  // Meta por producto para reconstruir el PUT: ids de línea de LinPedidoVta y flags de picking.
+  private edicionMetaLineas = new Map<string, { idLineaPago: number; idLineaOferta: number | null; pagoTienePicking: boolean; ofertaTienePicking: boolean }>();
+  private edicionMetaRegalos = new Map<string, { idLinea: number; tienePicking: boolean }>();
+  // NestoAPI#303: líneas en albarán/factura que no se cargan (solo para avisar al usuario).
+  public lineasEnAlbaranOFactura = 0;
+
   public async ngOnInit() {
     /*
     this.fechaMinima = (await this.ajustarFechaEntrega(this.hoySinHora)).toISOString().substring(0, 10);
     this.fechaEntrega = this.fechaMinima;
     */
    await this.calcularFechaMinima();
+
+    // Issue #150: si llegamos con empresa+numero, cargamos ese pedido en modo edición.
+    const qp = this.route.snapshot.queryParams;
+    if (qp && qp.empresa && qp.numero) {
+      await this.cargarPedidoParaEdicion(qp.empresa, +qp.numero);
+    }
   }
   
 
@@ -934,6 +953,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'Lineas': [],
       };
 
+      // Issue #150: en modo edición, el número de pedido viaja en la cabecera para el PUT.
+      if (this.pedidoEnEdicionNumero != null) {
+          pedido.numero = this.pedidoEnEdicionNumero;
+      }
+
       let nuevaLinea: any = {};
       let lineaPedidoOferta: any = {};
       let ofertaLinea: number = 0;
@@ -959,6 +983,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               'formaVenta': this.usuario.formaVenta,
               'oferta': ofertaLinea === 0 ? null : ofertaLinea,
           };
+          // Issue #150: en modo edición, adjuntar el id de la línea original (0 = nueva) y
+          // conservar el picking para que el servidor identifique/proteja la línea en el PUT.
+          const metaLinea = this.pedidoEnEdicionNumero != null ? this.edicionMetaLineas.get(linea.producto) : undefined;
+          if (this.pedidoEnEdicionNumero != null) {
+              nuevaLinea.id = metaLinea ? metaLinea.idLineaPago : 0;
+              if (metaLinea?.pagoTienePicking) { nuevaLinea.picking = 1; }
+          }
           pedido.Lineas.push(nuevaLinea);
 
           linea.cantidadOferta = +linea.cantidadOferta;
@@ -975,6 +1006,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                   lineaPedidoOferta.PrecioUnitario = 0;
               }
               lineaPedidoOferta.oferta = nuevaLinea.oferta;
+              // Issue #150: la 2ª línea (oferta) tiene su propio id; sobrescribir el copiado del pago.
+              if (this.pedidoEnEdicionNumero != null) {
+                  lineaPedidoOferta.id = metaLinea?.idLineaOferta || 0;
+                  lineaPedidoOferta.picking = metaLinea?.ofertaTienePicking ? 1 : 0;
+              }
               pedido.Lineas.push(lineaPedidoOferta);
           }
       }
@@ -1005,6 +1041,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               'formaVenta': this.usuario.formaVenta,
               'oferta': null,
           };
+          // Issue #150: id del regalo en modo edición (0 = nuevo).
+          if (this.pedidoEnEdicionNumero != null) {
+              const metaRegalo = this.edicionMetaRegalos.get(regalo.producto.ProductoId);
+              (lineaRegalo as any).id = metaRegalo ? metaRegalo.idLinea : 0;
+              if (metaRegalo?.tienePicking) { (lineaRegalo as any).picking = 1; }
+          }
           pedido.Lineas.push(lineaRegalo);
       }
 
@@ -1048,10 +1090,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           return;
       }
 
+      // Issue #150: en modo edición se guarda con PUT (modificar), no con POST (crear/ampliar).
+      if (this.pedidoEnEdicionNumero != null) {
+          await this.guardarPedidoModificado(false);
+          return;
+      }
+
       if (!this.pedidoPendienteSeleccionado) {
         let loading: any = await this.loadingCtrl.create({
             message: 'Creando Pedido...',
-        });  
+        });
         await loading.present();
         this.servicio.crearPedido(this.prepararPedido()).subscribe(
             async data => {
@@ -1311,6 +1359,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.portesGratis = false;
       this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
+      // Issue #150: salir del modo edición.
+      this.pedidoEnEdicionNumero = null;
+      this.edicionMetaLineas.clear();
+      this.edicionMetaRegalos.clear();
+      this.lineasEnAlbaranOFactura = 0;
   }
       
   get importePortesMostrar(): number {
@@ -1627,6 +1680,64 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   /**
+   * Issue #150: guarda el pedido en edición con PUT. Ante un error de validación de
+   * precios/descuentos ofrece guardar de todas formas (como el flujo de crear); el bloqueo
+   * de líneas con picking del servidor llega como error normal y se muestra tal cual.
+   */
+  private async guardarPedidoModificado(yaForzado: boolean): Promise<void> {
+      const loading: any = await this.loadingCtrl.create({
+          message: yaForzado ? 'Modificando Pedido (sin validar)...' : 'Modificando Pedido...',
+      });
+      await loading.present();
+      this.servicio.modificarPedido(this.prepararPedido(), yaForzado).subscribe(
+          async data => {
+              this.firebaseAnalytics.logEvent(yaForzado ? 'plantilla_venta_modificar_pedido_forzado' : 'plantilla_venta_modificar_pedido', { pedido: this.pedidoEnEdicionNumero });
+              await loading.dismiss();
+              const alert = await this.alertCtrl.create({
+                  header: 'Modificado',
+                  message: 'Pedido ' + this.pedidoEnEdicionNumero + ' modificado correctamente',
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+              this.reinicializar();
+          },
+          async error => {
+              await loading.dismiss();
+              await this.manejarErrorModificacionEnEdicion(error, yaForzado);
+          },
+          async () => {
+              await loading.dismiss();
+          }
+      );
+  }
+
+  private async manejarErrorModificacionEnEdicion(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      const mensaje = this.errorHandler.extractErrorMessage(error);
+      const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
+      const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;
+
+      if (esErrorValidacion && puedeForzar) {
+          const alert = await this.alertCtrl.create({
+              header: 'Error de Validación',
+              message: mensaje + '\n\n¿Desea modificar el pedido de todas formas?',
+              buttons: [
+                  { text: 'Cancelar', role: 'cancel' },
+                  { text: 'Modificar sin validar', handler: () => { this.guardarPedidoModificado(true); } }
+              ]
+          });
+          await alert.present();
+      } else {
+          const alert = await this.alertCtrl.create({
+              header: 'Error',
+              subHeader: 'No se ha podido modificar el pedido',
+              message: mensaje,
+              buttons: ['Ok'],
+          });
+          await alert.present();
+      }
+  }
+
+  /**
    * Detecta si un error es de validación de precios/descuentos
    * Soporta tanto el formato nuevo (con código) como el antiguo (por mensaje)
    */
@@ -1893,6 +2004,170 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   /**
+   * Restaura el estado de la plantilla desde un borrador (o un pedido convertido, #150).
+   * Prepara los valores protegidos, la configuración básica y dispara la carga de productos;
+   * las líneas se aplican en onProductosCargados una vez cargada la plantilla del cliente.
+   */
+  private aplicarBorradorParaRestaurar(borrador: BorradorPlantillaVenta): void {
+    // Guardar borrador para aplicar después de cargar productos
+    this.borradorEnRestauracion = borrador;
+    this.borradorRestauradoEnProductos = false;
+
+    // Establecer valores protegidos para ignorar eventos de los selectores
+    this.formaPagoProtegida = borrador.formaPago || null;
+    this.plazosPagoProtegido = borrador.plazosPago || null;
+
+    // Preseleccionar contacto para el selector de direcciones
+    this.contactoParaRestaurar = borrador.contacto || '';
+    // Forzar actualización del binding antes de continuar
+    this.ref.detectChanges();
+
+    // Fase 1: Restaurar configuración básica
+    this.almacen = borrador.almacenCodigo || this.usuario.almacen;
+    this.esPresupuesto = borrador.esPresupuesto || false;
+    this.fechaEntrega = borrador.fechaEntrega || this.fechaMinima;
+    this.servirPorGlovo = borrador.servirPorGlovo || false;
+    this.mandarCobroTarjeta = borrador.mandarCobroTarjeta || false;
+    this.cobroTarjetaCorreo = borrador.cobroTarjetaCorreo || '';
+    this.cobroTarjetaMovil = borrador.cobroTarjetaMovil || '';
+
+    // Fase 2: Cargar cliente (esto disparará la carga de productos)
+    if (borrador.cliente) {
+      const clienteParaCargar = {
+        empresa: borrador.empresa,
+        cliente: borrador.cliente,
+        contacto: borrador.contacto,
+        nombre: borrador.nombreCliente,
+        cifNif: 'pendiente' // Para evitar alerta de datos faltantes
+      };
+
+      // La carga de productos se completará y llamará a onProductosCargados
+      this.cargarProductosPlantilla(clienteParaCargar);
+      this.ref.detectChanges();
+    }
+  }
+
+  /**
+   * Issue #150: carga un pedido existente en la plantilla en modo edición. Reutiliza el
+   * mecanismo de restauración de borradores mapeando el PedidoParaPlantillaDTO a un borrador,
+   * y guarda aparte los ids de línea y flags de picking para reconstruir el PUT al guardar.
+   */
+  private async cargarPedidoParaEdicion(empresa: string, numero: number): Promise<void> {
+    const loading = await this.loadingCtrl.create({ message: 'Cargando pedido...' });
+    await loading.present();
+
+    this.servicio.cargarPedidoParaPlantilla(empresa, numero).subscribe(
+      async (dto: any) => {
+        this.pedidoEnEdicionNumero = dto.NumeroPedido;
+        this.lineasEnAlbaranOFactura = dto.LineasEnAlbaranOFactura || 0;
+        this.textoBotonCrearPedido = 'Modificar Pedido';
+
+        // Guardar los ids de línea y el picking por producto para el PUT.
+        this.edicionMetaLineas.clear();
+        for (const l of (dto.Lineas || [])) {
+          this.edicionMetaLineas.set(l.Producto, {
+            idLineaPago: l.IdLineaPago,
+            idLineaOferta: l.IdLineaOferta,
+            pagoTienePicking: l.PagoTienePicking,
+            ofertaTienePicking: l.OfertaTienePicking
+          });
+        }
+        this.edicionMetaRegalos.clear();
+        for (const r of (dto.Regalos || [])) {
+          this.edicionMetaRegalos.set(r.Producto, { idLinea: r.IdLinea, tienePicking: r.TienePicking });
+        }
+
+        this.aplicarBorradorParaRestaurar(this.convertirDtoABorrador(dto));
+        await loading.dismiss();
+        this.firebaseAnalytics.logEvent('plantilla_venta_editar_pedido', { pedido: numero });
+
+        await this.avisarLineasProtegidas(dto);
+      },
+      async error => {
+        await loading.dismiss();
+        this.pedidoEnEdicionNumero = null;
+        const mensaje = this.errorHandler.extractErrorMessage(error);
+        const alert = await this.alertCtrl.create({
+          header: 'Error',
+          subHeader: 'No se ha podido cargar el pedido para modificar',
+          message: mensaje,
+          buttons: ['Ok'],
+        });
+        await alert.present();
+      }
+    );
+  }
+
+  /** Mapea el PedidoParaPlantillaDTO (PascalCase) a la forma de borrador que reutiliza la carga. */
+  private convertirDtoABorrador(dto: any): BorradorPlantillaVenta {
+    return {
+      id: '',
+      fechaCreacion: '',
+      usuario: this.usuario.nombre || '',
+      empresa: dto.Empresa,
+      cliente: dto.Cliente,
+      contacto: dto.Contacto,
+      nombreCliente: '',
+      lineasProducto: (dto.Lineas || []).map((l: any) => ({
+        producto: l.Producto,
+        texto: l.Texto,
+        cantidad: l.Cantidad,
+        cantidadOferta: l.CantidadOferta,
+        precio: l.Precio,
+        descuento: l.Descuento,
+        aplicarDescuento: l.AplicarDescuento,
+        iva: '',
+        personalizarOferta: l.PersonalizarOferta || false,
+        precioOferta: l.PrecioOferta || 0,
+        descuentoOferta: l.DescuentoOferta || 0
+      })),
+      lineasRegalo: (dto.Regalos || []).map((r: any) => ({
+        producto: r.Producto,
+        texto: r.Texto,
+        precio: 0,
+        ganavisiones: 0,
+        iva: '',
+        cantidad: r.Cantidad
+      })),
+      esPresupuesto: dto.EsPresupuesto || false,
+      formaPago: dto.FormaPago,
+      plazosPago: dto.PlazosPago,
+      fechaEntrega: dto.FechaEntrega ? dto.FechaEntrega.toString().substring(0, 10) : '',
+      almacenCodigo: dto.Almacen,
+      mantenerJunto: dto.MantenerJunto || false,
+      servirJunto: dto.ServirJunto || false,
+      comentarioPicking: dto.ComentarioPicking || '',
+      recogerProducto: false,
+      suPedido: '',
+      total: 0,
+      servirPorGlovo: false,
+      mandarCobroTarjeta: false,
+      cobroTarjetaCorreo: '',
+      cobroTarjetaMovil: ''
+    } as BorradorPlantillaVenta;
+  }
+
+  /** Issue #150 / NestoAPI#303: avisa de las líneas que no se pueden modificar desde la plantilla. */
+  private async avisarLineasProtegidas(dto: any): Promise<void> {
+    const conPicking = (dto.Lineas || []).filter((l: any) => l.PagoTienePicking || l.OfertaTienePicking)
+      .map((l: any) => `${l.Producto} - ${l.Texto}`);
+    const partes: string[] = [];
+    if (this.lineasEnAlbaranOFactura > 0) {
+      partes.push(`${this.lineasEnAlbaranOFactura} línea(s) ya en albarán o factura no se cargan y se conservarán tal cual.`);
+    }
+    if (conPicking.length > 0) {
+      partes.push(`Hay líneas ya preparadas (picking) que no se pueden modificar ni quitar:\n${conPicking.join('\n')}`);
+    }
+    if (partes.length === 0) { return; }
+    const alert = await this.alertCtrl.create({
+      header: 'Aviso',
+      message: partes.join('\n\n'),
+      buttons: ['Ok'],
+    });
+    await alert.present();
+  }
+
+  /**
    * Carga un borrador y restaura el estado
    * Equivalente a OnCargarBorrador de Nesto
    */
@@ -1908,46 +2183,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         throw new Error('Borrador no encontrado');
       }
 
-      // Guardar borrador para aplicar después de cargar productos
-      this.borradorEnRestauracion = borrador;
-      this.borradorRestauradoEnProductos = false;
-
-      // Establecer valores protegidos para ignorar eventos de los selectores
-      this.formaPagoProtegida = borrador.formaPago || null;
-      this.plazosPagoProtegido = borrador.plazosPago || null;
-
-      // Preseleccionar contacto para el selector de direcciones
-      this.contactoParaRestaurar = borrador.contacto || '';
-      // Forzar actualización del binding antes de continuar
-      this.ref.detectChanges();
-
-      // Fase 1: Restaurar configuración básica
-      this.almacen = borrador.almacenCodigo || this.usuario.almacen;
-      this.esPresupuesto = borrador.esPresupuesto || false;
-      this.fechaEntrega = borrador.fechaEntrega || this.fechaMinima;
-      this.servirPorGlovo = borrador.servirPorGlovo || false;
-      this.mandarCobroTarjeta = borrador.mandarCobroTarjeta || false;
-      this.cobroTarjetaCorreo = borrador.cobroTarjetaCorreo || '';
-      this.cobroTarjetaMovil = borrador.cobroTarjetaMovil || '';
-
-      // Fase 2: Cargar cliente (esto disparará la carga de productos)
-      if (borrador.cliente) {
-        // Crear objeto cliente mínimo para disparar la carga
-        const clienteParaCargar = {
-          empresa: borrador.empresa,
-          cliente: borrador.cliente,
-          contacto: borrador.contacto,
-          nombre: borrador.nombreCliente,
-          cifNif: 'pendiente' // Para evitar alerta de datos faltantes
-        };
-
-        // La carga de productos se completará y llamará a onProductosCargados
-        this.cargarProductosPlantilla(clienteParaCargar);
-
-        // Forzar propagación de bindings después de que el slide se renderice
-        // Esto asegura que contactoParaRestaurar llegue al selector de direcciones
-        this.ref.detectChanges();
-      }
+      this.aplicarBorradorParaRestaurar(borrador);
 
       await loading.dismiss();
       this.firebaseAnalytics.logEvent('borrador_cargado', { id });
