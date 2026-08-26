@@ -45,6 +45,7 @@ export class AppComponent {
       { title: 'Comisiones', url: '/comisiones', icon: 'cash' },
       { title: 'Productos', url: '/lista-productos', icon: 'pricetag' },
       { title: 'Clientes', url: '/cliente', icon: 'people' },
+      { title: 'NIF incorrectos', url: '/nif-incorrectos', icon: 'alert-circle' },
       { title: 'Usuario', url: '/profile', icon: 'person' },
     ];
 

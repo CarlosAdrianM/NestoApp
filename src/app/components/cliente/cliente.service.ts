@@ -85,6 +85,42 @@ export class ClienteService {
       );
   }
 
+  /**
+   * Issue #157 (NestoAPI#327): listado de clientes con NIF incorrecto (Verifactu),
+   * ya priorizado por el servidor (los que tienen pedido pendiente primero).
+   * Si se pasa `vendedor`, filtra por él; si se omite, el servidor no filtra
+   * (para usuarios con permiso de ver clientes de todos los vendedores).
+   */
+  public getNifIncorrectos(vendedor?: string): Observable<any> {
+    const urlLlamada: string = this._baseUrl + '/NifIncorrectos';
+    let params: HttpParams = new HttpParams();
+    if (vendedor) {
+      params = params.append('vendedor', vendedor);
+    }
+
+    return this.http.get(urlLlamada, { params: params })
+      .pipe(
+        map(response => this.toCamelCase(response))
+      );
+  }
+
+  /**
+   * Issue #157 (NestoAPI#327): corrige el NIF de un cliente. El servidor lo revalida
+   * contra la AEAT (VNifV2); si es correcto, lo propaga a todos los contactos y reabre
+   * las facturas sin declarar. Si la AEAT lo rechaza, devuelve 400 y no toca nada.
+   */
+  public corregirNif(cliente: string, nif: string): Observable<any> {
+    const urlLlamada: string = this._baseUrl + '/CorregirNif';
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    this.cache.clearGroup("clientes");
+    return this.http.post(urlLlamada, JSON.stringify({ Cliente: cliente, Nif: nif }), { headers })
+      .pipe(
+        map(response => this.toCamelCase(response))
+      );
+  }
+
   public crearCliente(cliente: any): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');

@@ -5,6 +5,7 @@ import { ComisionesDetalleComponent } from './components/comisiones-detalle/comi
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { ExtractoClienteComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { LineaVentaComponent } from './components/linea-venta/linea-venta.component';
+import { NifIncorrectosComponent } from './components/nif-incorrectos/nif-incorrectos.component';
 import { ListaPedidosVentaComponent } from './components/lista-pedidos-venta/lista-pedidos-venta.component';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
 import { ListaRapportsComponent } from './components/lista-rapports/lista-rapports.component';
@@ -42,7 +43,11 @@ const routes: Routes = [
   {
     path: 'extracto-cliente',
     component: ExtractoClienteComponent
-  },  
+  },
+  {
+    path: 'nif-incorrectos',
+    component: NifIncorrectosComponent
+  },
   {
     path: 'lista-productos',
     component: ListaProductosComponent
