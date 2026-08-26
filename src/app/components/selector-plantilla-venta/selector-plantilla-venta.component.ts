@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { Keyboard } from '../../services/keyboard.service';
-import { AlertController, LoadingController, NavController } from '@ionic/angular';
+import { AlertController, LoadingController, NavController, ToastController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorPlantillaVentaService } from './selector-plantilla-venta.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
@@ -28,10 +28,11 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       private servicio: SelectorPlantillaVentaService, 
       private alertCtrl: AlertController, 
       private loadingCtrl: LoadingController, 
-      private nav: NavController, 
+      private nav: NavController,
       private keyboard: Keyboard,
       private firebaseAnalytics: FirebaseAnalytics,
-      private usuario: Usuario
+      private usuario: Usuario,
+      private toastCtrl: ToastController
       ) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
@@ -170,12 +171,72 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       if (changes.servirJunto && Object.keys(changes).length === 1) {
           return; // servirJunto solo afecta al cálculo de portes, no recargar productos
       }
+      // Issue #166: cambiar SOLO el almacén con productos ya cargados re-estampa los stocks del
+      // nuevo almacén conservando las cantidades, en vez de recargar la plantilla (que las
+      // borraría). El resto de cambios (cliente, estadoCliente, carga inicial) sí recargan.
+      if (changes.almacen && !changes.almacen.firstChange
+          && Object.keys(changes).length === 1
+          && this.datosIniciales().length > 0) {
+          this.recalcularStocksPorCambioAlmacen();
+          return;
+      }
       if (this.estadoCliente != 5)
       {
           this.cargarDatos(this.cliente);
       } else {
           this.inicializarDatos([]);
       }
+  }
+
+  /**
+   * Issue #166: al cambiar el almacén a mitad de pedido, releer los stocks del nuevo almacén y
+   * fusionarlos en las líneas existentes (SIN reemplazar los objetos, para no perder las
+   * cantidades introducidas ni el estado de cliente: personalización de oferta, descuentos y los
+   * enlaces datosInicial/datosFiltrados). El endpoint PonerStock eco las líneas que recibe con el
+   * stock estampado, así que conservan las cantidades.
+   */
+  private recalcularStocksPorCambioAlmacen(): void {
+      const almacen = this.almacen;
+      const lineas = this.datosIniciales();
+      const almacenes = this.usuario.almacenesPlantillaVenta.split(',');
+      this.servicio.ponerStocks(lineas, almacen, false, almacenes).subscribe(
+          (data: any[]) => {
+              const stockPorProducto = new Map<string, any>();
+              (data || []).forEach(l => stockPorProducto.set((l.producto ?? '').toString().trim(), l));
+              for (const linea of lineas) {
+                  const actualizada = stockPorProducto.get((linea.producto ?? '').toString().trim());
+                  if (actualizada) {
+                      linea.cantidadDisponible = actualizada.cantidadDisponible;
+                      linea.stocks = actualizada.stocks;
+                      linea.stockActualizado = actualizada.stockActualizado;
+                      linea.colorStock = actualizada.colorStock;
+                  }
+              }
+              // Recalcular colores/sobre-pedido con los nuevos stocks.
+              this.cargarResumen();
+              this.avisarLineasSinStock(almacen, lineas);
+          },
+          error => this.errorMessage = <any>error
+      );
+  }
+
+  /** Issue #166: aviso NO bloqueante (toast con recuento) de líneas sin stock en el nuevo almacén. */
+  private async avisarLineasSinStock(almacen: string, lineas: any[]): Promise<void> {
+      const sinStock = lineas.filter(l =>
+          (+l.cantidad + +l.cantidadOferta) > 0 &&
+          l.stockActualizado &&
+          l.cantidadDisponible < (+l.cantidad + +l.cantidadOferta)
+      );
+      const mensaje = sinStock.length > 0
+          ? `Aviso: ${sinStock.length} producto(s) sin stock suficiente en ${almacen}`
+          : `Stock actualizado para ${almacen}`;
+      const toast = await this.toastCtrl.create({
+          message: mensaje,
+          duration: 3500,
+          color: sinStock.length > 0 ? 'warning' : 'success',
+          position: 'bottom'
+      });
+      await toast.present();
   }
 
   public fijarFiltroBuscarEnTodos(evento: any) {
