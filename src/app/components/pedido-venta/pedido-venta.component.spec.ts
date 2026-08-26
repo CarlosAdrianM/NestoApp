@@ -9,6 +9,7 @@ import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/n
 import { PedidoVentaComponent } from './pedido-venta.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 describe('PedidoVentaComponent', () => {
   let component: PedidoVentaComponent;
@@ -67,5 +68,67 @@ describe('Setter fechaEntrega sin conversión a Date (#85)', () => {
     const jsonString = JSON.stringify(fechaString); // "\"2026-02-17\""
     expect(jsonString).toContain('2026-02-17');
     // El string no tiene componente horario, así que no hay desfase posible
+  });
+});
+
+describe('Recoger Producto: borrado de etiqueta de recogida (#165)', () => {
+  let component: PedidoVentaComponent;
+  let fixture: ComponentFixture<PedidoVentaComponent>;
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PedidoVentaComponent);
+    component = fixture.componentInstance;
+    component.pedido = { empresa: '1', numero: 123 } as any;
+  }));
+
+  it('al desmarcar y CANCELAR la confirmación no borra la etiqueta y deja la casilla marcada', async () => {
+    component.recogerProducto = false;
+    component['envioRecogidaExistente'] = { Numero: 55 };
+    spyOn<any>(component, 'confirmarBorradoEtiquetaRecogida').and.returnValue(Promise.resolve(false));
+    const cancelarSpy = spyOn(component['servicio'], 'cancelarEtiquetaPendiente');
+
+    await component.sincronizarRecogerProducto();
+
+    expect(cancelarSpy).not.toHaveBeenCalled();
+    expect(component.recogerProducto).toBeTrue();
+  });
+
+  it('al desmarcar y CONFIRMAR borra la etiqueta pendiente', async () => {
+    component.recogerProducto = false;
+    component['envioRecogidaExistente'] = { Numero: 55 };
+    spyOn<any>(component, 'confirmarBorradoEtiquetaRecogida').and.returnValue(Promise.resolve(true));
+    spyOn<any>(component, 'cargarSeguimientos');
+    const cancelarSpy = spyOn(component['servicio'], 'cancelarEtiquetaPendiente').and.returnValue(of({}));
+
+    await component.sincronizarRecogerProducto();
+
+    expect(cancelarSpy).toHaveBeenCalledWith(55);
+  });
+
+  it('un 409 al crear muestra un mensaje claro en vez del error crudo', async () => {
+    component.recogerProducto = true;
+    component['envioRecogidaExistente'] = null;
+    spyOn(component['servicio'], 'crearEtiquetaPendiente').and.returnValue(throwError(() => ({ status: 409 })));
+    const alertSpy = spyOn(component['alertCtrl'], 'create').and.returnValue(
+      Promise.resolve({ present: () => Promise.resolve() } as any)
+    );
+
+    await component.sincronizarRecogerProducto();
+
+    expect(alertSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      message: 'Ya existe una etiqueta pendiente para este pedido'
+    }));
   });
 });

@@ -454,6 +454,18 @@ export class PedidoVentaComponent  {
           return;
       }
 
+      // Issue #165 (réplica de Nesto#427): borrar la etiqueta de recogida pendiente pierde en
+      // silencio la dirección/reembolso personalizados de etiquetas creadas a mano en Agencias
+      // (al remarcar se crea otra con datos por defecto). Confirmar antes de borrar; si el
+      // usuario cancela, dejar la casilla como estaba (marcada) y no tocar el backend.
+      if (debeCancelar) {
+          const confirmado = await this.confirmarBorradoEtiquetaRecogida();
+          if (!confirmado) {
+              this.recogerProducto = true;
+              return;
+          }
+      }
+
       const peticion = debeCrear
           ? this.servicio.crearEtiquetaPendiente(this.pedido.empresa, this.pedido.numero, 1, 1)
           : this.servicio.cancelarEtiquetaPendiente(this.envioRecogidaExistente.Numero);
@@ -473,7 +485,11 @@ export class PedidoVentaComponent  {
               async error => {
                   // Revertir el checkbox visual al estado real (había/no había etiqueta).
                   this.recogerProducto = !!this.envioRecogidaExistente;
-                  const mensaje = this.errorHandler.extractErrorMessage(error);
+                  // Issue #165: el 409 al crear (ya existe etiqueta pendiente) llega sin cuerpo,
+                  // así que extractErrorMessage no da nada útil. Mensaje explícito.
+                  const mensaje = (debeCrear && error?.status === 409)
+                      ? 'Ya existe una etiqueta pendiente para este pedido'
+                      : this.errorHandler.extractErrorMessage(error);
                   let alert = await this.alertCtrl.create({
                       header: 'Error',
                       subHeader: 'No se ha podido actualizar "Recoger Producto"',
@@ -484,6 +500,24 @@ export class PedidoVentaComponent  {
                   resolve();
               }
           );
+      });
+  }
+
+  /**
+   * Issue #165: confirmación antes de borrar la etiqueta de recogida pendiente. Devuelve true si
+   * el usuario acepta borrarla, false si cancela.
+   */
+  private confirmarBorradoEtiquetaRecogida(): Promise<boolean> {
+      return new Promise<boolean>(async (resolve) => {
+          const confirm = await this.alertCtrl.create({
+              header: 'Borrar etiqueta de recogida',
+              message: 'Se va a borrar la etiqueta de recogida pendiente de este pedido. Si tenía dirección o reembolso personalizados, se perderán. ¿Continuar?',
+              buttons: [
+                  { text: 'Cancelar', role: 'cancel', handler: () => resolve(false) },
+                  { text: 'Borrar', role: 'confirm', handler: () => resolve(true) }
+              ]
+          });
+          await confirm.present();
       });
   }
 
