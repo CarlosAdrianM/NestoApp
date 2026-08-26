@@ -11,7 +11,7 @@ export class SelectorPlantillaVentaDetalleService {
   constructor(private http: HttpClient) { }
 
   public cargarStockProducto(producto: any, almacen: any): Observable<any> {
-      let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/CargarStocks';
+      const _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/CargarStocks';
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('almacen', almacen);
@@ -21,7 +21,7 @@ export class SelectorPlantillaVentaDetalleService {
   }
 
   public actualizarPrecioProducto(producto: any, cliente: any): Observable<any> {
-    let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/CargarPrecio';
+    const _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/CargarPrecio';
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
     params = params.append('cliente', cliente);

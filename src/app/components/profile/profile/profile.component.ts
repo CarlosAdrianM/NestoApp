@@ -99,7 +99,7 @@ export class ProfileComponent {
     }
 
   async login(credentials: any) {
-    let loading: any = await this.loadingCtrl.create({
+    const loading: any = await this.loadingCtrl.create({
         message: 'Iniciando sesión...',
     })
     
@@ -118,7 +118,7 @@ export class ProfileComponent {
         async data => {
             this.usuario.nombre = credentials.username;
             this.firebaseAnalytics.logEvent("login", {nombre: this.usuario.nombre});
-            let datos: any = data;
+            const datos: any = data;
             await this.authSuccess(datos.access_token, datos.refresh_token);
             this.cargarParametros();
             this.appComponent.registrarDispositivoPush();
@@ -137,7 +137,7 @@ public signup(credentials: any): void {
     this.http.post(this.SIGNUP_URL, JSON.stringify(credentials), { headers: this.contentHeader })
         .subscribe(
         data => {
-            let datos: any = data;
+            const datos: any = data;
             this.authSuccess(datos.id_token);
         },
         err => this.error = err
@@ -166,7 +166,7 @@ private async authSuccess(token: any, refreshToken?: any): Promise<void> {
 }
 
 private cargarParametros(): void {
-    let self: any = this;
+    const self: any = this;
 
     this.parametros.leer('Vendedor').subscribe(
         data => {
@@ -282,7 +282,7 @@ public cambiarVerStockTresAlmacenes(verTres: boolean): void {
 }
 
     async olvideMiContrasenna(correo: string) {
-        let alert = await this.alertCtrl.create({
+        const alert = await this.alertCtrl.create({
             header: 'Contraseña',
             message: '¿Está seguro que desea cambiar su contraseña?',
             buttons: [
@@ -302,7 +302,7 @@ public cambiarVerStockTresAlmacenes(verTres: boolean): void {
     }
 
     async llamarApiOlvideContrasenna(correo: string) {
-        let loading: any = await this.loadingCtrl.create({
+        const loading: any = await this.loadingCtrl.create({
             message: 'Reseteando contraseña...',
         })
         
@@ -323,7 +323,7 @@ public cambiarVerStockTresAlmacenes(verTres: boolean): void {
             })
             .subscribe(
             async () => {
-                let alert = await this.alertCtrl.create({
+                const alert = await this.alertCtrl.create({
                     header: 'Contraseña',
                     subHeader: 'Le hemos enviado un correo electrónico',
                     message: 'Haga clic en el enlace del correo para cambiar la contraseña',

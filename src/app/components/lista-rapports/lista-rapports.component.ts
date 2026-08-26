@@ -36,9 +36,9 @@ export class ListaRapportsComponent extends SelectorBase {
   }
   set fechaRapports(value: string) {
       this._fechaRapports = value;
-      var date = new Date(value);
-      var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-      var dateAjustada = new Date(date.getTime() - userTimezoneOffset);
+      const date = new Date(value);
+      const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+      const dateAjustada = new Date(date.getTime() - userTimezoneOffset);
       if (this.fechaYaAjustada) {
           this._fechaRapports = date.toISOString();
       } else {
@@ -116,7 +116,7 @@ export class ListaRapportsComponent extends SelectorBase {
           this.datosFiltrados.push(rapportCreado);
           if (this.listadoClientesSinVisitarFiltrado)
           {
-              var clienteEncontrado = this.listadoClientesSinVisitarFiltrado
+              const clienteEncontrado = this.listadoClientesSinVisitarFiltrado
                   .find(p => p.cliente == rapportCreado.Cliente.trim() &&
                       p.contacto == rapportCreado.Contacto.trim());
               if (clienteEncontrado != undefined) {
@@ -125,7 +125,7 @@ export class ListaRapportsComponent extends SelectorBase {
           }
           if (this.listadoClientesSinVisitar)
           {
-              var clienteEncontrado = this.listadoClientesSinVisitar
+              const clienteEncontrado = this.listadoClientesSinVisitar
                   .find(p => p.cliente == rapportCreado.Cliente.trim() &&
                       p.contacto == rapportCreado.Contacto.trim());
               if (clienteEncontrado != undefined) {
@@ -161,7 +161,7 @@ export class ListaRapportsComponent extends SelectorBase {
   }
 
   public async cargarDatosFecha(fecha: string): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Rapports...',
       });
 
@@ -170,7 +170,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.servicio.cargarListaFecha(fecha).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún rapport para listar en esa fecha',
                       buttons: ['Ok'],
@@ -191,7 +191,7 @@ export class ListaRapportsComponent extends SelectorBase {
   }
 
   public async cargarDatosCliente(cliente: string, contacto: string): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Rapports...',
       });
 
@@ -200,7 +200,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.servicio.cargarListaCliente(cliente, contacto).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún rapport de ese cliente para listar',
                       buttons: ['Ok'],
@@ -226,7 +226,7 @@ export class ListaRapportsComponent extends SelectorBase {
   }
   
   public annadirRapport(cliente: any) {
-      let rapport: any = new Object();
+      const rapport: any = new Object();
       rapport.Id = 0;
       rapport.Fecha = this.fechaRapports;
       rapport.Empresa = Configuracion.EMPRESA_POR_DEFECTO;
@@ -278,7 +278,7 @@ export class ListaRapportsComponent extends SelectorBase {
           return;
       }
       
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Códigos Postales...',
       });
 
@@ -287,7 +287,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.servicio.cargarCodigosPostalesSinVisitar(this.vendedorSeleccionado, forzarTodos).subscribe(
           async data => {
               if (!Array.isArray(data) || data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún código postal sin visitar',
                       buttons: ['Ok'],
@@ -316,7 +316,7 @@ export class ListaRapportsComponent extends SelectorBase {
       }
       this.firebaseAnalytics.logEvent("rapport_clientes_sin_visitar", {vendedor: this.vendedorSeleccionado});
       
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Clientes...',
       });
 
@@ -325,7 +325,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.servicio.cargarClientesSinVisitar(this.vendedorSeleccionado, this.codigoPostalSeleccionado).subscribe(
           async data => {
               if (!Array.isArray(data) || data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún cliente sin visitar',
                       buttons: ['Ok'],
@@ -421,7 +421,7 @@ export class ListaRapportsComponent extends SelectorBase {
           this.listadoClientesSinVisitarFiltrado = [];
           return;
       }
-      var filtro = this.filtro.toUpperCase();
+      const filtro = this.filtro.toUpperCase();
       this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitar.filter(
         c => c.Cliente == filtro || c.Nombre.toUpperCase().includes(filtro) || c.Direccion.toUpperCase().includes(filtro)
       )
@@ -448,7 +448,7 @@ export class ListaRapportsComponent extends SelectorBase {
   
 
   public async buscarRapports(): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Rapports...',
       });
 
@@ -457,7 +457,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.servicio.cargarRapportsFiltrados(this.filtroBuscar).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay ningún rapport que incluya ese texto',
                       buttons: ['Ok'],
@@ -508,7 +508,7 @@ export class ListaRapportsComponent extends SelectorBase {
   getGeoencoder(latitude,longitude){
       this.nativeGeocoder.reverseGeocode(latitude, longitude, this.geoencoderOptions)
       .then((result: NativeGeocoderResult[]) => {
-          var codEncontrado = this.codigosPostalesSinVisitar.find(p => p.codigoPostal == result[0].postalCode);
+          const codEncontrado = this.codigosPostalesSinVisitar.find(p => p.codigoPostal == result[0].postalCode);
           if (codEncontrado == undefined) {
               this.codigosPostalesSinVisitar.push({
                   codigoPostal : result[0].postalCode,

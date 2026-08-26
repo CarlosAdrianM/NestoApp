@@ -13,7 +13,7 @@ export class SelectorAlmacenesService {
   private _baseUrl: string = Configuracion.API_URL + '/Almacenes';
 
   public getAlmacenes(cliente: any): Observable<any[]> {
-      var listaAlmacenes = [
+      const listaAlmacenes = [
           {
               almacen : "ALG",
               descripcion : "Algete"

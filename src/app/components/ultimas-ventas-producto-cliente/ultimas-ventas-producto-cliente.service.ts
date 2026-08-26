@@ -11,7 +11,7 @@ export class UltimasVentasProductoClienteService {
   constructor(private http: HttpClient) {  }
 
   public cargarUltimasVentas(producto: string, cliente: string): Observable<any> {
-      let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/UltimasVentasProductoCliente';
+      const _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/UltimasVentasProductoCliente';
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('clienteUltimasVentas', cliente);

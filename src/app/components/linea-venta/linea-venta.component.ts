@@ -79,7 +79,7 @@ constructor(
       this.servicio.getProducto(nuevoProducto, this.cliente, this.contacto, this.linea.Cantidad).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No existe el producto ' + nuevoProducto,
                       buttons: ['Ok'],
@@ -143,7 +143,7 @@ constructor(
   }
 
   public seleccionarTexto(evento: any): void {
-    var nativeInputEle = evento.target;
+    const nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
       a => a.select()
     )

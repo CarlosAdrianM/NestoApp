@@ -4,7 +4,7 @@
       <ion-back-button></ion-back-button>
     </ion-buttons>
     <ion-title>Lista de Rapports</ion-title>
-    <ion-buttons slot="end" *ngIf="vendedorSeleccionado && segmentoRapports == 'codigoPostal'">
+    <ion-buttons slot="end" *ngIf="vendedorSeleccionado && segmentoRapports === 'codigoPostal'">
       <ion-button (click)="mostrarPopoverFiltros = !mostrarPopoverFiltros">
         <ion-icon name="funnel"></ion-icon>
       </ion-button>      
@@ -129,13 +129,13 @@
 </ion-header>
 
 <ion-content>
-<ion-list *ngIf="segmentoRapports != 'codigoPostal'">
+<ion-list *ngIf="segmentoRapports !== 'codigoPostal'">
   <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" class="ion-text-wrap">
     <ion-label class="ion-text-wrap">
       <ion-icon name="contact" slot="start"></ion-icon>
       <p>{{rapport.Cliente}}/{{rapport.Contacto}}</p>
       <p>
-        <ion-badge *ngIf="rapport.Tipo=='T'">Teléfono</ion-badge>
+        <ion-badge *ngIf="rapport.Tipo==='T'">Teléfono</ion-badge>
         <ion-badge color="light" *ngIf="rapport.Estado==1">No Contactado</ion-badge>
         <ion-badge color="dark" *ngIf="rapport.Estado==2">Gestión Administrativa</ion-badge>
         <ion-badge color="success" *ngIf="rapport.Pedido">Pedido</ion-badge>
@@ -144,7 +144,7 @@
         <ion-badge color="tertiary" *ngIf="rapport.Aparatos">Aparatos</ion-badge>
         <ion-badge color="danger" *ngIf="rapport.GestionAparatos">Gestión Aparatos</ion-badge>
         <ion-badge color="secondary" *ngIf="rapport.PrimeraVisita">Primera Visita</ion-badge>
-        <ion-icon *ngIf="rapport.Tipo=='W'" name="logo-whatsapp"></ion-icon>
+        <ion-icon *ngIf="rapport.Tipo==='W'" name="logo-whatsapp"></ion-icon>
       </p>
       <div [ngSwitch]="segmentoRapports">
         <div *ngSwitchCase="'fecha'">
@@ -161,7 +161,7 @@
   </ion-item>
 </ion-list>
 
-<ion-list *ngIf="segmentoRapports == 'codigoPostal'">
+<ion-list *ngIf="segmentoRapports === 'codigoPostal'">
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
   <ion-item *ngFor="let clienteSinVisitar of listadoClientesSinVisitarFiltrado" (click)="annadirRapport(clienteSinVisitar)" [color]="!clienteSinVisitar.Visitado ? '' : 'light'">
     <ion-icon name="information-circle" (click)="seleccionarCliente(clienteSinVisitar.Cliente)" color="colorEstado(clienteSinVisitar.Estado)" slot="start"></ion-icon>
@@ -170,8 +170,8 @@
       <h2>{{clienteSinVisitar.Nombre}}</h2>
       <h3>{{clienteSinVisitar.Direccion}}</h3>
       <p>Estado: {{clienteSinVisitar.Estado}}</p>
-      <p *ngIf="clienteSinVisitar.FechaUltimaVisita != '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.FechaUltimaVisita | date:'dd/MM/yy' }}</p>
-      <p *ngIf="clienteSinVisitar.FechaUltimaVisita == '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
+      <p *ngIf="clienteSinVisitar.FechaUltimaVisita !== '0001-01-01T00:00:00'">Última Visita: {{clienteSinVisitar.FechaUltimaVisita | date:'dd/MM/yy' }}</p>
+      <p *ngIf="clienteSinVisitar.FechaUltimaVisita === '0001-01-01T00:00:00'"><ion-badge color="danger">Nunca Visitado</ion-badge></p>      
       <p *ngIf="clienteSinVisitar.Visitado"><ion-badge color="dark">Visitado este mes</ion-badge></p>      
       <ion-text *ngIf="clienteSinVisitar.NivelRiesgoPagos == 5" color="danger">
         <h2>¡¡¡ CONTADO RIGUROSO !!!</h2>      

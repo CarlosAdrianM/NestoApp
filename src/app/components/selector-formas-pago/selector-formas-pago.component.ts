@@ -78,7 +78,7 @@ export class SelectorFormasPagoComponent extends SelectorBase implements OnInit 
     this.servicio.getFormasPago(this.cliente, this.totalPedido, this.tipoIva).subscribe(
       async data => {
         if (data.length === 0) {
-          let alert: any = await this.alertCtrl.create({
+          const alert: any = await this.alertCtrl.create({
             header: 'Error',
             message: 'Error al cargar las formas de pago',
             buttons: ['Ok'],

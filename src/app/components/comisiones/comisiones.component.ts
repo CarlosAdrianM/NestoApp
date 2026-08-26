@@ -54,7 +54,7 @@ export class ComisionesComponent implements OnInit {
       return;
     }
     
-    let loading: any = await this.loadingCtrl.create({
+    const loading: any = await this.loadingCtrl.create({
       message: 'Cargando Comisiones...',
     });
     await loading.present();
@@ -63,7 +63,7 @@ export class ComisionesComponent implements OnInit {
       .subscribe(
       async data => {
         if (!data || !data.Etiquetas || data.Etiquetas.length === 0) {
-          let alert = await this.alertCtrl.create({
+          const alert = await this.alertCtrl.create({
             message: 'Error',
             subHeader: 'No se han cargado correctamente las comisiones',
             buttons: ['Ok'],
@@ -97,11 +97,11 @@ export class ComisionesComponent implements OnInit {
   }
   
   async doCheckbox() {
-    let fechaNombreMes: Date = new Date(this.annoActual -1, this.mesActual);
+    const fechaNombreMes: Date = new Date(this.annoActual -1, this.mesActual);
     let etiquetaAnnoAnterior = fechaNombreMes.toLocaleDateString('es-ES', { month: 'long' }) + " " + (this.annoActual- 1);
     etiquetaAnnoAnterior = etiquetaAnnoAnterior.charAt(0).toUpperCase() + etiquetaAnnoAnterior.slice(1);
     
-    let buttonsMeses = [{
+    const buttonsMeses = [{
       text : 'Cancelar'
     },
     {
@@ -117,7 +117,7 @@ export class ComisionesComponent implements OnInit {
           this.annoSeleccionado = this.annoActual - 1;
         }
         this.deshabilitarIncluirAlbaranes = this.mesActual != this.mesSeleccionado;
-        let fechaNombreMes: Date = new Date(this.annoSeleccionado, this.mesSeleccionado);
+        const fechaNombreMes: Date = new Date(this.annoSeleccionado, this.mesSeleccionado);
         this.nombreMesSeleccionado = fechaNombreMes.toLocaleDateString('es-ES', { month: 'long' }) + " " + this.annoSeleccionado;
         this.incluirPicking = this.incluirPicking && !this.deshabilitarIncluirAlbaranes;
         if (this.incluirAlbaranes == this.deshabilitarIncluirAlbaranes) {
@@ -128,7 +128,7 @@ export class ComisionesComponent implements OnInit {
       }      
     }];
 
-    let alert = await this.alertCtrl.create({
+    const alert = await this.alertCtrl.create({
       header : 'Seleccione el mes deseado',
       inputs: [{
         name: 'enero',

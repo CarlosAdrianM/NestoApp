@@ -21,9 +21,9 @@ export class SelectorClientesService {
           params = params.append('vendedor', this.usuario.vendedor);
       }
 
-      let cacheKey = this._clientesUrl + params.toString();
-      let groupKey = "clientes";
-      let request = this.http.get(this._clientesUrl, { params: params });
+      const cacheKey = this._clientesUrl + params.toString();
+      const groupKey = "clientes";
+      const request = this.http.get(this._clientesUrl, { params: params });
       return this.cache.loadFromObservable(cacheKey, request, groupKey, 60);
   }
 }

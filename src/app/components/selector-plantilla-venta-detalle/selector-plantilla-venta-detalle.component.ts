@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Keyboard } from '../../services/keyboard.service';
 import { NavController, AlertController, ToastController, NavParams } from '@ionic/angular';
@@ -12,7 +12,7 @@ import { objetoDeQueryParam } from '../../utils/query-param';
     styleUrls: ['./selector-plantilla-venta-detalle.component.scss'],
     standalone: false
 })
-export class SelectorPlantillaVentaDetalleComponent {
+export class SelectorPlantillaVentaDetalleComponent implements AfterViewInit {
 
   constructor(
     private servicio: SelectorPlantillaVentaDetalleService, 
@@ -222,7 +222,7 @@ export class SelectorPlantillaVentaDetalleComponent {
   }
 
   public seleccionarTexto(evento: any): void {
-    var nativeInputEle = evento.target;
+    const nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
       a => a.select()
     )
@@ -247,7 +247,7 @@ export class SelectorPlantillaVentaDetalleComponent {
           texto = 'Hay ' + producto.stock + ' unidades en stock, pero solo ' + producto.cantidadDisponible + ' están disponibles.'
       }
 
-      let alert = await this.alertCtrl.create({
+      const alert = await this.alertCtrl.create({
           header: 'Stock',
           message: texto,
           buttons: ['OK']

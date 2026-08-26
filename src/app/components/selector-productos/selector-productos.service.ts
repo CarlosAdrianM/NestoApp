@@ -13,13 +13,13 @@ export class SelectorProductosService {
   private _consultaUrl: string = Configuracion.API_URL + '/Productos';
 
   public getProductos(filtro: string): Observable<any> {
-    let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
+    const _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/BuscarProducto';
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
     params = params.append('filtroProducto', filtro);
 
-    let cacheKey = _baseUrl + params.toString();
-    let request = this.http.get(_baseUrl, { params: params });
+    const cacheKey = _baseUrl + params.toString();
+    const request = this.http.get(_baseUrl, { params: params });
     return this.cache.loadFromObservable(cacheKey, request);
   }
 }

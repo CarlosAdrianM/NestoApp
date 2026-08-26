@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { AlertController, LoadingController, NavController, ModalController } from '@ionic/angular';
 import { ExtractoClienteService } from './extracto-cliente.service';
 import { FileOpener } from 'src/app/services/file-opener.service';
@@ -13,7 +13,7 @@ import { Usuario } from 'src/app/models/Usuario';
     styleUrls: ['./extracto-cliente.component.scss'],
     standalone: false
 })
-export class ExtractoClienteComponent {
+export class ExtractoClienteComponent implements AfterViewInit {
 
   private servicio: ExtractoClienteService;
   constructor(servicio: ExtractoClienteService,
@@ -77,7 +77,7 @@ export class ExtractoClienteComponent {
               this.resumenDeuda.abogado = 0;
               this.hoy = new Date();
 
-              for (let mov of this.movimientosDeuda) {
+              for (const mov of this.movimientosDeuda) {
                   if (mov.tipo.trim() === '4') {
                       this.resumenDeuda.impagados += mov.importePendiente;
                   }
@@ -123,7 +123,7 @@ export class ExtractoClienteComponent {
   }
 
   public async descargarModelo347(): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Generando certificado Modelo 347...',
       });
 
@@ -156,7 +156,7 @@ export class ExtractoClienteComponent {
           async error => {
               await loading.dismiss();
               const errorMsg = error?.body || error?.message || error?.http_status || error?.code || JSON.stringify(error);
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se pudo descargar el Modelo 347: ' + errorMsg,
                   buttons: ['Ok'],
@@ -188,7 +188,7 @@ export class ExtractoClienteComponent {
 
 
   public async descargarFactura(movimiento: any): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: this.mostrarImagenes ? 'Generando factura con imágenes...' : 'Generando factura en PDF...',
       });
 
@@ -427,7 +427,7 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
 
       // Generar concepto con números de factura
       const facturas: string[] = [];
-      for (let mov of this.movimientosSeleccionados) {
+      for (const mov of this.movimientosSeleccionados) {
         if (mov.documento) {
           facturas.push(mov.documento.trim());
         }

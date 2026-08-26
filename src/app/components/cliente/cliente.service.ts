@@ -15,7 +15,7 @@ export class ClienteService {
   constructor(private http: HttpClient, private cache:CacheService) { }
 
   public validarNif(nif: string, nombre: string): Observable<any> {
-    var urlLlamada: string = this._baseUrl+'/ComprobarNifNombre';
+    const urlLlamada: string = this._baseUrl+'/ComprobarNifNombre';
     let params: HttpParams = new HttpParams();
     params = params.append('nif', nif);
     params = params.append('nombre', nombre);
@@ -27,7 +27,7 @@ export class ClienteService {
   }
 
   validarDatosGenerales(cliente: any): Observable<any> {
-    var urlLlamada: string = this._baseUrl+'/ComprobarDatosGenerales';
+    const urlLlamada: string = this._baseUrl+'/ComprobarDatosGenerales';
     let params: HttpParams = new HttpParams();
     params = params.append('direccion', cliente.direccionCalleNumero);
     params = params.append('codigoPostal', cliente.codigoPostal);
@@ -73,7 +73,7 @@ export class ClienteService {
   }
 
   validarDatosPago(datosPago: any): Observable<any> {
-    var urlLlamada: string = this._baseUrl+'/ComprobarDatosBanco';
+    const urlLlamada: string = this._baseUrl+'/ComprobarDatosBanco';
     let params: HttpParams = new HttpParams();
     params = params.append('formaPago', datosPago.formaPago);
     params = params.append('plazosPago', datosPago.plazosPago);
@@ -130,7 +130,7 @@ export class ClienteService {
   }
 
   leerClienteCrear(empresa: string, cliente: string, contacto: string): Observable<any> {
-    var urlLlamada: string = this._baseUrl+'/GetClienteCrear';
+    const urlLlamada: string = this._baseUrl+'/GetClienteCrear';
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);
     params = params.append('cliente', cliente);

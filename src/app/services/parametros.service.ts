@@ -20,7 +20,7 @@ export class Parametros {
   ) { }
 
   public leer(clave: string): Observable<any> {
-    let _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
+    const _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
     params = params.append('usuario', this.usuario.nombre);
@@ -35,10 +35,10 @@ export class Parametros {
   }
 
   public escribir(clave: string, valor: string): Observable<any> {
-    let _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
+    const _baseUrl: string = Configuracion.API_URL + '/ParametrosUsuario';
 
     // El backend hace EntityState.Modified, hay que enviar la entidad completa (6 campos).
-    let parametro: any = {
+    const parametro: any = {
       Empresa: Configuracion.EMPRESA_POR_DEFECTO,
       Clave: clave,
       Usuario: this.usuario.nombre,

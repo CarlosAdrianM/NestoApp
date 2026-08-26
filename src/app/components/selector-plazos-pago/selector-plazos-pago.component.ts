@@ -100,7 +100,7 @@ export class SelectorPlazosPagoComponent extends SelectorBase implements OnInit,
           const data = response.plazosPago;
 
           if (!data || data.length === 0) {
-            let alert = await this.alertCtrl.create({
+            const alert = await this.alertCtrl.create({
               message: 'Error',
               subHeader: 'Error al cargar los plazos de pago',
               buttons: ['Ok'],
@@ -129,7 +129,7 @@ export class SelectorPlazosPagoComponent extends SelectorBase implements OnInit,
       async data => {
         this.cargando = false;
         if (!data || data.length === 0) {
-          let alert = await this.alertCtrl.create({
+          const alert = await this.alertCtrl.create({
             message: 'Error',
             subHeader: 'Error al cargar los plazos de pago',
             buttons: ['Ok'],

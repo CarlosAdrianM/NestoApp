@@ -68,11 +68,11 @@ export class PlantillaVentaService {
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {
-    var url = Configuracion.API_URL + "/ReclamacionDeuda";
+    const url = Configuracion.API_URL + "/ReclamacionDeuda";
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
 
-    var parametro = {
+    const parametro = {
       Cliente: cliente,
       Correo: cobroTarjetaCorreo,
       Movil: cobroTarjetaMovil,
@@ -81,13 +81,13 @@ export class PlantillaVentaService {
       TextoSMS: "Este es un mensaje de @COMERCIO@. Puede pagar el pedido " + numeroPedido + " de @IMPORTE@ @MONEDA@ aquí: @URL@"
     }
 
-    var parametroJson = JSON.stringify(parametro);
+    const parametroJson = JSON.stringify(parametro);
 
     return this.http.post(url, parametroJson, { headers: headers });
   }
 
   leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
-    var url = Configuracion.API_URL + "/Clientes/GetClienteCrear";
+    const url = Configuracion.API_URL + "/Clientes/GetClienteCrear";
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);
     params = params.append('cliente', cliente);
@@ -97,7 +97,7 @@ export class PlantillaVentaService {
   }
 
   cargarListaPendientes(empresa: any, cliente: any) {
-    var url = Configuracion.API_URL + "/PlantillaVentas/PedidosPendientes";
+    const url = Configuracion.API_URL + "/PlantillaVentas/PedidosPendientes";
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', empresa);
     params = params.append('clientePendientes', cliente);
@@ -108,7 +108,7 @@ export class PlantillaVentaService {
   public unirPedidos(empresa: string, numeroPedidoOriginal: number, pedidoAmpliacion: any, saltarValidacion: boolean = false): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');
-    var url = Configuracion.API_URL + "/PedidosVenta/UnirPedidos";
+    const url = Configuracion.API_URL + "/PedidosVenta/UnirPedidos";
 
     // Issue #156 / NestoAPI#324: al forzar, el flag viaja en la ampliación y el
     // servidor lo propaga al pedido original y al PUT interno de la unión.
@@ -116,7 +116,7 @@ export class PlantillaVentaService {
       ? { ...pedidoAmpliacion, CreadoSinPasarValidacion: true }
       : pedidoAmpliacion;
 
-    var pedido = {
+    const pedido = {
       "Empresa": empresa,
       "NumeroPedidoOriginal": numeroPedidoOriginal.toString(),
       "PedidoAmpliacion": ampliacionAEnviar
@@ -127,7 +127,7 @@ export class PlantillaVentaService {
 
   public calcularFechaEntrega(fecha: Date, ruta: string, almacen: string) {
     const formattedFecha: string = fecha.toISOString();
-    var url = Configuracion.API_URL + "/PedidosVenta/FechaAjustada";
+    const url = Configuracion.API_URL + "/PedidosVenta/FechaAjustada";
     let params: HttpParams = new HttpParams();
     params = params.append('fecha', formattedFecha);
     params = params.append('ruta', ruta);
@@ -146,7 +146,7 @@ export class PlantillaVentaService {
     const url = Configuracion.API_URL + '/Ganavisiones/ProductosBonificables';
     // Issue #126: incluirBloqueados=true para mostrar también los que aún no se pueden canjear
     // pero faltan pocos euros (el backend ya filtra los sin stock).
-    let params = new HttpParams()
+    const params = new HttpParams()
       .set('empresa', empresa)
       .set('baseImponibleBonificable', baseImponibleBonificable.toString())
       .set('almacen', almacen)

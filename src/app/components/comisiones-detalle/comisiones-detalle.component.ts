@@ -32,7 +32,7 @@ export class ComisionesDetalleComponent {
   private async cargarDetalle(vendedor: string, anno: number, mes: number,
     incluirAlbaranes: boolean, etiqueta: string) {
     this.firebaseAnalytics.logEvent("cargar_detalle_comisiones", {vendedor: vendedor, anno: anno, mes: mes, incluirAlbaranes: incluirAlbaranes, etiqueta: etiqueta});
-    let loading: any = await this.loadingCtrl.create({
+    const loading: any = await this.loadingCtrl.create({
       message: 'Cargando Comisiones...',
     });
     await loading.present();
@@ -40,7 +40,7 @@ export class ComisionesDetalleComponent {
       .subscribe(
           async data => {
             if (data.length === 0) {
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                 message: 'Error',
                 subHeader: 'No se han cargado correctamente las comisiones',
                 buttons: ['Ok'],

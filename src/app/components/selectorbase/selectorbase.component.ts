@@ -33,7 +33,7 @@ export abstract class SelectorBase {
   }
 
   public fijarFiltro(searchbar: any): void {
-      let filtro: string = searchbar.target.value.toUpperCase();
+      const filtro: string = searchbar.target.value.toUpperCase();
       //if (!this.datosInicial || this.datosInicial.length === 0) {
       if (!this.datosInicial) {
           this.filtroInicial = filtro;
@@ -63,7 +63,7 @@ export abstract class SelectorBase {
         this.filtrosFijados = this.filtrosFijados.filter(f => f != filtro);
         this.datos = this.datosInicial;
         this.datosFiltrados = this.datosInicial;
-        for (let filtroPoner of this.filtrosFijados){
+        for (const filtroPoner of this.filtrosFijados){
             this.datos = this.aplicarFiltro(this.datos, filtroPoner);
             this.datosFiltrados = this.datos;
         }
@@ -152,7 +152,7 @@ export abstract class SelectorBase {
   }
 
   public seleccionarTexto(evento: any): void {
-     var nativeInputEle = evento.target;
+     const nativeInputEle = evento.target;
      nativeInputEle.getInputElement().then(
        a => a.select()
      )

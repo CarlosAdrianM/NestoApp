@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, Output, ViewChild, AfterViewInit } from '@angular/core';
 import { Keyboard } from '../../services/keyboard.service';
 import { LoadingController, AlertController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -10,7 +10,7 @@ import { SelectorProductosService } from './selector-productos.service';
     styleUrls: ['./selector-productos.component.scss'],
     standalone: false
 })
-export class SelectorProductosComponent extends SelectorBase implements OnDestroy {
+export class SelectorProductosComponent extends SelectorBase implements OnDestroy, AfterViewInit {
   @Output() seleccionar = new EventEmitter();
 
   public filtroNombre: string;
@@ -49,7 +49,7 @@ export class SelectorProductosComponent extends SelectorBase implements OnDestro
   }
 
   protected async cargarDatos(filtro: string): Promise<void> {
-    let loading = await this.loadingCtrl.create({
+    const loading = await this.loadingCtrl.create({
       message: 'Cargando Productos...',
     });
     this.loadingActivo = loading;
@@ -59,7 +59,7 @@ export class SelectorProductosComponent extends SelectorBase implements OnDestro
     this.servicio.getProductos(filtro).subscribe(
       async data => {
         if (data.length === 0) {
-          let alert: any = await this.alertCtrl.create({
+          const alert: any = await this.alertCtrl.create({
             message: 'Error',
             subHeader: 'No se encuentra ningún producto con esos filtros',
             buttons: ['Ok'],

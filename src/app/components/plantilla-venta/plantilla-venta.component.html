@@ -162,7 +162,7 @@
              <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago != 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago !== 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-toggle [(ngModel)]="mandarCobroTarjeta">¿Mandar cobro por tarjeta?</ion-toggle>
         </ion-item>
@@ -173,7 +173,7 @@
             <ion-input label="Móvil tarjeta" label-placement="floating" type="tel" [(ngModel)]="cobroTarjetaMovil"></ion-input>
         </ion-item>
         <div>
-            <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago == 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
+            <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago === 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
         </div>
         <ion-item>
             <ion-input label="Su Pedido / P.O." label-placement="floating" [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente"></ion-input>

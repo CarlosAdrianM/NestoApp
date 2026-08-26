@@ -44,7 +44,7 @@ export class RapportService {
   public dejarDeVisitar(rapport: any, vendedorEstetica: string, vendedorPeluqueria: string): Observable<any> {
       let headers: any = new HttpHeaders();
       headers = headers.append('Content-Type', 'application/json');
-      let clienteCrear: any = {
+      const clienteCrear: any = {
           empresa: rapport.Empresa,
           cliente: rapport.Cliente,
           contacto: rapport.Contacto,

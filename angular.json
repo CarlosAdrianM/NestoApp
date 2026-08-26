@@ -96,8 +96,7 @@
             "production": {
               "buildTarget": "app:build:production"
             },
-            "ci": {
-            }
+            "ci": {}
           }
         },
         "extract-i18n": {
@@ -158,6 +157,15 @@
               "devServerTarget": "app:serve:production"
             }
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
@@ -165,6 +173,7 @@
   "cli": {
     "analytics": "65746e0d-e0ba-4aec-9a94-42487928d9db",
     "schematicCollections": [
+      "angular-eslint",
       "@ionic/angular-toolkit"
     ]
   },

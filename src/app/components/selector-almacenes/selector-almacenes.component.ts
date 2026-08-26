@@ -31,7 +31,7 @@ export class SelectorAlmacenesComponent extends SelectorBase implements OnInit {
       this.servicio.getAlmacenes(this.cliente).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       message: 'Error',
                       subHeader: 'Error al cargar los almacenes',
                       buttons: ['Ok'],

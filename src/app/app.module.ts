@@ -67,7 +67,7 @@ import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
 
 registerLocaleData(localeEs);
 
-let storage = new Storage();
+const storage = new Storage();
 
 export function initializeStorage(storage: Storage) {
   return () => storage.create();

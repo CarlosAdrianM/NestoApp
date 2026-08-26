@@ -80,11 +80,12 @@
     "@microsoft/microsoft-graph-types": "^2.6.0",
     "@types/jasmine": "~3.6.0",
     "@types/node": "^12.11.1",
-    "codelyzer": "^6.0.0",
+    "angular-eslint": "19.8.1",
     "cordova-android": "^9.1.0",
     "cordova-plugin-app-version": "^0.1.9",
     "cordova-plugin-inappbrowser": "^5.0.0",
     "cordova-support-android-plugin": "^1.0.2",
+    "eslint": "^9.28.0",
     "jasmine-core": "~3.8.0",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.1.0",
@@ -93,8 +94,8 @@
     "karma-jasmine-html-reporter": "^1.5.0",
     "puppeteer": "^24.37.1",
     "ts-node": "~8.3.0",
-    "tslint": "~6.1.0",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "8.33.1"
   },
   "description": "An Ionic project"
 }

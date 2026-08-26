@@ -23,8 +23,8 @@ export class LineaVentaService {
       params = params.append('contacto', contacto);
       params = params.append('cantidad', cantidad.toString());
 
-      let cacheKey = this._baseUrl + params.toString();
-      let request = this.http.get(this._baseUrl, { params });
+      const cacheKey = this._baseUrl + params.toString();
+      const request = this.http.get(this._baseUrl, { params });
       return this.cache.loadFromObservable(cacheKey, request);;
   }
 

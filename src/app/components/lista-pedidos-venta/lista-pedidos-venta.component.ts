@@ -112,7 +112,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
     }
 
     public async cargarDatos(): Promise<void> {
-        let loading: any = await this.loadingCtrl.create({
+        const loading: any = await this.loadingCtrl.create({
             message: 'Cargando Pedidos...',
         });
 
@@ -121,7 +121,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         this.servicio.cargarLista(this.estaFiltradoPresupuestos).subscribe(
             async data => {
                 if (data.length === 0) {
-                    let alert = await this.alertCtrl.create({
+                    const alert = await this.alertCtrl.create({
                         header: 'Error',
                         message: 'No hay ningún pedido pendiente de servir',
                         buttons: ['Ok'],
@@ -142,7 +142,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
     }
 
     public async mostrarFiltros() {
-        let alert = await this.alertCtrl.create({
+        const alert = await this.alertCtrl.create({
           header: 'Seleccione los filtros',
           inputs: [{
             type: 'checkbox',
@@ -184,7 +184,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
 
     public async descargarPedido(event: Event, pedido: any): Promise<void> {
         event.stopPropagation();
-        let loading: any = await this.loadingCtrl.create({
+        const loading: any = await this.loadingCtrl.create({
             message: this.mostrarImagenes ? 'Generando PDF con imágenes...' : 'Generando PDF pedido...',
         });
 

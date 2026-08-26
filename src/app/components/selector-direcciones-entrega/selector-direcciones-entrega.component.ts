@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnChanges } from '@angular/core';
 import { AlertController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorDireccionesEntregaService } from './selector-direcciones-entrega.service';
@@ -10,7 +10,7 @@ import { SelectorDireccionesEntregaService } from './selector-direcciones-entreg
     inputs: ['cliente', 'seleccionado', 'totalPedido', 'forzarEstado'],
     standalone: false
 })
-export class SelectorDireccionesEntregaComponent extends SelectorBase {
+export class SelectorDireccionesEntregaComponent extends SelectorBase implements OnChanges {
   private servicio: SelectorDireccionesEntregaService;
   private alertCtrl: AlertController;
   public direccionesEntrega: any[];
@@ -69,7 +69,7 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase {
       this.servicio.direccionesEntrega(cliente, totalPedido).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       message: 'Error',
                       subHeader: 'El cliente ' + cliente.cliente + ' no tiene ninguna dirección de entrega',
                       buttons: ['Ok'],

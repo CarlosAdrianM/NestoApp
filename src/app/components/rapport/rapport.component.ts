@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavParams, AlertController, LoadingController, NavController } from '@ionic/angular';
@@ -18,7 +18,7 @@ import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
     styleUrls: ['./rapport.component.scss'],
     standalone: false
 })
-export class RapportComponent {
+export class RapportComponent implements AfterViewInit {
   public rapport: any;
   public errorMessage: string;
   public numeroCliente: string;
@@ -82,7 +82,7 @@ export class RapportComponent {
       this.servicio.getCliente(cliente, contacto).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       subHeader: 'Error',
                       message: 'No se puede cargar el cliente ' + this.rapport.Cliente,
                       buttons: ['Ok'],
@@ -124,7 +124,7 @@ export class RapportComponent {
 
   public async modificarRapport(): Promise<void> {
 
-      let confirm = await this.alertCtrl.create({
+      const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere guardar el rapport?',
           buttons: [
@@ -135,7 +135,7 @@ export class RapportComponent {
                       if (!this.mostrarEstadoCliente) {
                           this.rapport.TipoCentro = 0; // no se sabe
                       }
-                      let loading: any = await this.loadingCtrl.create({
+                      const loading: any = await this.loadingCtrl.create({
                           message: 'Guardando Rapport...',
                       });
 
@@ -147,7 +147,7 @@ export class RapportComponent {
                                 this.rapport.Id = data.NºOrden;
                               }
                             this.firebaseAnalytics.logEvent("rapport_crear", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
-                              let alert = await this.alertCtrl.create({
+                              const alert = await this.alertCtrl.create({
                                   header: 'Creado',
                                   message: 'Rapport guardado correctamente',
                                   buttons: ['Ok'],
@@ -157,7 +157,7 @@ export class RapportComponent {
                                   this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
                                       async data => {
                                         this.firebaseAnalytics.logEvent("rapport_dejar_de_visitar", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
-                                          let alertOK = await this.alertCtrl.create({
+                                          const alertOK = await this.alertCtrl.create({
                                               header: 'Clientes',
                                               message: 'Se ha sacado el cliente de la cartera',
                                               buttons: ['Ok'],
@@ -166,7 +166,7 @@ export class RapportComponent {
                                           this.nav.pop();
                                       },
                                       async error => {
-                                          let alertKO = await this.alertCtrl.create({
+                                          const alertKO = await this.alertCtrl.create({
                                               header: 'Error',
                                               message: 'No se ha podido quitar el cliente.\n' + error.ExceptionMessage,
                                               buttons: ['Ok'],
@@ -187,7 +187,7 @@ export class RapportComponent {
                               }
                           },
                           async error => {
-                              let alert = await this.alertCtrl.create({
+                              const alert = await this.alertCtrl.create({
                                   header: 'Error',
                                   message: 'No se ha podido guardar el rapport.\n' + error.ExceptionMessage,
                                   buttons: ['Ok'],
@@ -222,16 +222,16 @@ export class RapportComponent {
   }
 
   public seleccionarTexto(evento: any): void {
-    var nativeInputEle = evento.target;
+    const nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
       a => a.select()
     )
   }
 
   public sePuedeModificar(): boolean {
-      let usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
-      var sePuedePorUsuario = !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
-      var sePuedePorDejarDeVisitar = !this.dejarDeVisitar || (this.rapport && this.rapport.Comentarios && this.rapport.Comentarios.length > 50);
+      const usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
+      const sePuedePorUsuario = !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
+      const sePuedePorDejarDeVisitar = !this.dejarDeVisitar || (this.rapport && this.rapport.Comentarios && this.rapport.Comentarios.length > 50);
       return sePuedePorUsuario && sePuedePorDejarDeVisitar;
   }
 
@@ -239,7 +239,7 @@ export class RapportComponent {
       if (estadoCliente == undefined) {
           return;
       }
-      let alert: any = await this.alertCtrl.create({
+      const alert: any = await this.alertCtrl.create({
           header: 'Info',
           message: 'El cliente está en estado ' + estadoCliente.toString(),
           buttons: ['Ok'],
@@ -286,7 +286,7 @@ export class RapportComponent {
       try {
         await this.servicio.addEventToCalendar(graphEvent);
         this.firebaseAnalytics.logEvent("rapport_crear_cita", { cliente: this.rapport.Cliente, contacto: this.rapport.Contacto });
-        let alert: any = await this.alertCtrl.create({
+        const alert: any = await this.alertCtrl.create({
             header: 'Aviso',
             message: 'Se ha creado correctamente la cita del cliente ' + this.rapport.Cliente.trim(),
             buttons: ['Ok'],

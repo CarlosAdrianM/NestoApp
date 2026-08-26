@@ -31,9 +31,9 @@ export class ListaRapportsService {
       }
       params = params.append('fecha', fecha);
 
-      let ttl = 10; // TTL in seconds
-      let cacheKey = this._baseUrl + params.toString();
-      let request = this.http.get(this._baseUrl, { params: params });
+      const ttl = 10; // TTL in seconds
+      const cacheKey = this._baseUrl + params.toString();
+      const request = this.http.get(this._baseUrl, { params: params });
       return this.cache.loadFromObservable(cacheKey, request, undefined, ttl);
   }
 
@@ -47,9 +47,9 @@ export class ListaRapportsService {
 }
 
   cargarCodigosPostalesSinVisitar(vendedor: string, forzarTodos: boolean = false): Observable<any[]> {
-      var date = new Date();
-      var primerDia = new Date(date.getFullYear(), date.getMonth(), 1);
-      var ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const date = new Date();
+      const primerDia = new Date(date.getFullYear(), date.getMonth(), 1);
+      let ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       if (forzarTodos) {
           ultimoDia = new Date(primerDia.getTime() - 1);
       }
@@ -63,9 +63,9 @@ export class ListaRapportsService {
   }
 
   cargarClientesSinVisitar(vendedor: string, codigoPostal: string): Observable<any[]> {
-      var date = new Date();
-      var primerDia = new Date(date.getFullYear(), date.getMonth(), 1);
-      var ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const date = new Date();
+      const primerDia = new Date(date.getFullYear(), date.getMonth(), 1);
+      const ultimoDia = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
       let params: HttpParams = new HttpParams();
       params = params.append('vendedor', vendedor);

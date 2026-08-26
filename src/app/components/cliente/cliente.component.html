@@ -98,8 +98,8 @@
                   <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}</p>
                   <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                   <p></p>
-                  <p *ngIf="cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!=''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
-                  <p *ngIf="!(cliente && cliente.telefono && cliente.telefono != 'undefined' && cliente.telefono.trim()!='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
+                  <p *ngIf="cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!==''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
+                  <p *ngIf="!(cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!=='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
                   <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
               </ion-card-content>
           </ion-card>
@@ -113,13 +113,13 @@
       <ion-card-header>Datos de Pago</ion-card-header>
       <ion-card-content>
           <selector-formas-pago seleccionado="{{cliente.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
-          <ion-item *ngIf="cliente.formaPago == 'RCB'">
+          <ion-item *ngIf="cliente.formaPago === 'RCB'">
               <ion-input label="IBAN" label-placement="start" #iban [(ngModel)]="cliente.iban"></ion-input>
           </ion-item>
           <selector-plazos-pago seleccionado="{{cliente.plazosPago}}" (seleccionar)="cliente.plazosPago = $event"></selector-plazos-pago>
       </ion-card-content>
       <ion-button expand="block" (click)="slideActual = DATOS_COMISIONES">&lt; Volver a Datos de Comisiones</ion-button>
-      <ion-button expand="block" [disabled]="cliente.formaPago=='RCB' && (!cliente.iban || cliente.iban.length < 24)" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</ion-button>
+      <ion-button expand="block" [disabled]="cliente.formaPago==='RCB' && (!cliente.iban || cliente.iban.length < 24)" (click)="goToDatosContacto()">Ir a Datos de Contacto &gt;</ion-button>
   </ion-card>
 
   <ion-card *ngIf="slideActual == DATOS_CONTACTO">

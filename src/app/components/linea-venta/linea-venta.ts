@@ -87,7 +87,7 @@ export class LineaVenta {
     }
 
     public get BaseImponible(): number {
-        let importeDescuento = this.redondea(this.Bruto * this.SumaDescuentos);
+        const importeDescuento = this.redondea(this.Bruto * this.SumaDescuentos);
         return this.redondea(this.Bruto - importeDescuento);
     }
     public set BaseImponible(value: number) { } //para que no de error

@@ -29,8 +29,8 @@ export class ExtractoClienteService {
   }
 
   public cargarFacturas(cliente: any): Observable<any> {
-    let fechaHasta: Date = new Date();
-    let fechaDesde: Date = new Date();
+    const fechaHasta: Date = new Date();
+    const fechaDesde: Date = new Date();
     fechaDesde.setMonth(fechaDesde.getMonth() - 6);
     let params: HttpParams = new HttpParams();
     params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);

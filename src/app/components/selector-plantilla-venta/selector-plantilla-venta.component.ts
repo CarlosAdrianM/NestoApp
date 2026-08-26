@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
 import { Keyboard } from '../../services/keyboard.service';
 import { AlertController, LoadingController, NavController, ToastController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -13,7 +13,7 @@ import { Usuario } from 'src/app/models/Usuario';
     styleUrls: ['./selector-plantilla-venta.component.scss'],
     standalone: false
 })
-export class SelectorPlantillaVentaComponent extends SelectorBase implements OnDestroy {
+export class SelectorPlantillaVentaComponent extends SelectorBase implements OnDestroy, OnChanges {
 
   @Input() public cliente: any;
   @Input() public estadoCliente: number;
@@ -52,7 +52,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
   }
 
   public async cargarDatos(cliente: any): Promise<void> {
-      let loading = await this.loadingCtrl.create({
+      const loading = await this.loadingCtrl.create({
           message: 'Cargando Productos...',
       });
       this.loadingActivo = loading;
@@ -64,7 +64,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
               if (data.length === 0) {
                 await loading.dismiss();
                 this.loadingActivo = null;
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'Este cliente no tiene histórico de compras',
                       buttons: ['Ok'],
@@ -76,7 +76,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                 this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                     async data => {
                         data = data.map(function (item): any {
-                            let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                            const clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                             clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                             clone.esSobrePedido = clone.estado != 0;
                             // Issue #127: personalización de unidad de oferta (default = gratis).
@@ -125,10 +125,10 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
   }
 
   public cargarResumen(): any[] {
-      let productosResumen: any[] = [];
+      const productosResumen: any[] = [];
       this.baseImponiblePedido = 0;
       this.baseImponibleParaPortes = 0;
-      for (let value of this.datosIniciales()) {
+      for (const value of this.datosIniciales()) {
           if (+value.cantidad !== 0 || +value.cantidadOferta !== 0) {
               productosResumen.push(value);
               console.log("Nº elementos en resumen: " + productosResumen.length);
@@ -259,7 +259,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
     this.servicio.buscarContextual(filtro, this.operador).subscribe(
         async data => {
             if (data.length === 0) {
-                let alert: any = await this.alertCtrl.create({
+                const alert: any = await this.alertCtrl.create({
                     header: 'Error',
                     message: 'No hay productos que coincidan con ' + filtro,
                     buttons: ['Ok'],
@@ -269,7 +269,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
               this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                   async data => {
                       data = data.map(function (item): any {
-                          let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                          const clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                           clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                           clone.esSobrePedido = clone.estado != 0;
                           return clone;
@@ -292,7 +292,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       this.servicio.buscarProductos(filtro).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No hay productos que coincidan con ' + filtro,
                       buttons: ['Ok'],
@@ -302,7 +302,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                 this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                     async data => {
                         data = data.map(function (item): any {
-                            let clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
+                            const clone: any = Object.assign({}, item); // Objects are pass by referenced, hence, you need to clone object
                             clone.aplicarDescuentoFicha = clone.aplicarDescuento;
                             clone.esSobrePedido = clone.estado != 0;
                             // Issue #127: personalización de unidad de oferta (default = gratis).
@@ -322,7 +322,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
   }
 
   public hayAlgunProducto() {
-      let datos = this.datosIniciales();
+      const datos = this.datosIniciales();
       if (!datos) {
           return false;
       }

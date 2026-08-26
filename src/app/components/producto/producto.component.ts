@@ -57,7 +57,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
   }
 
   async cargar() {
-    let loading = await this.loadingCtrl.create({
+    const loading = await this.loadingCtrl.create({
       message: 'Cargando Producto...',
     });
     this.loadingActivo = loading;
@@ -68,7 +68,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
         async data => {
           this.firebaseAnalytics.logEvent("producto_cargar", {producto: this.productoActual});
           if (data.length === 0) {
-            let alert = await this.alertCtrl.create({
+            const alert = await this.alertCtrl.create({
               message: 'Error',
               subHeader: 'No se ha cargado correctamente el producto',
               buttons: ['Ok'],
@@ -91,7 +91,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
   }
 
   async cargarClientes() {
-    let loading = await this.loadingCtrl.create({
+    const loading = await this.loadingCtrl.create({
       message: 'Cargando Clientes...',
     });
     this.loadingActivo = loading;
@@ -101,7 +101,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
         async data => {
           this.firebaseAnalytics.logEvent("producto_ver_clientes", {producto: this.productoActual});
           if (data.length === 0) {
-            let alert = await this.alertCtrl.create({
+            const alert = await this.alertCtrl.create({
               message: 'Error',
               subHeader: 'Ningún cliente ha comprado el producto ' + this.productoActual,
               buttons: ['Ok'],
@@ -129,7 +129,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
   }
 
   async cargarVideos() {
-    let loading = await this.loadingCtrl.create({
+    const loading = await this.loadingCtrl.create({
       message: 'Cargando vídeos...'
     });
     await loading.present();
@@ -161,7 +161,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
   }
 
   public seleccionarTexto(evento: any): void {
-    var nativeInputEle = evento.target;
+    const nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
       a => a.select()
     )

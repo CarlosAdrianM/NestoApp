@@ -44,7 +44,7 @@ export class SelectorClientesComponent extends SelectorBase {
   }
 
   public async cargarDatos(filtro: string): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Clientes...',
       });
 
@@ -53,7 +53,7 @@ export class SelectorClientesComponent extends SelectorBase {
       this.servicio.getClientes(filtro).subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert: any = await this.alertCtrl.create({
+                  const alert: any = await this.alertCtrl.create({
                       header: 'Error',
                       message: 'No se encuentra ningún cliente que coincida con ' + filtro,
                       buttons: ['Ok'],
@@ -124,7 +124,7 @@ export class SelectorClientesComponent extends SelectorBase {
       if (!this.datosFiltrados) {
           return;
       }
-      var clienteEncontrado = this.datosFiltrados.filter(c => c.empresa == clienteModificado.empresa && c.cliente == clienteModificado.cliente && c.contacto == clienteModificado.contacto)[0];
+      const clienteEncontrado = this.datosFiltrados.filter(c => c.empresa == clienteModificado.empresa && c.cliente == clienteModificado.cliente && c.contacto == clienteModificado.contacto)[0];
       if (clienteEncontrado) {
           clienteEncontrado.cifNif = clienteModificado.cifNif;
           clienteEncontrado.nombre = clienteModificado.nombre;

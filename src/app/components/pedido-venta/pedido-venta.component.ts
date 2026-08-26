@@ -67,7 +67,7 @@ export class PedidoVentaComponent  {
   }
 
   public async cargarPedido(empresa: string, numero: number): Promise<void> {
-      let loading: any = await this.loadingCtrl.create({
+      const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Pedido...',
       });
 
@@ -92,7 +92,7 @@ export class PedidoVentaComponent  {
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   subHeader: 'No se ha podido cargar el pedido',
                   message: mensaje,
@@ -185,7 +185,7 @@ export class PedidoVentaComponent  {
 
   public annadirLinea() {
       this.firebaseAnalytics.logEvent("pedido_venta_annadir_linea", {pedido: this.pedido.numero});
-      let linea: LineaVenta = new LineaVenta();
+      const linea: LineaVenta = new LineaVenta();
       linea.copiarDatosPedido(this.pedido);
       linea.Usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
       this.abrirLinea(linea);
@@ -193,7 +193,7 @@ export class PedidoVentaComponent  {
   }
 
   public async borrarLinea(linea: LineaVenta) {
-      let confirm = await this.alertCtrl.create({
+      const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Desea borrar la línea?',
           buttons: [
@@ -218,7 +218,7 @@ export class PedidoVentaComponent  {
 
   public async modificarPedido(): Promise<void> {
 
-      let confirm = await this.alertCtrl.create({
+      const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere modificar el pedido?',
           buttons: [
@@ -226,7 +226,7 @@ export class PedidoVentaComponent  {
                   text: 'Sí',
                   handler: async () => {
                       // Hay que guardar el pedido original en alguna parte
-                      let loading: any = await this.loadingCtrl.create({
+                      const loading: any = await this.loadingCtrl.create({
                           message: 'Modificando Pedido...',
                       });
 
@@ -239,7 +239,7 @@ export class PedidoVentaComponent  {
                               // plantilla-venta crea la etiqueta tras crear el pedido.
                               await this.sincronizarRecogerProducto();
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
-                              let alert = await this.alertCtrl.create({
+                              const alert = await this.alertCtrl.create({
                                   header: 'Modificado',
                                   message: 'Pedido modificado correctamente',
                                   buttons: ['Ok'],
@@ -273,7 +273,7 @@ export class PedidoVentaComponent  {
   
   public async aceptarPresupuesto(): Promise<void> {
 
-      let confirm = await this.alertCtrl.create({
+      const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Desea aceptar el presupuesto?',
           buttons: [
@@ -281,7 +281,7 @@ export class PedidoVentaComponent  {
                   text: 'Sí',
                   handler: async () => {
                       // Hay que guardar el pedido original en alguna parte
-                      let loading: any = await this.loadingCtrl.create({
+                      const loading: any = await this.loadingCtrl.create({
                           message: 'Aceptando presupuesto...',
                       });
                       this.firebaseAnalytics.logEvent("pedido_venta_aceptar_presupuesto", {pedido: this.pedido.numero});
@@ -291,7 +291,7 @@ export class PedidoVentaComponent  {
                       this.servicio.modificarPedido(this.pedido).subscribe(
                           async data => {
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
-                              let alert = await this.alertCtrl.create({
+                              const alert = await this.alertCtrl.create({
                                   header: 'Aceptado',
                                   message: 'Presupuesto aceptado correctamente',
                                   buttons: ['Ok'],
@@ -301,7 +301,7 @@ export class PedidoVentaComponent  {
                           },
                           async error => {
                               const mensaje = this.errorHandler.extractErrorMessage(error);
-                              let alert = await this.alertCtrl.create({
+                              const alert = await this.alertCtrl.create({
                                   header: 'Error',
                                   subHeader: 'No se ha podido aceptar el presupuesto',
                                   message: mensaje,
@@ -429,7 +429,7 @@ export class PedidoVentaComponent  {
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   subHeader: 'No se han podido cargar los seguimientos del pedido',
                   message: mensaje,
@@ -490,7 +490,7 @@ export class PedidoVentaComponent  {
                   const mensaje = (debeCrear && error?.status === 409)
                       ? 'Ya existe una etiqueta pendiente para este pedido'
                       : this.errorHandler.extractErrorMessage(error);
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       header: 'Error',
                       subHeader: 'No se ha podido actualizar "Recoger Producto"',
                       message: mensaje,
@@ -558,7 +558,7 @@ export class PedidoVentaComponent  {
           async error => {
               await loading.dismiss();
               const mensaje = this.errorHandler.extractErrorMessage(error);
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   subHeader: 'No se ha podido actualizar el estado del envío',
                   message: mensaje,

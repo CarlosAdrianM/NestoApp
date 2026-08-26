@@ -12,7 +12,7 @@ export class SelectorDireccionesEntregaService {
   constructor(private http: HttpClient) {    }
 
   public direccionesEntrega(cliente: any, totalPedido: number = 0): Observable<any> {
-      let _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/DireccionesEntrega';
+      const _baseUrl: string = Configuracion.API_URL + '/PlantillaVentas/DireccionesEntrega';
       let params: HttpParams = new HttpParams();
       params = params.append('empresa', Configuracion.EMPRESA_POR_DEFECTO);
       params = params.append('clienteDirecciones', cliente);

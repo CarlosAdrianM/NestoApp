@@ -41,7 +41,7 @@ export class SelectorVendedoresComponent extends SelectorBase implements OnInit 
       this.servicio.getVendedores().subscribe(
           async data => {
               if (data.length === 0) {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       message: 'Error',
                       subHeader: 'Error al cargar vendedores',
                       buttons: ['Ok'],

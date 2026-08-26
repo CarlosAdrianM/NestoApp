@@ -222,7 +222,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public productosResumen: any[];
   
   private async mostrarAlertaRellenar(value: any) {
-    let alert = await this.alertCtrl.create({
+    const alert = await this.alertCtrl.create({
       header: 'Faltan datos',
       message: 'A este cliente le faltan datos. Si continuas es ' +
         'posible que no puedas finalizar el pedido. Elige entre rellenar los ' +
@@ -676,7 +676,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       if (!this.clienteSeleccionado) {
           this.cargarProductosPlantilla(cliente);
       } else if (this.clienteSeleccionado && this.clienteSeleccionado !== cliente) {
-          let alert: any = await this.alertCtrl.create({
+          const alert: any = await this.alertCtrl.create({
               header: 'Cambiar cliente',
               message: '¿Desea cambiar de cliente y comenzar el pedido de nuevo?',
               buttons: [
@@ -716,7 +716,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   public async avanzar(): Promise<void> {
     this.indexActivo = this.swiper.activeIndex;
-    let indexPrevio = this.swiper.previousIndex;
+    const indexPrevio = this.swiper.previousIndex;
     if (this.indexActivo === 2 && indexPrevio === 1) {
         console.log("Resumen");
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
@@ -725,7 +725,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 this.listaPedidosPendientes = data;
             },
             async error => {
-                let alert = await this.alertCtrl.create({
+                const alert = await this.alertCtrl.create({
                     header: 'Error',
                     message: 'No se ha podido comprobar si el cliente tiene pedidos pendientes:\n' + error.ExceptionMessage,
                     buttons: ['Ok'],
@@ -770,7 +770,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
   
   private comprobarSiSePuedeServirPorGlovo(){
-    var pedido = this.prepararPedido();
+    const pedido = this.prepararPedido();
     this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
         data => {
             this.respuestaGlovo = data;
@@ -790,7 +790,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             }
         },
         async error => {
-            let alert = await this.alertCtrl.create({
+            const alert = await this.alertCtrl.create({
                 header: 'Error',
                 message: 'No se ha podido comprobar si se puede servir por Glovo:\n' + error.ExceptionMessage,
                 buttons: ['Ok'],
@@ -923,9 +923,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private prepararPedido(): any {
-      let pedido: any;
-
-      pedido = {
+      const pedido: any = {
           'empresa': this.clienteSeleccionado.empresa.trim(),
           'cliente': this.clienteSeleccionado.cliente.trim(),
           'contacto': this.direccionSeleccionada.contacto,
@@ -965,7 +963,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       let ofertaLinea: number = 0;
       let ultimaOferta: number = 0;
 
-      for (let linea of this.productosResumen) {
+      for (const linea of this.productosResumen) {
           ofertaLinea = linea.cantidadOferta ? ++ultimaOferta : 0;
           nuevaLinea = {
               'estado': this.esPresupuesto ? -3 : 1, // ojo, de parámetro. ¿Pongo 0 para tener que validar?
@@ -1018,7 +1016,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
 
       // Añadir líneas de regalos (Ganavisiones)
-      for (let regalo of this.regalosSeleccionados) {
+      for (const regalo of this.regalosSeleccionados) {
           let textoRegalo = regalo.producto.ProductoNombre;
           if (textoRegalo.length > 40) {
               textoRegalo = textoRegalo.substring(0, 40);
@@ -1099,7 +1097,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
 
       if (!this.pedidoPendienteSeleccionado) {
-        let loading: any = await this.loadingCtrl.create({
+        const loading: any = await this.loadingCtrl.create({
             message: 'Creando Pedido...',
         });
         await loading.present();
@@ -1167,7 +1165,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                     err => console.error('Error creando etiqueta pendiente:', err)
                   );
                 }
-                let alert = await this.alertCtrl.create({
+                const alert = await this.alertCtrl.create({
                     header: 'Creado',
                     message: 'Pedido ' + numeroPedido + ' creado correctamente',
                     buttons: ['Ok'],
@@ -1553,7 +1551,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         }
       }
     } catch (error) {
-      let alert = await this.alertCtrl.create({
+      const alert = await this.alertCtrl.create({
         message: 'Error',
         subHeader: 'No se han podido cargar los datos del cliente:\n' + error.ExceptionMessage,
         buttons: ['Ok'],

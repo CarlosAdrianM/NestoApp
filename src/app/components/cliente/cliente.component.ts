@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { AlertController, NavController, ModalController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -18,7 +18,7 @@ import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/
     styleUrls: ['./cliente.component.scss'],
     standalone: false
 })
-export class ClienteComponent {
+export class ClienteComponent implements AfterViewInit {
 
   DATOS_FISCALES: number = 0;
   DATOS_GENERALES: number = 1;
@@ -55,7 +55,7 @@ export class ClienteComponent {
                   this.goToDatosGenerales();
               },
               async error => {
-                  let alert = await this.alertCtrl.create({
+                  const alert = await this.alertCtrl.create({
                       message: 'Error',
                       subHeader: 'No se ha podido cargar el cliente:\n' + error.ExceptionMessage,
                       buttons: ['Ok'],
@@ -128,12 +128,12 @@ export class ClienteComponent {
   }
 
   annadirPersonaContacto() {
-      var persona = {};
+      const persona = {};
       this.cliente.personasContacto.push(persona);
   }
 
   borrarPersonaContacto(persona: any) {
-      var index = this.cliente.personasContacto.indexOf(persona);
+      const index = this.cliente.personasContacto.indexOf(persona);
       if (index !== -1) this.cliente.personasContacto.splice(index, 1);
   }
 
@@ -179,7 +179,7 @@ export class ClienteComponent {
               }
           },
           async error => {
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   message: 'Error',
                   subHeader: 'No se ha podido validar el NIF:\n' + error.ExceptionMessage,
                   buttons: ['Ok'],
@@ -233,7 +233,7 @@ export class ClienteComponent {
                   data.clientesMismoTelefono = data.clientesMismoTelefono.filter(c => c.cliente != this.cliente.cliente);
               }
               if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
-                  let clientesModal = await this.modalCtrl.create({
+                  const clientesModal = await this.modalCtrl.create({
                     component: ClientesMismoTelefonoComponent, 
                     componentProps: { listaClientes: data.clientesMismoTelefono }
                   });
@@ -241,7 +241,7 @@ export class ClienteComponent {
               }
           },
           async error => {
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se ha podido validar la dirección:\n' + error.ExceptionMessage,
                   buttons: ['Ok'],
@@ -256,7 +256,7 @@ export class ClienteComponent {
   }
 
   goToDatosContacto() {
-      var datosPago: any = {
+      const datosPago: any = {
           formaPago: this.cliente.formaPago,
           ibanBruto: this.cliente.iban,
           plazosPago: this.cliente.plazosPago
@@ -267,14 +267,14 @@ export class ClienteComponent {
           if (data.datosPagoValidos || (data.ibanValido && this.cliente.plazosPago == this.plazosPagoActuales)) {
               this.slideActual = this.DATOS_CONTACTO;
           } else if (!data.ibanValido) {
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'IBAN no válido',
                   buttons: ['Ok'],
               });
               await alert.present();
           } else {
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'Error en los datos de pago',
                   buttons: ['Ok'],
@@ -283,7 +283,7 @@ export class ClienteComponent {
           }
       },
       async error => {
-          let alert = await this.alertCtrl.create({
+          const alert = await this.alertCtrl.create({
               header: 'Error',
               message: 'Error en la validación del IBAN:\n' + error.ExceptionMessage,
               buttons: ['Ok'],
@@ -308,7 +308,7 @@ export class ClienteComponent {
       this.servicio.crearCliente(this.cliente).subscribe(
           async data => {
               this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto, "screen_name": "Cliente"});
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   message: 'Cliente',
                   subHeader: 'Se ha creado correctamente el cliente: ' 
                   + data.Nº_Cliente + '/'+data.Contacto,
@@ -327,8 +327,8 @@ export class ClienteComponent {
               
           },
           async error => {
-              var textoExcepcion: string = error.ExceptionMessage;
-              var subError: any = error;
+              let textoExcepcion: string = error.ExceptionMessage;
+              let subError: any = error;
               while (subError.InnerException) {
                   subError = subError.InnerException;
                   if (subError.ExceptionMessage != 
@@ -336,7 +336,7 @@ export class ClienteComponent {
                       textoExcepcion += "\n" + subError.ExceptionMessage;
                   }
               }
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se ha podido crear el cliente:\n' + textoExcepcion,
                   buttons: ['Ok'],
@@ -350,7 +350,7 @@ export class ClienteComponent {
       this.servicio.modificarCliente(this.cliente).subscribe(
           async data => {
             this.firebaseAnalytics.logEvent("modificar_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Cliente',
                   message: 'Se ha modificado correctamente el cliente: ' 
                   + data.Nº_Cliente + '/'+data.Contacto,
@@ -380,8 +380,8 @@ export class ClienteComponent {
               };
           },
           async error => {
-              var textoExcepcion: string = error.ExceptionMessage;
-              var subError: any = error;
+              let textoExcepcion: string = error.ExceptionMessage;
+              let subError: any = error;
               while (subError.InnerException) {
                   subError = subError.InnerException;
                   if (subError.ExceptionMessage != 
@@ -389,7 +389,7 @@ export class ClienteComponent {
                       textoExcepcion += "\n" + subError.ExceptionMessage;
                   }
               }
-              let alert = await this.alertCtrl.create({
+              const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se ha podido modificar el cliente:\n' + textoExcepcion,
                   buttons: ['Ok'],
@@ -512,7 +512,7 @@ export class ClienteComponent {
   }        
 
   public seleccionarTexto(evento: any): void {
-    var nativeInputEle = evento.target;
+    const nativeInputEle = evento.target;
     nativeInputEle.getInputElement().then(
       a => a.select()
     )

@@ -24,7 +24,7 @@ export class UltimasVentasProductoClienteComponent {
       this.servicio.cargarUltimasVentas(cliente, producto).subscribe(
           data => {
               this.movimientos = data;
-              for (let mov of this.movimientos) {
+              for (const mov of this.movimientos) {
                   mov.fechaMostrar = new Date(mov.fecha);
               }
           },
