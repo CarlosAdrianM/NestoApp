@@ -8,8 +8,7 @@
     "start": "ng serve",
     "build": "NODE_OPTIONS=--openssl-legacy-provider ng build",
     "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e"
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
@@ -80,7 +79,6 @@
     "@ionic/angular-toolkit": "^12.3.0",
     "@microsoft/microsoft-graph-types": "^2.6.0",
     "@types/jasmine": "~3.6.0",
-    "@types/jasminewd2": "~2.0.3",
     "@types/node": "^12.11.1",
     "codelyzer": "^6.0.0",
     "cordova-android": "^9.1.0",
@@ -88,13 +86,11 @@
     "cordova-plugin-inappbrowser": "^5.0.0",
     "cordova-support-android-plugin": "^1.0.2",
     "jasmine-core": "~3.8.0",
-    "jasmine-spec-reporter": "~5.0.0",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage-istanbul-reporter": "~3.0.2",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.5.0",
-    "protractor": "~7.0.0",
     "puppeteer": "^24.37.1",
     "ts-node": "~8.3.0",
     "tslint": "~6.1.0",
