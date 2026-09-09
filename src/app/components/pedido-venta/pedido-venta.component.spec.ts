@@ -4,7 +4,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 
 import { PedidoVentaComponent } from './pedido-venta.component';
 import { LineaVenta } from '../linea-venta/linea-venta';

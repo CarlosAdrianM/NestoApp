@@ -4,7 +4,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
-import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
+import { Keyboard } from '../../services/keyboard.service';
 
 import { SelectorPlantillaVentaDetalleComponent } from './selector-plantilla-venta-detalle.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';

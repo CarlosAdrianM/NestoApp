@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Keyboard } from '@awesome-cordova-plugins/keyboard/ngx';
+import { Keyboard } from '../../services/keyboard.service';
 import { CacheService } from '../../services/cache.service';
 import { Usuario } from 'src/app/models/Usuario';
 

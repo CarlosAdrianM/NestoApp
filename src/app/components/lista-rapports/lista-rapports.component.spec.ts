@@ -4,9 +4,9 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
-import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
+import { Geolocation } from '../../services/geolocation.service';
 import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { CacheService } from '../../services/cache.service';
 
 import { ListaRapportsComponent } from './lista-rapports.component';
