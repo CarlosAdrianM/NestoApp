@@ -39,6 +39,19 @@
       </ion-select>
     </ion-item>
 
+    <!-- NestoApp#170 / NestoAPI#464: solo se pregunta a quien el servidor marca con
+         preguntarEmpleados (hoy, clientes de la Comunidad de Madrid). No es obligatorio. -->
+    <ion-item *ngIf="preguntarEmpleados">
+      <ion-select label="Empleados" label-placement="start" name="empleados" [(ngModel)]="rapport.Empleados">
+        <ion-select-option [value]="0">Sin empleados</ion-select-option>
+        <ion-select-option [value]="1">1</ion-select-option>
+        <ion-select-option [value]="2">2</ion-select-option>
+        <ion-select-option [value]="3">3</ion-select-option>
+        <ion-select-option [value]="4">4</ion-select-option>
+        <ion-select-option [value]="5">5 o más</ion-select-option>
+      </ion-select>
+    </ion-item>
+
     <ion-item>
       <ion-checkbox [(ngModel)]="rapport.Pedido" name="Pedido">Pedido</ion-checkbox>
     </ion-item>

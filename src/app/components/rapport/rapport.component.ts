@@ -27,6 +27,12 @@ export class RapportComponent implements AfterViewInit {
   private vendedorEstetica: string;
   private vendedorPeluqueria: string;
   public fechaCita: string;
+  /**
+   * NestoApp#170 / NestoAPI#464: la app no sabe a qué clientes hay que preguntarles el número
+   * de empleados. La regla (hoy: código postal de Madrid) la resuelve el servidor y llega en
+   * el ClienteDTO como `preguntarEmpleados`.
+   */
+  public preguntarEmpleados: boolean = false;
 
   /*
   private readonly _destroying$ = new Subject<void>();
@@ -107,6 +113,12 @@ export class RapportComponent implements AfterViewInit {
                       this.rapport.TipoCentro = 3; // Estética y peluquería
                   } else {
                       this.rapport.TipoCentro = 0; // No sabemos qué es
+                  }
+                  this.preguntarEmpleados = data.preguntarEmpleados === true;
+                  // Si la ficha ya tiene el dato, la combo sale rellena para que el vendedor solo
+                  // la toque si ha cambiado algo. Lo que él haya contestado ya manda sobre la ficha.
+                  if (this.rapport.Empleados === undefined || this.rapport.Empleados === null) {
+                      this.rapport.Empleados = data.empleados !== undefined ? data.empleados : null;
                   }
               }
           },
