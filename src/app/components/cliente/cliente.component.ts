@@ -305,6 +305,9 @@ export class ClienteComponent implements AfterViewInit {
   }
 
   crearCliente() {
+      // Issue #168: si lo que se está creando es un contacto de un cliente que ya existe,
+      // al terminar se ofrece copiarle las personas de contacto y los CCC del principal.
+      const esContactoNuevo: boolean = !!this.cliente.esContacto && !this.cliente.esUnaModificacion;
       this.servicio.crearCliente(this.cliente).subscribe(
           async data => {
               this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto, "screen_name": "Cliente"});
@@ -315,6 +318,10 @@ export class ClienteComponent implements AfterViewInit {
                   buttons: ['Ok'],
               });
               await alert.present();
+              await alert.onDidDismiss();
+              if (esContactoNuevo) {
+                  await this.preguntarCopiarDatosDelPrincipal(data.Empresa, data.Nº_Cliente, data.Contacto);
+              }
               this.cliente = {
                   formaPago: "EFC",
                   plazosPago: "CONTADO",
@@ -344,6 +351,55 @@ export class ClienteComponent implements AfterViewInit {
               await alert.present();
              }
       )
+  }
+
+  /**
+   * Issue #168 (NestoAPI#438): la pregunta que antes se le hacía por correo a administración.
+   * Solo sale al crear un contacto de un cliente que ya existía, y no bloquea nada: si se
+   * contesta que no, el contacto se queda como se ha creado.
+   */
+  private async preguntarCopiarDatosDelPrincipal(empresa: string, cliente: string, contacto: string): Promise<void> {
+      const confirm = await this.alertCtrl.create({
+          header: 'Contacto creado',
+          message: '¿Desea copiar las personas de contacto y los CCC del contacto principal al nuevo contacto?',
+          buttons: [
+              {
+                  text: 'No',
+                  role: 'cancel'
+              },
+              {
+                  text: 'Sí',
+                  handler: () => {
+                      this.copiarDatosDelPrincipal(empresa, cliente, contacto);
+                  }
+              }
+          ]
+      });
+      await confirm.present();
+  }
+
+  public copiarDatosDelPrincipal(empresa: string, cliente: string, contacto: string): void {
+      this.servicio.copiarDatosDelPrincipal(empresa, cliente, contacto).subscribe(
+          async data => {
+              this.firebaseAnalytics.logEvent("copiar_datos_contacto_principal", {cliente: cliente, contacto: contacto});
+              const personas: number = data && data.personasCopiadas ? data.personasCopiadas : 0;
+              const cccs: number = data && data.cccsCopiados ? data.cccsCopiados : 0;
+              const alert = await this.alertCtrl.create({
+                  header: 'Contacto',
+                  message: 'Se han copiado ' + personas + ' personas de contacto y ' + cccs + ' cuentas bancarias del contacto principal.',
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          },
+          async error => {
+              const alert = await this.alertCtrl.create({
+                  header: 'Error',
+                  message: 'No se han podido copiar los datos del contacto principal:\n' + (error.Message || error.ExceptionMessage || ''),
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
+      );
   }
 
   modificarCliente() {

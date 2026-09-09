@@ -150,6 +150,23 @@ export class ClienteService {
     return this.http.put(this._baseUrl, JSON.stringify(cliente), { headers: headers });
   }
 
+  /**
+   * Issue #168 (NestoAPI#438): copia al contacto recién creado las personas de contacto y los
+   * CCC del contacto principal. La lógica entera es del servidor (idempotente: no duplica lo
+   * que el destino ya tenga); aquí solo se hace la pregunta y se llama.
+   */
+  public copiarDatosDelPrincipal(empresa: string, cliente: string, contacto: string): Observable<any> {
+    const urlLlamada: string = this._baseUrl + '/CopiarDatosDelPrincipal';
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    this.cache.clearGroup("clientes");
+    return this.http.post(urlLlamada, JSON.stringify({ Empresa: empresa, Cliente: cliente, Contacto: contacto }), { headers })
+      .pipe(
+        map(response => this.toCamelCase(response))
+      );
+  }
+
   private toCamelCase(obj: any): any {
     if (Array.isArray(obj)) {
       return obj.map(item => this.toCamelCase(item));

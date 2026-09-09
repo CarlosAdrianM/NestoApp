@@ -1,29 +1,49 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { AlertController, IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
-import { Geolocation } from '@awesome-cordova-plugins/geolocation/ngx';
+import { Geolocation } from '../../services/geolocation.service';
 import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { CacheService } from '../../services/cache.service';
 import { Storage } from '@ionic/storage-angular';
 
 import { ClienteComponent } from './cliente.component';
+import { ClienteService } from './cliente.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 describe('ClienteComponent', () => {
   let component: ClienteComponent;
   let fixture: ComponentFixture<ClienteComponent>;
+  let servicio: any;
+  let alertCreado: any;
+
+  const clienteCreado = { Empresa: '1', 'Nº_Cliente': '12345', Contacto: '1' };
 
   beforeEach(waitForAsync(() => {
+    alertCreado = null;
+    servicio = {
+      crearCliente: () => of(clienteCreado),
+      copiarDatosDelPrincipal: jasmine.createSpy('copiarDatosDelPrincipal')
+        .and.returnValue(of({ personasCopiadas: 2, cccsCopiados: 1, cccAsignado: '001' })),
+      validarNif: () => of({}),
+      validarDatosGenerales: () => of({}),
+      validarDatosPago: () => of({}),
+      modificarCliente: () => of({}),
+      leerClienteCrear: () => of({})
+    };
+
     TestBed.configureTestingModule({
     declarations: [ClienteComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [IonicModule.forRoot(), RouterTestingModule],
     providers: [
         Usuario,
+        { provide: ClienteService, useValue: servicio },
+        { provide: AlertController, useValue: { create: (opciones: any) => { alertCreado = opciones; return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }); } } },
         { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: Storage, useValue: {} },
         { provide: Geolocation, useValue: { getCurrentPosition: () => Promise.resolve({ coords: { latitude: 0, longitude: 0, accuracy: 0 } }) } },
@@ -40,5 +60,59 @@ describe('ClienteComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // Issue #168 (NestoAPI#438): al crear un contacto de un cliente que ya existe se ofrece
+  // copiarle las personas de contacto y los CCC del principal, que antes copiaba
+  // administración a mano.
+  describe('copiar los datos del contacto principal', () => {
+    it('pregunta si copiar cuando lo creado es un contacto de un cliente que ya existía', fakeAsync(() => {
+      const preguntar = spyOn<any>(component, 'preguntarCopiarDatosDelPrincipal').and.resolveTo();
+      component.cliente = { esContacto: true, esUnaModificacion: false };
+
+      component.crearCliente();
+      tick();
+
+      expect(preguntar).toHaveBeenCalledWith('1', '12345', '1');
+    }));
+
+    it('NO pregunta cuando se está creando un cliente nuevo', fakeAsync(() => {
+      const preguntar = spyOn<any>(component, 'preguntarCopiarDatosDelPrincipal').and.resolveTo();
+      component.cliente = { esContacto: false, esUnaModificacion: false };
+
+      component.crearCliente();
+      tick();
+
+      expect(preguntar).not.toHaveBeenCalled();
+    }));
+
+    it('NO pregunta cuando se está modificando un contacto que ya existía', fakeAsync(() => {
+      const preguntar = spyOn<any>(component, 'preguntarCopiarDatosDelPrincipal').and.resolveTo();
+      component.cliente = { esContacto: true, esUnaModificacion: true };
+
+      component.crearCliente();
+      tick();
+
+      expect(preguntar).not.toHaveBeenCalled();
+    }));
+
+    it('llama al endpoint con el contacto de destino y cuenta lo copiado', fakeAsync(() => {
+      component.copiarDatosDelPrincipal('1', '12345', '1');
+      tick();
+
+      expect(servicio.copiarDatosDelPrincipal).toHaveBeenCalledWith('1', '12345', '1');
+      expect(alertCreado.message).toContain('2 personas de contacto');
+      expect(alertCreado.message).toContain('1 cuentas bancarias');
+    }));
+
+    it('avisa si el servidor rechaza la copia', fakeAsync(() => {
+      servicio.copiarDatosDelPrincipal.and.returnValue(throwError(() => ({ Message: 'No hay contacto principal' })));
+
+      component.copiarDatosDelPrincipal('1', '12345', '1');
+      tick();
+
+      expect(alertCreado.header).toBe('Error');
+      expect(alertCreado.message).toContain('No hay contacto principal');
+    }));
   });
 });
