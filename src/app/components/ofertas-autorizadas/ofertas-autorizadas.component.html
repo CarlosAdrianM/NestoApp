@@ -1,0 +1,110 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Ofertas autorizadas</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cargar()">
+        <ion-icon name="refresh"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [value]="tipoSeleccionado" (ionChange)="cambiarTipo($event)">
+      <ion-segment-button value="combinada">
+        <ion-label>Combinadas</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="familia">
+        <ion-label>Por familia</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="escalonada">
+        <ion-label>Escalonadas</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="cargando" class="ion-text-center ion-padding">
+    <ion-spinner></ion-spinner>
+  </div>
+
+  <div *ngIf="!cargando && !hayOfertas" class="ion-text-center ion-padding">
+    <ion-icon name="pricetags-outline" color="medium" size="large"></ion-icon>
+    <p>No hay ofertas autorizadas de este tipo.</p>
+  </div>
+
+  <!-- Ofertas combinadas: importe mínimo + líneas (producto o filtro), con alternativas -->
+  <ion-list *ngIf="tipoSeleccionado === 'combinada'">
+    <ng-container *ngFor="let oferta of combinadas">
+      <ion-item button detail="false" (click)="alternarOferta('combinada', oferta.Id)">
+        <ion-label class="ion-text-wrap">
+          <h2>{{ oferta.Nombre }}</h2>
+          <p>Desde {{ importe(oferta.ImporteMinimo) }} · {{ vigencia(oferta.FechaDesde, oferta.FechaHasta) }}</p>
+          <p *ngIf="oferta.UnidadesRegaladas > 1">Regala {{ oferta.UnidadesRegaladas }} unidades por oferta</p>
+        </ion-label>
+        <ion-icon slot="end" [name]="estaAbierta('combinada', oferta.Id) ? 'chevron-up' : 'chevron-down'"></ion-icon>
+      </ion-item>
+
+      <div *ngIf="estaAbierta('combinada', oferta.Id)" class="detalle">
+        <ion-item *ngFor="let linea of oferta.Detalles" lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="producto">{{ descripcionLinea(linea) }}</p>
+            <p>
+              {{ textoCantidad(linea) }}
+              <ion-badge *ngIf="linea.GrupoAlternativa" color="medium">
+                Alternativa {{ linea.GrupoAlternativa }}
+              </ion-badge>
+            </p>
+          </ion-label>
+        </ion-item>
+      </div>
+    </ng-container>
+  </ion-list>
+
+  <!-- Ofertas por familia: lleva X y te regalamos Y -->
+  <ion-list *ngIf="tipoSeleccionado === 'familia'">
+    <ion-item *ngFor="let oferta of familias" lines="full">
+      <ion-label class="ion-text-wrap">
+        <h2>{{ oferta.FamiliaDescripcion || oferta.Familia }}</h2>
+        <p>Lleva {{ oferta.CantidadConPrecio }} y te regalamos {{ oferta.CantidadRegalo }}</p>
+        <p *ngIf="oferta.FiltroProducto">Solo productos que empiecen por "{{ oferta.FiltroProducto.trim() }}"</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <!-- Ofertas escalonadas: tramos por cantidad -->
+  <ion-list *ngIf="tipoSeleccionado === 'escalonada'">
+    <ng-container *ngFor="let oferta of escalonadas">
+      <ion-item button detail="false" (click)="alternarOferta('escalonada', oferta.Id)">
+        <ion-label class="ion-text-wrap">
+          <h2>{{ oferta.Nombre }}</h2>
+          <p>{{ vigencia(oferta.FechaDesde, oferta.FechaHasta) }}</p>
+        </ion-label>
+        <ion-icon slot="end" [name]="estaAbierta('escalonada', oferta.Id) ? 'chevron-up' : 'chevron-down'"></ion-icon>
+      </ion-item>
+
+      <div *ngIf="estaAbierta('escalonada', oferta.Id)" class="detalle">
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="producto">Tramos</p>
+            <p *ngFor="let tramo of oferta.Tramos">
+              Desde {{ tramo.CantidadMinima }} ud. → {{ porcentaje(tramo.Descuento) }} de descuento
+            </p>
+          </ion-label>
+        </ion-item>
+        <ion-item *ngFor="let producto of oferta.Productos" lines="none">
+          <ion-label class="ion-text-wrap">
+            <p class="producto">{{ producto.Producto?.trim() }} - {{ producto.ProductoNombre }}</p>
+            <p>PVP {{ importe(producto.PrecioBase) }}</p>
+          </ion-label>
+        </ion-item>
+      </div>
+    </ng-container>
+  </ion-list>
+</ion-content>

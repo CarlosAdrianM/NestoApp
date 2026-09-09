@@ -41,6 +41,7 @@ import { ListaPedidosVentaComponent } from './components/lista-pedidos-venta/lis
 import { PedidoVentaComponent } from './components/pedido-venta/pedido-venta.component';
 import { LineaVentaComponent } from './components/linea-venta/linea-venta.component';
 import { NifIncorrectosComponent } from './components/nif-incorrectos/nif-incorrectos.component';
+import { OfertasAutorizadasComponent } from './components/ofertas-autorizadas/ofertas-autorizadas.component';
 import { SelectorPlantillaVentaComponent } from './components/selector-plantilla-venta/selector-plantilla-venta.component';
 import { SelectorPlantillaVentaDetalleComponent } from './components/selector-plantilla-venta-detalle/selector-plantilla-venta-detalle.component';
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
@@ -59,7 +60,6 @@ import { MsalModule,
          MSAL_INSTANCE } from '@azure/msal-angular';
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
-import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser/ngx';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
@@ -116,6 +116,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         PedidoVentaComponent,
         LineaVentaComponent,
         NifIncorrectosComponent,
+        OfertasAutorizadasComponent,
         SelectorPlantillaVentaComponent,
         SelectorPlantillaVentaDetalleComponent,
         PlantillaVentaComponent,
@@ -150,7 +151,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             useFactory: MSALInstanceFactory
         },
         MsalService,
-        InAppBrowser,
         HTTP,
         {
             provide: APP_INITIALIZER,

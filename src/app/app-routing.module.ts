@@ -6,6 +6,7 @@ import { ComisionesComponent } from './components/comisiones/comisiones.componen
 import { ExtractoClienteComponent } from './components/extracto-cliente/extracto-cliente.component';
 import { LineaVentaComponent } from './components/linea-venta/linea-venta.component';
 import { NifIncorrectosComponent } from './components/nif-incorrectos/nif-incorrectos.component';
+import { OfertasAutorizadasComponent } from './components/ofertas-autorizadas/ofertas-autorizadas.component';
 import { ListaPedidosVentaComponent } from './components/lista-pedidos-venta/lista-pedidos-venta.component';
 import { ListaProductosComponent } from './components/lista-productos/lista-productos.component';
 import { ListaRapportsComponent } from './components/lista-rapports/lista-rapports.component';
@@ -47,6 +48,12 @@ const routes: Routes = [
   {
     path: 'nif-incorrectos',
     component: NifIncorrectosComponent
+  },
+  {
+    // Issue #137: destino del deeplink de la push de ofertas autorizadas (query params
+    // opcionales tipo e id para abrir directamente una oferta concreta).
+    path: 'ofertas-autorizadas',
+    component: OfertasAutorizadasComponent
   },
   {
     path: 'lista-productos',

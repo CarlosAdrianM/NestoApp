@@ -46,6 +46,7 @@ export class AppComponent {
       { title: 'Productos', url: '/lista-productos', icon: 'pricetag' },
       { title: 'Clientes', url: '/cliente', icon: 'people' },
       { title: 'NIF incorrectos', url: '/nif-incorrectos', icon: 'alert-circle' },
+      { title: 'Ofertas autorizadas', url: '/ofertas-autorizadas', icon: 'pricetags' },
       { title: 'Usuario', url: '/profile', icon: 'person' },
     ];
 
