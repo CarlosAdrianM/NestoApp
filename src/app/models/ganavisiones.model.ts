@@ -62,3 +62,12 @@ export interface ProductoSinStock {
   ProductoNombre: string;
   AlmacenConStock: string | null;
 }
+
+/**
+ * NestoAPI#466 / NestoApp#171: grupos cuya base imponible genera Ganavisiones.
+ * La lista de verdad es la del servidor (`GET api/Ganavisiones/GruposBonificables`),
+ * que es la que valida el pedido al guardarlo; esto es solo el valor de reserva
+ * para cuando la llamada aún no ha respondido o ha fallado.
+ * La peluquería (PEL) quedó fuera el 09/09/26.
+ */
+export const GRUPOS_BONIFICABLES_POR_DEFECTO: string[] = ['COS', 'ACC'];

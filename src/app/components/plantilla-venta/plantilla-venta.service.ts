@@ -136,6 +136,15 @@ export class PlantillaVentaService {
     return this.http.get(url, { params: params });
   }
 
+  /**
+   * NestoApp#171 / NestoAPI#466: la lista de grupos que generan Ganavisiones vive en el
+   * servidor, que es quien valida el pedido al guardarlo. La app la lee en vez de copiarla.
+   */
+  public cargarGruposBonificables(): Observable<string[]> {
+    const url = Configuracion.API_URL + '/Ganavisiones/GruposBonificables';
+    return this.http.get<string[]>(url);
+  }
+
   public cargarProductosBonificables(
     empresa: string,
     baseImponibleBonificable: number,

@@ -19,6 +19,7 @@ import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.compone
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
+import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
 
 @Component({
     selector: 'app-plantilla-venta',
@@ -147,6 +148,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.fechaEntrega = this.fechaMinima;
     */
    await this.calcularFechaMinima();
+
+    this.cargarGruposBonificables();
 
     // Issue #150: si llegamos con empresa+numero, cargamos ese pedido en modo edición.
     const qp = this.route.snapshot.queryParams;
@@ -377,7 +380,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   // Ganavisiones / Regalos
   public regalosSeleccionados: RegaloSeleccionado[] = [];
-  private readonly GRUPOS_BONIFICABLES = ['COS', 'ACC', 'PEL'];
+  // NestoApp#171: la lista la manda el servidor (GET api/Ganavisiones/GruposBonificables);
+  // esto es solo el valor de reserva hasta que responde.
+  private gruposBonificables: string[] = [...GRUPOS_BONIFICABLES_POR_DEFECTO];
   private productosBonificablesCount: number = -1; // -1 = no verificado aún
 
   // Borradores (Issue #77) - nombres como Nesto
@@ -390,10 +395,26 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private plazosPagoProtegido: string | null = null;
   private timeoutRestauracionId: any = null; // Para cancelar setTimeout si el usuario cambia dirección
 
+  /**
+   * NestoApp#171: los grupos que generan Ganavisiones los decide el servidor. Si la llamada
+   * falla se sigue con el valor de reserva: como mucho la app ofrece regalos que el servidor
+   * rechazará al guardar, que es lo que pasaba antes de leerla.
+   */
+  private cargarGruposBonificables(): void {
+    this.servicio.cargarGruposBonificables().subscribe({
+      next: grupos => {
+        if (grupos && grupos.length) {
+          this.gruposBonificables = grupos.map(g => g.trim().toUpperCase());
+        }
+      },
+      error: error => console.warn('No se han podido cargar los grupos bonificables', error)
+    });
+  }
+
   get baseImponibleBonificable(): number {
     if (!this.productosResumen) return 0;
     return this.productosResumen
-      .filter(p => p.grupo && this.GRUPOS_BONIFICABLES.includes(p.grupo.trim().toUpperCase()))
+      .filter(p => p.grupo && this.gruposBonificables.includes(p.grupo.trim().toUpperCase()))
       .reduce((sum, p) => {
         const base = p.cantidad * p.precio * (1 - p.descuento);
         // Issue #127: la unidad de oferta personalizada también aporta a la base bonificable.

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ProductoBonificable } from '../../models/ganavisiones.model';
+import { GRUPOS_BONIFICABLES_POR_DEFECTO, ProductoBonificable } from '../../models/ganavisiones.model';
 import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.component';
 
 /**
@@ -7,7 +7,7 @@ import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.compone
  * Estos tests verifican los cálculos y la lógica de negocio sin necesitar el componente completo.
  */
 describe('PlantillaVenta - Lógica Ganavisiones', () => {
-  const GRUPOS_BONIFICABLES = ['COS', 'ACC', 'PEL'];
+  const GRUPOS_BONIFICABLES = GRUPOS_BONIFICABLES_POR_DEFECTO;
 
   // Helper functions que replican la lógica del componente
   function calcularBaseImponibleBonificable(productosResumen: any[]): number {
@@ -45,16 +45,29 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       expect(calcularBaseImponibleBonificable([])).toBe(0);
     });
 
-    it('debe sumar solo productos de grupos bonificables (COS, ACC, PEL)', () => {
+    it('debe sumar solo productos de grupos bonificables (COS, ACC)', () => {
       const productos = [
         { grupo: 'COS', cantidad: 1, precio: 100, descuento: 0 },
         { grupo: 'ACC', cantidad: 2, precio: 50, descuento: 0 },
-        { grupo: 'PEL', cantidad: 1, precio: 30, descuento: 0 },
         { grupo: 'OTR', cantidad: 5, precio: 200, descuento: 0 }, // No bonificable
       ];
 
-      // COS: 1*100 = 100, ACC: 2*50 = 100, PEL: 1*30 = 30, Total = 230
-      expect(calcularBaseImponibleBonificable(productos)).toBe(230);
+      // COS: 1*100 = 100, ACC: 2*50 = 100, Total = 200
+      expect(calcularBaseImponibleBonificable(productos)).toBe(200);
+    });
+
+    // NestoApp#171 / NestoAPI#466: la peluquería dejó de generar Ganavisiones el 09/09/26.
+    it('NO debe sumar los productos del grupo PEL (peluquería)', () => {
+      const productos = [
+        { grupo: 'COS', cantidad: 1, precio: 100, descuento: 0 },
+        { grupo: 'PEL', cantidad: 1, precio: 1000, descuento: 0 },
+      ];
+
+      expect(calcularBaseImponibleBonificable(productos)).toBe(100);
+    });
+
+    it('el valor de reserva de grupos bonificables no lleva PEL', () => {
+      expect(GRUPOS_BONIFICABLES_POR_DEFECTO).toEqual(['COS', 'ACC']);
     });
 
     it('debe aplicar el descuento correctamente', () => {
@@ -80,7 +93,7 @@ describe('PlantillaVenta - Lógica Ganavisiones', () => {
       const productos = [
         { grupo: ' cos ', cantidad: 1, precio: 100, descuento: 0 },
         { grupo: 'Acc', cantidad: 1, precio: 50, descuento: 0 },
-        { grupo: 'PEL  ', cantidad: 1, precio: 30, descuento: 0 },
+        { grupo: 'acc  ', cantidad: 1, precio: 30, descuento: 0 },
       ];
 
       expect(calcularBaseImponibleBonificable(productos)).toBe(180);
