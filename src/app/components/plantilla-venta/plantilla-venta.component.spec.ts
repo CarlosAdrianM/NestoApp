@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { AlertController, IonicModule, LoadingController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
-import { FirebaseAnalytics } from '@awesome-cordova-plugins/firebase-analytics/ngx';
+import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { Storage } from '@ionic/storage-angular';
 
 import { PlantillaVentaComponent } from './plantilla-venta.component';
+import { PlantillaVentaService } from './plantilla-venta.service';
+import { of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PlantillaVentaComponent', () => {
@@ -136,4 +138,59 @@ describe('Formateo de fechas sin desfase UTC (#85)', () => {
       expect(isoString).toBe('2026-02-17');
     }
   });
+});
+
+/**
+ * Issue #172 (NestoAPI#468): al ampliar un pedido, el servidor podía responder 200 sin haber
+ * guardado nada. El arreglo va entero en el servidor (UnirPedidos ahora lanza), pero aquí se
+ * fija lo que la app tiene que hacer cuando la ampliación falla: NO dar el pedido por ampliado,
+ * NO registrar la analítica y, sobre todo, NO reinicializar (eso borraría lo que el vendedor
+ * tiene metido en la plantilla y le dejaría sin nada que reintentar).
+ */
+describe('Ampliar pedido cuando el servidor lo rechaza (#172)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let logEvent: jasmine.Spy;
+  let servicio: any;
+
+  beforeEach(waitForAsync(() => {
+    logEvent = jasmine.createSpy('logEvent');
+    servicio = {
+      unirPedidos: jasmine.createSpy('unirPedidos')
+        .and.returnValue(throwError(() => ({ Message: 'No se puede servir junto' }))),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC'])
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        { provide: AlertController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }) } },
+        { provide: FirebaseAnalytics, useValue: { logEvent } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  it('no reinicializa la plantilla ni registra la analítica si la ampliación falla', fakeAsync(() => {
+    const reinicializar = spyOn<any>(component, 'reinicializar');
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', cifNif: 'B12345678' };
+
+    component['ejecutarAmpliacion']({ numero: 0 }, false);
+    tick();
+
+    expect(servicio.unirPedidos).toHaveBeenCalled();
+    expect(reinicializar).not.toHaveBeenCalled();
+    expect(logEvent).not.toHaveBeenCalled();
+  }));
 });
