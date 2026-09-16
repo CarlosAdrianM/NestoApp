@@ -387,6 +387,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   // Borradores (Issue #77) - nombres como Nesto
   private borradorEnRestauracion: BorradorPlantillaVenta | null = null;
+  // Issue #173: borrador cargado explícitamente (onCargarBorrador), para ofrecer borrarlo al
+  // crear el pedido. borradorEnRestauracion no sirve: se limpia al aplicar las líneas.
+  private borradorOrigen: BorradorPlantillaVenta | null = null;
   private borradorRestauradoEnProductos: boolean = false;
   public listaBorradores: BorradorMetadata[] = [];
   public contactoParaRestaurar: string = ''; // Para preseleccionar dirección al cargar borrador
@@ -1192,7 +1195,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                     buttons: ['Ok'],
                 });
                 await alert.present();
+                // Issue #173: si el pedido nace de un borrador cargado, ofrecer borrarlo al
+                // cerrar la alerta. Se captura antes de reinicializar, que limpia el campo.
+                const borradorOrigen = this.borradorOrigen;
+                this.borradorOrigen = null;
                 this.reinicializar();
+                alert.onDidDismiss().then(() => this.preguntarBorrarBorrador(numeroPedido, borradorOrigen));
             },
             async error => {
                 await loading.dismiss();
@@ -1254,7 +1262,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           buttons: ['Ok'],
         });
         await alert.present();
+        // Issue #173: la ampliación también consume el borrador cargado.
+        const borradorOrigen = this.borradorOrigen;
+        this.borradorOrigen = null;
         this.reinicializar();
+        alert.onDidDismiss().then(() => this.preguntarBorrarBorrador(data.numero, borradorOrigen));
       },
       async error => {
         await loading.dismiss();
@@ -1385,6 +1397,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.edicionMetaLineas.clear();
       this.edicionMetaRegalos.clear();
       this.lineasEnAlbaranOFactura = 0;
+      // Issue #173: la plantilla limpia deja de apuntar al borrador cargado.
+      this.borradorOrigen = null;
   }
       
   get importePortesMostrar(): number {
@@ -1687,7 +1701,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         });
         await alert.present();
         await loading.dismiss();
+        // Issue #173: mismo ofrecimiento que en el flujo normal de crear.
+        const borradorOrigen = this.borradorOrigen;
+        this.borradorOrigen = null;
         this.reinicializar();
+        alert.onDidDismiss().then(() => this.preguntarBorrarBorrador(data.numero, borradorOrigen));
       },
       async error => {
         await loading.dismiss();
@@ -2205,6 +2223,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         throw new Error('Borrador no encontrado');
       }
 
+      // Issue #173: apuntar el borrador para ofrecer borrarlo cuando el pedido se cree.
+      // Solo aquí: los pedidos convertidos del modo edición (#150) no pasan por este método.
+      this.borradorOrigen = borrador;
       this.aplicarBorradorParaRestaurar(borrador);
 
       await loading.dismiss();
@@ -2213,6 +2234,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     } catch (error) {
       await loading.dismiss();
       this.borradorEnRestauracion = null;
+      this.borradorOrigen = null;
       const alert = await this.alertCtrl.create({
         header: 'Error',
         message: 'No se pudo cargar el borrador: ' + (error as Error).message,
@@ -2220,6 +2242,42 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       });
       await alert.present();
     }
+  }
+
+  /**
+   * Issue #173: al terminar un pedido que nació de un borrador cargado, ofrecer borrar el
+   * borrador para que no se acumulen. No se borra en silencio: un borrador puede ser una
+   * base que el vendedor quiere reutilizar. Los borradores guardados automáticamente al
+   * fallar la creación no pasan por aquí (ese borrador es el que hay que conservar).
+   */
+  public async preguntarBorrarBorrador(numeroPedido: string, borrador: BorradorPlantillaVenta | null): Promise<void> {
+    if (!borrador) {
+      return;
+    }
+    const fecha = new Date(borrador.fechaCreacion);
+    const dosDigitos = (n: number) => String(n).padStart(2, '0');
+    const fechaTexto = isNaN(fecha.getTime()) ? '' :
+      ` - ${dosDigitos(fecha.getDate())}/${dosDigitos(fecha.getMonth() + 1)}/${fecha.getFullYear()} ${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`;
+    const lineas = borrador.lineasProducto?.length || 0;
+    const descripcion = `${(borrador.cliente || '').trim()} - ${borrador.nombreCliente || 'Sin cliente'} (${lineas} ${lineas === 1 ? 'línea' : 'líneas'})${fechaTexto}`;
+
+    const alert = await this.alertCtrl.create({
+      header: 'Borrar borrador',
+      message: `El pedido ${numeroPedido} se ha creado a partir del borrador «${descripcion}». ¿Quieres borrar el borrador?`,
+      buttons: [
+        { text: 'No', role: 'cancel' },
+        {
+          text: 'Sí, borrarlo',
+          role: 'destructive',
+          handler: async () => {
+            await this.borradorService.eliminarBorrador(borrador.id);
+            this.firebaseAnalytics.logEvent('borrador_eliminado_tras_pedido', { id: borrador.id, pedido: numeroPedido });
+            await this.onActualizarListaBorradores();
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   /**

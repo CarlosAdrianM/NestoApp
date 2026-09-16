@@ -9,6 +9,7 @@ import { Storage } from '@ionic/storage-angular';
 
 import { PlantillaVentaComponent } from './plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
+import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
@@ -192,5 +193,143 @@ describe('Ampliar pedido cuando el servidor lo rechaza (#172)', () => {
     expect(servicio.unirPedidos).toHaveBeenCalled();
     expect(reinicializar).not.toHaveBeenCalled();
     expect(logEvent).not.toHaveBeenCalled();
+  }));
+});
+
+/**
+ * Issue #173: los borradores se acumulan porque al crear el pedido no se eliminan. No se borra
+ * en silencio (un borrador puede ser una base reutilizable): se pregunta al terminar el pedido
+ * y se hace lo que diga el usuario. Solo aplica al borrador cargado explícitamente
+ * (onCargarBorrador); los borradores que se guardan solos al fallar la creación no entran.
+ */
+describe('Borrar el borrador al crear el pedido (#173)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let borradorService: any;
+  let alertasCreadas: any[];
+  let botonesPulsados: string[];
+
+  const borradorBase = (): any => ({
+    id: 'b1',
+    fechaCreacion: '2026-09-10T12:15:00',
+    usuario: 'carlos',
+    empresa: '1',
+    cliente: '40445',
+    contacto: '0',
+    nombreCliente: 'LUXURY NADOR',
+    lineasProducto: [{ producto: 'p1' }, { producto: 'p2' }, { producto: 'p3' }],
+    lineasRegalo: [],
+    esPresupuesto: false,
+    formaPago: 'EFC',
+    plazosPago: 'CONTADO',
+    fechaEntrega: '',
+    almacenCodigo: 'ALG',
+    mantenerJunto: false,
+    servirJunto: false,
+    total: 100
+  });
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    botonesPulsados = [];
+
+    servicio = {
+      crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: '925001' })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC'])
+    };
+    borradorService = {
+      eliminarBorrador: jasmine.createSpy('eliminarBorrador').and.resolveTo(undefined),
+      obtenerBorradores: jasmine.createSpy('obtenerBorradores').and.resolveTo([]),
+      cargarBorrador: jasmine.createSpy('cargarBorrador').and.resolveTo(borradorBase())
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: borradorService },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: async () => {
+                  const texto = botonesPulsados.shift();
+                  const boton = (opts.buttons || []).find((b: any) => b && b.text === texto);
+                  if (boton && boton.handler) {
+                    await boton.handler();
+                  }
+                },
+                dismiss: () => Promise.resolve(),
+                onDidDismiss: () => Promise.resolve({})
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  it('cargar un borrador lo deja apuntado como origen del próximo pedido', fakeAsync(() => {
+    spyOn<any>(component, 'aplicarBorradorParaRestaurar'); // la restauración en sí no es lo que se prueba
+
+    component.onCargarBorrador('b1');
+    tick();
+
+    expect(component['borradorOrigen']).toEqual(jasmine.objectContaining({ id: 'b1' }));
+  }));
+
+  it('si confirma, elimina el borrador y refresca la lista', fakeAsync(() => {
+    botonesPulsados = ['Sí, borrarlo'];
+
+    component.preguntarBorrarBorrador('925001', borradorBase());
+    tick();
+
+    expect(borradorService.eliminarBorrador).toHaveBeenCalledWith('b1');
+    expect(borradorService.obtenerBorradores).toHaveBeenCalled();
+  }));
+
+  it('si cancela, el borrador se queda como está', fakeAsync(() => {
+    botonesPulsados = ['No'];
+
+    component.preguntarBorrarBorrador('925001', borradorBase());
+    tick();
+
+    expect(borradorService.eliminarBorrador).not.toHaveBeenCalled();
+  }));
+
+  it('sin borrador de origen no se pregunta nada', fakeAsync(() => {
+    component.preguntarBorrarBorrador('925001', null);
+    tick();
+
+    expect(alertasCreadas.length).toBe(0);
+  }));
+
+  it('al crear el pedido desde un borrador cargado se pregunta con el número del pedido', fakeAsync(() => {
+    spyOn<any>(component, 'reinicializar');
+    spyOn<any>(component, 'detectarOfertasSinBeneficio').and.returnValue([]);
+    spyOn<any>(component, 'prepararPedido').and.returnValue({});
+    spyOn<any>(component, 'esTarjetaPrepago').and.returnValue(false);
+    const preguntar = spyOn(component, 'preguntarBorrarBorrador');
+    component['borradorOrigen'] = borradorBase();
+
+    component.crearPedido();
+    tick();
+
+    expect(preguntar).toHaveBeenCalledWith('925001', jasmine.objectContaining({ id: 'b1' }));
+    expect(component['borradorOrigen']).toBeNull();
   }));
 });
