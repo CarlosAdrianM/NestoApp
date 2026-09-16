@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { AlertController, IonicModule, LoadingController, NavController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Usuario } from 'src/app/models/Usuario';
@@ -34,7 +34,7 @@ describe('RapportComponent', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { queryParams: { rapport: { Cliente: '0', Contacto: '', Id: 0, Tipo: '' } } } } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: { get: () => Promise.resolve(null) } },
-        { provide: RapportService, useValue: { getCliente: () => of(clienteDevuelto) } },
+        { provide: RapportService, useValue: { getCliente: () => of(clienteDevuelto), crearRapport: () => of({ 'NºOrden': 1 }) } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]
@@ -102,6 +102,104 @@ describe('RapportComponent', () => {
       component.leerCliente('0', '0');
 
       expect(component.rapport.Empleados).toBe(5);
+    });
+  });
+
+  // NestoApp#175 / NestoAPI#464: la combo está desde 2.20.0 pero nadie la rellena (368 rapports
+  // de Madrid, ninguno con empleados). Si está visible y vacía, al guardar hay que pedir al
+  // vendedor que confirme que no lo rellena porque no lo sabe.
+  describe('confirmar empleados vacíos al guardar (#175)', () => {
+    let alertasCreadas: any[];
+    let botonesPulsados: string[]; // textos de botón a pulsar automáticamente, por orden de alerta
+    let crearRapportSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      alertasCreadas = [];
+      botonesPulsados = [];
+
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callFake(async (opts: any) => {
+        alertasCreadas.push(opts);
+        return {
+          present: async () => {
+            const texto = botonesPulsados.shift();
+            const boton = (opts.buttons || []).find((b: any) => b && b.text === texto);
+            if (boton && boton.handler) {
+              await boton.handler();
+            }
+          },
+          dismiss: async () => true,
+          onDidDismiss: () => new Promise(() => { })
+        } as any;
+      });
+
+      const loadingCtrl = TestBed.inject(LoadingController);
+      spyOn(loadingCtrl, 'create').and.callFake(async () => ({
+        present: async () => { },
+        dismiss: async () => true
+      } as any));
+
+      const nav = TestBed.inject(NavController);
+      spyOn(nav, 'pop').and.resolveTo(true);
+
+      const servicio = TestBed.inject(RapportService);
+      crearRapportSpy = spyOn(servicio, 'crearRapport').and.callThrough();
+    });
+
+    const mensajeEmpleados = (opts: any) => opts && typeof opts.message === 'string' && opts.message.includes('empleados');
+
+    it('visible + vacía + no confirma: no se crea el rapport y se vuelve al formulario', async () => {
+      component.preguntarEmpleados = true;
+      component.rapport.Empleados = null;
+      botonesPulsados = ['No, voy a rellenarlo'];
+
+      await component.modificarRapport();
+
+      expect(crearRapportSpy).not.toHaveBeenCalled();
+      expect(alertasCreadas.length).toBe(1);
+      expect(mensajeEmpleados(alertasCreadas[0])).toBeTrue();
+    });
+
+    it('visible + vacía + confirma que no lo sabe: se crea el rapport', async () => {
+      component.preguntarEmpleados = true;
+      component.rapport.Empleados = null;
+      botonesPulsados = ['Sí, no lo sé', 'Sí'];
+
+      await component.modificarRapport();
+
+      expect(crearRapportSpy).toHaveBeenCalled();
+      expect(mensajeEmpleados(alertasCreadas[0])).toBeTrue();
+    });
+
+    it('combo no visible: no se pregunta por los empleados', async () => {
+      component.preguntarEmpleados = false;
+      component.rapport.Empleados = null;
+      botonesPulsados = ['No'];
+
+      await component.modificarRapport();
+
+      expect(alertasCreadas.some(mensajeEmpleados)).toBeFalse();
+      expect(alertasCreadas[0].message).toContain('guardar el rapport');
+    });
+
+    it('combo con valor: no se pregunta', async () => {
+      component.preguntarEmpleados = true;
+      component.rapport.Empleados = 3;
+      botonesPulsados = ['No'];
+
+      await component.modificarRapport();
+
+      expect(alertasCreadas.some(mensajeEmpleados)).toBeFalse();
+    });
+
+    it('el 0 de "sin empleados" cuenta como valor: no se pregunta', async () => {
+      component.preguntarEmpleados = true;
+      component.rapport.Empleados = 0;
+      botonesPulsados = ['No'];
+
+      await component.modificarRapport();
+
+      expect(alertasCreadas.some(mensajeEmpleados)).toBeFalse();
     });
   });
 });

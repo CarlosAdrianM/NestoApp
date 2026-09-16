@@ -136,6 +136,16 @@ export class RapportComponent implements AfterViewInit {
 
   public async modificarRapport(): Promise<void> {
 
+      // NestoApp#175 / NestoAPI#464: la combo de empleados está pero los vendedores no se fijan
+      // (368 rapports de Madrid sin el dato). Si está visible y vacía, no se guarda sin que el
+      // vendedor confirme que no lo rellena porque no lo sabe. El 0 de «Sin empleados» es valor.
+      if (this.preguntarEmpleados && (this.rapport.Empleados === undefined || this.rapport.Empleados === null)) {
+          const confirmado = await this.confirmarEmpleadosVacios();
+          if (!confirmado) {
+              return;
+          }
+      }
+
       const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere guardar el rapport?',
@@ -225,6 +235,30 @@ export class RapportComponent implements AfterViewInit {
       });
 
       await confirm.present();
+  }
+
+  private confirmarEmpleadosVacios(): Promise<boolean> {
+      return new Promise<boolean>(resolve => {
+          this.alertCtrl.create({
+              header: 'Empleados del centro',
+              message: 'No has indicado los empleados del centro. ¿Confirmas que no lo rellenas porque no lo sabes?',
+              buttons: [
+                  {
+                      text: 'No, voy a rellenarlo',
+                      role: 'cancel',
+                      handler: () => resolve(false)
+                  },
+                  {
+                      text: 'Sí, no lo sé',
+                      handler: () => resolve(true)
+                  }
+              ]
+          }).then(async alert => {
+              // Cerrar tocando fuera cuenta como «no confirmo»: se vuelve al formulario.
+              alert.onDidDismiss().then(() => resolve(false));
+              await alert.present();
+          });
+      });
   }
 
   public seleccionarContacto(evento: any): void {
