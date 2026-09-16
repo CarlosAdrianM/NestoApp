@@ -36,6 +36,9 @@ export class PedidoVenta {
     public vistoBuenoPlazosPago: boolean;
     public mantenerJunto: boolean;
     public servirJunto: boolean;
+    /** NestoApp#174 / NestoAPI#482: modo de servicio (1..4). La API lo devuelve siempre al
+     * leer; un pedido viejo sin él enseña el derivado de servirJunto. */
+    public modoServicio: number;
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;

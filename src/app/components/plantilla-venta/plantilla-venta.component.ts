@@ -20,6 +20,8 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto } from 'src/app/models/modos-servicio.model';
+import { Parametros } from 'src/app/services/parametros.service';
 
 @Component({
     selector: 'app-plantilla-venta',
@@ -45,9 +47,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private modalCtrl: ModalController,
     private borradorService: BorradorPlantillaVentaService,
     private pedidoVentaService: PedidoVentaService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private parametros: Parametros
     ) {
       this.almacen = this.usuario.almacen;
+      // NestoApp#174: el parámetro de usuario ModoServicioPorDefecto permite excepciones al 3.
+      this.parametros.leer('ModoServicioPorDefecto').subscribe(
+          data => { this.modoServicioPorDefecto = parsearModoPorDefecto(data); },
+          () => { this.modoServicioPorDefecto = MODOS_SERVICIO.POR_DEFECTO; }
+      );
       events.subscribe('clienteModificado', (clienteModificado: any) => {
           this.clienteSeleccionado = clienteModificado;
           this.cargarProductos(clienteModificado);
@@ -268,6 +276,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
   }  
 
+  // NestoApp#174 / NestoAPI#482: modo de servicio elegido (1..4). Null = nadie ha tocado el
+  // selector; el getter modoServicio deriva entonces del servirJunto o del por defecto.
+  private modoServicioSeleccionado: number | null = null;
+  public modoServicioPorDefecto: number = MODOS_SERVICIO.POR_DEFECTO;
+  public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
+
   private _direccionSeleccionada: any;
   get direccionSeleccionada(): any {
       return this._direccionSeleccionada;
@@ -279,6 +293,20 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
       this._direccionSeleccionada = value;
       if (value) {
+          // NestoApp#174: el pedido nace en el modo de servicio por defecto y NO se arrastra
+          // el servirJunto de la ficha (una referencia agotada dejaba pedidos «todo junto»
+          // sin servir nunca). Al restaurar borrador manda lo guardado (o su bool si es viejo).
+          if (this.borradorEnRestauracion) {
+              this.modoServicioSeleccionado = this.borradorEnRestauracion.modoServicio ??
+                  modoEfectivo(null, !!this.borradorEnRestauracion.servirJunto);
+              value.servirJunto = esTodoJunto(this.modoServicioSeleccionado);
+          } else if (direccionCambiando && !this.contactoParaRestaurar) {
+              this.modoServicioSeleccionado = this.modoServicioPorDefecto;
+              value.servirJunto = esTodoJunto(this.modoServicioPorDefecto);
+          } else if (this.modoServicioSeleccionado !== null) {
+              // Restauración tardía o re-selección: conservar el modo que ya había.
+              value.servirJunto = esTodoJunto(this.modoServicioSeleccionado);
+          }
           // Si estamos restaurando un borrador, usar los valores del borrador
           if (this.borradorEnRestauracion) {
               this.formaPago = this.borradorEnRestauracion.formaPago || value.formaPago;
@@ -519,23 +547,58 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   get indexSlideDireccion(): number { return 3 + this.offsetRegalos; }
   get indexSlidePago(): number { return 4 + this.offsetRegalos; }
 
-  // Getter para usar en template (el operador ?? no está soportado en templates Angular)
+  // NestoApp#174: a portes, bonificables y muestras les importa si el pedido acaba en una
+  // entrega única (modos 1 y 4), no el bool antiguo. El nombre se conserva por el contrato
+  // con selector-plantilla-venta y selector-regalos.
   get servirJuntoParaRegalos(): boolean {
-    return this.direccionSeleccionada ? this.direccionSeleccionada.servirJunto : true;
+    return esEntregaUnica(this.modoServicio);
   }
 
-  public async onServirJuntoChange(event: any): Promise<void> {
-    const nuevoValor = event.detail.checked;
+  /**
+   * NestoApp#174 / NestoAPI#482: el modo que rige (espejo de Nesto#476). servirJunto marcado
+   * SIEMPRE es «todo junto»; desmarcado, manda el modo parcial elegido o el 2. Sin dirección
+   * todavía, se enseña el por defecto: es con lo que nacerá el pedido.
+   */
+  get modoServicio(): number {
+    if (this.direccionSeleccionada?.servirJunto) {
+      return MODOS_SERVICIO.TODO_JUNTO;
+    }
+    if (this.modoServicioSeleccionado !== null && !esTodoJunto(this.modoServicioSeleccionado)) {
+      return this.modoServicioSeleccionado;
+    }
+    if (!this.direccionSeleccionada) {
+      return this.modoServicioPorDefecto;
+    }
+    return MODOS_SERVICIO.SEGUN_VAYA_ENTRANDO;
+  }
 
-    // Issue #122: al marcar volvemos a recalcular base de portes y portes
-    // (con servir junto cambia qué líneas cuentan para la base).
-    if (nuevoValor) {
-      this.recalcularPortesTrasServirJunto();
+  public cambiarModoServicio(nuevo: number): void {
+    const anterior = this.modoServicio;
+    if (anterior === nuevo) {
       return;
     }
+    this.modoServicioSeleccionado = nuevo;
+    if (this.direccionSeleccionada) {
+      this.direccionSeleccionada.servirJunto = esTodoJunto(nuevo);
+    }
+    // Issue #122: con el modo cambia qué líneas cuentan para la base de portes.
+    this.recalcularPortesTrasServirJunto();
+    // Pasar de más a menos restrictivo (salir de «todo junto») pasa por las mismas reglas
+    // que el desmarcado de antes; entre modos parciales y hacia el 1, libre.
+    if (esTodoJunto(anterior) && !esTodoJunto(nuevo)) {
+      this.validarSalidaDeTodoJunto(nuevo);
+    }
+  }
 
-    // Si se está desmarcando "Servir Junto", validar con el servidor
-    if (!nuevoValor) {
+  /** Vuelve a «Todo junto» cuando el servidor o el usuario no aceptan salir de él. */
+  private revertirATodoJunto(): void {
+    this.modoServicioSeleccionado = MODOS_SERVICIO.TODO_JUNTO;
+    if (this.direccionSeleccionada) {
+      this.direccionSeleccionada.servirJunto = true;
+    }
+  }
+
+  private validarSalidaDeTodoJunto(nuevoModo: number): void {
       const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
         ProductoId: r.producto.ProductoId,
         Cantidad: r.cantidad
@@ -568,14 +631,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         notaEntrega: false
       };
 
-      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido, lineasParaPortes).subscribe(
+      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido, lineasParaPortes, nuevoModo).subscribe(
         async (response) => {
           if (!response.PuedeDesmarcar) {
-            // No se puede desmarcar: revertir el toggle y mostrar mensaje
-            this.direccionSeleccionada.servirJunto = true;
+            // No se puede: revertir a «Todo junto» y mostrar mensaje (el servidor ya nombra el modo)
+            this.revertirATodoJunto();
             const alert = await this.alertCtrl.create({
-              header: 'No se puede desmarcar',
-              message: response.Mensaje || 'No se puede desmarcar "Servir Junto" porque hay productos de regalo que lo requieren.',
+              header: 'No se puede cambiar el modo',
+              message: response.Mensaje || 'No se puede cambiar el modo de entrega porque hay productos de regalo que requieren servir todo junto.',
               buttons: ['Ok']
             });
             await alert.present();
@@ -583,9 +646,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             return;
           }
 
-          // Avisos no-bloqueantes al desmarcar: comisión contra reembolso (NestoAPI#187) y
-          // aparición de portes por líneas sobre pedido (NestoAPI#211). Se muestran juntos
-          // en una sola confirmación; si el usuario cancela, se revierte el desmarcado.
+          // Avisos no-bloqueantes al salir de todo junto: comisión contra reembolso (NestoAPI#187)
+          // y aparición de portes por líneas sobre pedido (NestoAPI#211). Se muestran juntos
+          // en una sola confirmación; si el usuario cancela, se revierte el cambio de modo.
           const baseConServirJunto = this._selectorPlantillaVenta?.baseImponibleParaPortes || 0;
           const umbral = this.resultadoPortes?.ImporteMinimoPedidoSinPortes;
           const avisoPortes = PlantillaVentaComponent.construirAvisoPortesAlDesmarcar(
@@ -597,7 +660,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
           if (avisos.length > 0) {
             const confirm = await this.alertCtrl.create({
-              header: 'Servir Junto',
+              header: 'Modo de entrega',
               message: avisos.join('\n\n'),
               buttons: [
                 { text: 'Cancelar', role: 'cancel' },
@@ -607,22 +670,21 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             await confirm.present();
             const { role } = await confirm.onDidDismiss();
             if (role === 'cancel') {
-              this.direccionSeleccionada.servirJunto = true;
+              this.revertirATodoJunto();
             }
           }
-          // Tras procesar el cambio (sea desmarcado aceptado, revertido o sin avisos),
+          // Tras procesar el cambio (sea aceptado, revertido o sin avisos),
           // recalcular base de portes y el texto de portes a mostrar.
           this.recalcularPortesTrasServirJunto();
         },
         async (error) => {
           console.error('Error validando ServirJunto:', error);
-          // Si el servidor falla revertimos al estado seguro (servir junto marcado)
+          // Si el servidor falla revertimos al estado seguro (todo junto)
           // y recalculamos para que la UI quede coherente.
-          this.direccionSeleccionada.servirJunto = true;
+          this.revertirATodoJunto();
           this.recalcularPortesTrasServirJunto();
         }
       );
-    }
   }
 
   /**
@@ -637,7 +699,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private recalcularPortesTrasServirJunto(): void {
     Promise.resolve().then(() => {
       if (this._selectorPlantillaVenta) {
-        this._selectorPlantillaVenta.servirJunto = this.direccionSeleccionada?.servirJunto ?? true;
+        // NestoApp#174: para portes cuentan como «servir junto» los modos de entrega única (1 y 4).
+        this._selectorPlantillaVenta.servirJunto = esEntregaUnica(this.modoServicio);
         this._selectorPlantillaVenta.cargarResumen();
       }
       this.calcularPortes();
@@ -969,7 +1032,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'contactoCobro': this.clienteSeleccionado.contacto.trim(), // calcular
           'noComisiona': this.direccionSeleccionada.noComisiona,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
-          'servirJunto': this.direccionSeleccionada.servirJunto,
+          // NestoApp#174: viaja el modo y el servirJunto derivado (solo el 1 es true), para
+          // que un servidor sin migrar no cambie de comportamiento.
+          'servirJunto': esTodoJunto(this.modoServicio),
+          'modoServicio': this.modoServicio,
           'EsPresupuesto': this.esPresupuesto,
           'NoCobrarComisionReembolso': this.noCobrarComisionReembolso,
           'suPedido': this.suPedido ? this.suPedido.trim() : null,
@@ -1399,6 +1465,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.lineasEnAlbaranOFactura = 0;
       // Issue #173: la plantilla limpia deja de apuntar al borrador cargado.
       this.borradorOrigen = null;
+      // NestoApp#174: el próximo pedido vuelve a nacer en el modo por defecto.
+      this.modoServicioSeleccionado = null;
   }
       
   get importePortesMostrar(): number {
@@ -1838,7 +1906,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       fechaEntrega: this.fechaEntrega || '',
       almacenCodigo: this.almacen || '',
       mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
-      servirJunto: this.direccionSeleccionada?.servirJunto || false,
+      servirJunto: esTodoJunto(this.modoServicio),
+      modoServicio: this.modoServicio, // NestoApp#174
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
       avisarConImporteAlCogerPicking: this.clienteSeleccionado?.avisarConImporteAlCogerPicking || false,
       recogerProducto: this.recogerProducto || false,
@@ -2176,6 +2245,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       almacenCodigo: dto.Almacen,
       mantenerJunto: dto.MantenerJunto || false,
       servirJunto: dto.ServirJunto || false,
+      modoServicio: dto.ModoServicio ?? undefined, // NestoApp#174: el GET ParaPlantilla ya lo trae
       comentarioPicking: dto.ComentarioPicking || '',
       recogerProducto: false,
       suPedido: '',
@@ -2379,8 +2449,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
     // Restaurar flags y comentarios en direccionSeleccionada
     if (this.direccionSeleccionada) {
-      if (borrador.servirJunto !== undefined) {
-        this.direccionSeleccionada.servirJunto = borrador.servirJunto;
+      // NestoApp#174: restaurar el modo de servicio; un borrador viejo solo trae el bool.
+      if (borrador.modoServicio !== undefined || borrador.servirJunto !== undefined) {
+        this.modoServicioSeleccionado = borrador.modoServicio ?? modoEfectivo(null, !!borrador.servirJunto);
+        this.direccionSeleccionada.servirJunto = esTodoJunto(this.modoServicioSeleccionado);
       }
       if (borrador.mantenerJunto !== undefined) {
         this.direccionSeleccionada.mantenerJunto = borrador.mantenerJunto;

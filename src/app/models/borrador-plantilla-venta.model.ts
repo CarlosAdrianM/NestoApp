@@ -80,6 +80,9 @@ export interface BorradorPlantillaVenta {
   almacenCodigo: string;
   mantenerJunto: boolean;
   servirJunto: boolean;
+  /** NestoApp#174 / NestoAPI#482: modo de servicio (1..4). Un borrador viejo no lo trae
+   * y se deriva de servirJunto al restaurar. */
+  modoServicio?: number;
   comentarioPicking?: string;
   avisarConImporteAlCogerPicking?: boolean; // Issue #140: persistir la casilla de aviso con importe
   recogerProducto?: boolean;     // Issue #133: persistir la casilla "Recoger Producto"

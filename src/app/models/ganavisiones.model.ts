@@ -39,6 +39,9 @@ export interface LineaPortesServirJunto {
 
 export interface ValidarServirJuntoRequest {
   Almacen: string;
+  /** NestoApp#174 / NestoAPI#482: modo al que se quiere pasar el pedido (2, 3 o 4), para que
+   * los mensajes de denegación lo nombren. Opcional: sin él el servidor asume el 2. */
+  ModoServicio?: number;
   ProductosBonificadosConCantidad: ProductoBonificadoConCantidad[];
   LineasPedido?: ProductoBonificadoConCantidad[];
   LineasParaPortes?: LineaPortesServirJunto[];

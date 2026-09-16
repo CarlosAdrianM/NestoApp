@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
@@ -131,4 +131,96 @@ describe('Recoger Producto: borrado de etiqueta de recogida (#165)', () => {
       message: 'Ya existe una etiqueta pendiente para este pedido'
     }));
   });
+});
+
+/**
+ * NestoApp#174 / NestoAPI#482: en el detalle del pedido, el toggle «Servir junto» pasa a ser
+ * un selector de modo de servicio. Un pedido viejo sin modo enseña el que deriva de
+ * servirJunto; al cambiar, modoServicio y servirJunto viajan coherentes en el PUT.
+ */
+describe('Modo de servicio en pedido-venta (#174)', () => {
+  let component: PedidoVentaComponent;
+  let fixture: ComponentFixture<PedidoVentaComponent>;
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PedidoVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  it('un pedido viejo sin modo enseña el derivado de servirJunto', () => {
+    component.pedido = { servirJunto: true, Lineas: [] } as any;
+    expect(component.modoServicioPedido).toBe(1);
+
+    component.pedido = { servirJunto: false, Lineas: [] } as any;
+    expect(component.modoServicioPedido).toBe(2);
+  });
+
+  it('un pedido con modo parcial lo enseña tal cual', () => {
+    component.pedido = { servirJunto: false, modoServicio: 3, Lineas: [] } as any;
+    expect(component.modoServicioPedido).toBe(3);
+  });
+
+  it('cambiar entre modos parciales actualiza el pedido sin validar', fakeAsync(() => {
+    component.pedido = { servirJunto: false, modoServicio: 3, Lineas: [] } as any;
+    const validar = spyOn(component['plantillaVentaService'], 'validarServirJunto');
+
+    component.cambiarModoServicio(4);
+    tick();
+
+    expect(validar).not.toHaveBeenCalled();
+    expect(component.pedido.modoServicio).toBe(4);
+    expect(component.pedido.servirJunto).toBeFalse();
+  }));
+
+  it('volver a todo junto marca servirJunto sin validar', fakeAsync(() => {
+    component.pedido = { servirJunto: false, modoServicio: 3, Lineas: [] } as any;
+    const validar = spyOn(component['plantillaVentaService'], 'validarServirJunto');
+
+    component.cambiarModoServicio(1);
+    tick();
+
+    expect(validar).not.toHaveBeenCalled();
+    expect(component.pedido.modoServicio).toBe(1);
+    expect(component.pedido.servirJunto).toBeTrue();
+  }));
+
+  it('salir de todo junto valida y revierte si el servidor deniega', fakeAsync(() => {
+    component.pedido = { servirJunto: true, modoServicio: 1, formaPago: 'EFC', Lineas: [] } as any;
+    const validar = spyOn(component['plantillaVentaService'], 'validarServirJunto')
+      .and.returnValue(of({ PuedeDesmarcar: false, ProductosProblematicos: [], Mensaje: 'Hay muestras pendientes' }));
+    spyOn(component['alertCtrl'], 'create').and.returnValue(
+      Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) } as any)
+    );
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(validar).toHaveBeenCalled();
+    expect(component.pedido.modoServicio).toBe(1);
+    expect(component.pedido.servirJunto).toBeTrue();
+  }));
+
+  it('salir de todo junto con permiso del servidor deja el modo elegido', fakeAsync(() => {
+    component.pedido = { servirJunto: true, modoServicio: 1, formaPago: 'EFC', Lineas: [] } as any;
+    spyOn(component['plantillaVentaService'], 'validarServirJunto')
+      .and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }));
+
+    component.cambiarModoServicio(3);
+    tick();
+
+    expect(component.pedido.modoServicio).toBe(3);
+    expect(component.pedido.servirJunto).toBeFalse();
+  }));
 });

@@ -70,9 +70,12 @@
                 <ion-col class="ion-text-center">{{pedido.periodoFacturacion}}</ion-col>
                 <ion-col (click)="cambiarIVA()" class="ion-text-center">{{pedido.iva}}</ion-col>
               </ion-row>
+              <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
               <ion-item>
-                  <ion-label>Servir Junto</ion-label>
-                  <ion-toggle slot="end" [(ngModel)]="pedido.servirJunto" (ionChange)="onServirJuntoChange($event)"></ion-toggle>
+                  <ion-select label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
+                      [value]="modoServicioPedido" (ionChange)="cambiarModoServicio($event.detail.value)">
+                      <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
+                  </ion-select>
               </ion-item>
               <ion-item>
                   <ion-label>Mantener Junto</ion-label>

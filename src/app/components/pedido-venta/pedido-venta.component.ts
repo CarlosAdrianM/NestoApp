@@ -11,6 +11,7 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo } from 'src/app/models/modos-servicio.model';
 
 @Component({
     selector: 'app-pedido-venta',
@@ -107,10 +108,37 @@ export class PedidoVentaComponent  {
       );
   }
   
-  public async onServirJuntoChange(event: any): Promise<void> {
-      const nuevoValor = event.detail.checked;
-      if (nuevoValor || !this.pedido) return;
+  // NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo.
+  public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 
+  /** El modo que rige: servirJunto marcado siempre es «todo junto»; un pedido viejo sin
+   * modo enseña el derivado del bool. */
+  get modoServicioPedido(): number {
+      return modoEfectivo(this.pedido?.modoServicio, !!this.pedido?.servirJunto);
+  }
+
+  public cambiarModoServicio(nuevo: number): void {
+      if (!this.pedido) return;
+      const anterior = this.modoServicioPedido;
+      if (anterior === nuevo) return;
+
+      this.pedido.modoServicio = nuevo;
+      this.pedido.servirJunto = esTodoJunto(nuevo);
+
+      // Salir de «todo junto» pasa por las mismas reglas que el desmarcado de antes;
+      // entre modos parciales y hacia el 1, libre. El PUT posterior guarda el cambio.
+      if (esTodoJunto(anterior) && !esTodoJunto(nuevo)) {
+          this.validarSalidaDeTodoJunto(nuevo);
+      }
+  }
+
+  /** Vuelve a «Todo junto» cuando el servidor o el usuario no aceptan salir de él. */
+  private revertirATodoJunto(): void {
+      this.pedido.modoServicio = MODOS_SERVICIO.TODO_JUNTO;
+      this.pedido.servirJunto = true;
+  }
+
+  private validarSalidaDeTodoJunto(nuevoModo: number): void {
       const lineasPedido = (this.pedido.Lineas || [])
           .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0)
           .map(l => ({
@@ -127,13 +155,13 @@ export class PedidoVentaComponent  {
           notaEntrega: this.pedido.notaEntrega
       };
 
-      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido).subscribe(
+      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido, undefined, nuevoModo).subscribe(
           async (response) => {
               if (!response.PuedeDesmarcar) {
-                  this.pedido.servirJunto = true;
+                  this.revertirATodoJunto();
                   const alert = await this.alertCtrl.create({
-                      header: 'No se puede desmarcar',
-                      message: response.Mensaje || 'No se puede desmarcar "Servir Junto" porque hay productos que se quedarían pendientes.',
+                      header: 'No se puede cambiar el modo',
+                      message: response.Mensaje || 'No se puede cambiar el modo de entrega porque hay productos que se quedarían pendientes.',
                       buttons: ['Ok']
                   });
                   await alert.present();
@@ -152,7 +180,7 @@ export class PedidoVentaComponent  {
                   await confirm.present();
                   const { role } = await confirm.onDidDismiss();
                   if (role === 'cancel') {
-                      this.pedido.servirJunto = true;
+                      this.revertirATodoJunto();
                   }
               }
           },

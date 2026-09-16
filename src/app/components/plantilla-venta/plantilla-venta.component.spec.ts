@@ -333,3 +333,186 @@ describe('Borrar el borrador al crear el pedido (#173)', () => {
     expect(component['borradorOrigen']).toBeNull();
   }));
 });
+
+/**
+ * NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector con cuatro
+ * modos de servicio. servirJunto se sigue mandando coherente (solo el modo 1 es true) para
+ * que un servidor sin migrar no cambie de comportamiento. Espejo de Nesto#476.
+ */
+describe('Modo de servicio (#174)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    servicio = {
+      validarServirJunto: jasmine.createSpy('validarServirJunto')
+        .and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC']),
+      leerCliente: () => of({}),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: () => Promise.resolve(),
+                dismiss: () => Promise.resolve(),
+                onDidDismiss: () => Promise.resolve({})
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  const direccionBase = (): any => ({
+    contacto: '0', servirJunto: true, mantenerJunto: false, iva: 'G21',
+    formaPago: 'EFC', plazosPago: 'CONTADO', periodoFacturacion: 'NRM',
+    vendedor: 'NV', ruta: '00', ccc: null, noComisiona: 0, comentarioRuta: ''
+  });
+
+  it('sin dirección todavía, el selector enseña el modo por defecto (3)', () => {
+    expect(component.modoServicio).toBe(3);
+  });
+
+  it('al cambiar de dirección el pedido nace en el por defecto, sin arrastrar el servir junto de la ficha', fakeAsync(() => {
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B12345678' };
+
+    component.direccionSeleccionada = direccionBase(); // la ficha viene con servirJunto = true
+    tick();
+
+    expect(component.modoServicio).toBe(3);
+    expect(component.direccionSeleccionada.servirJunto).toBeFalse();
+  }));
+
+  it('pasar de todo junto a un modo parcial valida contra el servidor con el modo elegido', fakeAsync(() => {
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B12345678' };
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: true };
+    component['modoServicioSeleccionado'] = 1;
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(servicio.validarServirJunto).toHaveBeenCalled();
+    const modoEnviado = servicio.validarServirJunto.calls.mostRecent().args[5];
+    expect(modoEnviado).toBe(2);
+    expect(component.modoServicio).toBe(2);
+  }));
+
+  it('si el servidor deniega, se revierte a todo junto y se enseña el mensaje', fakeAsync(() => {
+    servicio.validarServirJunto.and.returnValue(of({ PuedeDesmarcar: false, ProductosProblematicos: [], Mensaje: 'Hay regalos que lo requieren' }));
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B12345678' };
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: true };
+    component['modoServicioSeleccionado'] = 1;
+
+    component.cambiarModoServicio(3);
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(component.direccionSeleccionada.servirJunto).toBeTrue();
+    expect(alertasCreadas.some(a => (a.message || '').includes('Hay regalos que lo requieren'))).toBeTrue();
+  }));
+
+  it('entre modos parciales no se valida (de menos a más restrictivo, libre)', fakeAsync(() => {
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+    component['modoServicioSeleccionado'] = 3;
+
+    component.cambiarModoServicio(4);
+    tick();
+
+    expect(servicio.validarServirJunto).not.toHaveBeenCalled();
+    expect(component.modoServicio).toBe(4);
+  }));
+
+  it('el DTO lleva el modo elegido y el servirJunto coherente (parcial)', () => {
+    component.clienteSeleccionado = { empresa: '1 ', cliente: '12345', contacto: '0', cifNif: 'B12345678', comentarioPicking: null };
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+    component['modoServicioSeleccionado'] = 4;
+    component['productosResumen'] = [];
+    component.formaPago = 'EFC';
+    component.plazosPago = 'CONTADO';
+
+    const pedido = component['prepararPedido']();
+
+    expect(pedido.modoServicio).toBe(4);
+    expect(pedido.servirJunto).toBeFalse();
+  });
+
+  it('el DTO de todo junto viaja con servirJunto true', () => {
+    component.clienteSeleccionado = { empresa: '1 ', cliente: '12345', contacto: '0', cifNif: 'B12345678', comentarioPicking: null };
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: true };
+    component['modoServicioSeleccionado'] = 1;
+    component['productosResumen'] = [];
+    component.formaPago = 'EFC';
+    component.plazosPago = 'CONTADO';
+
+    const pedido = component['prepararPedido']();
+
+    expect(pedido.modoServicio).toBe(1);
+    expect(pedido.servirJunto).toBeTrue();
+  });
+
+  it('el borrador guarda el modo de servicio', () => {
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+    component['modoServicioSeleccionado'] = 4;
+
+    const borrador = component['crearBorradorDesdeEstadoActual']();
+
+    expect(borrador.modoServicio).toBe(4);
+    expect(borrador.servirJunto).toBeFalse();
+  });
+
+  it('restaurar un borrador con modo lo aplica', fakeAsync(() => {
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+    component['borradorEnRestauracion'] = { modoServicio: 4, servirJunto: false } as any;
+
+    component['aplicarConfiguracionBorrador']();
+    tick(1000);
+
+    expect(component.modoServicio).toBe(4);
+  }));
+
+  it('un borrador viejo sin modo deriva del servirJunto', fakeAsync(() => {
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+    component['borradorEnRestauracion'] = { servirJunto: true } as any;
+
+    component['aplicarConfiguracionBorrador']();
+    tick(1000);
+
+    expect(component.modoServicio).toBe(1);
+    expect(component.direccionSeleccionada.servirJunto).toBeTrue();
+  }));
+
+  it('los modos de entrega única (1 y 4) mandan servirJunto=true a portes y regalos', () => {
+    component['_direccionSeleccionada'] = { ...direccionBase(), servirJunto: false };
+
+    component['modoServicioSeleccionado'] = 4;
+    expect(component.servirJuntoParaRegalos).toBeTrue();
+
+    component['modoServicioSeleccionado'] = 3;
+    expect(component.servirJuntoParaRegalos).toBeFalse();
+  });
+});

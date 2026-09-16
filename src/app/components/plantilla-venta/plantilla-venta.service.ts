@@ -189,12 +189,15 @@ export class PlantillaVentaService {
       periodoFacturacion?: string;
       notaEntrega?: boolean;
     },
-    lineasParaPortes?: LineaPortesServirJunto[]
+    lineasParaPortes?: LineaPortesServirJunto[],
+    modoServicio?: number
   ): Observable<ValidarServirJuntoResponse> {
     const url = Configuracion.API_URL + '/PedidosVenta/ValidarServirJunto';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     const body: ValidarServirJuntoRequest = {
       Almacen: almacen,
+      // NestoApp#174 / NestoAPI#482: para que la denegación nombre el modo elegido.
+      ModoServicio: modoServicio,
       ProductosBonificadosConCantidad: productosBonificadosConCantidad,
       LineasPedido: lineasPedido,
       LineasParaPortes: lineasParaPortes,

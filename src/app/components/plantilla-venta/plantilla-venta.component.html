@@ -108,8 +108,12 @@
                         </ng-template>
                     </ion-modal>
                 </ion-item>
+                <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
                 <ion-item>
-                    <ion-toggle [(ngModel)]="direccionSeleccionada.servirJunto" (ionChange)="onServirJuntoChange($event)">Servir Junto</ion-toggle>
+                    <ion-select label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
+                        [value]="modoServicio" (ionChange)="cambiarModoServicio($event.detail.value)">
+                        <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
+                    </ion-select>
                 </ion-item>
                 <ion-item>
                     <ion-toggle [(ngModel)]="direccionSeleccionada.mantenerJunto">Mantener Junto</ion-toggle>
