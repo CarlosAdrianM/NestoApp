@@ -12,12 +12,22 @@ import { AppComponent } from 'src/app/app.component';
 
 import { ProfileComponent } from './profile.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { NovedadesService } from 'src/app/services/novedades.service';
+import { of, throwError } from 'rxjs';
 
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
+  let novedadesService: any;
 
   beforeEach(waitForAsync(() => {
+    novedadesService = {
+      leerNovedades: jasmine.createSpy('leerNovedades').and.returnValue(of([
+        { Id: 2, Version: '2.20.1', Fecha: '2026-09-16', Categoria: 'Nuevo', Titulo: 'Selector de modo de entrega', Descripcion: '', Ambito: 'NestoApp' },
+        { Id: 1, Version: '2.20.0', Fecha: '2026-09-09', Categoria: 'Mejorado', Titulo: 'Arranque más rápido', Descripcion: '', Ambito: 'NestoApp' }
+      ]))
+    };
+
     TestBed.configureTestingModule({
     declarations: [ProfileComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -29,6 +39,7 @@ describe('ProfileComponent', () => {
         { provide: AppVersion, useValue: { getVersionNumber: () => Promise.resolve('0.0.0') } },
         { provide: ToastController, useValue: {} },
         { provide: AppComponent, useValue: { registrarDispositivoPush: () => { } } },
+        { provide: NovedadesService, useValue: novedadesService },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]
@@ -40,5 +51,23 @@ describe('ProfileComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // NestoApp#177: las novedades salen de la tabla Novedades de la API, agrupadas por versión.
+  describe('novedades desde la API (#177)', () => {
+    it('carga y agrupa las novedades al construirse', () => {
+      expect(novedadesService.leerNovedades).toHaveBeenCalled();
+      expect(component.gruposNovedades.length).toBe(2);
+      expect(component.gruposNovedades[0].version).toBe('2.20.1');
+      expect(component.gruposNovedades[0].novedades[0].Titulo).toBe('Selector de modo de entrega');
+    });
+
+    it('si el endpoint falla, la lista queda vacía y la sección no se pinta', () => {
+      novedadesService.leerNovedades.and.returnValue(throwError(() => new Error('sin conexión')));
+
+      const otraFixture = TestBed.createComponent(ProfileComponent);
+
+      expect(otraFixture.componentInstance.gruposNovedades).toEqual([]);
+    });
   });
 });

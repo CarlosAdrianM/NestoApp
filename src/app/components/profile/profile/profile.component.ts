@@ -10,6 +10,7 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
+import { GrupoNovedades, NovedadesService, agruparPorVersion, colorCategoria } from 'src/app/services/novedades.service';
 
 @Component({
     selector: 'app-profile',
@@ -34,13 +35,15 @@ export class ProfileComponent {
   public numeroVersionBinarios: string;
   public numeroVersionActualizacion: string;
   public listaSeEstaVendiendo: any;
+  // NestoApp#177: novedades desde la tabla Novedades de la API, agrupadas por versión.
+  public gruposNovedades: GrupoNovedades[] = [];
 
   constructor(
-      private http: HttpClient, 
-      public usuario: Usuario, 
-      private loadingCtrl: LoadingController, 
-      private local: Storage, 
-      private parametros: Parametros, 
+      private http: HttpClient,
+      public usuario: Usuario,
+      private loadingCtrl: LoadingController,
+      private local: Storage,
+      private parametros: Parametros,
       private alertCtrl: AlertController,
       public auth: AuthService,
       private firebaseAnalytics: FirebaseAnalytics,
@@ -48,10 +51,27 @@ export class ProfileComponent {
       private servicio: ProfileService,
       private nav: NavController,
       private appComponent: AppComponent,
+      private novedadesService: NovedadesService,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
+          this.cargarNovedades();
         }
+
+  private cargarNovedades(): void {
+      this.novedadesService.leerNovedades().subscribe(
+          novedades => { this.gruposNovedades = agruparPorVersion(novedades); },
+          error => {
+              // Sin conexión o endpoint caído: la sección simplemente no se pinta.
+              console.error('No se han podido cargar las novedades:', error);
+              this.gruposNovedades = [];
+          }
+      );
+  }
+
+  public colorCategoria(categoria: string): string {
+      return colorCategoria(categoria);
+  }
 
   @ViewChild('inputCorreoContrasenna') correoContrasenna: any;
 

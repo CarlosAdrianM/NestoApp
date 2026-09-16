@@ -52,10 +52,14 @@ Siempre que se vaya a hacer push, hay que:
    - `src/app/components/configuracion/configuracion.component.ts` (constante `Configuracion.VERSION`)
    - `android/app/build.gradle` (`versionName` y `versionCode`). El `versionCode` es entero, conviene usar `MAJOR*10000 + MINOR*100 + PATCH` (ej: `21703` para 2.17.3). Si solo se publica un bundle web por Live Updates y los binarios no cambian, este fichero **no hace falta** subirlo. Solo cuando se vaya a generar APK release nuevo.
 
-2. **Actualizar el changelog** en `src/app/components/profile/profile/profile.component.html`:
-   - Los nuevos `<ion-item>` se añaden **arriba** de la lista (justo después del `<h1>Hola...`)
-   - Se quitan los últimos `<ion-item>` (los de abajo) para mantener entre 6 y 10 entradas
-   - El contenido debe describir las funcionalidades nuevas visibles para el usuario (ej: portes, mensajes de Ganavisiones, PDF con imágenes), no cambios internos como migraciones o fixes de build
+2. **Actualizar el changelog** (Issue #177): las novedades viven en la tabla `dbo.Novedades`
+   (Nesto#372), NO en el HTML. Crear/actualizar `scripts/Novedades_<version>.sql` con los
+   INSERTs de la versión (`Ambito = 'NestoApp'`, `Categoria` = Nuevo/Mejorado/Corregido) y
+   recordarle a Carlos que lo ejecute en la base de datos al publicar.
+   - Lenguaje de usuario, nunca técnico. Solo cambios que el usuario percibe (ej: portes,
+     mensajes de Ganavisiones, PDF con imágenes), no migraciones ni fixes de build.
+   - La app lee `GET api/Novedades` y filtra `Ambito === 'NestoApp'` en cliente (chapuza
+     temporal hasta que NestoAPI#489 esté publicado; entonces pasar a `?ambito=NestoApp`).
 
 ## Build local de APK release firmado (WSL2)
 
