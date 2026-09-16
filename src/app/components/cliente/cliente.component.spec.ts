@@ -115,4 +115,51 @@ describe('ClienteComponent', () => {
       expect(alertCreado.message).toContain('No hay contacto principal');
     }));
   });
+
+  // Issue #162 (NestoAPI#471 / #362): días de la semana que el centro abre, en
+  // Clientes.DiasEnServir (char(5), L..V, '1'=abre / '0'=cierra). El picking no sirve
+  // pedidos los días cerrados. Null/vacío/formato raro = '11111' (abre toda la semana).
+  describe('días de servir (#162)', () => {
+    it('sin el campo, todos los días cuentan como abiertos', () => {
+      component.cliente = {};
+
+      for (let dia = 0; dia < 5; dia++) {
+        expect(component.diaServirAbierto(dia)).toBeTrue();
+      }
+    });
+
+    it('lee cada posición del campo (L..V)', () => {
+      component.cliente = { diasEnServir: '01110' };
+
+      expect(component.diaServirAbierto(0)).toBeFalse();  // lunes
+      expect(component.diaServirAbierto(1)).toBeTrue();   // martes
+      expect(component.diaServirAbierto(4)).toBeFalse();  // viernes
+    });
+
+    it('cerrar un día apaga solo su posición', () => {
+      component.cliente = { diasEnServir: '11111' };
+
+      component.cambiarDiaServir(2, false); // miércoles
+
+      expect(component.cliente.diasEnServir).toBe('11011');
+    });
+
+    it('abrir un día vuelve a encender su posición', () => {
+      component.cliente = { diasEnServir: '01111' };
+
+      component.cambiarDiaServir(0, true); // lunes
+
+      expect(component.cliente.diasEnServir).toBe('11111');
+    });
+
+    it('un valor con formato raro se trata como abre toda la semana', () => {
+      component.cliente = { diasEnServir: '111' };
+
+      expect(component.diaServirAbierto(3)).toBeTrue();
+
+      component.cambiarDiaServir(3, false); // jueves
+
+      expect(component.cliente.diasEnServir).toBe('11101');
+    });
+  });
 });

@@ -127,6 +127,32 @@ export class ClienteComponent implements AfterViewInit {
       },500)
   }
 
+  // Issue #162 (NestoAPI#471 / #362): días de la semana que el centro abre, en
+  // Clientes.DiasEnServir (char(5), L..V, '1'=abre / '0'=cierra). El picking no
+  // sirve pedidos los días cerrados. Null/vacío/formato raro = '11111'.
+  public readonly diasServir = [
+      { indice: 0, nombre: 'Lunes' },
+      { indice: 1, nombre: 'Martes' },
+      { indice: 2, nombre: 'Miércoles' },
+      { indice: 3, nombre: 'Jueves' },
+      { indice: 4, nombre: 'Viernes' }
+  ];
+
+  private diasEnServirNormalizado(): string {
+      const valor = this.cliente?.diasEnServir;
+      return typeof valor === 'string' && /^[01]{5}$/.test(valor) ? valor : '11111';
+  }
+
+  public diaServirAbierto(indice: number): boolean {
+      return this.diasEnServirNormalizado()[indice] === '1';
+  }
+
+  public cambiarDiaServir(indice: number, abierto: boolean): void {
+      const dias = this.diasEnServirNormalizado().split('');
+      dias[indice] = abierto ? '1' : '0';
+      this.cliente.diasEnServir = dias.join('');
+  }
+
   annadirPersonaContacto() {
       const persona = {};
       this.cliente.personasContacto.push(persona);

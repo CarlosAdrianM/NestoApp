@@ -73,6 +73,14 @@
               <ion-item>
                   <ion-input label="Teléfono" label-placement="floating" type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
+              <!-- Issue #162: días que el centro abre (el picking no sirve los días cerrados) -->
+              <ion-list-header>
+                  <ion-label>Días que abre el centro</ion-label>
+              </ion-list-header>
+              <ion-item *ngFor="let dia of diasServir">
+                  <ion-label>{{ dia.nombre }}</ion-label>
+                  <ion-toggle slot="end" name="diaServir{{ dia.indice }}" [checked]="diaServirAbierto(dia.indice)" (ionChange)="cambiarDiaServir(dia.indice, $event.detail.checked)"></ion-toggle>
+              </ion-item>
           </ion-list>
           <ion-button expand="block" (click)="slideActual = DATOS_FISCALES">&lt; Volver a Datos Fiscales</ion-button>
           <ion-button expand="block" (click)="goToDatosComisiones()">Ir a Datos de Comisiones &gt;</ion-button>
