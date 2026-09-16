@@ -41,8 +41,9 @@
                    (ionFocus)="seleccionarTexto($event)"></ion-input>
       </ion-item>
       <ion-item>
-        <ion-checkbox [disabled]="linea.estado > 2"
-                   [(ngModel)]="linea.AplicarDescuento" name="AplicarDescuento">Aplicar Descuento</ion-checkbox>
+        <ion-label>Aplicar Descuento</ion-label>
+        <ion-checkbox slot="end" aria-label="Aplicar Descuento" [disabled]="linea.estado > 2"
+                   [(ngModel)]="linea.AplicarDescuento" name="AplicarDescuento"></ion-checkbox>
       </ion-item>
       <ion-item>
         <ion-input label="Descuento Producto" label-placement="start" [disabled]="true"

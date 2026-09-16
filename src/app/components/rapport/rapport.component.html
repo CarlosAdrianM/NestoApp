@@ -53,22 +53,28 @@
     </ion-item>
 
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.Pedido" name="Pedido">Pedido</ion-checkbox>
+      <ion-label>Pedido</ion-label>
+      <ion-checkbox slot="end" aria-label="Pedido" [(ngModel)]="rapport.Pedido" name="Pedido"></ion-checkbox>
     </ion-item>
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.ClienteNuevo" name="ClienteNuevo">Cliente Nuevo</ion-checkbox>
+      <ion-label>Cliente Nuevo</ion-label>
+      <ion-checkbox slot="end" aria-label="Cliente Nuevo" [(ngModel)]="rapport.ClienteNuevo" name="ClienteNuevo"></ion-checkbox>
     </ion-item>
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.Aviso" name="Aviso">Aviso</ion-checkbox>
+      <ion-label>Aviso</ion-label>
+      <ion-checkbox slot="end" aria-label="Aviso" [(ngModel)]="rapport.Aviso" name="Aviso"></ion-checkbox>
     </ion-item>
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.Aparatos" name="Aparatos">Aparatos</ion-checkbox>
+      <ion-label>Aparatos</ion-label>
+      <ion-checkbox slot="end" aria-label="Aparatos" [(ngModel)]="rapport.Aparatos" name="Aparatos"></ion-checkbox>
     </ion-item>
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.GestionAparatos" name="GestionAparatos">Gestión Aparatos</ion-checkbox>
+      <ion-label>Gestión Aparatos</ion-label>
+      <ion-checkbox slot="end" aria-label="Gestión Aparatos" [(ngModel)]="rapport.GestionAparatos" name="GestionAparatos"></ion-checkbox>
     </ion-item>
     <ion-item>
-      <ion-checkbox [(ngModel)]="rapport.PrimeraVisita" name="PrimeraVisita">Primera Visita</ion-checkbox>
+      <ion-label>Primera Visita</ion-label>
+      <ion-checkbox slot="end" aria-label="Primera Visita" [(ngModel)]="rapport.PrimeraVisita" name="PrimeraVisita"></ion-checkbox>
     </ion-item>
 
     <ion-item>
@@ -77,7 +83,8 @@
     </ion-item>
 
     <ion-item>
-      <ion-toggle [(ngModel)]="dejarDeVisitar" color="danger" name="dejarDeVisitar">Quitar de mi listado</ion-toggle>
+      <ion-label>Quitar de mi listado</ion-label>
+      <ion-toggle slot="end" aria-label="Quitar de mi listado" [(ngModel)]="dejarDeVisitar" color="danger" name="dejarDeVisitar"></ion-toggle>
     </ion-item>
 
     <ion-item *ngIf="mostrarTipoCentro()">

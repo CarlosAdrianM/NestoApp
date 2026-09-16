@@ -72,7 +72,8 @@
               </ion-row>
               <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
               <ion-item>
-                  <ion-select label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
+                  <ion-label>Entrega</ion-label>
+                  <ion-select aria-label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
                       [value]="modoServicioPedido" (ionChange)="cambiarModoServicio($event.detail.value)">
                       <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
                   </ion-select>
@@ -132,10 +133,12 @@
               <ion-input label="Comentarios Picking" label-placement="floating" [(ngModel)]="pedido.comentarioPicking"></ion-input>
           </ion-item>
           <ion-item>
-              <ion-checkbox slot="end" [(ngModel)]="pedido.avisarConImporteAlCogerPicking">Avisar con importe cuando coja picking</ion-checkbox>
+              <ion-label>Avisar con importe cuando coja picking</ion-label>
+              <ion-checkbox slot="end" aria-label="Avisar con importe cuando coja picking" [(ngModel)]="pedido.avisarConImporteAlCogerPicking"></ion-checkbox>
           </ion-item>
           <ion-item>
-              <ion-checkbox slot="end" [(ngModel)]="recogerProducto">Recoger Producto</ion-checkbox>
+              <ion-label>Recoger Producto</ion-label>
+              <ion-checkbox slot="end" aria-label="Recoger Producto" [(ngModel)]="recogerProducto"></ion-checkbox>
           </ion-item>
           <ion-list *ngFor="let enlace of listaEnlacesSeguimiento">
               <ion-item>

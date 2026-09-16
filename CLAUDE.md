@@ -101,6 +101,12 @@ Para construir los dos APKs hay que cambiar el canal en `capacitor.config.ts` an
 ### Controles en ion-item
 `ion-select`, `ion-toggle` e `ion-checkbox` dentro de `ion-item` **requieren `slot="end"`** para alinearse a la derecha. En Ionic 5 era automático, en Ionic 8 no.
 
+**La etiqueta va SIEMPRE en un `<ion-label>` separado**, nunca dentro del control (ni como
+texto hijo ni con el atributo `label=`): con `slot="end"` el control entero se va a la
+derecha y arrastra consigo la etiqueta, que queda pegada al valor (visto en #174 con el
+`ion-select` de Entrega y los checkbox de picking). Poner `aria-label` en el control para
+accesibilidad, ya que la etiqueta visible queda fuera.
+
 `ion-input` e `ion-textarea` **NO usan `slot="end"`** (los empuja demasiado lejos del label).
 
 ```html

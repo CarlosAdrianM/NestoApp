@@ -91,10 +91,12 @@
       <ion-card-header>Datos Comisiones</ion-card-header>
       <ion-card-content>
           <ion-item *ngIf="!cliente.esUnaModificacion">
-              <ion-toggle [(ngModel)]="cliente.estetica">¿Tiene Estética? <span *ngIf="cliente.estetica" style="color: var(--ion-color-success)">({{cliente.vendedorEstetica}})</span></ion-toggle>
+              <ion-label>¿Tiene Estética? <span *ngIf="cliente.estetica" style="color: var(--ion-color-success)">({{cliente.vendedorEstetica}})</span></ion-label>
+              <ion-toggle slot="end" aria-label="¿Tiene Estética?" [(ngModel)]="cliente.estetica"></ion-toggle>
           </ion-item>
           <ion-item *ngIf="!cliente.esUnaModificacion">
-              <ion-toggle [(ngModel)]="cliente.peluqueria">¿Tiene Peluquería? <span *ngIf="cliente.peluqueria" style="color: var(--ion-color-success)">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</span></ion-toggle>
+              <ion-label>¿Tiene Peluquería? <span *ngIf="cliente.peluqueria" style="color: var(--ion-color-success)">({{cliente.vendedorPeluqueria ? cliente.vendedorPeluqueria : cliente.vendedorEstetica}})</span></ion-label>
+              <ion-toggle slot="end" aria-label="¿Tiene Peluquería?" [(ngModel)]="cliente.peluqueria"></ion-toggle>
           </ion-item>
           <ion-item>
               <p></p>
@@ -145,7 +147,8 @@
                 <ion-input label="Correo-e" label-placement="start" type="email" [(ngModel)]="persona.correoElectronico" name="correoElectronico"></ion-input>
             </ion-item>
             <ion-item>
-                <ion-toggle [(ngModel)]="persona.facturacionElectronica">Facturación Electrónica</ion-toggle>
+                <ion-label>Facturación Electrónica</ion-label>
+                <ion-toggle slot="end" aria-label="Facturación Electrónica" [(ngModel)]="persona.facturacionElectronica"></ion-toggle>
             </ion-item>
         </ion-card>
         <ion-fab vertical="bottom" horizontal="end">
