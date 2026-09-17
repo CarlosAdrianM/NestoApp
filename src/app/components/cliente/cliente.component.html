@@ -42,9 +42,6 @@
             <ion-item *ngIf="cliente.direccion">
                 <ion-input label="Dirección actual" label-placement="floating" #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" [disabled]="true"></ion-input>
             </ion-item>
-            <ion-fab *ngIf="cliente.direccion" horizontal="end" vertical="center" edge>
-                <ion-fab-button size="small" (click)="editarDireccion()" horizontal="end"><ion-icon name="create"></ion-icon></ion-fab-button>
-            </ion-fab>
               <ion-item *ngIf="!cliente.direccion">
                   <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionInput)="buscarDireccion($event)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
@@ -180,5 +177,12 @@
       <ion-button expand="block" (click)="slideActual = DATOS_PAGO">&lt; Volver a Datos de Pago</ion-button>
       <ion-button expand="block" (click)="finalizar()">FINALIZAR</ion-button>
   </ion-card>
+
+  <!-- Issue #162: el lápiz de editar la dirección va fijo abajo a la derecha. Dentro de la
+       lista se posicionaba relativo a la tarjeta y, al crecer esta con los días de servir,
+       caía encima del toggle del lunes. Esta pantalla no usa swiper: fixed es seguro. -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end" *ngIf="slideActual == DATOS_GENERALES && cliente.direccion">
+      <ion-fab-button size="small" (click)="editarDireccion()" aria-label="Editar dirección"><ion-icon name="create"></ion-icon></ion-fab-button>
+  </ion-fab>
 
 </ion-content>  
