@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { ActionSheetController, AlertController, LoadingController, ModalController, NavController, Platform } from '@ionic/angular';
+import { ActionSheetController, AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -40,7 +40,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private alertCtrl: AlertController,
     private loadingCtrl: LoadingController,
     private ref: ChangeDetectorRef,
-    private platform: Platform,
     private firebaseAnalytics: FirebaseAnalytics,
     private errorHandler: ErrorHandlerService,
     private actionSheetCtrl: ActionSheetController,
@@ -65,19 +64,21 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             this._selectorPlantillaVenta.cargarResumen();
           }
       });
-      this.platform.backButton.subscribeWithPriority(10, () => {
-        console.log('Botón atrás pulsado');
-      });
+      // Issue #183: aquí había un subscribeWithPriority de depuración que no encadenaba
+      // (sin processNextHandler), no se desuscribía y, al estar en el constructor, dejaba el
+      // botón atrás de Android anulado en TODA la app. El atrás lo gestiona el
+      // ion-router-outlet; lo que haya que decidir al salir va en canDeactivate().
   }
 
+  /**
+   * Issue #183: decide por el estado real del carrito, no por qué se pulsó para salir. Antes
+   * dependía de una bandera que solo levantaba la flecha de arriba a la izquierda, así que
+   * salir por el atrás de Android (o por un gesto) perdía el pedido sin preguntar.
+   */
   canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
-    if (!this.comprobarCanDeactivate) {
-        return true;
-    }
     const hayProductos = this._selectorPlantillaVenta && this._selectorPlantillaVenta.hayAlgunProducto();
 
     if (!hayProductos) {
-      this.comprobarCanDeactivate = false;
       return true;
     }
 
@@ -93,7 +94,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             handler: async () => {
               await this.guardarBorradorAutomatico();
               this.firebaseAnalytics.logEvent('plantilla_venta_guardar_y_salir', {});
-              this.comprobarCanDeactivate = false;
               resolve(true);
               return true;
             }
@@ -104,7 +104,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             role: 'destructive',
             handler: () => {
               this.firebaseAnalytics.logEvent('plantilla_venta_salir_sin_guardar', {});
-              this.comprobarCanDeactivate = false;
               resolve(true);
               return true;
             }
@@ -115,7 +114,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             role: 'cancel',
             handler: () => {
               this.firebaseAnalytics.logEvent('plantilla_venta_cancelar_salida', {});
-              this.comprobarCanDeactivate = false;
               resolve(false);
               return false;
             }
@@ -392,7 +390,6 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public costeGlovo: number;
   public servirPorGlovo: boolean;
   public indexActivo: number;
-  public comprobarCanDeactivate: boolean = false;
   public textoBotonCrearPedido: string = "Crear Pedido";
   public listaPedidosPendientes: any;
   public totalPedidoPlazosPago: number;

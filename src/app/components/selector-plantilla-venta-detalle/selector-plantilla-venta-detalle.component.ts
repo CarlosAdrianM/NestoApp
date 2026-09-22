@@ -259,7 +259,12 @@ export class SelectorPlantillaVentaDetalleComponent implements AfterViewInit {
     this.nav.navigateForward('producto', { queryParams: { empresa: "1", producto: this.producto.producto }});
   }
 
-  public salir() {
+  /**
+   * Issue #183: el refresco del carrito colgaba del (click) de la flecha de atrás, así que
+   * salir con el botón atrás de Android dejaba el resumen desactualizado. En el ciclo de vida
+   * de la página se dispara se salga por donde se salga (flecha, atrás o gesto).
+   */
+  public ionViewWillLeave() {
     this.events.publish('carritoModificado');
   }
 }

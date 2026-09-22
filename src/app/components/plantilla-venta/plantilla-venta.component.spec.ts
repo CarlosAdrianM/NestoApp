@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { AlertController, IonicModule, LoadingController } from '@ionic/angular';
+import { ActionSheetController, AlertController, IonicModule, LoadingController, Platform } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
@@ -671,5 +671,86 @@ describe('Slide de pago sin dirección ni condiciones de pago (#179 / #182)', ()
     component['productosResumen'] = [{ producto: '12345', cantidad: 1, texto: 'CERA', precio: 10, iva: 'G21' }];
 
     expect(() => fixture.detectChanges()).not.toThrow();
+  });
+});
+
+describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let accionesCreadas: any[];
+  let botonPulsado: string;
+
+  beforeEach(waitForAsync(() => {
+    accionesCreadas = [];
+    botonPulsado = 'Cancelar';
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: { calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]) } },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        {
+          provide: ActionSheetController, useValue: {
+            create: (opts: any) => {
+              accionesCreadas.push(opts);
+              return Promise.resolve({
+                present: () => {
+                  const boton = opts.buttons.find((b: any) => b.text === botonPulsado);
+                  if (boton) { boton.handler(); }
+                  return Promise.resolve();
+                }
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  it('con productos en el carrito se pregunta qué hacer, se salga por donde se salga', fakeAsync(() => {
+    component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => true } as any;
+
+    let puedeSalir: boolean = null;
+    Promise.resolve(component.canDeactivate() as Promise<boolean>).then(r => puedeSalir = r);
+    tick();
+
+    expect(accionesCreadas.length).toBe(1);
+    expect(puedeSalir).toBeFalse(); // 'Cancelar'
+  }));
+
+  it('con el carrito vacío se sale sin preguntar', () => {
+    component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => false } as any;
+
+    expect(component.canDeactivate() as boolean).toBeTrue();
+    expect(accionesCreadas.length).toBe(0);
+  });
+
+  it('sin selector todavía (pedido recién creado) se sale sin preguntar', () => {
+    component['_selectorPlantillaVenta'] = undefined;
+
+    expect(component.canDeactivate() as boolean).toBeTrue();
+  });
+
+  it('la plantilla no engancha handlers al botón atrás de Android', () => {
+    // El handler de depuración del constructor no encadenaba (no llamaba a processNextHandler),
+    // así que anulaba el atrás en las 16 pantallas con ion-back-button, y encima se acumulaba
+    // uno por cada instancia. El único que debe quedar es el por defecto de Ionic.
+    const platform: any = TestBed.inject(Platform);
+    const handlersAntes = platform.backButton.observers?.length ?? 0;
+
+    TestBed.createComponent(PlantillaVentaComponent);
+    TestBed.createComponent(PlantillaVentaComponent);
+
+    expect(platform.backButton.observers?.length ?? 0).toBe(handlersAntes);
   });
 });
