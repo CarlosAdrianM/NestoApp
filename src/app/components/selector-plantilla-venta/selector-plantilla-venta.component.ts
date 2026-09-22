@@ -338,6 +338,21 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       return this.datosIniciales();
   }
 
+  /**
+   * NestoApp#169: pone en la línea de un producto las unidades cobradas y de regalo que sugiere
+   * el servidor (NestoAPI#457). Devuelve false si el producto no está en la plantilla cargada,
+   * para que el que llama no dé por aplicada una sugerencia que no se ha aplicado.
+   */
+  public aplicarCantidades(producto: string, cantidad: number, cantidadOferta: number): boolean {
+      const linea = (this.datosIniciales() || []).find(d => d.producto?.trim() === producto?.trim());
+      if (!linea) {
+          return false;
+      }
+      linea.cantidad = cantidad;
+      linea.cantidadOferta = cantidadOferta;
+      return true;
+  }
+
   public ponerStocks(ordenar: boolean): void {
       this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
           async data => {

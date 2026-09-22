@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
+import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
 
 @Injectable({
   providedIn: 'root'
@@ -65,6 +66,18 @@ export class PlantillaVentaService {
     headers = headers.append('Content-Type', 'application/json');
 
     return this.http.post(this._baseUrl + "/SePuedeServirPorAgencia", JSON.stringify(pedido), { headers: headers });
+  }
+
+  /**
+   * NestoApp#169 / NestoAPI#457: qué ofertas se podrían aplicar al pedido que se está montando
+   * y no se están aplicando. El motor entero vive en el servidor (mismo DTO que se manda a
+   * guardar), para que Nesto, NestoApp y la tienda no repitan las reglas.
+   */
+  public ofertasSugeridas(pedido: any): Observable<SugerenciaOferta[]> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    return this.http.post<SugerenciaOferta[]>(this._baseUrl + '/OfertasSugeridas', JSON.stringify(pedido), { headers: headers });
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {

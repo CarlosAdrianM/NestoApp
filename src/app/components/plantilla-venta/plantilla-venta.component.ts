@@ -21,6 +21,7 @@ import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaReg
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto } from 'src/app/models/modos-servicio.model';
+import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 
 @Component({
@@ -839,6 +840,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         // Verificar si hay productos bonificables disponibles (antes de mostrar el slide)
         await this.verificarProductosBonificables();
 
+        // NestoApp#169: al llegar al resumen (no en cada cambio de línea) se pregunta qué
+        // ofertas se podrían aplicar y no se están aplicando.
+        this.cargarSugerenciasOfertas();
+
         // Actualizar slider para que reconozca la slide de regalos si aplica
         console.log("baseImponibleBonificable:", this.baseImponibleBonificable, "hayGanavisiones:", this.hayGanavisionesDisponibles, "productosBonificablesCount:", this.productosBonificablesCount);
         if (this.hayGanavisionesDisponibles) {
@@ -874,6 +879,63 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.swiper.allowSlideNext = !!this.direccionSeleccionada;
   }
   
+  /**
+   * NestoApp#169 / NestoAPI#457: ofertas que el pedido podría aplicar y no está aplicando. Es
+   * una ayuda, nunca un bloqueo: si la API falla o tarda, el pedido se cierra igual.
+   */
+  public sugerenciasOfertas: SugerenciaOferta[] = [];
+  /** El plegable nace cerrado: en el resumen manda el pedido, no la sugerencia. */
+  public verSugerenciasOfertas: boolean = false;
+
+  get textoSugerenciasOfertas(): string {
+    return resumenSugerencias(this.sugerenciasOfertas);
+  }
+
+  public sePuedeAplicarSugerencia(sugerencia: SugerenciaOferta): boolean {
+    return esAccionable(sugerencia);
+  }
+
+  public cargarSugerenciasOfertas(): void {
+    const pedido = this.prepararPedido();
+    if (!pedido) {
+      this.sugerenciasOfertas = [];
+      return;
+    }
+    this.servicio.ofertasSugeridas(pedido).subscribe(
+      (sugerencias: SugerenciaOferta[]) => {
+        this.sugerenciasOfertas = sugerencias || [];
+      },
+      error => {
+        // Sin ruido: que no salgan las sugerencias no impide cerrar el pedido.
+        console.log('No se han podido calcular las ofertas sugeridas', error);
+        this.sugerenciasOfertas = [];
+      }
+    );
+  }
+
+  /**
+   * Aplica la sugerencia de un toque: pone en la línea las unidades cobradas y de regalo que
+   * dice el servidor. Las de importe de pedido solo informan (no hay línea que tocar).
+   */
+  public aplicarSugerenciaOferta(sugerencia: SugerenciaOferta): void {
+    if (!esAccionable(sugerencia) || !this._selectorPlantillaVenta) {
+      return;
+    }
+    const aplicada = this._selectorPlantillaVenta.aplicarCantidades(
+      sugerencia.Producto, +sugerencia.CantidadSugerida, +sugerencia.CantidadRegalo);
+    if (!aplicada) {
+      return;
+    }
+    this.firebaseAnalytics.logEvent('plantilla_venta_aplicar_oferta_sugerida',
+      { producto: sugerencia.Producto, tipo: sugerencia.Tipo });
+    this.sugerenciasOfertas = this.sugerenciasOfertas.filter(s => s !== sugerencia);
+    this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+    this.calcularPortes();
+    // Al cambiar las unidades cambian las demás sugerencias (puede aparecer otra o caerse una),
+    // así que se vuelven a pedir. Es una acción explícita del vendedor, no un cambio de línea.
+    this.cargarSugerenciasOfertas();
+  }
+
   private comprobarSiSePuedeServirPorGlovo(){
     const pedido = this.prepararPedido();
     // Issue #179: sin dirección no hay nada que preguntar (y prepararPedido devuelve null).
@@ -1530,6 +1592,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.borradorOrigen = null;
       // NestoApp#174: el próximo pedido vuelve a nacer en el modo por defecto.
       this.modoServicioSeleccionado = null;
+      // NestoApp#169: las sugerencias son del pedido que se acaba de cerrar.
+      this.sugerenciasOfertas = [];
+      this.verSugerenciasOfertas = false;
   }
       
   get importePortesMostrar(): number {

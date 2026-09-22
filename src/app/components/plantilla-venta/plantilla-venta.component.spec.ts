@@ -783,3 +783,115 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
     expect(platform.backButton.observers?.length ?? 0).toBe(handlersAntes);
   });
 });
+
+/**
+ * NestoApp#169 / NestoAPI#457: al llegar al resumen se pregunta al servidor qué ofertas se
+ * podrían aplicar y no se están aplicando. Es una ayuda: si la API falla o tarda, el pedido
+ * se cierra igual.
+ */
+describe('Ofertas que el pedido podría aplicar (#169)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+
+  const sugerenciaAmpliar = {
+    Tipo: 'AmpliarCantidad', Producto: '38093', CantidadActual: 5, CantidadSugerida: 6,
+    CantidadRegalo: 1, ImporteQueFalta: 0, ImportePedido: 0, Descuento: 0,
+    Texto: 'Con 1 unidad más te llevas la séptima de regalo'
+  };
+
+  beforeEach(waitForAsync(() => {
+    servicio = {
+      ofertasSugeridas: jasmine.createSpy('ofertasSugeridas').and.returnValue(of([sugerenciaAmpliar])),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21' };
+    component['productosResumen'] = [{ producto: '38093', cantidad: 5, cantidadOferta: 0 }];
+  }));
+
+  it('al llegar al resumen se piden las sugerencias y se resumen', fakeAsync(() => {
+    component.cargarSugerenciasOfertas();
+    tick();
+
+    expect(servicio.ofertasSugeridas).toHaveBeenCalled();
+    expect(component.sugerenciasOfertas.length).toBe(1);
+    expect(component.textoSugerenciasOfertas).toBe('1 oferta sin aplicar');
+  }));
+
+  it('si la API falla, no se avisa de nada y el pedido sigue', fakeAsync(() => {
+    servicio.ofertasSugeridas.and.returnValue(throwError(() => ({ statusCode: 500 })));
+
+    expect(() => { component.cargarSugerenciasOfertas(); tick(); }).not.toThrow();
+    expect(component.sugerenciasOfertas.length).toBe(0);
+    expect(component.textoSugerenciasOfertas).toBe('');
+  }));
+
+  it('sin pedido que mandar (sin dirección) no se llama al servidor', fakeAsync(() => {
+    component['_direccionSeleccionada'] = undefined;
+
+    component.cargarSugerenciasOfertas();
+    tick();
+
+    expect(servicio.ofertasSugeridas).not.toHaveBeenCalled();
+  }));
+
+  it('aplicar una sugerencia ajusta las unidades de esa línea y la quita de la lista', fakeAsync(() => {
+    const lineas = [{ producto: '38093', cantidad: 5, cantidadOferta: 0 }];
+    component['_selectorPlantillaVenta'] = {
+      aplicarCantidades: jasmine.createSpy('aplicarCantidades').and.returnValue(true),
+      cargarResumen: () => lineas,
+      hayAlgunProducto: () => true
+    } as any;
+    component.cargarSugerenciasOfertas();
+    tick();
+
+    servicio.ofertasSugeridas.and.returnValue(of([])); // ya aplicada, el servidor no sugiere más
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(component['_selectorPlantillaVenta'].aplicarCantidades).toHaveBeenCalledWith('38093', 6, 1);
+    expect(servicio.ofertasSugeridas).toHaveBeenCalledTimes(2); // se recalcula tras aplicar
+    expect(component.sugerenciasOfertas.length).toBe(0);
+  }));
+
+  it('la sugerencia de importe de pedido no intenta tocar ninguna línea', fakeAsync(() => {
+    servicio.ofertasSugeridas.and.returnValue(of([{
+      Tipo: 'AmpliarImporte', Producto: null, CantidadActual: 0, CantidadSugerida: 0,
+      CantidadRegalo: 0, ImporteQueFalta: 12, ImportePedido: 200, Descuento: 0,
+      Texto: 'Añadiendo 12,00 € llegas al regalo'
+    }]));
+    component['_selectorPlantillaVenta'] = {
+      aplicarCantidades: jasmine.createSpy('aplicarCantidades'),
+      cargarResumen: () => [], hayAlgunProducto: () => true
+    } as any;
+    component.cargarSugerenciasOfertas();
+    tick();
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(component['_selectorPlantillaVenta'].aplicarCantidades).not.toHaveBeenCalled();
+    expect(component.sugerenciasOfertas.length).toBe(1);
+  }));
+});
