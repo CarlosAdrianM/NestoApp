@@ -53,8 +53,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.almacen = this.usuario.almacen;
       // NestoApp#174: el parámetro de usuario ModoServicioPorDefecto permite excepciones al 3.
       this.parametros.leer('ModoServicioPorDefecto').subscribe(
-          data => { this.modoServicioPorDefecto = parsearModoPorDefecto(data); },
-          () => { this.modoServicioPorDefecto = MODOS_SERVICIO.POR_DEFECTO; }
+          data => { this.modoServicioParametro = parsearModoPorDefecto(data); },
+          () => { this.modoServicioParametro = MODOS_SERVICIO.POR_DEFECTO; }
       );
       events.subscribe('clienteModificado', (clienteModificado: any) => {
           this.clienteSeleccionado = clienteModificado;
@@ -290,7 +290,19 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private modoServicioElegidoPorUsuario: boolean = false;
   /** Por qué el servidor sugiere ese modo (se enseña junto al selector). */
   public motivoModoServicio: string = '';
-  public modoServicioPorDefecto: number = MODOS_SERVICIO.POR_DEFECTO;
+  /** Respaldo mientras el servidor no ha contestado (parámetro de usuario, si lo hay). */
+  private modoServicioParametro: number = MODOS_SERVICIO.POR_DEFECTO;
+  /** NestoApp#184: lo último que calculó NestoAPI para este pedido. */
+  private modoServicioSugeridoServidor: number | null = null;
+
+  /**
+   * NestoApp#184 / NestoAPI#506: el modo con el que nace el pedido lo decide el servidor, que es
+   * quien ve el stock de todos los almacenes (y quien aplica el parámetro ModoServicioPorDefecto
+   * del usuario). Hasta que conteste se enseña el respaldo local. El vendedor puede cambiarlo.
+   */
+  public get modoServicioPorDefecto(): number {
+      return this.modoServicioSugeridoServidor ?? this.modoServicioParametro;
+  }
   public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 
   private _direccionSeleccionada: any;
@@ -582,13 +594,19 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     return MODOS_SERVICIO.SEGUN_VAYA_ENTRANDO;
   }
 
-  public cambiarModoServicio(nuevo: number): void {
+  /**
+   * @param elegidoPorUsuario false cuando lo aplica la sugerencia del servidor (NestoApp#184):
+   * el modo cambia igual y se valida igual, pero no cuenta como elección del vendedor.
+   */
+  public cambiarModoServicio(nuevo: number, elegidoPorUsuario: boolean = true): void {
     const anterior = this.modoServicio;
     if (anterior === nuevo) {
       return;
     }
-    // NestoApp#184: a partir de aquí manda el vendedor, no la sugerencia del servidor.
-    this.modoServicioElegidoPorUsuario = true;
+    if (elegidoPorUsuario) {
+      // NestoApp#184: a partir de aquí manda el vendedor, no la sugerencia del servidor.
+      this.modoServicioElegidoPorUsuario = true;
+    }
     this.modoServicioSeleccionado = nuevo;
     if (this.direccionSeleccionada) {
       this.direccionSeleccionada.servirJunto = esTodoJunto(nuevo);
@@ -891,8 +909,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   /**
    * NestoApp#184 / NestoAPI#506: preselecciona el modo de servicio que sugiere el servidor según
    * el stock real de las líneas. Se llama al llegar al resumen, cuando ya se sabe qué lleva el
-   * pedido. No pisa lo que el vendedor haya elegido a mano ni lo que traiga un borrador, y nunca
-   * saca de «Todo junto» (esa es la única transición que valida contra el servidor).
+   * pedido, así que se recalcula cada vez que se vuelve atrás a tocar líneas. No pisa lo que el
+   * vendedor haya elegido a mano ni lo que traiga un borrador.
    */
   public cargarModoServicioSugerido(): void {
     if (this.modoServicioElegidoPorUsuario || this.borradorEnRestauracion || this.pedidoEnEdicionNumero != null) {
@@ -908,14 +926,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           return;
         }
         this.motivoModoServicio = sugerencia.Motivo || '';
-        if (esTodoJunto(this.modoServicio) && !esTodoJunto(sugerencia.Modo)) {
-          return; // salir de «todo junto» solo lo decide el vendedor
-        }
-        this.modoServicioSeleccionado = sugerencia.Modo;
-        if (this.direccionSeleccionada) {
-          this.direccionSeleccionada.servirJunto = esTodoJunto(sugerencia.Modo);
-        }
-        this.recalcularPortesTrasServirJunto();
+        // Se guarda para que un cambio de dirección de entrega no vuelva a caer en el
+        // respaldo local: a partir de aquí, el «por defecto» de este pedido es este.
+        this.modoServicioSugeridoServidor = sugerencia.Modo;
+        // Se aplica por la misma puerta que el vendedor, así que salir de «todo junto» sigue
+        // pasando por ValidarServirJunto; lo que no hace es contar como elección suya.
+        this.cambiarModoServicio(sugerencia.Modo, false);
       },
       error => {
         // Sin sugerencia se queda el defecto de siempre: es una ayuda, no un bloqueo.
@@ -1642,6 +1658,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.verSugerenciasOfertas = false;
       // NestoApp#184: el próximo pedido vuelve a aceptar la sugerencia del servidor.
       this.modoServicioElegidoPorUsuario = false;
+      this.modoServicioSugeridoServidor = null;
       this.motivoModoServicio = '';
   }
       

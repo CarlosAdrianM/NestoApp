@@ -962,16 +962,56 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
     expect(component.modoServicio).toBe(4);
   }));
 
-  it('nunca saca solo de «Todo junto» (esa salida es la que valida el servidor)', fakeAsync(() => {
-    component['_direccionSeleccionada'].servirJunto = true;
-    component['modoServicioSeleccionado'] = 1;
-    servicio.modoServicioSugerido.and.returnValue(sugerencia(4, 'Hay líneas sin stock'));
+  it('si el «Todo junto» lo puso la sugerencia, una línea nueva lo puede cambiar', fakeAsync(() => {
+    // Lo que vio Carlos en Master: con stock de todo sale «Todo junto»; al volver atrás y meter
+    // una línea que hay que reponer de tiendas, el resumen tiene que pasar a «Tras reponer».
+    component.cargarModoServicioSugerido();
+    tick();
+    expect(component.modoServicio).toBe(1);
+
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que hay que reponer de tiendas'));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(3);
+    expect(component.direccionSeleccionada.servirJunto).toBeFalse();
+  }));
+
+  it('salir de «Todo junto» por la sugerencia pasa por la validación del servidor', fakeAsync(() => {
+    component.cargarModoServicioSugerido();
+    tick();
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer'));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(servicio.validarServirJunto).toHaveBeenCalled();
+  }));
+
+  it('cambiar de dirección de entrega no pierde el modo que calculó el servidor', fakeAsync(() => {
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(4, 'Hay líneas sin stock en ningún sitio'));
+    component.cargarModoServicioSugerido();
+    tick();
+    expect(component.modoServicio).toBe(4);
+
+    // El vendedor cambia a otro contacto de entrega: antes esto devolvía el pedido al 3 local.
+    component.direccionSeleccionada = { contacto: '1', iva: 'G21', servirJunto: true };
+    tick();
+
+    expect(component.modoServicio).toBe(4);
+  }));
+
+  it('si el vendedor eligió «Todo junto» a mano, la sugerencia no se lo quita', fakeAsync(() => {
+    component['_direccionSeleccionada'].servirJunto = false;
+    component['modoServicioSeleccionado'] = 3;
+    component.cambiarModoServicio(1);
+    tick();
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer'));
 
     component.cargarModoServicioSugerido();
     tick();
 
     expect(component.modoServicio).toBe(1);
-    expect(servicio.validarServirJunto).not.toHaveBeenCalled();
   }));
 
   it('si la llamada falla se queda el modo de siempre', fakeAsync(() => {
