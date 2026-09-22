@@ -77,11 +77,18 @@ jobs:
             echo "Versión: $BASE_VER -> $HEAD_VER ✓"
           fi
 
-          # 2) El changelog (novedades del perfil) debe haberse tocado.
-          if echo "$CODE_CHANGED" | grep -q 'src/app/components/profile/profile/profile.component.html'; then
+          # 2) El changelog debe haberse tocado. Desde #177 las novedades NO viven en
+          # profile.component.html, sino en la tabla dbo.Novedades: cada versión añade su
+          # scripts/Novedades_<version>.sql, que Carlos ejecuta en la base de datos al publicar.
+          CHANGELOG_CHANGED=$(git diff --name-only "$BASE" "$HEAD" | grep '^scripts/Novedades_.*\.sql$' || true)
+          if [ -n "$CHANGELOG_CHANGED" ]; then
             echo "Changelog actualizado ✓"
+            echo "$CHANGELOG_CHANGED"
+            if ! echo "$CHANGELOG_CHANGED" | grep -q "^scripts/Novedades_${HEAD_VER}\.sql$"; then
+              echo "::warning::El changelog que se ha tocado no es el de la versión $HEAD_VER (se esperaba scripts/Novedades_${HEAD_VER}.sql)."
+            fi
           else
-            echo "::error::Cambió código en src/ pero NO se actualizó el changelog (src/app/components/profile/profile/profile.component.html)."
+            echo "::error::Cambió código en src/ pero NO se actualizó el changelog: falta scripts/Novedades_${HEAD_VER}.sql con los INSERT de la versión (issue #177)."
             FALLO=1
           fi
 
