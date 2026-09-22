@@ -325,6 +325,7 @@ describe('Borrar el borrador al crear el pedido (#173)', () => {
     spyOn<any>(component, 'esTarjetaPrepago').and.returnValue(false);
     const preguntar = spyOn(component, 'preguntarBorrarBorrador');
     component['borradorOrigen'] = borradorBase();
+    component['_direccionSeleccionada'] = { contacto: '0' }; // #179: sin dirección no se crea pedido
 
     component.crearPedido();
     tick();
@@ -514,5 +515,161 @@ describe('Modo de servicio (#174)', () => {
 
     component['modoServicioSeleccionado'] = 3;
     expect(component.servirJuntoParaRegalos).toBeFalse();
+  });
+});
+
+describe('Slide de pago sin dirección ni condiciones de pago (#179 / #182)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    servicio = {
+      sePuedeServirPorGlovo: jasmine.createSpy('sePuedeServirPorGlovo').and.returnValue(of(null)),
+      calcularPortes: jasmine.createSpy('calcularPortes').and.returnValue(of({})),
+      validarServirJunto: () => of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC']),
+      leerCliente: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: () => Promise.resolve(),
+                dismiss: () => Promise.resolve(),
+                onDidDismiss: () => Promise.resolve({})
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  const direccionBase = (): any => ({
+    contacto: '0', servirJunto: false, mantenerJunto: false, iva: 'G21',
+    formaPago: 'EFC', plazosPago: 'CONTADO', periodoFacturacion: 'NRM',
+    vendedor: 'NV', ruta: '00', ccc: null, noComisiona: 0, comentarioRuta: '',
+    codigoPostal: '28001'
+  });
+
+  const clienteBase = (): any => ({
+    empresa: '1 ', cliente: '12345', contacto: '0 ', cifNif: 'B12345678', comentarioPicking: null
+  });
+
+  // #182: ELMAH 22/09/2026, Iñaki. plazosPago llegaba null y .trim() reventaba la pantalla.
+  it('prepararPedido no revienta con plazosPago null', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = direccionBase();
+    component['productosResumen'] = [];
+    component.formaPago = 'EFC';
+    component.plazosPago = null;
+
+    const pedido = component['prepararPedido']();
+
+    expect(pedido).toBeTruthy();
+    expect(pedido.plazosPago).toBeNull();
+  });
+
+  it('prepararPedido saca el código cuando los plazos vienen como objeto', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = direccionBase();
+    component['productosResumen'] = [];
+    component.formaPago = { formaPago: 'EFC' };
+    component.plazosPago = { plazoPago: 'CNT' };
+
+    const pedido = component['prepararPedido']();
+
+    expect(pedido.plazosPago).toBe('CNT');
+    expect(pedido.formaPago).toBe('EFC');
+  });
+
+  it('prepararPedido recorta los plazos con espacios', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = direccionBase();
+    component['productosResumen'] = [];
+    component.plazosPago = 'CNT  ';
+
+    expect(component['prepararPedido']().plazosPago).toBe('CNT');
+  });
+
+  // #179: ELMAH 17/09/2026, Israel. direccionSeleccionada undefined con el resumen cargado.
+  it('prepararPedido devuelve null si no hay dirección seleccionada', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = undefined;
+    component['productosResumen'] = [{ producto: '12345', cantidad: 1 }];
+
+    expect(() => component['prepararPedido']()).not.toThrow();
+    expect(component['prepararPedido']()).toBeNull();
+  });
+
+  it('no se pregunta a Glovo si todavía no hay dirección seleccionada', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = undefined;
+    component['productosResumen'] = [{ producto: '12345', cantidad: 1 }];
+
+    component['comprobarSiSePuedeServirPorGlovo']();
+
+    expect(servicio.sePuedeServirPorGlovo).not.toHaveBeenCalled();
+    expect(component.sePuedeServirPorGlovo).toBeFalse();
+  });
+
+  it('cambiar los plazos de pago sin dirección no revienta', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = undefined;
+    component['productosResumen'] = [{ producto: '12345', cantidad: 1 }];
+
+    expect(() => component.cambiarPlazosPago('CNT')).not.toThrow();
+  });
+
+  it('en la slide de dirección sin dirección no se deja avanzar con el gesto', () => {
+    const swiper: any = { activeIndex: 4, previousIndex: 3, allowSlideNext: true };
+    component['sliderRef'] = { nativeElement: { swiper } } as any;
+    component.indexActivo = component.indexSlideDireccion;
+    component['_direccionSeleccionada'] = undefined;
+
+    component['actualizarBloqueoAvanceSinDireccion']();
+
+    expect(swiper.allowSlideNext).toBeFalse();
+  });
+
+  it('al llegar la dirección se vuelve a permitir avanzar', () => {
+    const swiper: any = { activeIndex: 4, previousIndex: 3, allowSlideNext: false };
+    component['sliderRef'] = { nativeElement: { swiper } } as any;
+    component.indexActivo = component.indexSlideDireccion;
+    component.clienteSeleccionado = clienteBase();
+
+    component.seleccionarCliente(direccionBase());
+
+    expect(swiper.allowSlideNext).toBeTrue();
+  });
+
+  it('la plantilla no revienta con el resumen cargado y sin dirección', () => {
+    component.clienteSeleccionado = clienteBase();
+    component['_direccionSeleccionada'] = undefined;
+    component['productosResumen'] = [{ producto: '12345', cantidad: 1, texto: 'CERA', precio: 10, iva: 'G21' }];
+
+    expect(() => fixture.detectChanges()).not.toThrow();
   });
 });

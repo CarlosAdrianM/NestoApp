@@ -854,10 +854,32 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (this.indexActivo === 2 && indexPrevio !== 1) {
         this.actualizarTextoPortes();
     }
+
+    this.actualizarBloqueoAvanceSinDireccion();
+  }
+
+  /**
+   * Issue #179: el FAB de siguiente ya se esconde sin dirección (sePuedeAvanzar), pero el gesto
+   * de arrastre no, y así se llegaba a la slide de pago sin dirección y reventaba.
+   */
+  private actualizarBloqueoAvanceSinDireccion(): void {
+    if (!this.swiper || this.indexActivo !== this.indexSlideDireccion) {
+        return;
+    }
+    this.swiper.allowSlideNext = !!this.direccionSeleccionada;
   }
   
   private comprobarSiSePuedeServirPorGlovo(){
     const pedido = this.prepararPedido();
+    // Issue #179: sin dirección no hay nada que preguntar (y prepararPedido devuelve null).
+    if (!pedido) {
+        this.sePuedeServirPorGlovo = false;
+        this.sePodriaServirConGlovoEnPrepago = false;
+        this.costeGlovo = 0;
+        this.direccionFormateada = "";
+        this.almacenEntregaUrgente = "";
+        return;
+    }
     this.servicio.sePuedeServirPorGlovo(pedido).subscribe(
         data => {
             this.respuestaGlovo = data;
@@ -1007,16 +1029,46 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           this.plazosPago = cliente.plazosPago;
       }
       this.calcularPortes();
+      this.actualizarBloqueoAvanceSinDireccion();
   }
 
+  /**
+   * Issue #179: avisa si todavía no hay dirección de entrega seleccionada. La slide de
+   * direcciones no emite nada cuando el cliente no tiene ninguna o falla la carga, y así el
+   * pedido no llegaba a montarse.
+   */
+  private async hayDireccionParaElPedido(): Promise<boolean> {
+      if (this.direccionSeleccionada) {
+          return true;
+      }
+      const alert = await this.alertCtrl.create({
+          header: 'Falta la dirección de entrega',
+          message: 'Vuelve atrás y elige una dirección de entrega antes de crear el pedido.',
+          buttons: ['Ok'],
+      });
+      await alert.present();
+      return false;
+  }
+
+  /**
+   * Issues #179 y #182: monta el DTO del pedido. Devuelve null si todavía no hay cliente o
+   * dirección (borrador que carga el resumen antes que las direcciones, cliente sin
+   * direcciones, petición de direcciones fallida); antes reventaba la pantalla entera leyendo
+   * .contacto de undefined. Los códigos de pago pueden llegar null o como objeto del selector,
+   * así que se sacan con los extractores en vez de con .trim() a pelo.
+   */
   private prepararPedido(): any {
+      if (!this.clienteSeleccionado || !this.direccionSeleccionada) {
+          return null;
+      }
+      const formaPago = this.extraerCodigoFormaPago() || null;
       const pedido: any = {
-          'empresa': this.clienteSeleccionado.empresa.trim(),
-          'cliente': this.clienteSeleccionado.cliente.trim(),
+          'empresa': this.clienteSeleccionado.empresa?.trim() ?? null,
+          'cliente': this.clienteSeleccionado.cliente?.trim() ?? null,
           'contacto': this.direccionSeleccionada.contacto,
           'fecha': this.hoy,
-          'formaPago': this.formaPago,
-          'plazosPago': this.plazosPago.trim(),
+          'formaPago': formaPago,
+          'plazosPago': this.extraerCodigoPlazosPago().trim() || null,
           'primerVencimiento': this.hoy, // se calcula en la API
           'iva': this.direccionSeleccionada.iva,
           'vendedor': this.direccionSeleccionada.vendedor,
@@ -1027,9 +1079,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'periodoFacturacion': this.direccionSeleccionada.periodoFacturacion,
           'ruta': this.servirPorGlovo ? "GLV" : this.direccionSeleccionada.ruta,
           'serie': 'NV', // calcular
-          'ccc': this.formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
-          'origen': this.clienteSeleccionado.empresa.trim(),
-          'contactoCobro': this.clienteSeleccionado.contacto.trim(), // calcular
+          'ccc': formaPago === "RCB" ? this.direccionSeleccionada.ccc : null,
+          'origen': this.clienteSeleccionado.empresa?.trim() ?? null,
+          'contactoCobro': this.clienteSeleccionado.contacto?.trim() ?? null, // calcular
           'noComisiona': this.direccionSeleccionada.noComisiona,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
           // NestoApp#174: viaja el modo y el servirJunto derivado (solo el 1 es true), para
@@ -1165,6 +1217,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   public async crearPedido(): Promise<void> {
       let numeroPedido: string;
+
+      // Issue #179: sin dirección de entrega no hay pedido que mandar; avisamos en vez de
+      // enviar un DTO a medias (o reventar montándolo).
+      if (!await this.hayDireccionParaElPedido()) {
+          return;
+      }
 
       // Issue #129: backstop "oferta sin beneficio" (regresión #127). El servidor lo rechazaría
       // (NestoAPI ValidadorOfertaSinBeneficio) pero avisamos antes para no llegar hasta allí.
@@ -1523,6 +1581,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   public cambiarIVA(): void {
+      if (!this.direccionSeleccionada) { return; } // Issue #179
       this.direccionSeleccionada.iva = this.direccionSeleccionada.iva ? undefined : this.iva;
       this.calcularPortes();
   }
@@ -1663,6 +1722,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
   }
   public noSePuedeCrearPedido(): boolean {
+    // Issue #179: lo llama el [disabled] del botón en cada ciclo de change detection, así que
+    // tiene que aguantar la slide de pago sin dirección (si no, ELMAH se llena en bucle).
+    if (!this.direccionSeleccionada || !this.clienteSeleccionado) {
+      return true;
+    }
     return this.direccionSeleccionada.iva && ((!this.clienteSeleccionado.cifNif && !this.esPresupuesto) || !this.formaPago || !this.plazosPago);
   }
 

@@ -168,10 +168,10 @@
             <ion-label class="ion-text-center"><strong>{{textoPortes}}</strong></ion-label>
         </ion-item>
         <ion-item (click)="cambiarIVA()">
-             <ion-label class="ion-text-center"> {{direccionSeleccionada.iva}} </ion-label>
+             <ion-label class="ion-text-center"> {{direccionSeleccionada?.iva}} </ion-label>
         </ion-item>
-        <selector-formas-pago *ngIf="direccionSeleccionada.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada.iva" [seleccionado]="formaPago"></selector-formas-pago>
-        <selector-plazos-pago *ngIf="direccionSeleccionada.iva && direccionSeleccionada.plazosPago !== 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
+        <selector-formas-pago *ngIf="direccionSeleccionada?.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada?.iva" [seleccionado]="formaPago"></selector-formas-pago>
+        <selector-plazos-pago *ngIf="direccionSeleccionada?.iva && direccionSeleccionada?.plazosPago !== 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
             <ion-toggle slot="end" aria-label="¿Mandar cobro por tarjeta?" [(ngModel)]="mandarCobroTarjeta"></ion-toggle>
@@ -183,7 +183,7 @@
             <ion-input label="Móvil tarjeta" label-placement="floating" type="tel" [(ngModel)]="cobroTarjetaMovil"></ion-input>
         </ion-item>
         <div>
-            <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada.plazosPago === 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
+            <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada?.plazosPago === 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
         </div>
         <ion-item>
             <ion-input label="Su Pedido / P.O." label-placement="floating" [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente"></ion-input>
@@ -192,20 +192,20 @@
             <ion-label>Crear como presupuesto</ion-label>
             <ion-toggle slot="end" aria-label="Crear como presupuesto" [(ngModel)]="esPresupuesto"></ion-toggle>
         </ion-item>
-        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo">
+        <ion-item *ngIf="direccionSeleccionada?.iva && sePuedeServirPorGlovo">
             <ion-label>Servir en 2 horas <ion-img src="https://static.vecteezy.com/system/resources/previews/008/786/429/non_2x/express-delivery-icon-fast-delivery-express-and-urgent-delivery-services-stopwatch-sign-timer-and-express-delivery-inscription-fast-delivery-logo-design-vector.jpg"></ion-img></ion-label>
             <ion-toggle slot="end" aria-label="Servir en 2 horas" [(ngModel)]="servirPorGlovo" (ngModelChange)="calcularPortes()"></ion-toggle>
         </ion-item>
-        <ion-item *ngIf="direccionSeleccionada.iva && !sePuedeServirPorGlovo && sePodriaServirConGlovoEnPrepago">
+        <ion-item *ngIf="direccionSeleccionada?.iva && !sePuedeServirPorGlovo && sePodriaServirConGlovoEnPrepago">
             <ion-label color="danger">Si hay PREPAGO podría servirse en 2 horas</ion-label>
         </ion-item>
         
         <!--
-        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
+        <ion-item *ngIf="direccionSeleccionada?.iva && sePuedeServirPorGlovo && servirPorGlovo">
             <ion-label>{{direccionFormateada}}</ion-label>
         </ion-item>
         -->
-        <ion-item *ngIf="direccionSeleccionada.iva && sePuedeServirPorGlovo && servirPorGlovo">
+        <ion-item *ngIf="direccionSeleccionada?.iva && sePuedeServirPorGlovo && servirPorGlovo">
             <ion-label slot="start">Portes</ion-label>
             <ion-label slot="end" class="ion-text-right">{{ costeGlovo | currency:'EUR' }}</ion-label> 
         </ion-item>

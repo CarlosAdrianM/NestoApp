@@ -2,6 +2,7 @@ import { Component, OnInit, OnChanges } from '@angular/core';
 import { AlertController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorDireccionesEntregaService } from './selector-direcciones-entrega.service';
+import { ErrorHandlerService } from '../../services/error-handler.service';
 
 @Component({
     selector: 'selector-direcciones-entrega',
@@ -13,6 +14,7 @@ import { SelectorDireccionesEntregaService } from './selector-direcciones-entreg
 export class SelectorDireccionesEntregaComponent extends SelectorBase implements OnChanges {
   private servicio: SelectorDireccionesEntregaService;
   private alertCtrl: AlertController;
+  private errorHandler: ErrorHandlerService;
   public direccionesEntrega: any[];
   public direccionSeleccionada: any;
 
@@ -56,10 +58,11 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase implements
     }
   }
 
-  constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController) {
+  constructor(servicio: SelectorDireccionesEntregaService, alertCtrl: AlertController, errorHandler: ErrorHandlerService) {
       super();
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
+      this.errorHandler = errorHandler;
   }
 
     public cargarDatos(cliente: any, totalPedido: number = 0): void {
@@ -71,7 +74,7 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase implements
               if (data.length === 0) {
                   const alert: any = await this.alertCtrl.create({
                       message: 'Error',
-                      subHeader: 'El cliente ' + cliente.cliente + ' no tiene ninguna dirección de entrega',
+                      subHeader: 'El cliente ' + cliente + ' no tiene ninguna dirección de entrega',
                       buttons: ['Ok'],
                   });
                   await alert.present();
@@ -115,7 +118,21 @@ export class SelectorDireccionesEntregaComponent extends SelectorBase implements
                   }
               }
           },
-          error => this.errorMessage = <any>error
+          // Issue #179: si falla la carga, el padre se quedaba sin dirección y la slide de pago
+          // reventaba sin que el vendedor supiera por qué. Ahora se avisa con el motivo real.
+          async error => {
+              this.errorMessage = <any>error;
+              if (error?.isCancelled) {
+                  return;
+              }
+              const alert: any = await this.alertCtrl.create({
+                  header: 'Error',
+                  message: 'No se han podido cargar las direcciones de entrega:\n' +
+                      this.errorHandler.extractErrorMessage(error),
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
       );
   }
 
