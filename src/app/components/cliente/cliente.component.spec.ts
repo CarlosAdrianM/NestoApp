@@ -119,6 +119,65 @@ describe('ClienteComponent', () => {
   // Issue #162 (NestoAPI#471 / #362): días de la semana que el centro abre, en
   // Clientes.DiasEnServir (char(5), L..V, '1'=abre / '0'=cierra). El picking no sirve
   // pedidos los días cerrados. Null/vacío/formato raro = '11111' (abre toda la semana).
+  // Issue #181: desde el interceptor lo que llega al subscribe es un ProcessedApiError, así
+  // que error.ExceptionMessage era siempre undefined y Jesús vio literalmente
+  // "No se ha podido cargar el cliente: undefined" al abrir una ficha que dio 404.
+  describe('motivo de los errores de la API (#181)', () => {
+    const errorProcesado = (mensaje: string, status = 404) => ({
+      isBusinessError: false,
+      isServerError: false,
+      isCancelled: false,
+      statusCode: status,
+      originalError: { error: { Message: mensaje } }
+    });
+
+    it('saca el motivo del ProcessedApiError en vez de undefined', () => {
+      const motivo = component['motivoDelError'](errorProcesado('No existe el cliente 1/39627/1'));
+
+      expect(motivo).toBe('No existe el cliente 1/39627/1');
+      expect(motivo).not.toContain('undefined');
+    });
+
+    it('saca el motivo del formato estructurado nuevo', () => {
+      const motivo = component['motivoDelError']({
+        apiError: { error: { code: 'PEDIDO_INVALIDO', message: 'El cliente está bloqueado' } },
+        originalError: {}
+      });
+
+      expect(motivo).toBe('El cliente está bloqueado');
+    });
+
+    it('encadena las InnerException del formato antiguo', () => {
+      const motivo = component['motivoDelError']({
+        originalError: {
+          error: {
+            ExceptionMessage: 'No se ha podido guardar',
+            InnerException: { ExceptionMessage: 'La clave ya existe' }
+          }
+        }
+      });
+
+      expect(motivo).toContain('No se ha podido guardar');
+      expect(motivo).toContain('La clave ya existe');
+    });
+
+    it('nunca devuelve undefined aunque el error venga vacío', () => {
+      const motivo = component['motivoDelError']({});
+
+      expect(motivo).toBeTruthy();
+      expect(motivo).not.toContain('undefined');
+    });
+
+    it('al fallar la carga del cliente se enseña el motivo', fakeAsync(() => {
+      servicio.leerClienteCrear = () => throwError(() => errorProcesado('No existe el cliente 1/39627/1'));
+
+      component['cargarCliente']('1', '39627', '1');
+      tick();
+
+      expect(alertCreado.subHeader).toContain('No existe el cliente 1/39627/1');
+    }));
+  });
+
   describe('días de servir (#162)', () => {
     it('sin el campo, todos los días cuentan como abiertos', () => {
       component.cliente = {};

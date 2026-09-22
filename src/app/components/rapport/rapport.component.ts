@@ -10,6 +10,7 @@ import { AuthService, SesionOutlookCaducadaError } from '../../auth.service';
 import { User } from '../../user';
 import { VersionNativoService } from 'src/app/services/version-nativo.service';
 import { objetoDeQueryParam } from '../../utils/query-param';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 
 @Component({
@@ -49,7 +50,8 @@ export class RapportComponent implements AfterViewInit {
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
     private authService: AuthService,
-    private versionNativo: VersionNativoService
+    private versionNativo: VersionNativoService,
+    private errorHandler: ErrorHandlerService
     ) {
       // Issue #135 / #155: en build Web los queryParams se serializan a string. Si llega
       // "[object Object]" el código de abajo casca al crear propiedades sobre un string.
@@ -190,7 +192,7 @@ export class RapportComponent implements AfterViewInit {
                                       async error => {
                                           const alertKO = await this.alertCtrl.create({
                                               header: 'Error',
-                                              message: 'No se ha podido quitar el cliente.\n' + error.ExceptionMessage,
+                                              message: 'No se ha podido quitar el cliente.\n' + this.errorHandler.extractErrorDetail(error),
                                               buttons: ['Ok'],
                                           });
                                           await alertKO.present();
@@ -211,7 +213,7 @@ export class RapportComponent implements AfterViewInit {
                           async error => {
                               const alert = await this.alertCtrl.create({
                                   header: 'Error',
-                                  message: 'No se ha podido guardar el rapport.\n' + error.ExceptionMessage,
+                                  message: 'No se ha podido guardar el rapport.\n' + this.errorHandler.extractErrorDetail(error),
                                   buttons: ['Ok'],
                               });
                               await alert.present();

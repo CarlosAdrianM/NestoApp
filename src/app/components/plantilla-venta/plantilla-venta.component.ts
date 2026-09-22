@@ -811,7 +811,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             async error => {
                 const alert = await this.alertCtrl.create({
                     header: 'Error',
-                    message: 'No se ha podido comprobar si el cliente tiene pedidos pendientes:\n' + error.ExceptionMessage,
+                    message: 'No se ha podido comprobar si el cliente tiene pedidos pendientes:\n' + this.errorHandler.extractErrorDetail(error),
                     buttons: ['Ok'],
                 });
                 await alert.present();
@@ -898,7 +898,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         async error => {
             const alert = await this.alertCtrl.create({
                 header: 'Error',
-                message: 'No se ha podido comprobar si se puede servir por Glovo:\n' + error.ExceptionMessage,
+                message: 'No se ha podido comprobar si se puede servir por Glovo:\n' + this.errorHandler.extractErrorDetail(error),
                 buttons: ['Ok'],
             });
             await alert.present();
@@ -1606,7 +1606,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             async error => {
               let alert = await this.alertCtrl.create({
                 message: 'Error',
-                subHeader: 'No se ha podido ajustar la fecha de entrega:\n' + error.ExceptionMessage,
+                subHeader: 'No se ha podido ajustar la fecha de entrega:\n' + this.errorHandler.extractErrorDetail(error),
                 buttons: ['Ok'],
               });
               await alert.present();
@@ -1673,7 +1673,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         async error => {
             let alert = await this.alertCtrl.create({
                 message: 'Error',
-                subHeader: 'No se han podido cargar los datos del cliente:\n' + error.ExceptionMessage,
+                subHeader: 'No se han podido cargar los datos del cliente:\n' + this.errorHandler.extractErrorDetail(error),
                 buttons: ['Ok'],
             });
             await alert.present();
@@ -1712,7 +1712,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     } catch (error) {
       const alert = await this.alertCtrl.create({
         message: 'Error',
-        subHeader: 'No se han podido cargar los datos del cliente:\n' + error.ExceptionMessage,
+        subHeader: 'No se han podido cargar los datos del cliente:\n' + this.errorHandler.extractErrorDetail(error),
         buttons: ['Ok'],
       });
       await alert.present();

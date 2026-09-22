@@ -180,6 +180,28 @@ export class ErrorHandlerService {
   }
 
   /**
+   * Issue #181: el motivo completo del error, para enseñárselo al usuario. Es lo que hay que
+   * usar en los alert: desde que existe el interceptor, al subscribe llega un
+   * ProcessedApiError y leer error.ExceptionMessage a pelo daba siempre "undefined".
+   * Encadena las InnerException del formato antiguo de NestoAPI, que es donde suele ir el
+   * motivo de verdad (la de fuera es el genérico de Entity Framework).
+   */
+  extractErrorDetail(error: any): string {
+    let texto: string = this.extractErrorMessage(error);
+    let subError: any = error?.originalError?.error ?? error?.error ?? error;
+    while (subError?.InnerException) {
+      subError = subError.InnerException;
+      const mensaje: string = subError.ExceptionMessage;
+      if (mensaje &&
+          mensaje !== 'An error occurred while updating the entries. See the inner exception for details.' &&
+          !texto.includes(mensaje)) {
+        texto += '\n' + mensaje;
+      }
+    }
+    return texto;
+  }
+
+  /**
    * Extrae el mensaje de error de cualquier tipo de error
    * Soporta tanto el nuevo formato estructurado como el formato antiguo de NestoAPI
    */

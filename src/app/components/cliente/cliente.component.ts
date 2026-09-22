@@ -9,6 +9,7 @@ import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@aw
 import { Geolocation } from '../../services/geolocation.service';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 
@@ -39,30 +40,15 @@ export class ClienteComponent implements AfterViewInit {
       public events: Events,
       private route: ActivatedRoute,
       private firebaseAnalytics: FirebaseAnalytics,
+      private errorHandler: ErrorHandlerService,
   ){
       if (this.route.snapshot.queryParams && this.route.snapshot.queryParams.empresa &&
         this.route.snapshot.queryParams.cliente && this.route.snapshot.queryParams.contacto) {
-          this.servicio.leerClienteCrear(
-            this.route.snapshot.queryParams.empresa, 
+          this.cargarCliente(
+            this.route.snapshot.queryParams.empresa,
             this.route.snapshot.queryParams.cliente,
             this.route.snapshot.queryParams.contacto
-          ).subscribe(
-              data => {
-                  this.cliente = data;
-                  this.cliente.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
-                  this.cliente.esUnaModificacion = true;
-                  this.plazosPagoActuales = this.cliente.plazosPago;
-                  this.goToDatosGenerales();
-              },
-              async error => {
-                  const alert = await this.alertCtrl.create({
-                      message: 'Error',
-                      subHeader: 'No se ha podido cargar el cliente:\n' + error.ExceptionMessage,
-                      buttons: ['Ok'],
-                  });
-                  await alert.present();
-              }
-          )
+          );
           if (!this.cliente.personasContacto) {
               this.cliente.personasContacto = [];
           }
@@ -207,12 +193,43 @@ export class ClienteComponent implements AfterViewInit {
           async error => {
               const alert = await this.alertCtrl.create({
                   message: 'Error',
-                  subHeader: 'No se ha podido validar el NIF:\n' + error.ExceptionMessage,
+                  subHeader: 'No se ha podido validar el NIF:\n' + this.motivoDelError(error),
                   buttons: ['Ok'],
               });
               await alert.present();
           }
       )    
+  }
+
+  private cargarCliente(empresa: string, cliente: string, contacto: string): void {
+      this.servicio.leerClienteCrear(empresa, cliente, contacto).subscribe(
+          data => {
+              this.cliente = data;
+              this.cliente.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
+              this.cliente.esUnaModificacion = true;
+              this.plazosPagoActuales = this.cliente.plazosPago;
+              this.goToDatosGenerales();
+          },
+          async error => {
+              const alert = await this.alertCtrl.create({
+                  message: 'Error',
+                  subHeader: 'No se ha podido cargar el cliente ' + empresa + '/' + cliente + '/' + contacto + ':\n' +
+                      this.motivoDelError(error),
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+          }
+      );
+  }
+
+  /**
+   * Issue #181: desde que existe el interceptor, lo que llega al subscribe es un
+   * ProcessedApiError, no el cuerpo de NestoAPI, así que la propiedad de siempre venía
+   * undefined y el vendedor veía "No se ha podido cargar el cliente: undefined". Además
+   * encadena las InnerException del formato antiguo, que es donde va el motivo de verdad.
+   */
+  private motivoDelError(error: any): string {
+      return this.errorHandler.extractErrorDetail(error);
   }
 
   private pasarADatosGenerales() {
@@ -269,7 +286,7 @@ export class ClienteComponent implements AfterViewInit {
           async error => {
               const alert = await this.alertCtrl.create({
                   header: 'Error',
-                  message: 'No se ha podido validar la dirección:\n' + error.ExceptionMessage,
+                  message: 'No se ha podido validar la dirección:\n' + this.motivoDelError(error),
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -311,7 +328,7 @@ export class ClienteComponent implements AfterViewInit {
       async error => {
           const alert = await this.alertCtrl.create({
               header: 'Error',
-              message: 'Error en la validación del IBAN:\n' + error.ExceptionMessage,
+              message: 'Error en la validación del IBAN:\n' + this.motivoDelError(error),
               buttons: ['Ok'],
           });
           await alert.present();
@@ -360,15 +377,7 @@ export class ClienteComponent implements AfterViewInit {
               
           },
           async error => {
-              let textoExcepcion: string = error.ExceptionMessage;
-              let subError: any = error;
-              while (subError.InnerException) {
-                  subError = subError.InnerException;
-                  if (subError.ExceptionMessage != 
-                      "An error occurred while updating the entries. See the inner exception for details.") {
-                      textoExcepcion += "\n" + subError.ExceptionMessage;
-                  }
-              }
+              const textoExcepcion: string = this.motivoDelError(error);
               const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se ha podido crear el cliente:\n' + textoExcepcion,
@@ -420,7 +429,7 @@ export class ClienteComponent implements AfterViewInit {
           async error => {
               const alert = await this.alertCtrl.create({
                   header: 'Error',
-                  message: 'No se han podido copiar los datos del contacto principal:\n' + (error.Message || error.ExceptionMessage || ''),
+                  message: 'No se han podido copiar los datos del contacto principal:\n' + this.motivoDelError(error),
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -462,15 +471,7 @@ export class ClienteComponent implements AfterViewInit {
               };
           },
           async error => {
-              let textoExcepcion: string = error.ExceptionMessage;
-              let subError: any = error;
-              while (subError.InnerException) {
-                  subError = subError.InnerException;
-                  if (subError.ExceptionMessage != 
-                      "An error occurred while updating the entries. See the inner exception for details.") {
-                      textoExcepcion += "\n" + subError.ExceptionMessage;
-                  }
-              }
+              const textoExcepcion: string = this.motivoDelError(error);
               const alert = await this.alertCtrl.create({
                   header: 'Error',
                   message: 'No se ha podido modificar el cliente:\n' + textoExcepcion,
