@@ -245,6 +245,12 @@ export class ClienteComponent implements AfterViewInit {
       if (this.cliente.telefono == 'undefined') {
           this.cliente.telefono = '';
       }
+      // Issue #180: sin dirección elegida de Google no se sigue (ya no vale escribirla a mano
+      // y dejar que el backend geocodifique).
+      if (this.faltaDireccionVerificada) {
+          this.avisarDireccionSinVerificar();
+          return;
+      }
       /*
       if (this.cliente.direccionValidada) {
           this.slideActual = this.DATOS_COMISIONES;
@@ -336,9 +342,17 @@ export class ClienteComponent implements AfterViewInit {
   }
 
   finalizar() {
+      // Issue #180: backstop del bloqueo duro, por si se llega aquí sin pasar por la slide.
+      if (this.faltaDireccionVerificada) {
+          this.avisarDireccionSinVerificar();
+          return;
+      }
       if (this.cliente.formaPago == "EFC") {
           this.cliente.iban = "";
       }
+      // Issue #180 / NestoAPI#499: el flag tiene que viajar siempre (JSON.stringify se come
+      // los undefined), para que el servidor pueda rechazar altas sin dirección verificada.
+      this.cliente.direccionVerificada = !!this.cliente.direccionVerificada;
       if (this.cliente.esUnaModificacion) {
           this.modificarCliente();
           this.nav.pop();
@@ -493,9 +507,40 @@ export class ClienteComponent implements AfterViewInit {
       }
   }
 
-  editarDireccion() {
-      this.cliente.direccion = "";
-      // Issue #153: al reeditar la dirección se pierde la verificación de Places.
+  /**
+   * Issue #180: la dirección que ofrece Google se selecciona, no se escribe. Mientras esté
+   * elegida, el campo de calle y número va readonly (que no disabled: así se lee bien y se
+   * puede copiar); para cambiarla hay que borrarla con el botón de al lado.
+   */
+  get direccionBloqueada(): boolean {
+      return !!this.cliente?.direccionVerificada;
+  }
+
+  /**
+   * Issue #180: no se guarda un cliente cuya dirección no venga elegida de Google. Solo
+   * aplica mientras se está metiendo una dirección: si la ficha ya la tiene formateada y no
+   * se toca (modificación normal), no se pide nada.
+   */
+  get faltaDireccionVerificada(): boolean {
+      return !this.cliente?.direccion && !this.cliente?.direccionVerificada;
+  }
+
+  private async avisarDireccionSinVerificar(): Promise<void> {
+      const alert = await this.alertCtrl.create({
+          header: 'Falta la dirección',
+          message: 'Elige la dirección de la lista que ofrece Google. Lo que quieras añadir ' +
+              '(portal, local, referencias) va en «Dirección (resto de información)».',
+          buttons: ['Ok'],
+      });
+      await alert.present();
+  }
+
+  /**
+   * Issue #180: vacía la calle y número para poder buscar otra dirección. Es el botón que
+   * está junto al campo cuando la dirección ya viene elegida de Google.
+   */
+  public limpiarDireccion(): void {
+      this.cliente.direccionCalleNumero = "";
       this.cliente.direccionVerificada = false;
       this.sugerenciasDireccion = [];
       this.sessionTokenDireccion = null;
@@ -503,6 +548,12 @@ export class ClienteComponent implements AfterViewInit {
         // Issue #134: protegemos por consistencia con los demás setFocus del componente.
         this.inputDireccion?.setFocus();
     }, 500);
+  }
+
+  editarDireccion() {
+      this.cliente.direccion = "";
+      // Issue #153: al reeditar la dirección se pierde la verificación de Places.
+      this.limpiarDireccion();
   }
 
   /**

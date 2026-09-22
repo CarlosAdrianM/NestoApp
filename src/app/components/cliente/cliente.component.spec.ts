@@ -178,6 +178,97 @@ describe('ClienteComponent', () => {
     }));
   });
 
+  // Issue #180: la dirección que ofrece Google se selecciona, no se escribe. Los vendedores
+  // elegían la sugerencia y luego le añadían el portal al final, y la ficha quedaba sin
+  // normalizar. Lo que se quiera añadir va en "Dirección (resto de información)".
+  describe('la dirección se selecciona, no se escribe (#180)', () => {
+    it('al elegir una sugerencia la dirección queda verificada y el campo se bloquea', fakeAsync(() => {
+      servicio.leerDetalleDireccion = () => of({ calle: 'CALLE MAYOR', numero: '5', codigoPostal: '28013', poblacion: 'madrid', provincia: 'madrid' });
+      component.cliente = {};
+
+      component.seleccionarSugerenciaDireccion({ placeId: 'abc' });
+      tick();
+
+      expect(component.cliente.direccionCalleNumero).toBe('CALLE MAYOR 5');
+      expect(component.cliente.direccionVerificada).toBeTrue();
+      expect(component.direccionBloqueada).toBeTrue();
+    }));
+
+    it('el botón de limpiar vacía la dirección y la reabre para buscar otra', () => {
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR 5', direccionVerificada: true };
+
+      component.limpiarDireccion();
+
+      expect(component.cliente.direccionCalleNumero).toBe('');
+      expect(component.cliente.direccionVerificada).toBeFalse();
+      expect(component.direccionBloqueada).toBeFalse();
+    });
+
+    it('sin dirección elegida de Google no se pasa de datos generales', fakeAsync(() => {
+      const validar = spyOn(servicio, 'validarDatosGenerales').and.returnValue(of({}));
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR 5 PORTAL B', direccionVerificada: false };
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(validar).not.toHaveBeenCalled();
+      expect(component.slideActual).not.toBe(component.DATOS_COMISIONES);
+      expect(alertCreado.message).toContain('Google');
+    }));
+
+    it('con la dirección elegida se sigue adelante', fakeAsync(() => {
+      const validar = spyOn(servicio, 'validarDatosGenerales').and.returnValue(of({ direccionFormateada: 'CALLE MAYOR 5', hayErrores: false }));
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR 5', direccionVerificada: true };
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(validar).toHaveBeenCalled();
+    }));
+
+    it('una ficha que ya tiene dirección y no se toca no pide nada', fakeAsync(() => {
+      component.cliente = { direccion: 'CALLE MAYOR 5, MADRID', direccionCalleNumero: '', direccionVerificada: false };
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(component.faltaDireccionVerificada).toBeFalse();
+      expect(component.slideActual).toBe(component.DATOS_COMISIONES);
+    }));
+
+    it('el lápiz de editar deja la dirección lista para volver a buscarla', () => {
+      component.cliente = { direccion: 'CALLE MAYOR 5, MADRID', direccionCalleNumero: 'CALLE MAYOR 5', direccionVerificada: true };
+
+      component.editarDireccion();
+
+      expect(component.cliente.direccion).toBe('');
+      expect(component.cliente.direccionCalleNumero).toBe('');
+      expect(component.faltaDireccionVerificada).toBeTrue();
+    });
+
+    it('no se guarda un cliente cuya dirección no viene de Google', fakeAsync(() => {
+      const crear = spyOn(component, 'crearCliente');
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR 5 PORTAL B', direccionVerificada: false, esUnaModificacion: false };
+
+      component.finalizar();
+      tick();
+
+      expect(crear).not.toHaveBeenCalled();
+      expect(alertCreado.message).toContain('Google');
+    }));
+
+    it('el cliente viaja con direccionVerificada booleana', fakeAsync(() => {
+      const crear = spyOn(servicio, 'crearCliente').and.returnValue(of(clienteCreado));
+      component.cliente = { direccion: 'CALLE MAYOR 5, MADRID', esUnaModificacion: false, formaPago: 'EFC' };
+
+      component.finalizar();
+      tick();
+
+      expect(crear).toHaveBeenCalled();
+      expect((crear.calls.mostRecent().args[0] as any).direccionVerificada).toBe(false);
+    }));
+  });
+
   describe('días de servir (#162)', () => {
     it('sin el campo, todos los días cuentan como abiertos', () => {
       component.cliente = {};

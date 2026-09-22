@@ -42,8 +42,18 @@
             <ion-item *ngIf="cliente.direccion">
                 <ion-input label="Dirección actual" label-placement="floating" #direccionActual type="text" [(ngModel)]="cliente.direccion" name="direccionActual" [disabled]="true"></ion-input>
             </ion-item>
+              <!-- Issue #180: la dirección de Google se selecciona, no se escribe. Una vez
+                   elegida el campo va readonly y para cambiarla hay que borrarla. -->
               <ion-item *ngIf="!cliente.direccion">
-                  <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" (ionInput)="buscarDireccion($event)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Dirección (solo calle y número)" label-placement="floating" #direccion type="text" [(ngModel)]="cliente.direccionCalleNumero" name="direccion" [readonly]="direccionBloqueada" (ionInput)="buscarDireccion($event)" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-button slot="end" fill="clear" *ngIf="direccionBloqueada" (click)="limpiarDireccion()" aria-label="Borrar la dirección para buscar otra">
+                      <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+                  </ion-button>
+              </ion-item>
+              <ion-item lines="none" *ngIf="!cliente.direccion && !direccionBloqueada">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+                      Escribe y elige la dirección de la lista. Portal, local o referencias van en «resto de información».
+                  </ion-label>
               </ion-item>
               <!-- Issue #152/#153: sugerencias de Google Places (proxy de NestoAPI) -->
               <ion-list *ngIf="!cliente.direccion && sugerenciasDireccion.length > 0" class="sugerencias-direccion">
