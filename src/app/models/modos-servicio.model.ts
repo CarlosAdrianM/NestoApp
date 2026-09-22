@@ -98,3 +98,17 @@ export function parsearModoPorDefecto(valorParametro: string | null | undefined)
   const modo = parseInt((valorParametro || '').trim(), 10);
   return !isNaN(modo) && esModoValido(modo) ? modo : MODOS_SERVICIO.POR_DEFECTO;
 }
+
+/**
+ * NestoApp#184 / NestoAPI#506: modo que sugiere el servidor mirando el stock real de las líneas
+ * (verde = hay en el almacén, rosa = hay que traerlo de tiendas, rojo = no hay en ningún sitio).
+ * PascalCase, como lo serializa NestoAPI.
+ */
+export interface ModoServicioSugerido {
+  Modo: number;
+  Nombre: string;
+  LineasVerdes: number;
+  LineasRosas: number;
+  LineasRojas: number;
+  Motivo: string;
+}

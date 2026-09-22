@@ -128,6 +128,10 @@
                         <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
                     </ion-select>
                 </ion-item>
+                <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo -->
+                <ion-item lines="none" *ngIf="motivoModoServicio">
+                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{motivoModoServicio}}</ion-label>
+                </ion-item>
                 <ion-item>
                     <ion-label>Mantener Junto</ion-label>
                     <ion-toggle slot="end" aria-label="Mantener Junto" [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>

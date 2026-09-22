@@ -20,7 +20,7 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 
@@ -286,6 +286,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   // NestoApp#174 / NestoAPI#482: modo de servicio elegido (1..4). Null = nadie ha tocado el
   // selector; el getter modoServicio deriva entonces del servirJunto o del por defecto.
   private modoServicioSeleccionado: number | null = null;
+  /** NestoApp#184: si el vendedor ha elegido modo a mano, la sugerencia del servidor no le pisa. */
+  private modoServicioElegidoPorUsuario: boolean = false;
+  /** Por qué el servidor sugiere ese modo (se enseña junto al selector). */
+  public motivoModoServicio: string = '';
   public modoServicioPorDefecto: number = MODOS_SERVICIO.POR_DEFECTO;
   public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 
@@ -583,6 +587,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (anterior === nuevo) {
       return;
     }
+    // NestoApp#184: a partir de aquí manda el vendedor, no la sugerencia del servidor.
+    this.modoServicioElegidoPorUsuario = true;
     this.modoServicioSeleccionado = nuevo;
     if (this.direccionSeleccionada) {
       this.direccionSeleccionada.servirJunto = esTodoJunto(nuevo);
@@ -844,6 +850,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         // ofertas se podrían aplicar y no se están aplicando.
         this.cargarSugerenciasOfertas();
 
+        // NestoApp#184: y con qué modo de servicio nacería el pedido según su stock real.
+        this.cargarModoServicioSugerido();
+
         // Actualizar slider para que reconozca la slide de regalos si aplica
         console.log("baseImponibleBonificable:", this.baseImponibleBonificable, "hayGanavisiones:", this.hayGanavisionesDisponibles, "productosBonificablesCount:", this.productosBonificablesCount);
         if (this.hayGanavisionesDisponibles) {
@@ -879,6 +888,42 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.swiper.allowSlideNext = !!this.direccionSeleccionada;
   }
   
+  /**
+   * NestoApp#184 / NestoAPI#506: preselecciona el modo de servicio que sugiere el servidor según
+   * el stock real de las líneas. Se llama al llegar al resumen, cuando ya se sabe qué lleva el
+   * pedido. No pisa lo que el vendedor haya elegido a mano ni lo que traiga un borrador, y nunca
+   * saca de «Todo junto» (esa es la única transición que valida contra el servidor).
+   */
+  public cargarModoServicioSugerido(): void {
+    if (this.modoServicioElegidoPorUsuario || this.borradorEnRestauracion || this.pedidoEnEdicionNumero != null) {
+      return;
+    }
+    const pedido = this.prepararPedido();
+    if (!pedido) {
+      return;
+    }
+    this.servicio.modoServicioSugerido(pedido).subscribe(
+      (sugerencia: ModoServicioSugerido) => {
+        if (!sugerencia || !sugerencia.Modo) {
+          return;
+        }
+        this.motivoModoServicio = sugerencia.Motivo || '';
+        if (esTodoJunto(this.modoServicio) && !esTodoJunto(sugerencia.Modo)) {
+          return; // salir de «todo junto» solo lo decide el vendedor
+        }
+        this.modoServicioSeleccionado = sugerencia.Modo;
+        if (this.direccionSeleccionada) {
+          this.direccionSeleccionada.servirJunto = esTodoJunto(sugerencia.Modo);
+        }
+        this.recalcularPortesTrasServirJunto();
+      },
+      error => {
+        // Sin sugerencia se queda el defecto de siempre: es una ayuda, no un bloqueo.
+        console.log('No se ha podido calcular el modo de servicio sugerido', error);
+      }
+    );
+  }
+
   /**
    * NestoApp#169 / NestoAPI#457: ofertas que el pedido podría aplicar y no está aplicando. Es
    * una ayuda, nunca un bloqueo: si la API falla o tarda, el pedido se cierra igual.
@@ -1595,6 +1640,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       // NestoApp#169: las sugerencias son del pedido que se acaba de cerrar.
       this.sugerenciasOfertas = [];
       this.verSugerenciasOfertas = false;
+      // NestoApp#184: el próximo pedido vuelve a aceptar la sugerencia del servidor.
+      this.modoServicioElegidoPorUsuario = false;
+      this.motivoModoServicio = '';
   }
       
   get importePortesMostrar(): number {

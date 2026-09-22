@@ -895,3 +895,99 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
     expect(component.sugerenciasOfertas.length).toBe(1);
   }));
 });
+
+/**
+ * NestoApp#184 / NestoAPI#506: el modo de servicio con el que nace el pedido lo decide el
+ * servidor según el stock real de las líneas. La app lo preselecciona al llegar al resumen,
+ * sin pisar lo que el vendedor haya elegido a mano.
+ */
+describe('Modo de servicio sugerido por el servidor (#184)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+
+  const sugerencia = (modo: number, motivo = 'Todas las líneas tienen stock en el almacén') =>
+    of({ Modo: modo, Nombre: 'X', LineasVerdes: 2, LineasRosas: 0, LineasRojas: 0, Motivo: motivo });
+
+  beforeEach(waitForAsync(() => {
+    servicio = {
+      modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(1)),
+      ofertasSugeridas: () => of([]),
+      validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false };
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', cantidad: 2, cantidadOferta: 0 }];
+  }));
+
+  it('con stock de todo, el pedido pasa a «Todo junto»', fakeAsync(() => {
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(servicio.modoServicioSugerido).toHaveBeenCalled();
+    expect(component.modoServicio).toBe(1);
+    expect(component.motivoModoServicio).toContain('stock');
+  }));
+
+  it('si el vendedor ya ha elegido modo, no se le pisa', fakeAsync(() => {
+    component.cambiarModoServicio(4);
+    tick();
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(servicio.modoServicioSugerido).not.toHaveBeenCalled();
+    expect(component.modoServicio).toBe(4);
+  }));
+
+  it('nunca saca solo de «Todo junto» (esa salida es la que valida el servidor)', fakeAsync(() => {
+    component['_direccionSeleccionada'].servirJunto = true;
+    component['modoServicioSeleccionado'] = 1;
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(4, 'Hay líneas sin stock'));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(servicio.validarServirJunto).not.toHaveBeenCalled();
+  }));
+
+  it('si la llamada falla se queda el modo de siempre', fakeAsync(() => {
+    servicio.modoServicioSugerido.and.returnValue(throwError(() => ({ statusCode: 500 })));
+
+    expect(() => { component.cargarModoServicioSugerido(); tick(); }).not.toThrow();
+    expect(component.modoServicio).toBe(3);
+    expect(component.motivoModoServicio).toBe('');
+  }));
+
+  it('restaurar un borrador manda sobre la sugerencia', fakeAsync(() => {
+    component['borradorEnRestauracion'] = { modoServicio: 4, servirJunto: false } as any;
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(servicio.modoServicioSugerido).not.toHaveBeenCalled();
+  }));
+});

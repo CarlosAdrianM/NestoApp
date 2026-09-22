@@ -5,6 +5,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
+import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 
 @Injectable({
   providedIn: 'root'
@@ -78,6 +79,18 @@ export class PlantillaVentaService {
     headers = headers.append('Content-Type', 'application/json');
 
     return this.http.post<SugerenciaOferta[]>(this._baseUrl + '/OfertasSugeridas', JSON.stringify(pedido), { headers: headers });
+  }
+
+  /**
+   * NestoApp#184 / NestoAPI#506: el modo de servicio que el servidor pondría al pedido según el
+   * stock real de sus líneas (o el que fuerce el parámetro del usuario). La regla vive entera
+   * en el servidor, que es quien ve el stock de todos los almacenes.
+   */
+  public modoServicioSugerido(pedido: any): Observable<ModoServicioSugerido> {
+    let headers: any = new HttpHeaders();
+    headers = headers.append('Content-Type', 'application/json');
+
+    return this.http.post<ModoServicioSugerido>(this._baseUrl + '/ModoServicioSugerido', JSON.stringify(pedido), { headers: headers });
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {
