@@ -728,6 +728,35 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
     expect(puedeSalir).toBeFalse(); // 'Cancelar'
   }));
 
+  it('abrir el detalle de un producto no pregunta nada (no se está saliendo del pedido)', () => {
+    component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => true } as any;
+
+    const puedeSalir = component.canDeactivate({ url: '/selector-plantilla-venta-detalle?producto=12345' } as any);
+
+    expect(puedeSalir).toBeTrue();
+    expect(accionesCreadas.length).toBe(0);
+  });
+
+  it('ir a rellenar la ficha del cliente tampoco pregunta', () => {
+    component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => true } as any;
+
+    const puedeSalir = component.canDeactivate({ url: '/cliente?empresa=1&cliente=12345&contacto=0' } as any);
+
+    expect(puedeSalir).toBeTrue();
+    expect(accionesCreadas.length).toBe(0);
+  });
+
+  it('salir de verdad de la plantilla sí pregunta', fakeAsync(() => {
+    component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => true } as any;
+
+    let puedeSalir: boolean = null;
+    Promise.resolve(component.canDeactivate({ url: '/home' } as any) as Promise<boolean>).then(r => puedeSalir = r);
+    tick();
+
+    expect(accionesCreadas.length).toBe(1);
+    expect(puedeSalir).toBeFalse();
+  }));
+
   it('con el carrito vacío se sale sin preguntar', () => {
     component['_selectorPlantillaVenta'] = { hayAlgunProducto: () => false } as any;
 

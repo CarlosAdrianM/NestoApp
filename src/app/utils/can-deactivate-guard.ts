@@ -8,8 +8,9 @@ export class CanDeactivateGuard  {
   canDeactivate(
     component: IDeactivatableComponent,
     route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
+    state: RouterStateSnapshot,
+    nextState?: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
-    return component.canDeactivate();
+    return component.canDeactivate(nextState);
   }
 }

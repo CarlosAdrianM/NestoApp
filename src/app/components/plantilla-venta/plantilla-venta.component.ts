@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterStateSnapshot } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -70,12 +70,20 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       // ion-router-outlet; lo que haya que decidir al salir va en canDeactivate().
   }
 
+  /** Issue #183: destinos que forman parte del propio flujo de meter el pedido. */
+  private static readonly RUTAS_INTERNAS = ['/selector-plantilla-venta-detalle', '/cliente'];
+
   /**
    * Issue #183: decide por el estado real del carrito, no por qué se pulsó para salir. Antes
    * dependía de una bandera que solo levantaba la flecha de arriba a la izquierda, así que
    * salir por el atrás de Android (o por un gesto) perdía el pedido sin preguntar.
    */
-  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+  canDeactivate(nextState?: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+    // Issue #183: entrar al detalle de un producto (decenas de veces por pedido) o a rellenar
+    // la ficha del cliente también desactiva esta ruta, y ahí no se está saliendo del pedido.
+    if (nextState && PlantillaVentaComponent.RUTAS_INTERNAS.some(ruta => nextState.url.startsWith(ruta))) {
+      return true;
+    }
     const hayProductos = this._selectorPlantillaVenta && this._selectorPlantillaVenta.hayAlgunProducto();
 
     if (!hayProductos) {
