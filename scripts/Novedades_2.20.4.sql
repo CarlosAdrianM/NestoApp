@@ -19,4 +19,10 @@ INSERT INTO dbo.Novedades ([Version], Fecha, Categoria, Titulo, Descripcion, Amb
  'NestoApp', SUSER_SNAME()),
 ('2.20.4', '2026-09-22', 'Corregido', 'Los errores explican qué ha pasado',
  'Al abrir o guardar una ficha de cliente, cuando algo falla se ve el motivo en vez de un «undefined».',
+ 'NestoApp', SUSER_SNAME()),
+('2.20.4', '2026-09-22', 'Nuevo', 'Te avisamos de las ofertas que no estás aplicando',
+ 'En el resumen del pedido sale un aviso con las ofertas que podrías aplicar y no estás aplicando («con 1 unidad más tienes el 6+1», «este producto tiene un 2+1 sin poner», «añadiendo 12 € entra el regalo»). Las que dicen producto y cantidad se aplican con un toque.',
+ 'NestoApp', SUSER_SNAME()),
+('2.20.4', '2026-09-22', 'Mejorado', 'El modo de entrega se propone según el stock',
+ 'Al llegar al resumen, el pedido se pone solo en el modo de entrega que le corresponde según el stock que haya de sus productos, y te explica por qué. Si lo cambias tú, se respeta tu elección.',
  'NestoApp', SUSER_SNAME());
