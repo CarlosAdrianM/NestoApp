@@ -59,7 +59,9 @@ Siempre que se vaya a hacer push, hay que:
    - Lenguaje de usuario, nunca técnico. Solo cambios que el usuario percibe (ej: portes,
      mensajes de Ganavisiones, PDF con imágenes), no migraciones ni fixes de build.
    - La app lee `GET api/Novedades` y filtra `Ambito === 'NestoApp'` en cliente (chapuza
-     temporal hasta que NestoAPI#489 esté publicado; entonces pasar a `?ambito=NestoApp`).
+     temporal). El cambio bueno espera a **NestoAPI#495**, que sustituye el criterio de #489:
+     `?ambitos=NestoApp,NestoAPI&desdeId=<última vista>` y parámetro `UltimaNovedadVistaApp`
+     (por Id, no por versión). El popup «qué hay de nuevo» se hace ya con ese criterio.
 
 ## Build local de APK release firmado (WSL2)
 
