@@ -1,11 +1,16 @@
+// #188: va dentro de la tarjeta de la novedad, separado de su texto por una línea.
 .feedback {
-  padding: 0 16px 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--ion-color-step-150);
+  padding-top: 4px;
 }
 
 .acciones {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
 
   .mi-voto {
     font-weight: bold;
@@ -13,9 +18,10 @@
 }
 
 .comentarios {
-  border-left: 2px solid var(--ion-color-step-200);
-  padding-left: 12px;
   margin-top: 4px;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--ion-color-step-50);
 }
 
 .comentario {

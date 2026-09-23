@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
@@ -31,7 +32,7 @@ describe('ProfileComponent', () => {
     TestBed.configureTestingModule({
     declarations: [ProfileComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
-    imports: [IonicModule.forRoot(), RouterTestingModule],
+    imports: [IonicModule.forRoot(), RouterTestingModule, FormsModule],
     providers: [
         Usuario,
         { provide: Storage, useValue: { get: () => Promise.resolve(null) } },
@@ -60,6 +61,36 @@ describe('ProfileComponent', () => {
       expect(component.gruposNovedades.length).toBe(2);
       expect(component.gruposNovedades[0].version).toBe('2.20.1');
       expect(component.gruposNovedades[0].novedades[0].Titulo).toBe('Selector de modo de entrega');
+    });
+
+    it('#188: se ve una sola versión, la más reciente, y se navega a las anteriores con flechas', () => {
+      expect(component.grupoNovedadesActual.version).toBe('2.20.1');
+      expect(component.hayVersionPosterior).toBeFalse();
+      expect(component.hayVersionAnterior).toBeTrue();
+
+      component.verVersionAnterior();
+      expect(component.grupoNovedadesActual.version).toBe('2.20.0');
+      expect(component.hayVersionAnterior).toBeFalse();
+      expect(component.hayVersionPosterior).toBeTrue();
+
+      component.verVersionAnterior(); // ya no hay más: se queda
+      expect(component.grupoNovedadesActual.version).toBe('2.20.0');
+
+      component.verVersionPosterior();
+      expect(component.grupoNovedadesActual.version).toBe('2.20.1');
+    });
+
+    it('#188: en pantalla solo salen las novedades de la versión elegida', () => {
+      component.usuario.nombre = 'carlos'; // la sección solo se pinta con sesión iniciada
+      fixture.detectChanges();
+      const texto = () => fixture.nativeElement.textContent as string;
+      expect(texto()).toContain('Selector de modo de entrega');
+      expect(texto()).not.toContain('Arranque más rápido');
+
+      component.verVersionAnterior();
+      fixture.detectChanges();
+      expect(texto()).toContain('Arranque más rápido');
+      expect(texto()).not.toContain('Selector de modo de entrega');
     });
 
     it('si el endpoint falla, la lista queda vacía y la sección no se pinta', () => {

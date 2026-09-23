@@ -60,13 +60,44 @@ export class ProfileComponent {
 
   private cargarNovedades(): void {
       this.novedadesService.leerNovedades().subscribe(
-          novedades => { this.gruposNovedades = agruparPorVersion(novedades); },
+          novedades => {
+              this.gruposNovedades = agruparPorVersion(novedades);
+              this.indiceVersionNovedades = 0;
+          },
           error => {
               // Sin conexión o endpoint caído: la sección simplemente no se pinta.
               console.error('No se han podido cargar las novedades:', error);
               this.gruposNovedades = [];
           }
       );
+  }
+
+  // Como la ventana de Novedades de Nesto: una versión cada vez y flechas para las demás. Si no,
+  // con el tiempo el perfil sería una lista interminable. 0 = la más reciente.
+  public indiceVersionNovedades: number = 0;
+
+  get grupoNovedadesActual(): GrupoNovedades | undefined {
+      return this.gruposNovedades[this.indiceVersionNovedades];
+  }
+
+  get hayVersionAnterior(): boolean {
+      return this.indiceVersionNovedades < this.gruposNovedades.length - 1;
+  }
+
+  get hayVersionPosterior(): boolean {
+      return this.indiceVersionNovedades > 0;
+  }
+
+  public verVersionAnterior(): void {
+      if (this.hayVersionAnterior) {
+          this.indiceVersionNovedades++;
+      }
+  }
+
+  public verVersionPosterior(): void {
+      if (this.hayVersionPosterior) {
+          this.indiceVersionNovedades--;
+      }
   }
 
   public colorCategoria(categoria: string): string {

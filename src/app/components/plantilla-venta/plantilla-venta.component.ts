@@ -1019,8 +1019,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public sugerenciasOfertas: SugerenciaOferta[] = [];
   /** El plegable nace cerrado: en el resumen manda el pedido, no la sugerencia. */
   public verSugerenciasOfertas: boolean = false;
+  /** Mientras llega la respuesta no se sabe si hay ofertas: se dice, para que no se pase de largo. */
+  public calculandoSugerenciasOfertas: boolean = false;
+  /** Para descartar la respuesta de un cálculo anterior que llegue tarde. */
+  private peticionSugerenciasOfertas: number = 0;
 
   get textoSugerenciasOfertas(): string {
+    if (this.calculandoSugerenciasOfertas) {
+      return 'Calculando ofertas sin aplicar…';
+    }
     return resumenSugerencias(this.sugerenciasOfertas);
   }
 
@@ -1029,19 +1036,31 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   public cargarSugerenciasOfertas(): void {
+    const peticion = ++this.peticionSugerenciasOfertas;
     const pedido = this.prepararPedido();
     if (!pedido) {
       this.sugerenciasOfertas = [];
+      this.calculandoSugerenciasOfertas = false;
       return;
     }
+    // El recuento de la pasada anterior ya no vale: hasta que conteste, «Calculando…».
+    this.calculandoSugerenciasOfertas = true;
     this.servicio.ofertasSugeridas(pedido).subscribe(
       (sugerencias: SugerenciaOferta[]) => {
+        if (peticion !== this.peticionSugerenciasOfertas) {
+          return;
+        }
         this.sugerenciasOfertas = sugerencias || [];
+        this.calculandoSugerenciasOfertas = false;
       },
       error => {
+        if (peticion !== this.peticionSugerenciasOfertas) {
+          return;
+        }
         // Sin ruido: que no salgan las sugerencias no impide cerrar el pedido.
         console.log('No se han podido calcular las ofertas sugeridas', error);
         this.sugerenciasOfertas = [];
+        this.calculandoSugerenciasOfertas = false;
       }
     );
   }

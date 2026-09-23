@@ -94,24 +94,36 @@
           <!-- NestoApp#177: las novedades salen de la tabla Novedades de la API (Nesto#372).
                Si el endpoint falla o no hay entradas, la sección no se pinta. -->
           <h4 class="seccion-titulo" *ngIf="gruposNovedades.length > 0">Novedades</h4>
-          <ion-list class="changelog-list" *ngIf="gruposNovedades.length > 0">
-            <ng-container *ngFor="let grupo of gruposNovedades">
-              <ion-list-header>
-                <ion-label>Versión {{ grupo.version }} <span class="fecha-novedad">{{ grupo.fecha | date:'dd/MM/yyyy' }}</span></ion-label>
-              </ion-list-header>
-              <ng-container *ngFor="let novedad of grupo.novedades">
-                <ion-item [lines]="novedad.VotosPositivos != null ? 'none' : undefined">
-                  <ion-badge slot="start" [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
-                  <ion-label class="ion-text-wrap">
-                    <h3>{{ novedad.Titulo }}</h3>
-                    <p *ngIf="novedad.Descripcion">{{ novedad.Descripcion }}</p>
-                  </ion-label>
-                </ion-item>
+          <!-- #188: una versión cada vez (como Nesto) y cada novedad en su tarjeta, con sus votos y
+               comentarios dentro, para que se vea de qué novedad son. -->
+          <div class="novedades" *ngIf="grupoNovedadesActual as grupo">
+            <div class="navegacion-versiones">
+              <ion-button fill="clear" [disabled]="!hayVersionAnterior" (click)="verVersionAnterior()" aria-label="Versión anterior">
+                <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+              </ion-button>
+              <div class="version-actual">
+                <div class="numero-version">Versión {{ grupo.version }}</div>
+                <div class="fecha-novedad">{{ grupo.fecha | date:'dd/MM/yyyy' }} · {{ indiceVersionNovedades + 1 }} de {{ gruposNovedades.length }}</div>
+              </div>
+              <ion-button fill="clear" [disabled]="!hayVersionPosterior" (click)="verVersionPosterior()" aria-label="Versión siguiente">
+                <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
+              </ion-button>
+            </div>
+
+            <ion-card class="novedad" *ngFor="let novedad of grupo.novedades">
+              <ion-card-header>
+                <div class="cabecera-novedad">
+                  <ion-badge [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
+                  <ion-card-title>{{ novedad.Titulo }}</ion-card-title>
+                </div>
+              </ion-card-header>
+              <ion-card-content>
+                <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
                 <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
                 <novedad-feedback [novedad]="novedad"></novedad-feedback>
-              </ng-container>
-            </ng-container>
-          </ion-list>
+              </ion-card-content>
+            </ion-card>
+          </div>
 
           <h4 class="seccion-titulo">Configuración</h4>
           <ion-list>

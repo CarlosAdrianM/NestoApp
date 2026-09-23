@@ -58,13 +58,17 @@
                 </ion-item>
                 <!-- NestoApp#169 / NestoAPI#457: ofertas que el pedido podría aplicar. En el móvil
                      se enseña un resumen que se despliega, no una lista larga encima del pedido. -->
-                <ion-item *ngIf="textoSugerenciasOfertas" button detail="false" color="success" (click)="verSugerenciasOfertas = !verSugerenciasOfertas">
+                <ion-item *ngIf="calculandoSugerenciasOfertas" color="medium" lines="full">
+                    <ion-spinner name="crescent" slot="start"></ion-spinner>
+                    <ion-label class="ion-text-wrap">{{textoSugerenciasOfertas}}</ion-label>
+                </ion-item>
+                <ion-item *ngIf="!calculandoSugerenciasOfertas && textoSugerenciasOfertas" button detail="false" color="success" (click)="verSugerenciasOfertas = !verSugerenciasOfertas">
                     <ion-icon name="pricetags-outline" slot="start"></ion-icon>
                     <ion-label class="ion-text-wrap"><strong>{{textoSugerenciasOfertas}}</strong></ion-label>
                     <ion-icon slot="end" [name]="verSugerenciasOfertas ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
                 </ion-item>
                 <!-- *ngIf y no [hidden]: ion-item fija su propio display y el atributo hidden no lo oculta -->
-                <ng-container *ngIf="verSugerenciasOfertas">
+                <ng-container *ngIf="verSugerenciasOfertas && !calculandoSugerenciasOfertas">
                     <ion-item *ngFor="let sugerencia of sugerenciasOfertas" lines="full">
                         <ion-label class="ion-text-wrap">{{sugerencia.Texto}}</ion-label>
                         <ion-button slot="end" fill="outline" size="small" *ngIf="sePuedeAplicarSugerencia(sugerencia)" (click)="aplicarSugerenciaOferta(sugerencia)">Aplicar</ion-button>

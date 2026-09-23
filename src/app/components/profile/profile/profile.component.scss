@@ -53,38 +53,59 @@ swiper-container {
   margin: 16px 0 8px;
 }
 
-.changelog-list {
-  ion-item {
-    --padding-start: 16px;
-    --inner-padding-end: 0;
-    font-size: 0.9rem;
+.novedades {
+  // #188: una versión cada vez, con flechas a los lados (como la ventana de Novedades de Nesto)
+  .navegacion-versiones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  // NestoApp#177: cabecera de versión y badge de categoría
-  ion-list-header {
+  .version-actual {
+    text-align: center;
+  }
+
+  .numero-version {
     font-size: 0.95rem;
     font-weight: 600;
   }
 
   .fecha-novedad {
-    font-weight: 400;
     font-size: 0.8rem;
     color: var(--ion-color-medium);
-    margin-left: 8px;
   }
 
-  ion-badge {
-    min-width: 74px;
-    text-align: center;
+  // Cada novedad en su tarjeta: así los votos y comentarios se ven de cuál son.
+  ion-card.novedad {
+    margin: 8px 0 12px;
+    border: 1px solid var(--ion-color-step-150);
+    box-shadow: none;
   }
 
-  ion-label h3 {
-    font-size: 0.9rem;
+  ion-card-header {
+    padding-bottom: 4px;
   }
 
-  ion-label p {
-    font-size: 0.8rem;
-    white-space: normal;
+  .cabecera-novedad {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-badge {
+      flex-shrink: 0;
+      min-width: 74px;
+      text-align: center;
+    }
+  }
+
+  ion-card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .descripcion-novedad {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
   }
 }
 

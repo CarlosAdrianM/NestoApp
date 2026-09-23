@@ -10,7 +10,7 @@ import { Storage } from '@ionic/storage-angular';
 import { PlantillaVentaComponent } from './plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('PlantillaVentaComponent', () => {
@@ -890,6 +890,48 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
     component.verSugerenciasOfertas = false;
     fixture.detectChanges();
     expect(texto()).not.toContain(sugerenciaAmpliar.Texto);
+  }));
+
+  it('mientras se calcula se avisa de que aún no se sabe si hay ofertas', fakeAsync(() => {
+    const respuesta = new Subject<any[]>();
+    servicio.ofertasSugeridas.and.returnValue(respuesta);
+
+    component.cargarSugerenciasOfertas();
+    expect(component.calculandoSugerenciasOfertas).toBeTrue();
+    expect(component.textoSugerenciasOfertas).toBe('Calculando ofertas sin aplicar…');
+
+    respuesta.next([sugerenciaAmpliar]);
+    respuesta.complete();
+    expect(component.calculandoSugerenciasOfertas).toBeFalse();
+    expect(component.textoSugerenciasOfertas).toBe('1 oferta sin aplicar');
+  }));
+
+  it('al recalcular no se enseña el recuento viejo como si fuera el bueno', fakeAsync(() => {
+    component.cargarSugerenciasOfertas();
+    tick();
+    expect(component.textoSugerenciasOfertas).toBe('1 oferta sin aplicar');
+
+    const respuesta = new Subject<any[]>();
+    servicio.ofertasSugeridas.and.returnValue(respuesta);
+    component.cargarSugerenciasOfertas();
+
+    expect(component.textoSugerenciasOfertas).toBe('Calculando ofertas sin aplicar…');
+    respuesta.next([sugerenciaAmpliar, { ...sugerenciaAmpliar, Producto: '99999' }]);
+    expect(component.textoSugerenciasOfertas).toBe('2 ofertas sin aplicar');
+  }));
+
+  it('si llega tarde la respuesta de un cálculo anterior, no pisa la del último', fakeAsync(() => {
+    const primera = new Subject<any[]>();
+    const segunda = new Subject<any[]>();
+    servicio.ofertasSugeridas.and.returnValues(primera, segunda);
+
+    component.cargarSugerenciasOfertas();
+    component.cargarSugerenciasOfertas();
+    segunda.next([]);
+    primera.next([sugerenciaAmpliar]);
+
+    expect(component.sugerenciasOfertas.length).toBe(0);
+    expect(component.calculandoSugerenciasOfertas).toBeFalse();
   }));
 
   it('la sugerencia de importe de pedido no intenta tocar ninguna línea', fakeAsync(() => {
