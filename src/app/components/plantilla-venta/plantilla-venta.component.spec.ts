@@ -875,6 +875,23 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
     expect(component.sugerenciasOfertas.length).toBe(0);
   }));
 
+  it('el plegable de ofertas nace cerrado y se abre y se cierra de verdad (no solo la flecha)', fakeAsync(() => {
+    component.cargarSugerenciasOfertas();
+    tick();
+    fixture.detectChanges();
+    const texto = () => fixture.nativeElement.textContent as string;
+    expect(texto()).toContain('1 oferta sin aplicar');
+    expect(texto()).not.toContain(sugerenciaAmpliar.Texto);
+
+    component.verSugerenciasOfertas = true;
+    fixture.detectChanges();
+    expect(texto()).toContain(sugerenciaAmpliar.Texto);
+
+    component.verSugerenciasOfertas = false;
+    fixture.detectChanges();
+    expect(texto()).not.toContain(sugerenciaAmpliar.Texto);
+  }));
+
   it('la sugerencia de importe de pedido no intenta tocar ninguna línea', fakeAsync(() => {
     servicio.ofertasSugeridas.and.returnValue(of([{
       Tipo: 'AmpliarImporte', Producto: null, CantidadActual: 0, CantidadSugerida: 0,

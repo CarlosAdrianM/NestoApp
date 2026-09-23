@@ -63,10 +63,13 @@
                     <ion-label class="ion-text-wrap"><strong>{{textoSugerenciasOfertas}}</strong></ion-label>
                     <ion-icon slot="end" [name]="verSugerenciasOfertas ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
                 </ion-item>
-                <ion-item *ngFor="let sugerencia of sugerenciasOfertas" [hidden]="!verSugerenciasOfertas" lines="full">
-                    <ion-label class="ion-text-wrap">{{sugerencia.Texto}}</ion-label>
-                    <ion-button slot="end" fill="outline" size="small" *ngIf="sePuedeAplicarSugerencia(sugerencia)" (click)="aplicarSugerenciaOferta(sugerencia)">Aplicar</ion-button>
-                </ion-item>
+                <!-- *ngIf y no [hidden]: ion-item fija su propio display y el atributo hidden no lo oculta -->
+                <ng-container *ngIf="verSugerenciasOfertas">
+                    <ion-item *ngFor="let sugerencia of sugerenciasOfertas" lines="full">
+                        <ion-label class="ion-text-wrap">{{sugerencia.Texto}}</ion-label>
+                        <ion-button slot="end" fill="outline" size="small" *ngIf="sePuedeAplicarSugerencia(sugerencia)" (click)="aplicarSugerenciaOferta(sugerencia)">Aplicar</ion-button>
+                    </ion-item>
+                </ng-container>
                 <ion-item *ngIf="baseImponibleParaPortes != baseImponiblePedido">
                     <div>Base Imponible Para Portes:</div>
                     <div slot="end" class="ion-text-right">{{baseImponibleParaPortes | currency:'EUR'}}</div>
