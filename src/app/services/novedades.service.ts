@@ -72,20 +72,8 @@ export function aplicarVoto(novedad: Novedad, pulsado: 1 | -1): { novedad: Noved
   };
 }
 
-/** Mismo límite que la API (NestoAPI#520): se avisa antes de mandar. */
+/** Mismo límite que la API (NestoAPI#520): las capturas se ajustan antes de mandarlas. */
 export const TAMANO_MAXIMO_IMAGEN = 2 * 1024 * 1024;
-export const TIPOS_IMAGEN_ADMITIDOS = ['image/png', 'image/jpeg'];
-
-/** null si la imagen vale; si no, el motivo (los mismos textos que la API). */
-export function validarImagen(tipo: string, tamano: number): string | null {
-  if (!TIPOS_IMAGEN_ADMITIDOS.includes((tipo || '').toLowerCase())) {
-    return 'Solo se admiten imágenes PNG o JPEG.';
-  }
-  if (tamano > TAMANO_MAXIMO_IMAGEN) {
-    return 'La imagen es demasiado grande (máximo 2 MB). Recorta solo la parte que importa.';
-  }
-  return null;
-}
 
 export interface GrupoNovedades {
   version: string;

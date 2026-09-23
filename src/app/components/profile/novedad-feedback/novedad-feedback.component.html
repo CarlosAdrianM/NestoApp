@@ -37,8 +37,8 @@
     <ion-note *ngIf="errorImagen" color="danger" class="error-imagen">{{ errorImagen }}</ion-note>
 
     <div class="botones">
-      <input #fichero type="file" accept="image/png,image/jpeg" hidden (change)="alElegirFichero($event)" />
-      <ion-button size="small" fill="outline" (click)="fichero.click()">Adjuntar captura</ion-button>
+      <input #fichero type="file" accept="image/*" hidden (change)="alElegirFichero($event)" />
+      <ion-button size="small" fill="outline" (click)="fichero.click()">Adjuntar captura de la galería</ion-button>
       <ion-button *ngIf="puedeLeerPortapapeles" size="small" fill="outline" (click)="pegarImagen()">Pegar imagen</ion-button>
       <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviarComentario()">Enviar</ion-button>
     </div>

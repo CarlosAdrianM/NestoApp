@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
-import { NovedadesService, Novedad, agruparPorVersion, colorCategoria, aplicarVoto, validarImagen, tieneFeedback } from './novedades.service';
+import { NovedadesService, Novedad, agruparPorVersion, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
 
 /**
  * NestoApp#177: las novedades del perfil salen de la tabla Novedades de la API (Nesto#372)
@@ -170,12 +170,5 @@ describe('Feedback de las novedades (#188)', () => {
     expect(r.novedad.VotosPositivos).toBe(2);
     expect(r.novedad.VotosNegativos).toBe(2);
     expect(r.novedad.MiVoto).toBe(-1);
-  });
-
-  it('solo se admiten PNG o JPEG de hasta 2 MB (mismos textos que la API)', () => {
-    expect(validarImagen('image/png', 1000)).toBeNull();
-    expect(validarImagen('image/jpeg', 2 * 1024 * 1024)).toBeNull();
-    expect(validarImagen('image/png', 2 * 1024 * 1024 + 1)).toContain('máximo 2 MB');
-    expect(validarImagen('image/gif', 1000)).toContain('PNG o JPEG');
   });
 });
