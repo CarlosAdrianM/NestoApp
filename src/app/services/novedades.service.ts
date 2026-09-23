@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
@@ -58,15 +58,14 @@ export class NovedadesService {
   constructor(private http: HttpClient) { }
 
   /**
-   * CHAPUZA TEMPORAL (NestoApp#177): la API aún no filtra por ámbito, así que se baja todo
-   * y se filtra aquí. Tampoco se manda desdeVersion: el servidor compararía las versiones
-   * de Nesto (1.10.x) con las de la app (2.x). Cuando NestoAPI#489 esté publicado, pasar a
-   * GET api/Novedades?ambito=NestoApp y retirar el filtro en cliente.
+   * #186: solo las de la app. Sin ámbito, NestoAPI (#489) devuelve las del escritorio y nunca
+   * las de NestoApp. Sin desdeVersion: el perfil enseña el histórico completo.
    */
   public leerNovedades(): Observable<Novedad[]> {
     const url = Configuracion.API_URL + '/Novedades';
-    return this.http.get<Novedad[]>(url).pipe(
-      map(novedades => (novedades || []).filter(n => n.Ambito === 'NestoApp'))
+    const params = new HttpParams().set('ambito', 'NestoApp');
+    return this.http.get<Novedad[]>(url, { params }).pipe(
+      map(novedades => novedades || [])
     );
   }
 }

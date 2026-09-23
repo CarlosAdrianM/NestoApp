@@ -6,8 +6,7 @@ import { NovedadesService, Novedad, agruparPorVersion, colorCategoria } from './
 
 /**
  * NestoApp#177: las novedades del perfil salen de la tabla Novedades de la API (Nesto#372)
- * en vez del HTML hardcodeado. Hasta que NestoAPI#489 esté publicado, el GET baja todo y
- * se filtra Ambito === 'NestoApp' en el cliente (chapuza temporal).
+ * en vez del HTML hardcodeado. #186: se piden con ?ambito=NestoApp (NestoAPI#489).
  */
 describe('NovedadesService (#177)', () => {
   let service: NovedadesService;
@@ -31,22 +30,22 @@ describe('NovedadesService (#177)', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('descarta las novedades que no son de NestoApp (chapuza hasta NestoAPI#489)', () => {
+  it('pide solo las de NestoApp con ?ambito=NestoApp (#186) y no filtra en cliente', () => {
     let resultado: Novedad[] = [];
     service.leerNovedades().subscribe(n => resultado = n);
 
     const req = httpMock.expectOne(r => r.url.endsWith('/Novedades'));
     expect(req.request.method).toBe('GET');
-    // Sin desdeVersion: el servidor compararía versiones de Nesto (1.10.x) con las de la app (2.x)
+    // #186: sin ámbito, NestoAPI (#489) devuelve las del escritorio y nunca las de la app
+    expect(req.request.params.get('ambito')).toBe('NestoApp');
+    // Sin desdeVersion: el perfil enseña el histórico completo
     expect(req.request.params.has('desdeVersion')).toBeFalse();
     req.flush([
-      novedadBase({ Id: 1, Version: '1.10.28.0', Titulo: 'Cosa de Nesto', Ambito: 'Nesto' }),
-      novedadBase({ Id: 2, Version: '2.20.1', Titulo: 'Cosa de la app', Ambito: 'NestoApp' }),
-      novedadBase({ Id: 3, Version: '1.10.28.0', Titulo: 'Cosa de la API', Ambito: 'NestoAPI' })
+      novedadBase({ Id: 2, Version: '2.20.5', Titulo: 'Cosa de la app', Ambito: 'NestoApp' }),
+      novedadBase({ Id: 1, Version: '2.20.1', Titulo: 'Otra de la app', Ambito: 'NestoApp' })
     ]);
 
-    expect(resultado.length).toBe(1);
-    expect(resultado[0].Titulo).toBe('Cosa de la app');
+    expect(resultado.map(n => n.Titulo)).toEqual(['Cosa de la app', 'Otra de la app']);
   });
 
   it('una respuesta vacía o rara devuelve lista vacía sin reventar', () => {
