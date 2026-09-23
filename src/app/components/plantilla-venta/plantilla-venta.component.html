@@ -193,6 +193,9 @@
              <ion-label class="ion-text-center"> {{direccionSeleccionada?.iva}} </ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada?.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada?.iva" [seleccionado]="formaPago"></selector-formas-pago>
+        <!-- NestoApp#189: con recibo bancario, qué cuenta se carga (o aviso si no hay ninguna válida) -->
+        <selector-ccc *ngIf="esReciboBancario && direccionSeleccionada" [empresa]="clienteSeleccionado.empresa" [cliente]="clienteSeleccionado.cliente"
+            [contacto]="direccionSeleccionada.contacto" [seleccionado]="direccionSeleccionada.ccc" (seleccionar)="cambiarCCC($event)"></selector-ccc>
         <selector-plazos-pago *ngIf="direccionSeleccionada?.iva && direccionSeleccionada?.plazosPago !== 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>

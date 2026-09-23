@@ -44,6 +44,9 @@
                   </ion-modal>
               </ion-item>
               <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
+              <!-- NestoApp#189: con recibo bancario, qué cuenta se carga (o aviso si no hay ninguna válida) -->
+              <selector-ccc *ngIf="pedido.formaPago?.trim() === 'RCB'" [empresa]="pedido.empresa" [cliente]="pedido.cliente"
+                  [contacto]="pedido.contacto" [seleccionado]="pedido.ccc" (seleccionar)="pedido.ccc = $event"></selector-ccc>
               <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="seleccionarPlazosPago($event)"></selector-plazos-pago>
               <ion-item>
                   <ion-label>Fecha Vencimiento</ion-label>

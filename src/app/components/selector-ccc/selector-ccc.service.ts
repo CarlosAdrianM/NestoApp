@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { CCC, CCC_SIN_CCC } from 'src/app/models/ccc.model';
+import { CCC } from 'src/app/models/ccc.model';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +20,7 @@ export class SelectorCCCService {
     params = params.append('contacto', contacto);
 
     return this.http.get<CCC[]>(this._baseUrl, { params }).pipe(
-      map(cccs => [CCC_SIN_CCC, ...cccs])
+      map(cccs => cccs || [])
     );
   }
 }

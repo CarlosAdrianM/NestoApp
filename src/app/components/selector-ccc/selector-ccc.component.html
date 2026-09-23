@@ -1,26 +1,24 @@
-<ion-item>
-  <ion-select
-    label="Cuenta Bancaria"
-    label-placement="start"
-    *ngIf="cccs.length > 0"
-    [(ngModel)]="seleccionado"
-    (ionChange)="seleccionarCCC(seleccionado)"
-    [compareWith]="compararCCC"
-    [disabled]="cargando">
-    <ion-select-option
-      *ngFor="let ccc of cccs"
-      [value]="ccc"
-      [disabled]="esCCCInvalido(ccc)"
-      [class.ccc-invalido]="esCCCInvalido(ccc)">
-      {{ccc.descripcion}}
-    </ion-select-option>
-  </ion-select>
-  <ion-spinner *ngIf="cargando" name="crescent" slot="end"></ion-spinner>
+<ion-item *ngIf="cargando">
+  <ion-label>Cuenta del recibo</ion-label>
+  <ion-spinner slot="end" name="crescent"></ion-spinner>
 </ion-item>
-<ion-item *ngIf="cccObligatorio && (!seleccionado || !seleccionado.numero)" color="warning" lines="none">
+<ion-item *ngIf="!cargando && cccsValidos.length === 1">
+  <ion-label>Cuenta del recibo</ion-label>
+  <ion-note slot="end">{{ descripcion(cccsValidos[0]) }}</ion-note>
+</ion-item>
+<ion-item *ngIf="!cargando && cccsValidos.length > 1">
+  <ion-label>Cuenta del recibo</ion-label>
+  <ion-select slot="end" aria-label="Cuenta del recibo" interface="action-sheet" [cancelText]="'Cancelar'"
+    [value]="numeroSeleccionado" (ionChange)="seleccionarCCC($event.detail.value)">
+    <ion-select-option *ngFor="let ccc of cccsValidos" [value]="ccc.numero.trim()">{{ descripcion(ccc) }}</ion-select-option>
+  </ion-select>
+</ion-item>
+<ion-item *ngIf="sinCCCValido" color="warning" lines="none">
   <ion-label class="ion-text-wrap">
-    <ion-text color="dark">
-      <small>Se requiere seleccionar una cuenta bancaria para esta forma de pago</small>
-    </ion-text>
+    <strong>Este cliente no tiene cuenta bancaria válida: el recibo NO se podrá mandar al banco.</strong>
+    Pide la cuenta o elige otra forma de pago.
   </ion-label>
+</ion-item>
+<ion-item *ngIf="errorCarga" color="warning" lines="none">
+  <ion-label class="ion-text-wrap">No se ha podido comprobar la cuenta bancaria del cliente.</ion-label>
 </ion-item>

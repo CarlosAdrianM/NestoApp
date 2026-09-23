@@ -1941,6 +1941,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     return this.direccionSeleccionada.iva && ((!this.clienteSeleccionado.cifNif && !this.esPresupuesto) || !this.formaPago || !this.plazosPago);
   }
 
+  /** NestoApp#189: con recibo bancario se enseña qué cuenta se va a cargar. */
+  get esReciboBancario(): boolean {
+    return this.extraerCodigoFormaPago() === 'RCB';
+  }
+
+  /** NestoApp#189: la cuenta viaja en la dirección de entrega (es lo que manda prepararPedido). */
+  public cambiarCCC(numero: string): void {
+    if (this.direccionSeleccionada) {
+      this.direccionSeleccionada.ccc = numero;
+    }
+  }
+
   public cambiarFormaPago(nuevaFormaPago: string) {
     // Si hay un valor protegido del borrador, ignorar el evento del selector
     if (this.formaPagoProtegida) {
