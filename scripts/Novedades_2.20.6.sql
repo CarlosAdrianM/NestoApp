@@ -17,6 +17,9 @@ INSERT INTO dbo.Novedades ([Version], Fecha, Categoria, Titulo, Descripcion, Amb
 ('2.20.6', '2026-09-23', 'Corregido', 'El modo de entrega se recalcula al cambiar el pedido',
  'Si volvías atrás, cambiabas productos o cantidades y avanzabas otra vez, el modo de entrega se quedaba con lo que salió la primera vez. Ahora se recalcula cada vez que llegas al resumen.',
  'NestoApp', SUSER_SNAME()),
+('2.20.6', '2026-09-23', 'Corregido', 'El aviso de ofertas sin aplicar se puede plegar',
+ 'En el resumen del pedido, al tocar el aviso de ofertas la lista se abre y se cierra de verdad; antes solo cambiaba la flecha y ocupaba sitio todo el rato.',
+ 'NestoApp', SUSER_SNAME()),
 ('2.20.6', '2026-09-23', 'Corregido', 'Vuelven a verse las novedades',
  'Desde el 17 de septiembre no salía ninguna novedad en tu perfil.',
  'NestoApp', SUSER_SNAME());
