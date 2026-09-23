@@ -20,7 +20,7 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 
@@ -294,6 +294,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private modoServicioParametro: number = MODOS_SERVICIO.POR_DEFECTO;
   /** NestoApp#184: lo último que calculó NestoAPI para este pedido. */
   private modoServicioSugeridoServidor: number | null = null;
+  /** NestoApp#187 / NestoAPI#518: qué modos tienen sentido para el pedido. Null = sin respuesta: todos. */
+  private modosServicio: ModoServicioPermitido[] | null = null;
+
+  public esModoServicioPermitido(modo: number): boolean {
+      return esModoPermitido(this.modosServicio, modo);
+  }
+
+  /** Los modos que no se pueden elegir, con el motivo que da el servidor (se enseñan bajo el selector). */
+  public get modosServicioNoPermitidos(): ModoServicioPermitido[] {
+      return (this.modosServicio || []).filter(m => !m.Permitido);
+  }
 
   /**
    * NestoApp#184 / NestoAPI#506: el modo con el que nace el pedido lo decide el servidor, que es
@@ -616,7 +627,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     // Pasar de más a menos restrictivo (salir de «todo junto») pasa por las mismas reglas
     // que el desmarcado de antes; entre modos parciales y hacia el 1, libre.
     if (esTodoJunto(anterior) && !esTodoJunto(nuevo)) {
-      this.validarSalidaDeTodoJunto(nuevo);
+      this.validarSalidaDeTodoJunto(nuevo, !elegidoPorUsuario);
     }
   }
 
@@ -628,7 +639,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
   }
 
-  private validarSalidaDeTodoJunto(nuevoModo: number): void {
+  /**
+   * @param automatico true cuando el cambio lo hace el recálculo del modo sugerido (NestoApp#185):
+   * nadie lo ha pedido, así que no se sacan alertas ni confirmaciones. Si el servidor no deja salir
+   * de «Todo junto», se queda ahí y se explica en el texto bajo el selector.
+   */
+  private validarSalidaDeTodoJunto(nuevoModo: number, automatico: boolean = false): void {
       const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
         ProductoId: r.producto.ProductoId,
         Cantidad: r.cantidad
@@ -666,6 +682,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           if (!response.PuedeDesmarcar) {
             // No se puede: revertir a «Todo junto» y mostrar mensaje (el servidor ya nombra el modo)
             this.revertirATodoJunto();
+            if (automatico) {
+              this.motivoModoServicio = response.Mensaje || 'Se mantiene «Todo junto»: hay productos de regalo que requieren servir todo junto.';
+              this.recalcularPortesTrasServirJunto();
+              return;
+            }
             const alert = await this.alertCtrl.create({
               header: 'No se puede cambiar el modo',
               message: response.Mensaje || 'No se puede cambiar el modo de entrega porque hay productos de regalo que requieren servir todo junto.',
@@ -688,7 +709,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           if (response.Aviso) avisos.push(response.Aviso);
           if (avisoPortes) avisos.push(avisoPortes);
 
-          if (avisos.length > 0) {
+          // NestoApp#185: en el recálculo automático los avisos no se preguntan (no lo ha pedido nadie).
+          if (avisos.length > 0 && !automatico) {
             const confirm = await this.alertCtrl.create({
               header: 'Modo de entrega',
               message: avisos.join('\n\n'),
@@ -858,11 +880,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             this.totalPedidoPlazosPago = this.totalPedido;
         }
 
-        // Validar que los regalos seleccionados no excedan los Ganavisiones disponibles
-        await this.validarRegalosSeleccionados();
+        // NestoApp#185: si una de estas comprobaciones falla, no se puede llevar por delante el
+        // recálculo de ofertas y modo de servicio de abajo (se quedaban los de la primera pasada).
+        try {
+            // Validar que los regalos seleccionados no excedan los Ganavisiones disponibles
+            await this.validarRegalosSeleccionados();
 
-        // Verificar si hay productos bonificables disponibles (antes de mostrar el slide)
-        await this.verificarProductosBonificables();
+            // Verificar si hay productos bonificables disponibles (antes de mostrar el slide)
+            await this.verificarProductosBonificables();
+        } catch (error) {
+            console.error('Error comprobando regalos y bonificables al llegar al resumen:', error);
+        }
 
         // NestoApp#169: al llegar al resumen (no en cada cambio de línea) se pregunta qué
         // ofertas se podrían aplicar y no se están aplicando.
@@ -910,10 +938,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * NestoApp#184 / NestoAPI#506: preselecciona el modo de servicio que sugiere el servidor según
    * el stock real de las líneas. Se llama al llegar al resumen, cuando ya se sabe qué lleva el
    * pedido, así que se recalcula cada vez que se vuelve atrás a tocar líneas. No pisa lo que el
-   * vendedor haya elegido a mano ni lo que traiga un borrador.
+   * vendedor haya elegido a mano (salvo que deje de tener sentido, #187) ni lo que traiga un borrador.
    */
   public cargarModoServicioSugerido(): void {
-    if (this.modoServicioElegidoPorUsuario || this.borradorEnRestauracion || this.pedidoEnEdicionNumero != null) {
+    if (this.borradorEnRestauracion || this.pedidoEnEdicionNumero != null) {
       return;
     }
     const pedido = this.prepararPedido();
@@ -925,12 +953,30 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         if (!sugerencia || !sugerencia.Modo) {
           return;
         }
-        this.motivoModoServicio = sugerencia.Motivo || '';
+        // NestoApp#187 / NestoAPI#518: qué modos se pueden elegir para este pedido.
+        this.modosServicio = sugerencia.Modos?.length ? sugerencia.Modos : null;
         // Se guarda para que un cambio de dirección de entrega no vuelva a caer en el
         // respaldo local: a partir de aquí, el «por defecto» de este pedido es este.
         this.modoServicioSugeridoServidor = sugerencia.Modo;
+
+        if (this.modoServicioElegidoPorUsuario) {
+          const elegido = this.modoServicio;
+          if (this.esModoServicioPermitido(elegido)) {
+            return; // manda el vendedor
+          }
+          // #187: su modo ya no tiene sentido con las líneas de ahora. Se pasa al sugerido
+          // (que ya no es elección suya) y se le explica.
+          const motivo = this.modosServicio?.find(m => m.Modo === elegido)?.Motivo;
+          this.modoServicioElegidoPorUsuario = false;
+          this.motivoModoServicio = `«${nombreModo(elegido)}» ya no tiene sentido para este pedido` +
+            (motivo ? `: ${motivo}` : '.') + ` Se pasa a «${nombreModo(sugerencia.Modo)}».`;
+          this.cambiarModoServicio(sugerencia.Modo, false);
+          return;
+        }
+
+        this.motivoModoServicio = sugerencia.Motivo || '';
         // Se aplica por la misma puerta que el vendedor, así que salir de «todo junto» sigue
-        // pasando por ValidarServirJunto; lo que no hace es contar como elección suya.
+        // pasando por ValidarServirJunto; pero no cuenta como elección suya ni le saca diálogos (#185).
         this.cambiarModoServicio(sugerencia.Modo, false);
       },
       error => {
@@ -938,6 +984,32 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         console.log('No se ha podido calcular el modo de servicio sugerido', error);
       }
     );
+  }
+
+  /**
+   * NestoApp#187 / NestoAPI#518: al guardar, la API rechaza un modo que ya no tiene sentido (el
+   * stock ha cambiado mientras se montaba el pedido). Se enseña su mensaje y se preselecciona el
+   * modo que sí vale, para que el vendedor vuelva a guardar. Devuelve false si el error es otro.
+   */
+  private async tratarModoServicioNoPermitido(error: any): Promise<boolean> {
+    const rechazo = leerModoServicioNoPermitido(error);
+    if (!rechazo) {
+      return false;
+    }
+    if (rechazo.modosPermitidos.length > 0) {
+      this.modosServicio = modosDesdePermitidos(rechazo.modosPermitidos);
+    }
+    this.modoServicioSugeridoServidor = rechazo.modoSugerido;
+    this.modoServicioElegidoPorUsuario = false;
+    this.motivoModoServicio = rechazo.mensaje;
+    this.cambiarModoServicio(rechazo.modoSugerido, false);
+    const alert = await this.alertCtrl.create({
+      header: 'Modo de entrega',
+      message: rechazo.mensaje,
+      buttons: ['Ok']
+    });
+    await alert.present();
+    return true;
   }
 
   /**
@@ -1534,6 +1606,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Issue #156: gestiona el error al ampliar. Espejo de manejarErrorCreacionPedido.
    */
   private async manejarErrorAmpliacionPedido(error: ProcessedApiError, ampliacion: any, yaForzado: boolean): Promise<void> {
+    if (await this.tratarModoServicioNoPermitido(error)) {
+      return;
+    }
     const mensaje = this.errorHandler.extractErrorMessage(error);
     const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
     const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;
@@ -1659,6 +1734,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       // NestoApp#184: el próximo pedido vuelve a aceptar la sugerencia del servidor.
       this.modoServicioElegidoPorUsuario = false;
       this.modoServicioSugeridoServidor = null;
+      this.modosServicio = null;
       this.motivoModoServicio = '';
   }
       
@@ -1904,6 +1980,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Maneja errores de creación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorCreacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+    if (await this.tratarModoServicioNoPermitido(error)) {
+      return;
+    }
     const mensaje = this.errorHandler.extractErrorMessage(error);
 
     // Verificar si es un error de validación (formato nuevo o antiguo)
@@ -2018,6 +2097,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private async manejarErrorModificacionEnEdicion(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      if (await this.tratarModoServicioNoPermitido(error)) {
+          return;
+      }
       const mensaje = this.errorHandler.extractErrorMessage(error);
       const esErrorValidacion = this.esErrorDeValidacion(error, mensaje);
       const puedeForzar = this.usuario.permitirCrearPedidoConErroresValidacion && !yaForzado;

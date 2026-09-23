@@ -125,12 +125,19 @@
                     <ion-label>Entrega</ion-label>
                     <ion-select aria-label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
                         [value]="modoServicio" (ionChange)="cambiarModoServicio($event.detail.value)">
-                        <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
+                        <!-- NestoApp#187 / NestoAPI#518: los modos sin sentido para el pedido salen deshabilitados -->
+                        <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo" [disabled]="!esModoServicioPermitido(modo.codigo)">{{ modo.nombre }}</ion-select-option>
                     </ion-select>
                 </ion-item>
                 <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo -->
                 <ion-item lines="none" *ngIf="motivoModoServicio">
                     <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{motivoModoServicio}}</ion-label>
+                </ion-item>
+                <!-- NestoApp#187: y por qué no se pueden elegir los demás -->
+                <ion-item lines="none" *ngIf="modosServicioNoPermitidos.length > 0">
+                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+                        <p *ngFor="let modo of modosServicioNoPermitidos">No disponible «{{ modo.Nombre }}»<span *ngIf="modo.Motivo">: {{ modo.Motivo }}</span></p>
+                    </ion-label>
                 </ion-item>
                 <ion-item>
                     <ion-label>Mantener Junto</ion-label>

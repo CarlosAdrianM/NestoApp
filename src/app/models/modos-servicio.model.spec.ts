@@ -5,7 +5,9 @@ import {
   esTodoJunto,
   esEntregaUnica,
   modoEfectivo,
-  nombreModo
+  nombreModo,
+  esModoPermitido,
+  leerModoServicioNoPermitido
 } from './modos-servicio.model';
 
 /**
@@ -68,5 +70,55 @@ describe('ModosServicio (#174)', () => {
     expect(nombreModo(2)).toBe('Según vaya entrando');
     expect(nombreModo(3)).toBe('Tras reponer de tiendas');
     expect(nombreModo(4)).toBe('Ahora lo que hay, el resto de una vez');
+  });
+});
+
+/**
+ * NestoApp#187 / NestoAPI#518: el servidor dice qué modos tienen sentido para el pedido según el
+ * almacén y el stock. La app no calcula nada: pinta lo que diga la API.
+ */
+describe('Modos permitidos por el servidor (#187)', () => {
+  const modos = [
+    { Modo: 1, Nombre: 'Todo junto', Permitido: true, Motivo: null },
+    { Modo: 2, Nombre: 'Según vaya entrando', Permitido: false, Motivo: 'Todo el pedido tiene stock en Algete: sale todo junto.' }
+  ];
+
+  it('sin respuesta del servidor, todos los modos se pueden elegir (como hasta ahora)', () => {
+    expect(esModoPermitido(null, 2)).toBeTrue();
+    expect(esModoPermitido([], 3)).toBeTrue();
+  });
+
+  it('un modo que el servidor marca como no permitido no se puede elegir', () => {
+    expect(esModoPermitido(modos, 1)).toBeTrue();
+    expect(esModoPermitido(modos, 2)).toBeFalse();
+  });
+
+  it('un modo que el servidor no menciona no se bloquea', () => {
+    expect(esModoPermitido(modos, 4)).toBeTrue();
+  });
+
+  it('lee el rechazo MODO_SERVICIO_NO_PERMITIDO al guardar con el modo que sí vale', () => {
+    const error: any = {
+      apiError: {
+        error: {
+          code: 'MODO_SERVICIO_NO_PERMITIDO',
+          message: 'El stock ha cambiado mientras montabas el pedido. Elige «Todo junto» y vuelve a guardar.',
+          details: { modoSugerido: 1, modoSugeridoNombre: 'Todo junto', modosPermitidos: [1] }
+        }
+      }
+    };
+
+    const rechazo = leerModoServicioNoPermitido(error);
+
+    expect(rechazo).not.toBeNull();
+    expect(rechazo!.modoSugerido).toBe(1);
+    expect(rechazo!.modosPermitidos).toEqual([1]);
+    expect(rechazo!.mensaje).toContain('Elige «Todo junto»');
+  });
+
+  it('cualquier otro error no es un rechazo de modo', () => {
+    expect(leerModoServicioNoPermitido({ apiError: { error: { code: 'PEDIDO_VALIDACION_FALLO', message: 'x' } } } as any)).toBeNull();
+    expect(leerModoServicioNoPermitido({ message: 'sin conexión' } as any)).toBeNull();
+    expect(leerModoServicioNoPermitido(null)).toBeNull();
   });
 });

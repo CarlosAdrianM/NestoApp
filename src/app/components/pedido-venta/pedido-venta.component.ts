@@ -11,7 +11,7 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido } from 'src/app/models/modos-servicio.model';
 
 @Component({
     selector: 'app-pedido-venta',
@@ -620,6 +620,21 @@ export class PedidoVentaComponent  {
    * Maneja errores de modificación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      // NestoApp#187 / NestoAPI#518: el PUT que cambia el modo lo rechaza si ya no tiene sentido
+      // para el pedido. Se preselecciona el que vale y el vendedor vuelve a guardar.
+      const rechazoModo = leerModoServicioNoPermitido(error);
+      if (rechazoModo) {
+          this.pedido.modoServicio = rechazoModo.modoSugerido;
+          this.pedido.servirJunto = esTodoJunto(rechazoModo.modoSugerido);
+          const alert = await this.alertCtrl.create({
+              header: 'Modo de entrega',
+              message: rechazoModo.mensaje,
+              buttons: ['Ok']
+          });
+          await alert.present();
+          return;
+      }
+
       const mensaje = this.errorHandler.extractErrorMessage(error);
 
       // Verificar si es un error de validación (formato nuevo o antiguo)

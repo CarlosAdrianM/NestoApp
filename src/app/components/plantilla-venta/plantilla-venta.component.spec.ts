@@ -958,7 +958,8 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
     component.cargarModoServicioSugerido();
     tick();
 
-    expect(servicio.modoServicioSugerido).not.toHaveBeenCalled();
+    // #187: se pregunta igual (hay que saber qué modos siguen teniendo sentido), pero su modo manda
+    expect(servicio.modoServicioSugerido).toHaveBeenCalled();
     expect(component.modoServicio).toBe(4);
   }));
 
@@ -1029,5 +1030,205 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
     tick();
 
     expect(servicio.modoServicioSugerido).not.toHaveBeenCalled();
+  }));
+});
+
+/**
+ * NestoApp#185: al volver atrás, cambiar las líneas y avanzar otra vez, el modo de servicio tiene
+ * que recalcularse. El recálculo automático no es una elección del vendedor, así que no le saca
+ * los diálogos de la salida manual de «Todo junto».
+ */
+describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+
+  const sugerencia = (modo: number, motivo = 'Motivo del servidor', modos: any[] = []) =>
+    of({ Modo: modo, Nombre: 'X', LineasVerdes: 0, LineasRosas: 0, LineasRojas: 0, Motivo: motivo, ModosPermitidos: [], Modos: modos });
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    servicio = {
+      modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(1)),
+      ofertasSugeridas: jasmine.createSpy('ofertasSugeridas').and.returnValue(of([])),
+      validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
+      cargarListaPendientes: () => of([]),
+      crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: '925001' })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: () => Promise.resolve(),
+                dismiss: () => Promise.resolve(),
+                onDidDismiss: () => Promise.resolve({ role: 'cancel' })
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false };
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', cantidad: 2, cantidadOferta: 0 }];
+  }));
+
+  it('si el servidor no deja salir de «Todo junto» en un recálculo automático, se queda sin alerta y lo explica', fakeAsync(() => {
+    component.cargarModoServicioSugerido();
+    tick();
+    expect(component.modoServicio).toBe(1);
+
+    servicio.validarServirJunto.and.returnValue(of({ PuedeDesmarcar: false, Mensaje: 'Hay regalos que exigen servir todo junto' }));
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(alertasCreadas.length).toBe(0);
+    expect(component.motivoModoServicio).toContain('regalos');
+  }));
+
+  it('los avisos de portes o comisión no piden confirmación en un recálculo automático', fakeAsync(() => {
+    component.cargarModoServicioSugerido();
+    tick();
+
+    servicio.validarServirJunto.and.returnValue(of({ PuedeDesmarcar: true, Aviso: 'Contra reembolso: se cobra comisión por cada entrega' }));
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(alertasCreadas.length).toBe(0);
+    expect(component.modoServicio).toBe(3);
+  }));
+
+  it('cuando es el vendedor quien sale de «Todo junto», los avisos se siguen preguntando', fakeAsync(() => {
+    component['_direccionSeleccionada'].servirJunto = true;
+    component['modoServicioSeleccionado'] = 1;
+    servicio.validarServirJunto.and.returnValue(of({ PuedeDesmarcar: true, Aviso: 'Contra reembolso: se cobra comisión por cada entrega' }));
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(alertasCreadas.length).toBe(1);
+    expect(component.modoServicio).toBe(1); // canceló
+  }));
+
+  it('al volver al resumen desde los productos se recalculan modo y ofertas aunque falle la comprobación de regalos', fakeAsync(() => {
+    component['sliderRef'] = { nativeElement: { swiper: { activeIndex: 2, previousIndex: 1, update: () => { } } } } as any;
+    component['_selectorPlantillaVenta'] = { cargarResumen: () => component['productosResumen'], hayAlgunProducto: () => true } as any;
+    spyOn<any>(component, 'validarRegalosSeleccionados').and.callFake(() => Promise.resolve());
+    spyOn<any>(component, 'verificarProductosBonificables').and.callFake(() => Promise.reject(new Error('fallo de red')));
+
+    component.avanzar();
+    tick(200);
+
+    expect(servicio.modoServicioSugerido).toHaveBeenCalled();
+    expect(servicio.ofertasSugeridas).toHaveBeenCalled();
+  }));
+
+  const modosAlg = [
+    { Modo: 1, Nombre: 'Todo junto', Permitido: true, Motivo: null },
+    { Modo: 2, Nombre: 'Según vaya entrando', Permitido: false, Motivo: 'Todo el pedido tiene stock en Algete: sale todo junto.' },
+    { Modo: 3, Nombre: 'Tras reponer de tiendas', Permitido: false, Motivo: 'No hay nada que traer de las tiendas.' },
+    { Modo: 4, Nombre: 'Ahora lo que hay, el resto de una vez', Permitido: false, Motivo: 'Todo el pedido tiene stock en Algete.' }
+  ];
+
+  it('#187: los modos que el servidor no permite se marcan y se explica por qué', fakeAsync(() => {
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(1, 'Todo tiene stock', modosAlg));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.esModoServicioPermitido(1)).toBeTrue();
+    expect(component.esModoServicioPermitido(2)).toBeFalse();
+    expect(component.modosServicioNoPermitidos.map(m => m.Modo)).toEqual([2, 3, 4]);
+    expect(component.modosServicioNoPermitidos[0].Motivo).toContain('Algete');
+  }));
+
+  it('#187: sin respuesta del servidor, todos los modos se pueden elegir', fakeAsync(() => {
+    servicio.modoServicioSugerido.and.returnValue(throwError(() => ({ statusCode: 500 })));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect([1, 2, 3, 4].every(m => component.esModoServicioPermitido(m))).toBeTrue();
+    expect(component.modosServicioNoPermitidos.length).toBe(0);
+  }));
+
+  it('#187: si el modo que eligió el vendedor deja de tener sentido, se pasa al sugerido y se explica', fakeAsync(() => {
+    component.cambiarModoServicio(4); // 3 → 4, elegido a mano
+    tick();
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(1, 'Todo tiene stock', modosAlg));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(component.motivoModoServicio).toContain('Ahora lo que hay, el resto de una vez');
+    expect(component.motivoModoServicio).toContain('Todo junto');
+  }));
+
+  it('#187: si el modo que eligió el vendedor sigue permitido, se respeta', fakeAsync(() => {
+    component.cambiarModoServicio(4);
+    tick();
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay que reponer', [
+      { Modo: 1, Nombre: 'Todo junto', Permitido: true, Motivo: null },
+      { Modo: 2, Nombre: 'Según vaya entrando', Permitido: true, Motivo: null },
+      { Modo: 3, Nombre: 'Tras reponer de tiendas', Permitido: true, Motivo: null },
+      { Modo: 4, Nombre: 'Ahora lo que hay, el resto de una vez', Permitido: true, Motivo: null }
+    ]));
+
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(4);
+  }));
+
+  it('#187: si al crear el pedido la API rechaza el modo, se enseña su mensaje y se preselecciona el que vale', fakeAsync(() => {
+    spyOn<any>(component, 'detectarOfertasSinBeneficio').and.returnValue([]);
+    spyOn<any>(component, 'prepararPedido').and.returnValue({});
+    const ofrecerBorrador = spyOn<any>(component, 'ofrecerGuardarBorrador');
+    component['modoServicioSeleccionado'] = 4;
+    servicio.crearPedido.and.returnValue(throwError(() => ({
+      isBusinessError: true,
+      apiError: {
+        error: {
+          code: 'MODO_SERVICIO_NO_PERMITIDO',
+          message: 'El stock ha cambiado mientras montabas el pedido. Elige «Todo junto» y vuelve a guardar.',
+          details: { modoSugerido: 1, modoSugeridoNombre: 'Todo junto', modosPermitidos: [1] }
+        }
+      }
+    })));
+
+    component.crearPedido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(alertasCreadas.some(a => (a.message || '').includes('vuelve a guardar'))).toBeTrue();
+    expect(ofrecerBorrador).not.toHaveBeenCalled();
+    expect(component.esModoServicioPermitido(4)).toBeFalse();
   }));
 });

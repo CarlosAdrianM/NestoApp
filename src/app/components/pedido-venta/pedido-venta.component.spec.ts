@@ -223,4 +223,32 @@ describe('Modo de servicio en pedido-venta (#174)', () => {
     expect(component.pedido.modoServicio).toBe(3);
     expect(component.pedido.servirJunto).toBeFalse();
   }));
+
+  it('#187: si al modificar la API rechaza el modo, se enseña su mensaje y se preselecciona el que vale', fakeAsync(() => {
+    component.pedido = { empresa: '1', numero: 900001, servirJunto: false, modoServicio: 4, Lineas: [] } as any;
+    const alertas: any[] = [];
+    spyOn(component['alertCtrl'], 'create').and.callFake((opts: any) => {
+      alertas.push(opts);
+      return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) } as any);
+    });
+    const error: any = {
+      isBusinessError: true,
+      apiError: {
+        error: {
+          code: 'MODO_SERVICIO_NO_PERMITIDO',
+          message: 'El stock ha cambiado. Elige «Todo junto» y vuelve a guardar.',
+          details: { modoSugerido: 1, modoSugeridoNombre: 'Todo junto', modosPermitidos: [1] }
+        }
+      }
+    };
+
+    component['manejarErrorModificacionPedido'](error, false);
+    tick();
+
+    expect(component.pedido.modoServicio).toBe(1);
+    expect(component.pedido.servirJunto).toBeTrue();
+    expect(alertas.length).toBe(1);
+    expect(alertas[0].header).toBe('Modo de entrega');
+    expect(alertas[0].message).toContain('vuelve a guardar');
+  }));
 });

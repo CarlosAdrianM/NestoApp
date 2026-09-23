@@ -1,3 +1,5 @@
+import { ApiErrorCode } from './api-error.model';
+
 /**
  * NestoApp#174 / NestoAPI#482: el modo de servicio del pedido, que sustituye a la casilla
  * «Servir junto». Réplica de Constantes.Pedidos.ModosServicio de NestoAPI y de ModosServicio
@@ -111,4 +113,62 @@ export interface ModoServicioSugerido {
   LineasRosas: number;
   LineasRojas: number;
   Motivo: string;
+  /** NestoApp#187 / NestoAPI#518: los modos que se pueden elegir (el sugerido siempre está). */
+  ModosPermitidos?: number[];
+  /** NestoApp#187 / NestoAPI#518: los cuatro modos con su permiso y, si no se puede, el motivo. */
+  Modos?: ModoServicioPermitido[];
+}
+
+/** NestoApp#187 / NestoAPI#518: si un modo tiene sentido para el pedido y, si no, por qué. */
+export interface ModoServicioPermitido {
+  Modo: number;
+  Nombre: string;
+  Permitido: boolean;
+  Motivo: string | null;
+}
+
+/**
+ * NestoApp#187: la regla vive en el servidor; la app solo pinta lo que diga. Sin respuesta (o sin
+ * mencionar ese modo) se deja elegir, como antes de NestoAPI#518.
+ */
+export function esModoPermitido(modos: ModoServicioPermitido[] | null | undefined, modo: number): boolean {
+  const encontrado = (modos || []).find(m => m.Modo === modo);
+  return !encontrado || encontrado.Permitido;
+}
+
+export interface ModoServicioNoPermitido {
+  mensaje: string;
+  modoSugerido: number;
+  modosPermitidos: number[];
+}
+
+/**
+ * NestoApp#187: si el error es el 400 MODO_SERVICIO_NO_PERMITIDO de NestoAPI#518, su mensaje y el
+ * modo que sí vale (para preseleccionarlo); si es cualquier otro error, null.
+ */
+export function leerModoServicioNoPermitido(error: any): ModoServicioNoPermitido | null {
+  const apiError = error?.apiError?.error;
+  if (!apiError || apiError.code !== ApiErrorCode.MODO_SERVICIO_NO_PERMITIDO) {
+    return null;
+  }
+  const modoSugerido = Number(apiError.details?.modoSugerido);
+  if (!esModoValido(modoSugerido)) {
+    return null;
+  }
+  const permitidos = Array.isArray(apiError.details?.modosPermitidos) ? apiError.details.modosPermitidos : [modoSugerido];
+  return {
+    mensaje: apiError.message || '',
+    modoSugerido,
+    modosPermitidos: permitidos.map(Number).filter(esModoValido)
+  };
+}
+
+/** Los cuatro modos con su permiso, a partir de solo la lista de permitidos (sin motivos). */
+export function modosDesdePermitidos(permitidos: number[]): ModoServicioPermitido[] {
+  return LISTA_MODOS_SERVICIO.map(m => ({
+    Modo: m.codigo,
+    Nombre: m.nombre,
+    Permitido: permitidos.includes(m.codigo),
+    Motivo: null
+  }));
 }
