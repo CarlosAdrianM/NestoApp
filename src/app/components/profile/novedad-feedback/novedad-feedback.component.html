@@ -1,0 +1,46 @@
+<div class="feedback" *ngIf="tieneFeedback">
+  <div class="acciones">
+    <ion-button size="small" fill="clear" [color]="novedad.MiVoto === 1 ? 'primary' : 'medium'"
+      [class.mi-voto]="novedad.MiVoto === 1" (click)="votar(1)" aria-label="Me gusta">
+      👍 {{ novedad.VotosPositivos || 0 }}
+    </ion-button>
+    <ion-button size="small" fill="clear" [color]="novedad.MiVoto === -1 ? 'primary' : 'medium'"
+      [class.mi-voto]="novedad.MiVoto === -1" (click)="votar(-1)" aria-label="No me gusta">
+      👎 {{ novedad.VotosNegativos || 0 }}
+    </ion-button>
+    <ion-button size="small" fill="clear" color="medium" (click)="abrirOCerrarComentarios()">
+      Comentarios ({{ novedad.NumeroComentarios || 0 }})
+    </ion-button>
+  </div>
+
+  <div class="comentarios" *ngIf="comentariosAbiertos">
+    <ion-spinner *ngIf="cargandoComentarios" name="crescent"></ion-spinner>
+
+    <div class="comentario" *ngFor="let comentario of comentarios">
+      <div class="cabecera">
+        <strong>{{ comentario.NombreVisible }}</strong> · {{ comentario.Fecha | date:'dd/MM/yyyy HH:mm' }}
+        <ion-button *ngIf="comentario.EsMio" size="small" fill="clear" color="danger" (click)="borrarComentario(comentario)">Borrar</ion-button>
+      </div>
+      <div class="texto">{{ comentario.Texto }}</div>
+      <img *ngIf="imagenes[comentario.Id]" class="miniatura" [src]="imagenes[comentario.Id]" (click)="ampliarImagen(comentario.Id)" alt="Captura adjunta" />
+    </div>
+
+    <ion-item lines="none" class="nuevo-comentario">
+      <ion-textarea [(ngModel)]="nuevoTexto" [autoGrow]="true" [maxlength]="2000" aria-label="Tu comentario"
+        placeholder="Escribe tu comentario…" (paste)="alPegar($event)"></ion-textarea>
+    </ion-item>
+
+    <div class="adjunta" *ngIf="imagenAdjunta">
+      <img class="miniatura" [src]="imagenAdjunta.dataUrl" alt="Imagen que se va a enviar" />
+      <ion-button size="small" fill="clear" color="medium" (click)="quitarImagen()">Quitar imagen</ion-button>
+    </div>
+    <ion-note *ngIf="errorImagen" color="danger" class="error-imagen">{{ errorImagen }}</ion-note>
+
+    <div class="botones">
+      <input #fichero type="file" accept="image/png,image/jpeg" hidden (change)="alElegirFichero($event)" />
+      <ion-button size="small" fill="outline" (click)="fichero.click()">Adjuntar captura</ion-button>
+      <ion-button *ngIf="puedeLeerPortapapeles" size="small" fill="outline" (click)="pegarImagen()">Pegar imagen</ion-button>
+      <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviarComentario()">Enviar</ion-button>
+    </div>
+  </div>
+</div>

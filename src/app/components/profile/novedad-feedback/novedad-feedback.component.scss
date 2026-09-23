@@ -1,0 +1,78 @@
+.feedback {
+  padding: 0 16px 8px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  .mi-voto {
+    font-weight: bold;
+  }
+}
+
+.comentarios {
+  border-left: 2px solid var(--ion-color-step-200);
+  padding-left: 12px;
+  margin-top: 4px;
+}
+
+.comentario {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ion-color-step-100);
+
+  .cabecera {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8em;
+    color: var(--ion-color-step-600);
+
+    ion-button {
+      margin-left: auto;
+    }
+  }
+
+  .texto {
+    white-space: pre-wrap;
+    font-size: 0.9em;
+  }
+}
+
+.miniatura {
+  display: block;
+  max-width: 160px;
+  max-height: 120px;
+  margin-top: 4px;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.nuevo-comentario {
+  --padding-start: 0;
+  margin-top: 8px;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 4px;
+}
+
+.adjunta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-imagen {
+  display: block;
+  font-size: 0.85em;
+  margin-top: 4px;
+}
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+}

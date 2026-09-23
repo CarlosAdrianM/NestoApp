@@ -47,6 +47,7 @@ import { SelectorPlantillaVentaDetalleComponent } from './components/selector-pl
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
 import { ModalListaBorradoresComponent } from './components/plantilla-venta/modal-lista-borradores.component';
 import { VisorImagenComponent } from './components/visor-imagen/visor-imagen.component';
+import { NovedadFeedbackComponent } from './components/profile/novedad-feedback/novedad-feedback.component';
 import { SelectorRegalosComponent } from './components/selector-regalos/selector-regalos.component';
 import { ModalResumenVentasComponent } from './components/resumen-ventas/modal-resumen-ventas.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
@@ -122,6 +123,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         PlantillaVentaComponent,
         ModalListaBorradoresComponent,
         VisorImagenComponent,
+        NovedadFeedbackComponent,
         UltimasVentasProductoClienteComponent,
         AlertsComponent,
         ResumenVentasComponent,

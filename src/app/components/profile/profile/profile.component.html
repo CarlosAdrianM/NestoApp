@@ -99,13 +99,17 @@
               <ion-list-header>
                 <ion-label>Versión {{ grupo.version }} <span class="fecha-novedad">{{ grupo.fecha | date:'dd/MM/yyyy' }}</span></ion-label>
               </ion-list-header>
-              <ion-item *ngFor="let novedad of grupo.novedades">
-                <ion-badge slot="start" [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
-                <ion-label class="ion-text-wrap">
-                  <h3>{{ novedad.Titulo }}</h3>
-                  <p *ngIf="novedad.Descripcion">{{ novedad.Descripcion }}</p>
-                </ion-label>
-              </ion-item>
+              <ng-container *ngFor="let novedad of grupo.novedades">
+                <ion-item [lines]="novedad.VotosPositivos != null ? 'none' : undefined">
+                  <ion-badge slot="start" [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
+                  <ion-label class="ion-text-wrap">
+                    <h3>{{ novedad.Titulo }}</h3>
+                    <p *ngIf="novedad.Descripcion">{{ novedad.Descripcion }}</p>
+                  </ion-label>
+                </ion-item>
+                <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
+                <novedad-feedback [novedad]="novedad"></novedad-feedback>
+              </ng-container>
             </ng-container>
           </ion-list>
 
