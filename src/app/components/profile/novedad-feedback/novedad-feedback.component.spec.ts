@@ -169,4 +169,31 @@ describe('NovedadFeedbackComponent (#188)', () => {
     expect(component.comentarios.map(c => c.Id)).toEqual([1]);
     expect(component.novedad.NumeroComentarios).toBe(1);
   }));
+
+  // NestoApp#193: desde la push «Te han contestado», los comentarios se abren solos y se resalta la respuesta.
+  it('#193: con un comentario marcado, abre los comentarios (recién pedidos) y lo resalta', fakeAsync(() => {
+    component.comentarioResaltado = 2;
+    component.ngOnChanges({ comentarioResaltado: {} as any });
+    tick(200);
+
+    expect(component.comentariosAbiertos).toBeTrue();
+    expect(servicio.leerComentarios).toHaveBeenCalledWith(7);
+    expect(component.comentarioResaltadoVisible).toBe(2);
+
+    tick(5000);
+    expect(component.comentarioResaltadoVisible).toBeNull();
+  }));
+
+  it('#193: si ya estaban abiertos, se vuelven a pedir para que salga la respuesta', fakeAsync(() => {
+    component.abrirOCerrarComentarios();
+    tick();
+    servicio.leerComentarios.calls.reset();
+
+    component.comentarioResaltado = 2;
+    component.ngOnChanges({ comentarioResaltado: {} as any });
+    tick(5000);
+
+    expect(component.comentariosAbiertos).toBeTrue();
+    expect(servicio.leerComentarios).toHaveBeenCalledTimes(1);
+  }));
 });

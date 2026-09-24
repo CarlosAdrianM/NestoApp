@@ -16,7 +16,8 @@
   <div class="comentarios" *ngIf="comentariosAbiertos">
     <ion-spinner *ngIf="cargandoComentarios" name="crescent"></ion-spinner>
 
-    <div class="comentario" *ngFor="let comentario of comentarios">
+    <div class="comentario" *ngFor="let comentario of comentarios" [id]="'comentario-' + comentario.Id"
+      [class.resaltado]="comentarioResaltadoVisible === comentario.Id">
       <div class="cabecera">
         <strong>{{ comentario.NombreVisible }}</strong> · {{ comentario.Fecha | date:'dd/MM/yyyy HH:mm' }}
         <ion-button *ngIf="comentario.EsMio" size="small" fill="clear" color="danger" (click)="borrarComentario(comentario)">Borrar</ion-button>

@@ -12,6 +12,7 @@ import { CacheService } from "./services/cache.service";
 import { Configuracion } from './components/configuracion/configuracion/configuracion.component';
 import { Router } from '@angular/router';
 import { ErroresService } from './services/errores.service';
+import { rutaDeNotificacion } from './utils/notificaciones';
 
 
 @Component({
@@ -110,7 +111,8 @@ export class AppComponent {
       // Escuchar notificaciones recibidas en foreground
       FirebaseMessaging.addListener('notificationReceived', async (event) => {
         const notification = event.notification;
-        const ruta = notification.data?.['ruta'] as string | undefined;
+        // #193: además de «ruta», los tipos conocidos (p. ej. la respuesta en Novedades)
+        const ruta = rutaDeNotificacion(notification.data as any);
         const toast = await this.toastCtrl.create({
           header: notification.title,
           message: notification.body,
@@ -128,7 +130,7 @@ export class AppComponent {
 
       // Escuchar pulsaciones sobre notificaciones (foreground o background)
       FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
-        const ruta = event.notification.data?.['ruta'] as string | undefined;
+        const ruta = rutaDeNotificacion(event.notification.data as any);
         if (ruta) {
           this.router.navigateByUrl(ruta);
         }

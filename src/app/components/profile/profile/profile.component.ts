@@ -10,6 +10,7 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
+import { ActivatedRoute } from '@angular/router';
 import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 
@@ -53,11 +54,19 @@ export class ProfileComponent {
       private nav: NavController,
       private appComponent: AppComponent,
       private novedadesService: NovedadesService,
+      private route: ActivatedRoute,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
           this.cargarNovedades();
           this.cargarSugerencias();
+          // #193: la push «Te han contestado en Novedades» trae aquí ?novedad=…&comentario=…
+          this.route.queryParamMap.subscribe(parametros => {
+              const novedad = Number(parametros.get('novedad'));
+              if (novedad) {
+                  this.abrirAviso(novedad, Number(parametros.get('comentario')) || null);
+              }
+          });
         }
 
   /** NestoApp#192: al volver a la pantalla no se piden otra vez si se cargaron hace menos de esto. */
@@ -223,6 +232,39 @@ export class ProfileComponent {
       setTimeout(() => document.getElementById('novedad-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
       clearTimeout(this.temporizadorResaltado);
       this.temporizadorResaltado = setTimeout(() => this.novedadResaltada = null, 4000);
+  }
+
+  // ---- NestoApp#193: la push de respuesta (o de @mención) abre la novedad en el comentario ----
+
+  /** El comentario al que lleva el aviso, para que su tarjeta abra los comentarios y lo resalte. */
+  public avisoComentario: { novedadId: number; comentarioId: number } | null = null;
+
+  /**
+   * Se recarga todo antes (la respuesta es nueva: cifras frescas) y se salta a la versión de la
+   * novedad o a las sugerencias. Sin comentario (una mención al sugerir) solo se enseña la novedad.
+   */
+  public async abrirAviso(novedadId: number, comentarioId: number | null): Promise<void> {
+      await Promise.all([this.cargarNovedades(), this.cargarSugerencias()]);
+      const version = this.versionDeNovedad(novedadId);
+      if (version === undefined) {
+          console.warn(`La novedad ${novedadId} del aviso ya no está en la lista`);
+          return;
+      }
+      this.avisoComentario = comentarioId ? { novedadId, comentarioId } : null;
+      await this.mostrarNovedad(novedadId, version);
+  }
+
+  /** La versión de una novedad cargada, null si es una sugerencia o undefined si no está. */
+  private versionDeNovedad(id: number): string | null | undefined {
+      const grupo = this.gruposNovedades.find(g => g.novedades.some(n => n.Id === id));
+      if (grupo) {
+          return grupo.version;
+      }
+      return this.sugerencias.some(s => s.Id === id) ? null : undefined;
+  }
+
+  public comentarioDelAviso(novedad: Novedad): number | null {
+      return this.avisoComentario?.novedadId === novedad.Id ? this.avisoComentario.comentarioId : null;
   }
 
   /** #192: con el gesto de arrastrar se recarga todo lo que cambia solo, y se cierra al acabar. */

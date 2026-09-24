@@ -154,7 +154,7 @@
                   <p class="autor-sugerencia" *ngIf="sugerencia.SugeridaNombre || sugerencia.SugeridaFecha">
                     Sugerida<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>
                   </p>
-                  <novedad-feedback [novedad]="sugerencia"></novedad-feedback>
+                  <novedad-feedback [novedad]="sugerencia" [comentarioResaltado]="comentarioDelAviso(sugerencia)"></novedad-feedback>
                 </ion-card-content>
               </ion-card>
             </ng-container>
@@ -171,7 +171,7 @@
                 <ion-card-content>
                   <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
                   <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
-                  <novedad-feedback [novedad]="novedad"></novedad-feedback>
+                  <novedad-feedback [novedad]="novedad" [comentarioResaltado]="comentarioDelAviso(novedad)"></novedad-feedback>
                 </ion-card-content>
               </ion-card>
             </ng-container>

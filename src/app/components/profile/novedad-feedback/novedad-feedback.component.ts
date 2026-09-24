@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import {
   ComentarioNovedad, Novedad, NovedadesService, NuevoComentarioNovedad, aplicarVoto, tieneFeedback
@@ -20,9 +20,17 @@ import { ImagenAdjunta } from '../captura-adjunta/captura-adjunta.component';
   styleUrls: ['./novedad-feedback.component.scss'],
   standalone: false
 })
-export class NovedadFeedbackComponent {
+export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
 
   @Input() public novedad: Novedad;
+  /**
+   * NestoApp#193: el comentario al que lleva la push «Te han contestado en Novedades» (o una
+   * @mención). Con él, los comentarios se abren solos y ese se lleva a la vista resaltado.
+   */
+  @Input() public comentarioResaltado: number | null = null;
+  /** El que se ve resaltado ahora mismo (se apaga a los pocos segundos). */
+  public comentarioResaltadoVisible: number | null = null;
+  private temporizadorResaltado: any = null;
 
   public comentariosAbiertos: boolean = false;
   public cargandoComentarios: boolean = false;
@@ -42,6 +50,18 @@ export class NovedadFeedbackComponent {
     private modalCtrl: ModalController,
     private errorHandler: ErrorHandlerService
   ) { }
+
+  ngOnChanges(cambios: SimpleChanges): void {
+    if (cambios['comentarioResaltado'] && this.comentarioResaltado) {
+      // Se piden siempre: si ya estaban abiertos, la respuesta nueva aún no está en la lista.
+      this.comentariosAbiertos = true;
+      this.cargarComentarios(this.comentarioResaltado);
+    }
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.temporizadorResaltado);
+  }
 
   get tieneFeedback(): boolean {
     return tieneFeedback(this.novedad);
@@ -80,19 +100,30 @@ export class NovedadFeedbackComponent {
     }
   }
 
-  private cargarComentarios(): void {
+  private cargarComentarios(resaltar: number | null = null): void {
     this.cargandoComentarios = true;
     this.servicio.leerComentarios(this.novedad.Id).subscribe({
       next: comentarios => {
         this.comentarios = comentarios;
         this.cargandoComentarios = false;
         comentarios.filter(c => c.TieneImagen).forEach(c => this.cargarImagen(c.Id));
+        if (resaltar) {
+          this.resaltarComentario(resaltar);
+        }
       },
       error: error => {
         console.error('No se han podido cargar los comentarios', error);
         this.cargandoComentarios = false;
       }
     });
+  }
+
+  private resaltarComentario(idComentario: number): void {
+    this.comentarioResaltadoVisible = idComentario;
+    // Tras pintar la lista
+    setTimeout(() => document.getElementById('comentario-' + idComentario)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    clearTimeout(this.temporizadorResaltado);
+    this.temporizadorResaltado = setTimeout(() => this.comentarioResaltadoVisible = null, 4000);
   }
 
   private cargarImagen(idComentario: number): void {

@@ -330,4 +330,42 @@ describe('ProfileComponent', () => {
       expect(component.viendoSugerencias).toBeTrue();
     });
   });
+
+  // NestoApp#193: al tocar la push «Te han contestado en Novedades» se abre la novedad en el comentario.
+  describe('abrir la novedad desde la push (#193)', () => {
+    it('recarga, salta a la versión de la novedad y le marca el comentario', fakeAsync(() => {
+      novedadesService.leerNovedades.calls.reset();
+
+      component.abrirAviso(1, 77);
+      flush();
+
+      expect(novedadesService.leerNovedades).toHaveBeenCalled(); // la respuesta es nueva: cifras frescas
+      expect(component.grupoNovedadesActual.version).toBe('2.20.0');
+      expect(component.avisoComentario).toEqual({ novedadId: 1, comentarioId: 77 });
+    }));
+
+    it('si es una sugerencia, salta a las sugerencias', fakeAsync(() => {
+      component.abrirAviso(9, 78);
+      flush();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.avisoComentario).toEqual({ novedadId: 9, comentarioId: 78 });
+    }));
+
+    it('una mención al sugerir no trae comentario: solo se enseña la sugerencia', fakeAsync(() => {
+      component.abrirAviso(9, null);
+      flush();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.avisoComentario).toBeNull();
+    }));
+
+    it('si la novedad ya no existe, no se mueve de donde estaba', fakeAsync(() => {
+      component.abrirAviso(12345, 1);
+      flush();
+
+      expect(component.grupoNovedadesActual.version).toBe('2.20.1');
+      expect(component.avisoComentario).toBeNull();
+    }));
+  });
 });

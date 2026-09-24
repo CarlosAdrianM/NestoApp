@@ -27,6 +27,13 @@
 .comentario {
   padding: 6px 0;
   border-bottom: 1px solid var(--ion-color-step-100);
+  transition: background 0.3s;
+
+  // #193: la respuesta a la que lleva la push
+  &.resaltado {
+    background: rgba(var(--ion-color-primary-rgb), 0.12);
+    border-radius: 4px;
+  }
 
   .cabecera {
     display: flex;
