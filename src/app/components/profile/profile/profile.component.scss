@@ -176,3 +176,12 @@ swiper-container {
     font-size: 0.75rem;
   }
 }
+
+// #176: el contador sobre la campana de la cabecera
+.contador-avisos {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  font-size: 0.6rem;
+  padding: 2px 4px;
+}

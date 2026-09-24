@@ -13,6 +13,7 @@ import { Configuracion } from './components/configuracion/configuracion/configur
 import { Router } from '@angular/router';
 import { ErroresService } from './services/errores.service';
 import { rutaDeNotificacion } from './utils/notificaciones';
+import { BuzonNotificacionesService, textoContador } from './services/buzon-notificaciones.service';
 
 
 @Component({
@@ -33,6 +34,7 @@ export class AppComponent {
     private http: HttpClient,
     private router: Router,
     private erroresService: ErroresService,
+    public buzon: BuzonNotificacionesService,
     cache: CacheService
   ) {
     this.initializeApp();
@@ -48,6 +50,7 @@ export class AppComponent {
       { title: 'Clientes', url: '/cliente', icon: 'people' },
       { title: 'NIF incorrectos', url: '/nif-incorrectos', icon: 'alert-circle' },
       { title: 'Ofertas autorizadas', url: '/ofertas-autorizadas', icon: 'pricetags' },
+      { title: 'Avisos', url: '/avisos', icon: 'notifications' },
       { title: 'Usuario', url: '/profile', icon: 'person' },
     ];
 
@@ -57,6 +60,17 @@ export class AppComponent {
       this.rootPage = ProfileComponent;
     }
 
+  }
+
+  /** NestoApp#176: el contador de avisos sin leer, solo con sesión (sin ella la API da 401). */
+  public refrescarAvisos(): void {
+    if (this.usuario?.nombre) {
+      this.buzon.refrescarContador();
+    }
+  }
+
+  public textoContador(noLeidas: number | null): string {
+    return textoContador(noLeidas || 0);
   }
 
   // Issue #123: ErrorHandler de Angular sólo cubre lo que pasa por Zone; las promesas
@@ -78,6 +92,8 @@ export class AppComponent {
         await SplashScreen.hide();
       }
       this.inicializarNotificacionesPush();
+      // #176: al volver a primer plano, el contador de avisos al día
+      this.platform.resume?.subscribe(() => this.refrescarAvisos());
     });
   }
 
@@ -111,6 +127,7 @@ export class AppComponent {
       // Escuchar notificaciones recibidas en foreground
       FirebaseMessaging.addListener('notificationReceived', async (event) => {
         const notification = event.notification;
+        this.refrescarAvisos(); // #176: la push ya está en el buzón
         // #193: además de «ruta», los tipos conocidos (p. ej. la respuesta en Novedades)
         const ruta = rutaDeNotificacion(notification.data as any);
         const toast = await this.toastCtrl.create({

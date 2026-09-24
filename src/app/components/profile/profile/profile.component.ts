@@ -11,6 +11,7 @@ import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute } from '@angular/router';
+import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
 import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 
@@ -55,6 +56,7 @@ export class ProfileComponent {
       private appComponent: AppComponent,
       private novedadesService: NovedadesService,
       private route: ActivatedRoute,
+      public buzon: BuzonNotificacionesService,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
@@ -350,6 +352,7 @@ export class ProfileComponent {
                 this.cargarParametros();
                 this.cargarSeEstaVendiendo();
                 this.appComponent.registrarDispositivoPush();
+                this.buzon.refrescarContador(); // #176
             }
         }).catch(error => {
             console.log(error);
@@ -396,6 +399,7 @@ export class ProfileComponent {
             await this.authSuccess(datos.access_token, datos.refresh_token);
             this.cargarParametros();
             this.appComponent.registrarDispositivoPush();
+            this.buzon.refrescarContador(); // #176
         },
         async err => {
             this.error = 'Se ha producido un error al intentar iniciar sesión',
@@ -424,6 +428,7 @@ public logout(): void {
     this.local.remove('profile');
     this.firebaseAnalytics.logEvent("logout", {nombre: this.usuario.nombre});
     this.usuario.nombre = null;
+    this.buzon.reiniciar(); // #176: el badge no se queda con los avisos del anterior
 }
 
 private async authSuccess(token: any, refreshToken?: any): Promise<void> {
@@ -623,6 +628,10 @@ public cambiarVerStockTresAlmacenes(verTres: boolean): void {
                 this.correoContrasenna.setFocus();            
             }, 200);    
         }
+    }
+
+    public textoContador(noLeidas: number | null): string {
+        return textoContador(noLeidas || 0);
     }
 
     public abrirEnlace(urlDestino: string): void {

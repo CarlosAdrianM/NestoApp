@@ -1,0 +1,53 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Avisos</ion-title>
+    <ion-buttons slot="end" *ngIf="hayNoLeidas">
+      <ion-button (click)="marcarTodasLeidas()" aria-label="Marcar todos como leídos">
+        <ion-icon slot="icon-only" name="checkmark-done-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="estado" *ngIf="cargando && notificaciones.length === 0">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <div class="estado" *ngIf="cargaFallida">
+    <p>No se han podido cargar los avisos.</p>
+    <ion-button fill="outline" (click)="cargar(null)">Reintentar</ion-button>
+  </div>
+
+  <div class="estado" *ngIf="sinNotificaciones">
+    <ion-icon name="notifications-off-outline"></ion-icon>
+    <p>No tienes avisos. Aquí se guardan las notificaciones que te lleguen al móvil, aunque las descartes.</p>
+  </div>
+
+  <ion-list *ngIf="notificaciones.length > 0">
+    <ion-item-sliding #deslizable *ngFor="let notificacion of notificaciones; trackBy: idNotificacion">
+      <ion-item button detail="false" (click)="abrir(notificacion)" [class.no-leida]="!notificacion.Leida">
+        <span class="punto" slot="start" [class.visible]="!notificacion.Leida" aria-hidden="true"></span>
+        <ion-label class="ion-text-wrap">
+          <h3>{{ notificacion.Titulo }}</h3>
+          <p>{{ notificacion.Cuerpo }}</p>
+          <p class="fecha">{{ notificacion.FechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p>
+        </ion-label>
+      </ion-item>
+      <ion-item-options side="end">
+        <ion-item-option color="danger" (click)="eliminar(notificacion, deslizable)">Borrar</ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
+
+  <ion-infinite-scroll [disabled]="!hayMas" (ionInfinite)="cargarMas($event)">
+    <ion-infinite-scroll-content></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+</ion-content>

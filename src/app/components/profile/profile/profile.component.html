@@ -4,6 +4,13 @@
         <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>Usuario</ion-title>
+    <!-- #176: campana con los avisos sin leer -->
+    <ion-buttons slot="end" *ngIf="usuario && usuario.nombre">
+      <ion-button routerLink="/avisos" aria-label="Avisos">
+        <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
+        <ion-badge class="contador-avisos" color="danger" *ngIf="textoContador(buzon.noLeidas$ | async) as contador">{{ contador }}</ion-badge>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 

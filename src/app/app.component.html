@@ -1,5 +1,5 @@
 <ion-app>
-  <ion-menu side="start" menuId="first" contentId="main">
+  <ion-menu side="start" menuId="first" contentId="main" (ionWillOpen)="refrescarAvisos()">
     <ion-header>
         <ion-toolbar>
             <ion-title>Menu</ion-title>
@@ -12,6 +12,8 @@
             <ion-item [routerLink]="page.url" routerDirection="forward">
                 <ion-icon [name]="page.icon" slot="start"></ion-icon>
                    {{page.title}} 
+                <!-- #176: avisos sin leer -->
+                <ion-badge slot="end" color="danger" *ngIf="page.url === '/avisos' && textoContador(buzon.noLeidas$ | async) as contador">{{ contador }}</ion-badge>
             </ion-item>
           </ion-menu-toggle>
         </ion-list>

@@ -19,11 +19,17 @@ import { RapportComponent } from './components/rapport/rapport.component';
 import { SelectorPlantillaVentaDetalleComponent } from './components/selector-plantilla-venta-detalle/selector-plantilla-venta-detalle.component';
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
+import { BuzonNotificacionesComponent } from './components/buzon-notificaciones/buzon-notificaciones.component';
 
 const routes: Routes = [
   {
     path: 'profile',
     component : ProfileComponent
+  },
+  {
+    // NestoApp#176: buzón de avisos (NestoAPI#387)
+    path: 'avisos',
+    component: BuzonNotificacionesComponent
   },
   {
     path: 'producto',

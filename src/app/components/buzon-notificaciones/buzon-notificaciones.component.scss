@@ -1,0 +1,32 @@
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--ion-color-medium);
+
+  ion-icon {
+    font-size: 48px;
+  }
+}
+
+// Las no leídas, en negrita y con un punto a la izquierda
+.no-leida h3 {
+  font-weight: 700;
+}
+
+.punto {
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+
+  &.visible {
+    background: var(--ion-color-primary);
+  }
+}
+
+.fecha {
+  font-size: 0.75rem;
+}

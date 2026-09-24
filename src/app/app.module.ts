@@ -67,6 +67,7 @@ import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
 import { TrozosMencionPipe } from './pipes/trozos-mencion.pipe';
+import { BuzonNotificacionesComponent } from './components/buzon-notificaciones/buzon-notificaciones.component';
 import { TextareaMencionesComponent } from './components/profile/textarea-menciones/textarea-menciones.component';
 
 
@@ -137,6 +138,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         ModalResumenVentasComponent,
         ImporteOTextoPipe,
         TrozosMencionPipe,
+        BuzonNotificacionesComponent,
         TextareaMencionesComponent
     ],
     bootstrap: [AppComponent],
