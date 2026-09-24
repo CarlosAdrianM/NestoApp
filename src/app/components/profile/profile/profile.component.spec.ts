@@ -15,6 +15,7 @@ import { ProfileComponent } from './profile.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NovedadesService } from 'src/app/services/novedades.service';
 import { ProfileService } from './profile.service';
+import { TrozosMencionPipe } from 'src/app/pipes/trozos-mencion.pipe';
 import { Subject, of, throwError } from 'rxjs';
 
 describe('ProfileComponent', () => {
@@ -41,7 +42,7 @@ describe('ProfileComponent', () => {
     };
 
     TestBed.configureTestingModule({
-    declarations: [ProfileComponent],
+    declarations: [ProfileComponent, TrozosMencionPipe],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [IonicModule.forRoot(), RouterTestingModule, FormsModule],
     providers: [

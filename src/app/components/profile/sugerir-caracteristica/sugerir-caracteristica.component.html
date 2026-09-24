@@ -4,11 +4,10 @@
 </ion-button>
 
 <div class="formulario" *ngIf="abierto">
-  <ion-item lines="none" class="texto-sugerencia">
-    <ion-textarea [(ngModel)]="texto" [autoGrow]="true" [maxlength]="2000" aria-label="Tu sugerencia"
-      placeholder="¿Qué te vendría bien que hiciera la app? La primera línea será el título."
-      (paste)="captura.alPegar($event)"></ion-textarea>
-  </ion-item>
+  <!-- #194: también se puede mencionar a alguien al sugerir -->
+  <textarea-menciones [(texto)]="texto" etiqueta="Tu sugerencia"
+    placeholder="¿Qué te vendría bien que hiciera la app? La primera línea será el título."
+    (pegar)="captura.alPegar($event)"></textarea-menciones>
 
   <captura-adjunta #captura [(imagen)]="imagenAdjunta">
     <ion-button size="small" fill="clear" color="medium" (click)="cancelar()">Cancelar</ion-button>

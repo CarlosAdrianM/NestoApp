@@ -1,0 +1,9 @@
+<div class="campo">
+  <ion-textarea #area [value]="texto" [autoGrow]="true" [maxlength]="2000" [placeholder]="placeholder"
+    [attr.aria-label]="etiqueta" (ionInput)="alEscribir($event)" (paste)="pegar.emit($event)"></ion-textarea>
+</div>
+<ion-list class="candidatos" *ngIf="candidatos.length > 0" lines="none">
+  <ion-item button detail="false" *ngFor="let persona of candidatos" (click)="elegir(persona)">
+    <ion-label>&#64;{{ persona.Nombre }}</ion-label>
+  </ion-item>
+</ion-list>

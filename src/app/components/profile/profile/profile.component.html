@@ -149,7 +149,7 @@
                 </ion-card-header>
                 <ion-card-content>
                   <p *ngIf="sugerencia.Descripcion" class="descripcion-novedad">{{ sugerencia.Descripcion }}</p>
-                  <p *ngIf="textoOriginalAparte(sugerencia)" class="texto-original">«{{ sugerencia.TextoOriginal }}»</p>
+                  <p *ngIf="textoOriginalAparte(sugerencia)" class="texto-original">«<span *ngFor="let trozo of sugerencia.TextoOriginal | trozosMencion" [class.mencion]="trozo.mencion">{{ trozo.texto }}</span>»</p>
                   <img *ngIf="imagenesSugerencias[sugerencia.Id]" class="captura-sugerencia" [src]="imagenesSugerencias[sugerencia.Id]" alt="Captura de la sugerencia" />
                   <p class="autor-sugerencia" *ngIf="sugerencia.SugeridaNombre || sugerencia.SugeridaFecha">
                     Sugerida<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>

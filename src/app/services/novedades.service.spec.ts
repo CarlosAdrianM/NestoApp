@@ -230,3 +230,42 @@ describe('Sugerencias y buscador de novedades (#190)', () => {
     expect(resultados).toEqual([]);
   });
 });
+
+describe('Mencionables (#194)', () => {
+  let service: NovedadesService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    });
+    service = TestBed.inject(NovedadesService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('se piden una sola vez, con el ámbito de la app', () => {
+    let primera: any[] = [];
+    let segunda: any[] = [];
+    service.leerMencionables().subscribe(m => primera = m);
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/Mencionables'));
+    expect(req.request.params.get('ambito')).toBe('NestoApp');
+    req.flush([{ Nombre: 'Carlos', Clave: 'Carlos', Aplicacion: 'NestoApp' }]);
+
+    service.leerMencionables().subscribe(m => segunda = m);
+
+    expect(primera.length).toBe(1);
+    expect(segunda.length).toBe(1);
+  });
+
+  it('si fallan, lista vacía y se vuelven a pedir la próxima vez', () => {
+    let recibidos: any[] = null;
+    service.leerMencionables().subscribe(m => recibidos = m);
+    httpMock.expectOne(r => r.url.endsWith('/Novedades/Mencionables')).flush('x', { status: 500, statusText: 'Error' });
+    expect(recibidos).toEqual([]);
+
+    service.leerMencionables().subscribe();
+    httpMock.expectOne(r => r.url.endsWith('/Novedades/Mencionables')).flush([]);
+  });
+});

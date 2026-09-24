@@ -66,6 +66,8 @@ import { AlertsComponent } from '../app/alerts/alerts.component';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
+import { TrozosMencionPipe } from './pipes/trozos-mencion.pipe';
+import { TextareaMencionesComponent } from './components/profile/textarea-menciones/textarea-menciones.component';
 
 
 registerLocaleData(localeEs);
@@ -133,7 +135,9 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         ResumenVentasComponent,
         SelectorRegalosComponent,
         ModalResumenVentasComponent,
-        ImporteOTextoPipe
+        ImporteOTextoPipe,
+        TrozosMencionPipe,
+        TextareaMencionesComponent
     ],
     bootstrap: [AppComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA], imports: [BrowserModule,

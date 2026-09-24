@@ -137,6 +137,11 @@ swiper-container {
     white-space: pre-wrap;
     color: var(--ion-color-step-700);
     margin-bottom: 4px;
+
+    .mencion {
+      color: var(--ion-color-primary);
+      font-weight: 600;
+    }
   }
 
   .captura-sugerencia {

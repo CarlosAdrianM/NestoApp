@@ -21,14 +21,14 @@
         <strong>{{ comentario.NombreVisible }}</strong> · {{ comentario.Fecha | date:'dd/MM/yyyy HH:mm' }}
         <ion-button *ngIf="comentario.EsMio" size="small" fill="clear" color="danger" (click)="borrarComentario(comentario)">Borrar</ion-button>
       </div>
-      <div class="texto">{{ comentario.Texto }}</div>
+      <!-- #194: las @menciones, resaltadas -->
+      <div class="texto"><span *ngFor="let trozo of comentario.Texto | trozosMencion" [class.mencion]="trozo.mencion">{{ trozo.texto }}</span></div>
       <img *ngIf="imagenes[comentario.Id]" class="miniatura" [src]="imagenes[comentario.Id]" (click)="ampliarImagen(comentario.Id)" alt="Captura adjunta" />
     </div>
 
-    <ion-item lines="none" class="nuevo-comentario">
-      <ion-textarea [(ngModel)]="nuevoTexto" [autoGrow]="true" [maxlength]="2000" aria-label="Tu comentario"
-        placeholder="Escribe tu comentario…" (paste)="captura.alPegar($event)"></ion-textarea>
-    </ion-item>
+    <!-- #194: al escribir @ se despliega a quién se puede mencionar -->
+    <textarea-menciones [(texto)]="nuevoTexto" etiqueta="Tu comentario"
+      placeholder="Escribe tu comentario… (con @ avisas a alguien)" (pegar)="captura.alPegar($event)"></textarea-menciones>
 
     <captura-adjunta #captura [(imagen)]="imagenAdjunta">
       <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviarComentario()">Enviar</ion-button>

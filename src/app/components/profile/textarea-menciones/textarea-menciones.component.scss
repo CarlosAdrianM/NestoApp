@@ -1,0 +1,24 @@
+:host {
+  display: block;
+}
+
+.campo {
+  margin-top: 8px;
+  padding: 0 8px;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 4px;
+  background: var(--ion-background-color);
+}
+
+// El desplegable, pegado debajo del cuadro
+.candidatos {
+  margin: 2px 0 0;
+  padding: 0;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 4px;
+
+  ion-item {
+    --min-height: 36px;
+    font-size: 0.9em;
+  }
+}

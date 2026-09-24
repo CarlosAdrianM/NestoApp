@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 
 import { NovedadFeedbackComponent } from './novedad-feedback.component';
 import { CapturaAdjuntaComponent } from '../captura-adjunta/captura-adjunta.component';
+import { TrozosMencionPipe } from 'src/app/pipes/trozos-mencion.pipe';
 import { Novedad, NovedadesService } from 'src/app/services/novedades.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 
@@ -39,7 +40,7 @@ describe('NovedadFeedbackComponent (#188)', () => {
     };
 
     TestBed.configureTestingModule({
-      declarations: [NovedadFeedbackComponent, CapturaAdjuntaComponent],
+      declarations: [NovedadFeedbackComponent, CapturaAdjuntaComponent, TrozosMencionPipe],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot()],
       providers: [

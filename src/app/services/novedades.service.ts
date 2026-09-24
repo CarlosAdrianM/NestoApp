@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map, shareReplay } from 'rxjs/operators';
+import { Mencionable } from '../utils/menciones';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 
 /**
@@ -134,6 +135,28 @@ export function colorCategoria(categoria: string): string {
 export class NovedadesService {
 
   constructor(private http: HttpClient) { }
+
+  private mencionables$: Observable<Mencionable[]> | null = null;
+
+  /**
+   * NestoApp#194 / NestoAPI#537: a quién se puede mencionar con @ (los que tienen la app registrada
+   * para push). Se pide una vez por sesión; si falla, no hay desplegable y se reintenta la próxima vez.
+   */
+  public leerMencionables(): Observable<Mencionable[]> {
+    if (!this.mencionables$) {
+      const params = new HttpParams().set('ambito', 'NestoApp');
+      this.mencionables$ = this.http.get<Mencionable[]>(`${Configuracion.API_URL}/Novedades/Mencionables`, { params }).pipe(
+        map(lista => lista || []),
+        catchError(error => {
+          console.error('No se han podido cargar los mencionables', error);
+          this.mencionables$ = null;
+          return of([] as Mencionable[]);
+        }),
+        shareReplay(1)
+      );
+    }
+    return this.mencionables$;
+  }
 
   /**
    * #186: solo las de la app. Sin ámbito, NestoAPI (#489) devuelve las del escritorio y nunca
