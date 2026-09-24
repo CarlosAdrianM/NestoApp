@@ -7,7 +7,8 @@ import {
   modoEfectivo,
   nombreModo,
   esModoPermitido,
-  leerModoServicioNoPermitido
+  leerModoServicioNoPermitido,
+  leerModoConPicking
 } from './modos-servicio.model';
 
 /**
@@ -120,5 +121,20 @@ describe('Modos permitidos por el servidor (#187)', () => {
     expect(leerModoServicioNoPermitido({ apiError: { error: { code: 'PEDIDO_VALIDACION_FALLO', message: 'x' } } } as any)).toBeNull();
     expect(leerModoServicioNoPermitido({ message: 'sin conexión' } as any)).toBeNull();
     expect(leerModoServicioNoPermitido(null)).toBeNull();
+  });
+
+  // NestoApp#191 / NestoAPI#533: con picking (o albarán de hoy) el PUT no deja cambiar el modo.
+  it('lee el rechazo MODO_CON_PICKING con el mensaje de la API', () => {
+    const error: any = {
+      apiError: { error: { code: 'MODO_CON_PICKING', message: 'Este pedido ya está en preparación (tiene picking)...' } }
+    };
+
+    expect(leerModoConPicking(error)).toContain('tiene picking');
+  });
+
+  it('cualquier otro error no es un rechazo por picking', () => {
+    expect(leerModoConPicking({ apiError: { error: { code: 'MODO_SERVICIO_NO_PERMITIDO', message: 'x' } } } as any)).toBeNull();
+    expect(leerModoConPicking({ message: 'sin conexión' } as any)).toBeNull();
+    expect(leerModoConPicking(null)).toBeNull();
   });
 });

@@ -20,7 +20,8 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
+import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 
@@ -48,7 +49,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private borradorService: BorradorPlantillaVentaService,
     private pedidoVentaService: PedidoVentaService,
     private route: ActivatedRoute,
-    private parametros: Parametros
+    private parametros: Parametros,
+    private solicitudCambioModo: SolicitudCambioModoService
     ) {
       this.almacen = this.usuario.almacen;
       // NestoApp#174: el parámetro de usuario ModoServicioPorDefecto permite excepciones al 3.
@@ -151,6 +153,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   // ========================================
   // Nº del pedido en edición (null = alta normal). Cuando está fijado, guardar hace PUT.
   public pedidoEnEdicionNumero: number | null = null;
+  /** NestoApp#191: el modo del pedido en edición tal como está en la BD. */
+  private modoServicioGuardadoEdicion: number | null = null;
   // Meta por producto para reconstruir el PUT: ids de línea de LinPedidoVta y flags de picking.
   private edicionMetaLineas = new Map<string, { idLineaPago: number; idLineaOferta: number | null; pagoTienePicking: boolean; ofertaTienePicking: boolean }>();
   private edicionMetaRegalos = new Map<string, { idLinea: number; tienePicking: boolean }>();
@@ -1013,6 +1017,29 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   /**
+   * NestoApp#191 / NestoAPI#533: con picking (o albarán de hoy) la API no deja cambiar el modo del
+   * pedido en edición. Se vuelve al modo guardado, para poder guardar el resto de cambios, y se
+   * ofrece pedírselo a almacén. Devuelve false si el error es otro.
+   */
+  private async tratarModoConPicking(error: any): Promise<boolean> {
+    const motivo = leerModoConPicking(error);
+    if (!motivo) {
+      return false;
+    }
+    const modoDeseado = this.modoServicio;
+    if (this.modoServicioGuardadoEdicion !== null) {
+      this.modoServicioSeleccionado = this.modoServicioGuardadoEdicion;
+      if (this.direccionSeleccionada) {
+        this.direccionSeleccionada.servirJunto = esTodoJunto(this.modoServicioGuardadoEdicion);
+      }
+      this.recalcularPortesTrasServirJunto();
+    }
+    this.motivoModoServicio = 'El pedido ya está en preparación: el modo de entrega solo lo puede cambiar almacén.';
+    await this.solicitudCambioModo.ofrecer(motivo, this.clienteSeleccionado?.empresa, this.pedidoEnEdicionNumero, modoDeseado);
+    return true;
+  }
+
+  /**
    * NestoApp#169 / NestoAPI#457: ofertas que el pedido podría aplicar y no está aplicando. Es
    * una ayuda, nunca un bloqueo: si la API falla o tarda, el pedido se cierra igual.
    */
@@ -1740,6 +1767,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.recogerProducto = false;
       // Issue #150: salir del modo edición.
       this.pedidoEnEdicionNumero = null;
+      this.modoServicioGuardadoEdicion = null;
       this.edicionMetaLineas.clear();
       this.edicionMetaRegalos.clear();
       this.lineasEnAlbaranOFactura = 0;
@@ -2128,6 +2156,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private async manejarErrorModificacionEnEdicion(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      if (await this.tratarModoConPicking(error)) {
+          return;
+      }
       if (await this.tratarModoServicioNoPermitido(error)) {
           return;
       }
@@ -2480,6 +2511,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.servicio.cargarPedidoParaPlantilla(empresa, numero).subscribe(
       async (dto: any) => {
         this.pedidoEnEdicionNumero = dto.NumeroPedido;
+        this.modoServicioGuardadoEdicion = modoEfectivo(dto.ModoServicio, !!dto.ServirJunto);
         this.lineasEnAlbaranOFactura = dto.LineasEnAlbaranOFactura || 0;
         this.textoBotonCrearPedido = 'Modificar Pedido';
 

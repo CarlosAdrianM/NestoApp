@@ -251,4 +251,21 @@ describe('Modo de servicio en pedido-venta (#174)', () => {
     expect(alertas[0].header).toBe('Modo de entrega');
     expect(alertas[0].message).toContain('vuelve a guardar');
   }));
+
+  it('#191: con picking no se cambia el modo; vuelve al guardado y ofrece pedírselo a almacén', fakeAsync(() => {
+    component.pedido = { empresa: '1', numero: 926879, servirJunto: true, modoServicio: 1, Lineas: [] } as any;
+    component['modoServicioGuardado'] = 2; // el que tenía antes de que el vendedor lo tocase
+    const ofrecer = spyOn(component['solicitudCambioModo'], 'ofrecer').and.returnValue(Promise.resolve());
+    const error: any = {
+      isBusinessError: true,
+      apiError: { error: { code: 'MODO_CON_PICKING', message: 'Este pedido ya está en preparación (tiene picking).' } }
+    };
+
+    component['manejarErrorModificacionPedido'](error, false);
+    tick();
+
+    expect(ofrecer).toHaveBeenCalledWith('Este pedido ya está en preparación (tiene picking).', '1', 926879, 1);
+    expect(component.pedido.modoServicio).toBe(2);
+    expect(component.pedido.servirJunto).toBeFalse();
+  }));
 });

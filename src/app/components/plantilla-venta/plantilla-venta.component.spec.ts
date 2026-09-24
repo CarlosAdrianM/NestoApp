@@ -1,3 +1,4 @@
+import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -1289,5 +1290,24 @@ describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
     expect(alertasCreadas.some(a => (a.message || '').includes('vuelve a guardar'))).toBeTrue();
     expect(ofrecerBorrador).not.toHaveBeenCalled();
     expect(component.esModoServicioPermitido(4)).toBeFalse();
+  }));
+
+  it('#191: al modificar con picking no se cambia el modo; vuelve al guardado y ofrece pedírselo a almacén', fakeAsync(() => {
+    component.pedidoEnEdicionNumero = 926879;
+    component['modoServicioGuardadoEdicion'] = 2;
+    component['modoServicioSeleccionado'] = 3; // el que ha elegido el vendedor
+    const ofrecer = spyOn(TestBed.inject(SolicitudCambioModoService), 'ofrecer').and.returnValue(Promise.resolve());
+    const error: any = {
+      isBusinessError: true,
+      apiError: { error: { code: 'MODO_CON_PICKING', message: 'Este pedido ya está en preparación (tiene picking).' } }
+    };
+
+    component['manejarErrorModificacionEnEdicion'](error, false);
+    tick();
+
+    expect(ofrecer).toHaveBeenCalledWith('Este pedido ya está en preparación (tiene picking).', '1', 926879, 3);
+    expect(component.modoServicio).toBe(2);
+    expect(component.motivoModoServicio).toContain('almacén');
+    expect(alertasCreadas.length).toBe(0); // la alerta es la de la solicitud, no la de error genérico
   }));
 });

@@ -163,6 +163,18 @@ export function leerModoServicioNoPermitido(error: any): ModoServicioNoPermitido
   };
 }
 
+/**
+ * NestoApp#191 / NestoAPI#533: el PUT no deja cambiar el modo de un pedido con picking (o con albarán
+ * de hoy). Devuelve el motivo que explica la API, o null si el error es otro.
+ */
+export function leerModoConPicking(error: any): string | null {
+  const apiError = error?.apiError?.error;
+  if (!apiError || apiError.code !== ApiErrorCode.MODO_CON_PICKING) {
+    return null;
+  }
+  return apiError.message || 'El pedido ya está en preparación y el modo de entrega ya no se puede cambiar desde aquí.';
+}
+
 /** Los cuatro modos con su permiso, a partir de solo la lista de permitidos (sin motivos). */
 export function modosDesdePermitidos(permitidos: number[]): ModoServicioPermitido[] {
   return LISTA_MODOS_SERVICIO.map(m => ({

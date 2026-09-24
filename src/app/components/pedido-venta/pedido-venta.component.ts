@@ -11,7 +11,8 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking } from 'src/app/models/modos-servicio.model';
+import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
 
 @Component({
     selector: 'app-pedido-venta',
@@ -58,7 +59,8 @@ export class PedidoVentaComponent  {
     private route: ActivatedRoute,
     private firebaseAnalytics: FirebaseAnalytics,
     private errorHandler: ErrorHandlerService,
-    private plantillaVentaService: PlantillaVentaService
+    private plantillaVentaService: PlantillaVentaService,
+    private solicitudCambioModo: SolicitudCambioModoService
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -78,6 +80,7 @@ export class PedidoVentaComponent  {
           data => {
               this.firebaseAnalytics.logEvent("cargar_pedido", {empresa: empresa, pedido: numero});
               this.pedido = data as PedidoVenta;
+              this.modoServicioGuardado = this.modoServicioPedido;
               for (let i = 0; i < this.pedido.Lineas.length; i++) {
                   this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
               }
@@ -116,6 +119,9 @@ export class PedidoVentaComponent  {
   get modoServicioPedido(): number {
       return modoEfectivo(this.pedido?.modoServicio, !!this.pedido?.servirJunto);
   }
+
+  /** NestoApp#191: el modo que tiene el pedido en la BD, para volver a él si la API no deja cambiarlo. */
+  private modoServicioGuardado: number | null = null;
 
   public cambiarModoServicio(nuevo: number): void {
       if (!this.pedido) return;
@@ -622,6 +628,19 @@ export class PedidoVentaComponent  {
   private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
       // NestoApp#187 / NestoAPI#518: el PUT que cambia el modo lo rechaza si ya no tiene sentido
       // para el pedido. Se preselecciona el que vale y el vendedor vuelve a guardar.
+      // NestoApp#191 / NestoAPI#533: con picking el modo ya no se cambia desde aquí. Se vuelve al
+      // guardado (para poder guardar el resto de cambios) y se ofrece pedírselo a almacén.
+      const motivoPicking = leerModoConPicking(error);
+      if (motivoPicking) {
+          const modoDeseado = this.modoServicioPedido;
+          if (this.modoServicioGuardado !== null) {
+              this.pedido.modoServicio = this.modoServicioGuardado;
+              this.pedido.servirJunto = esTodoJunto(this.modoServicioGuardado);
+          }
+          await this.solicitudCambioModo.ofrecer(motivoPicking, this.pedido.empresa, this.pedido.numero, modoDeseado);
+          return;
+      }
+
       const rechazoModo = leerModoServicioNoPermitido(error);
       if (rechazoModo) {
           this.pedido.modoServicio = rechazoModo.modoSugerido;
