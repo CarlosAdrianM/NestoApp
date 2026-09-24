@@ -10,7 +10,7 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
-import { GrupoNovedades, NovedadesService, agruparPorVersion, colorCategoria } from 'src/app/services/novedades.service';
+import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria } from 'src/app/services/novedades.service';
 
 @Component({
     selector: 'app-profile',
@@ -58,18 +58,49 @@ export class ProfileComponent {
           this.cargarNovedades();
         }
 
-  private cargarNovedades(): void {
-      this.novedadesService.leerNovedades().subscribe(
-          novedades => {
-              this.gruposNovedades = agruparPorVersion(novedades);
-              this.indiceVersionNovedades = 0;
-          },
-          error => {
-              // Sin conexión o endpoint caído: la sección simplemente no se pinta.
-              console.error('No se han podido cargar las novedades:', error);
-              this.gruposNovedades = [];
-          }
-      );
+  /** NestoApp#192: al volver a la pantalla no se piden otra vez si se cargaron hace menos de esto. */
+  private static readonly MINIMO_ENTRE_RECARGAS_MS = 60 * 1000;
+  private ultimaCargaNovedades: number = 0;
+
+  /**
+   * Se resuelve siempre (también si falla), para poder cerrar el refresher. Si falla y ya había
+   * novedades, se quedan las que había; la primera vez la sección simplemente no se pinta.
+   */
+  private cargarNovedades(): Promise<void> {
+      this.ultimaCargaNovedades = Date.now();
+      return new Promise<void>(resolve => {
+          this.novedadesService.leerNovedades().subscribe({
+              next: novedades => {
+                  // #192: al refrescar se sigue viendo la misma versión, si sigue existiendo.
+                  const versionVista = this.grupoNovedadesActual?.version;
+                  this.gruposNovedades = agruparPorVersion(novedades);
+                  const indice = this.gruposNovedades.findIndex(g => g.version === versionVista);
+                  this.indiceVersionNovedades = indice >= 0 ? indice : 0;
+                  resolve();
+              },
+              error: error => {
+                  console.error('No se han podido cargar las novedades:', error);
+                  resolve();
+              }
+          });
+      });
+  }
+
+  /** #192: con el gesto de arrastrar se recarga todo lo que cambia solo, y se cierra al acabar. */
+  public async refrescar(event: any): Promise<void> {
+      await Promise.all([this.cargarSeEstaVendiendo(), this.cargarNovedades()]);
+      event?.target?.complete();
+  }
+
+  ionViewWillEnter() {
+      if (Date.now() - this.ultimaCargaNovedades >= ProfileComponent.MINIMO_ENTRE_RECARGAS_MS) {
+          this.cargarNovedades();
+      }
+  }
+
+  /** Por Id: al refrescar, las tarjetas (con sus comentarios abiertos) no se vuelven a crear. */
+  public idNovedad(_indice: number, novedad: Novedad): number {
+      return novedad.Id;
   }
 
   // Como la ventana de Novedades de Nesto: una versión cada vez y flechas para las demás. Si no,
@@ -126,7 +157,7 @@ export class ProfileComponent {
                 this.usuario.nombre = profile;
                 this.firebaseAnalytics.setUserId(this.usuario.nombre);
                 this.cargarParametros();
-                this.cargarSeEstaVendiendo(null);
+                this.cargarSeEstaVendiendo();
                 this.appComponent.registrarDispositivoPush();
             }
         }).catch(error => {
@@ -136,16 +167,17 @@ export class ProfileComponent {
     }
   }
 
-    cargarSeEstaVendiendo(event: any) {
-        this.servicio.getSeEstaVendiendo().subscribe({
-            next: data => { this.listaSeEstaVendiendo = Array.isArray(data) ? data : []; },
-            error: err => {
-                console.error('SeEstaVendiendo error:', err);
-                event?.target?.complete();
-            },
-            complete: () => {
-                event?.target?.complete();
-            }
+    /** Se resuelve siempre, para que el refresher se cierre aunque falle. */
+    cargarSeEstaVendiendo(): Promise<void> {
+        return new Promise<void>(resolve => {
+            this.servicio.getSeEstaVendiendo().subscribe({
+                next: data => { this.listaSeEstaVendiendo = Array.isArray(data) ? data : []; },
+                error: err => {
+                    console.error('SeEstaVendiendo error:', err);
+                    resolve();
+                },
+                complete: () => resolve()
+            });
         });
     }
 

@@ -8,7 +8,7 @@
 </ion-header>
 
 <ion-content>
-    <ion-refresher slot="fixed" (ionRefresh)="cargarSeEstaVendiendo($event)">
+    <ion-refresher slot="fixed" (ionRefresh)="refrescar($event)">
         <ion-refresher-content></ion-refresher-content>
     </ion-refresher>
   <div [ngSwitch]="authType" class="login" *ngIf="!(usuario && usuario.nombre)">
@@ -110,7 +110,7 @@
               </ion-button>
             </div>
 
-            <ion-card class="novedad" *ngFor="let novedad of grupo.novedades">
+            <ion-card class="novedad" *ngFor="let novedad of grupo.novedades; trackBy: idNovedad">
               <ion-card-header>
                 <div class="cabecera-novedad">
                   <ion-badge [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
