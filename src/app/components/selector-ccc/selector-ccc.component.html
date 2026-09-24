@@ -13,10 +13,19 @@
     <ion-select-option *ngFor="let ccc of cccsValidos" [value]="ccc.numero.trim()">{{ descripcion(ccc) }}</ion-select-option>
   </ion-select>
 </ion-item>
+<!-- NestoAPI 69102110: si la cuenta de la dirección no vale y se ha cambiado por otra, por qué -->
+<ion-item *ngIf="!cargando && cuentaDescartada" lines="none">
+  <ion-label class="ion-text-wrap motivo">
+    La cuenta de la dirección ({{ descripcion(cuentaDescartada) }}) no vale: {{ motivo(cuentaDescartada) }}. Se usará la de arriba.
+  </ion-label>
+</ion-item>
 <ion-item *ngIf="sinCCCValido" color="warning" lines="none">
   <ion-label class="ion-text-wrap">
     <strong>Este cliente no tiene cuenta bancaria válida: el recibo NO se podrá mandar al banco.</strong>
     Pide la cuenta o elige otra forma de pago.
+    <ul *ngIf="cccs.length > 0" class="motivos">
+      <li *ngFor="let ccc of cccs">{{ descripcion(ccc) }}: {{ motivo(ccc) }}</li>
+    </ul>
   </ion-label>
 </ion-item>
 <ion-item *ngIf="errorCarga" color="warning" lines="none">

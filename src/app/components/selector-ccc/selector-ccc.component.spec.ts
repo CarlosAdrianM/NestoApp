@@ -89,4 +89,28 @@ describe('SelectorCCCComponent (#189)', () => {
     component.seleccionarCCC('2');
     expect(emitidos).toContain('2');
   }));
+
+  // NestoAPI 69102110: validoParaRecibo / motivoNoValido / esDeLaFicha
+  it('sin ninguna válida, explica por qué no vale cada cuenta (el motivo de la API)', fakeAsync(() => {
+    servicio.getCCCs.and.returnValue(of([{ ...ccc('1'), validoParaRecibo: false, motivoNoValido: 'El IBAN está incompleto' }]));
+    cargar();
+    fixture.detectChanges();
+
+    expect(component.sinCCCValido).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('El IBAN está incompleto');
+  }));
+
+  it('si la cuenta de la dirección no vale y se cambia por otra, se dice por qué', fakeAsync(() => {
+    servicio.getCCCs.and.returnValue(of([
+      { ...ccc('1'), validoParaRecibo: false, motivoNoValido: 'La cuenta está de baja' },
+      { ...ccc('2'), validoParaRecibo: true, esDeLaFicha: true }
+    ]));
+    component.seleccionado = '1';
+    cargar();
+    fixture.detectChanges();
+
+    expect(emitidos).toEqual(['2']);
+    expect(component.cuentaDescartada?.numero).toBe('1');
+    expect(fixture.nativeElement.textContent).toContain('La cuenta está de baja');
+  }));
 });

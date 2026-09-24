@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
 import { SelectorCCCService } from './selector-ccc.service';
-import { CCC, descripcionCCC, elegirCCC, esCCCValido } from 'src/app/models/ccc.model';
+import { CCC, descripcionCCC, elegirCCC, esCCCValido, motivoCCCNoValido } from 'src/app/models/ccc.model';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 /**
@@ -27,6 +27,8 @@ export class SelectorCCCComponent implements OnChanges {
   public cccs: CCC[] = [];
   public cargando: boolean = false;
   public errorCarga: boolean = false;
+  /** La cuenta que traía la dirección y no vale, cuando se ha cambiado por otra: se explica por qué. */
+  public cuentaDescartada: CCC | null = null;
 
   constructor(private servicio: SelectorCCCService) { }
 
@@ -53,6 +55,10 @@ export class SelectorCCCComponent implements OnChanges {
     return descripcionCCC(ccc);
   }
 
+  public motivo(ccc: CCC): string | null {
+    return motivoCCCNoValido(ccc);
+  }
+
   public cargarDatos(): void {
     if (!this.cliente) {
       this.cccs = [];
@@ -60,6 +66,7 @@ export class SelectorCCCComponent implements OnChanges {
     }
     this.cargando = true;
     this.errorCarga = false;
+    this.cuentaDescartada = null;
     this.servicio.getCCCs(
       (this.empresa || Configuracion.EMPRESA_POR_DEFECTO).toString().trim(),
       this.cliente.toString().trim(),
@@ -70,6 +77,7 @@ export class SelectorCCCComponent implements OnChanges {
         this.cargando = false;
         const elegido = elegirCCC(this.cccs, this.seleccionado);
         if (elegido && elegido !== this.numeroSeleccionado) {
+          this.cuentaDescartada = this.cccs.find(c => (c.numero || '').trim() === this.numeroSeleccionado && !esCCCValido(c)) || null;
           this.seleccionarCCC(elegido);
         }
       },
