@@ -172,3 +172,61 @@ describe('Feedback de las novedades (#188)', () => {
     expect(r.novedad.MiVoto).toBe(-1);
   });
 });
+
+describe('Sugerencias y buscador de novedades (#190)', () => {
+  let service: NovedadesService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    });
+    service = TestBed.inject(NovedadesService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('las sugerencias se piden de la app y en el orden de la API (votos), sin reordenar', () => {
+    let recibidas: Novedad[] = [];
+    service.leerSugerencias().subscribe(s => recibidas = s);
+
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/Sugerencias') && r.method === 'GET');
+    expect(req.request.params.get('ambito')).toBe('NestoApp');
+    req.flush([
+      { Id: 9, Version: null, Titulo: 'Muy votada', VotosPositivos: 5, VotosNegativos: 0 },
+      { Id: 8, Version: null, Titulo: 'Poco votada', VotosPositivos: 1, VotosNegativos: 0 }
+    ]);
+
+    expect(recibidas.map(s => s.Id)).toEqual([9, 8]);
+  });
+
+  it('una sugerencia nueva va por POST con texto, imagen y versión', () => {
+    service.crearSugerencia({ Texto: 'Filtro por ruta', ImagenBase64: 'data:image/png;base64,AAAA', ImagenTipo: 'image/png', VersionCliente: '2.20.8' }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/Sugerencias') && r.method === 'POST');
+    expect(req.request.body.Texto).toBe('Filtro por ruta');
+    expect(req.request.body.ImagenTipo).toBe('image/png');
+    req.flush({ Id: 360, Version: null });
+  });
+
+  it('la captura de una sugerencia se baja como blob (lleva JWT)', () => {
+    service.leerImagenNovedad(360).subscribe();
+
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/360/Imagen'));
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['x']));
+  });
+
+  it('el buscador manda el texto y el ámbito', () => {
+    let resultados: Novedad[] = [];
+    service.buscar('reembolso envío').subscribe(r => resultados = r);
+
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/Buscar'));
+    expect(req.request.params.get('texto')).toBe('reembolso envío');
+    expect(req.request.params.get('ambito')).toBe('NestoApp');
+    req.flush(null);
+
+    expect(resultados).toEqual([]);
+  });
+});

@@ -4,6 +4,7 @@ import { AlertController, IonicModule, ModalController, ToastController } from '
 import { of, throwError } from 'rxjs';
 
 import { NovedadFeedbackComponent } from './novedad-feedback.component';
+import { CapturaAdjuntaComponent } from '../captura-adjunta/captura-adjunta.component';
 import { Novedad, NovedadesService } from 'src/app/services/novedades.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 
@@ -38,7 +39,7 @@ describe('NovedadFeedbackComponent (#188)', () => {
     };
 
     TestBed.configureTestingModule({
-      declarations: [NovedadFeedbackComponent],
+      declarations: [NovedadFeedbackComponent, CapturaAdjuntaComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot()],
       providers: [
@@ -136,31 +137,7 @@ describe('NovedadFeedbackComponent (#188)', () => {
     expect(component.imagenAdjunta).toBeNull();
   }));
 
-  it('un pantallazo grande de la galería se reduce hasta caber, en vez de rechazarlo', async () => {
-    const lienzo = document.createElement('canvas');
-    lienzo.width = 300; lienzo.height = 600;
-    const ctx = lienzo.getContext('2d');
-    const datos = ctx.createImageData(300, 600);
-    for (let i = 0; i < datos.data.length; i++) { datos.data[i] = (i % 4 === 3) ? 255 : Math.floor(Math.random() * 256); }
-    ctx.putImageData(datos, 0, 0);
-    const png: Blob = await new Promise(r => lienzo.toBlob(b => r(b), 'image/png'));
-    component.tamanoMaximoImagen = 40 * 1024;
-    expect(png.size).toBeGreaterThan(component.tamanoMaximoImagen);
-
-    await component.adjuntarImagen(png);
-
-    expect(component.errorImagen).toBe('');
-    expect(component.imagenAdjunta!.tipo).toBe('image/jpeg');
-  });
-
-  it('si la imagen no se puede leer, se explica y no se adjunta', async () => {
-    const ilegible = new File([new Uint8Array(1000)], 'foto.heic', { type: 'image/heic' });
-
-    await component.adjuntarImagen(ilegible);
-
-    expect(component.imagenAdjunta).toBeNull();
-    expect(component.errorImagen).toContain('No se ha podido leer');
-  });
+  // Los de reducir y leer la captura están en captura-adjunta.component.spec.ts.
 
   it('si la API rechaza el comentario se enseña su mensaje y no se pierde lo escrito', fakeAsync(() => {
     servicio.crearComentario.and.returnValue(throwError(() => ({

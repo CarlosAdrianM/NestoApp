@@ -41,3 +41,13 @@ function redibujarEnJpeg(bitmap: ImageBitmap, escala: number, calidad: number): 
   return new Promise((resolve, reject) =>
     lienzo.toBlob(b => b ? resolve(b) : reject(new Error('No se ha podido convertir la imagen')), 'image/jpeg', calidad));
 }
+
+/** Para pintar la imagen (miniatura) y para mandarla a la API, que admite el prefijo «data:». */
+export function leerComoDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => resolve(lector.result as string);
+    lector.onerror = () => reject(lector.error);
+    lector.readAsDataURL(blob);
+  });
+}

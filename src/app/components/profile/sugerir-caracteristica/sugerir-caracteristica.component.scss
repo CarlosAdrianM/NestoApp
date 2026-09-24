@@ -1,0 +1,16 @@
+:host {
+  display: block;
+  margin: 8px 0;
+}
+
+.formulario {
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--ion-color-step-50);
+}
+
+.texto-sugerencia {
+  --padding-start: 0;
+  border: 1px solid var(--ion-color-step-200);
+  border-radius: 4px;
+}

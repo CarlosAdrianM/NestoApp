@@ -107,6 +107,58 @@ swiper-container {
     font-size: 0.85rem;
     margin-bottom: 4px;
   }
+
+  // #190: el buscador y sus resultados, encima de la navegación por versiones
+  .buscador-novedades {
+    padding: 0;
+  }
+
+  .resultados-busqueda {
+    margin-bottom: 8px;
+    border: 1px solid var(--ion-color-step-150);
+    border-radius: 6px;
+
+    h3 {
+      font-size: 0.9rem;
+      white-space: normal;
+    }
+  }
+
+  // #190 / #193: al saltar a una novedad (buscador, push) se resalta un rato
+  ion-card.novedad.resaltada {
+    border-color: var(--ion-color-primary);
+    box-shadow: 0 0 0 2px var(--ion-color-primary);
+    transition: box-shadow 0.3s;
+  }
+
+  .texto-original {
+    font-size: 0.85rem;
+    font-style: italic;
+    white-space: pre-wrap;
+    color: var(--ion-color-step-700);
+    margin-bottom: 4px;
+  }
+
+  .captura-sugerencia {
+    display: block;
+    max-width: 100%;
+    max-height: 200px;
+    margin: 4px 0;
+    border: 1px solid var(--ion-color-step-200);
+    border-radius: 4px;
+    object-fit: contain;
+  }
+
+  .autor-sugerencia {
+    font-size: 0.75rem;
+    color: var(--ion-color-medium);
+  }
+
+  .sin-sugerencias {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ion-color-medium);
+  }
 }
 
 .version-info {

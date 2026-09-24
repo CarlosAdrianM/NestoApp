@@ -62,23 +62,3 @@
   border: 1px solid var(--ion-color-step-200);
   border-radius: 4px;
 }
-
-.adjunta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.error-imagen {
-  display: block;
-  font-size: 0.85em;
-  margin-top: 4px;
-}
-
-.botones {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-top: 8px;
-}

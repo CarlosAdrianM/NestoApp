@@ -93,15 +93,40 @@
 
           <!-- NestoApp#177: las novedades salen de la tabla Novedades de la API (Nesto#372).
                Si el endpoint falla o no hay entradas, la sección no se pinta. -->
-          <h4 class="seccion-titulo" *ngIf="gruposNovedades.length > 0">Novedades</h4>
-          <!-- #188: una versión cada vez (como Nesto) y cada novedad en su tarjeta, con sus votos y
-               comentarios dentro, para que se vea de qué novedad son. -->
-          <div class="novedades" *ngIf="grupoNovedadesActual as grupo">
+          <h4 class="seccion-titulo" *ngIf="hayNovedades">Novedades</h4>
+          <div class="novedades" *ngIf="hayNovedades">
+            <!-- #190 / NestoAPI#527: buscador. Al elegir un resultado se salta a su versión (o a las sugerencias). -->
+            <ion-searchbar class="buscador-novedades" placeholder="Buscar en las novedades" [debounce]="400"
+              [value]="textoBusqueda" (ionInput)="buscarNovedades($event.detail.value)"></ion-searchbar>
+            <ion-list class="resultados-busqueda" *ngIf="resultadosBusqueda || buscandoNovedades">
+              <ion-item *ngIf="buscandoNovedades" lines="none">
+                <ion-spinner slot="start" name="crescent"></ion-spinner>
+                <ion-label>Buscando…</ion-label>
+              </ion-item>
+              <ng-container *ngIf="!buscandoNovedades && resultadosBusqueda">
+                <ion-item button detail="true" *ngFor="let resultado of resultadosBusqueda" (click)="irAResultado(resultado)">
+                  <ion-label>
+                    <h3>{{ resultado.Titulo }}</h3>
+                    <p>{{ resultado.Version ? 'Versión ' + resultado.Version : 'Sugerencia' }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-item *ngIf="resultadosBusqueda.length === 0" lines="none">
+                  <ion-label color="medium">No hay ninguna novedad con esas palabras.</ion-label>
+                </ion-item>
+              </ng-container>
+            </ion-list>
+
+            <!-- #188: una versión cada vez (como Nesto) y cada novedad en su tarjeta, con sus votos y
+                 comentarios dentro, para que se vea de qué novedad son. -->
             <div class="navegacion-versiones">
               <ion-button fill="clear" [disabled]="!hayVersionAnterior" (click)="verVersionAnterior()" aria-label="Versión anterior">
                 <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
               </ion-button>
-              <div class="version-actual">
+              <div class="version-actual" *ngIf="viendoSugerencias">
+                <div class="numero-version">Sugerencias pendientes</div>
+                <div class="fecha-novedad">Por delante de la versión actual · {{ sugerencias.length }}</div>
+              </div>
+              <div class="version-actual" *ngIf="grupoNovedadesActual as grupo">
                 <div class="numero-version">Versión {{ grupo.version }}</div>
                 <div class="fecha-novedad">{{ grupo.fecha | date:'dd/MM/yyyy' }} · {{ indiceVersionNovedades + 1 }} de {{ gruposNovedades.length }}</div>
               </div>
@@ -110,19 +135,46 @@
               </ion-button>
             </div>
 
-            <ion-card class="novedad" *ngFor="let novedad of grupo.novedades; trackBy: idNovedad">
-              <ion-card-header>
-                <div class="cabecera-novedad">
-                  <ion-badge [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
-                  <ion-card-title>{{ novedad.Titulo }}</ion-card-title>
-                </div>
-              </ion-card-header>
-              <ion-card-content>
-                <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
-                <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
-                <novedad-feedback [novedad]="novedad"></novedad-feedback>
-              </ion-card-content>
-            </ion-card>
+            <!-- #190 / NestoAPI#526: lo que sugieren los usuarios; se vota y se comenta como las novedades. -->
+            <ng-container *ngIf="viendoSugerencias">
+              <sugerir-caracteristica (creada)="alCrearSugerencia($event)"></sugerir-caracteristica>
+              <p class="sin-sugerencias" *ngIf="sugerencias.length === 0">Todavía no hay sugerencias. ¿Qué te vendría bien?</p>
+              <ion-card class="novedad" *ngFor="let sugerencia of sugerencias; trackBy: idNovedad"
+                [id]="'novedad-' + sugerencia.Id" [class.resaltada]="novedadResaltada === sugerencia.Id">
+                <ion-card-header>
+                  <div class="cabecera-novedad">
+                    <ion-badge [color]="colorEstadoSugerencia(sugerencia.Estado)">{{ sugerencia.Estado || 'Pendiente' }}</ion-badge>
+                    <ion-card-title>{{ sugerencia.Titulo }}</ion-card-title>
+                  </div>
+                </ion-card-header>
+                <ion-card-content>
+                  <p *ngIf="sugerencia.Descripcion" class="descripcion-novedad">{{ sugerencia.Descripcion }}</p>
+                  <p *ngIf="textoOriginalAparte(sugerencia)" class="texto-original">«{{ sugerencia.TextoOriginal }}»</p>
+                  <img *ngIf="imagenesSugerencias[sugerencia.Id]" class="captura-sugerencia" [src]="imagenesSugerencias[sugerencia.Id]" alt="Captura de la sugerencia" />
+                  <p class="autor-sugerencia" *ngIf="sugerencia.SugeridaNombre || sugerencia.SugeridaFecha">
+                    Sugerida<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>
+                  </p>
+                  <novedad-feedback [novedad]="sugerencia"></novedad-feedback>
+                </ion-card-content>
+              </ion-card>
+            </ng-container>
+
+            <ng-container *ngIf="grupoNovedadesActual as grupo">
+              <ion-card class="novedad" *ngFor="let novedad of grupo.novedades; trackBy: idNovedad"
+                [id]="'novedad-' + novedad.Id" [class.resaltada]="novedadResaltada === novedad.Id">
+                <ion-card-header>
+                  <div class="cabecera-novedad">
+                    <ion-badge [color]="colorCategoria(novedad.Categoria)">{{ novedad.Categoria }}</ion-badge>
+                    <ion-card-title>{{ novedad.Titulo }}</ion-card-title>
+                  </div>
+                </ion-card-header>
+                <ion-card-content>
+                  <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
+                  <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
+                  <novedad-feedback [novedad]="novedad"></novedad-feedback>
+                </ion-card-content>
+              </ion-card>
+            </ng-container>
           </div>
 
           <h4 class="seccion-titulo">Configuración</h4>

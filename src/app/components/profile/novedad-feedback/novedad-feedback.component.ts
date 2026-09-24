@@ -1,18 +1,13 @@
 import { Component, Input } from '@angular/core';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import {
-  ComentarioNovedad, Novedad, NovedadesService, NuevoComentarioNovedad,
-  TAMANO_MAXIMO_IMAGEN, aplicarVoto, tieneFeedback
+  ComentarioNovedad, Novedad, NovedadesService, NuevoComentarioNovedad, aplicarVoto, tieneFeedback
 } from 'src/app/services/novedades.service';
-import { ajustarImagen } from 'src/app/utils/ajustar-imagen';
+import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { VisorImagenComponent } from '../../visor-imagen/visor-imagen.component';
-
-export interface ImagenAdjunta {
-  dataUrl: string;
-  tipo: string;
-}
+import { ImagenAdjunta } from '../captura-adjunta/captura-adjunta.component';
 
 /**
  * NestoApp#188 / NestoAPI#520: bajo cada novedad del perfil, 👍/👎 con su recuento y los
@@ -36,14 +31,9 @@ export class NovedadFeedbackComponent {
   public imagenes: { [idComentario: number]: string } = {};
 
   public nuevoTexto: string = '';
+  /** La pone y la quita <captura-adjunta> (galería, pegar), con [(imagen)]. */
   public imagenAdjunta: ImagenAdjunta | null = null;
-  public errorImagen: string = '';
   public enviando: boolean = false;
-  /** El de la API; sustituible en los tests. */
-  public tamanoMaximoImagen: number = TAMANO_MAXIMO_IMAGEN;
-
-  /** El portapapeles del sistema solo se puede leer donde el WebView lo permite. */
-  public readonly puedeLeerPortapapeles: boolean = typeof navigator !== 'undefined' && !!(navigator.clipboard as any)?.read;
 
   constructor(
     private servicio: NovedadesService,
@@ -148,7 +138,6 @@ export class NovedadFeedbackComponent {
         this.novedad.NumeroComentarios = (this.novedad.NumeroComentarios || 0) + 1;
         this.nuevoTexto = '';
         this.imagenAdjunta = null;
-        this.errorImagen = '';
       },
       error: async error => {
         // Lo escrito no se pierde: el vendedor corrige (p. ej. la imagen) y vuelve a enviar.
@@ -194,78 +183,4 @@ export class NovedadFeedbackComponent {
       }
     });
   }
-
-  // ---- Captura: desde la galería o pegada del portapapeles ----
-
-  public alElegirFichero(evento: Event): void {
-    const input = evento.target as HTMLInputElement;
-    const fichero = input?.files?.[0];
-    if (fichero) {
-      this.adjuntarImagen(fichero);
-    }
-    if (input) {
-      input.value = ''; // para poder volver a elegir la misma
-    }
-  }
-
-  /** Pegar con pulsación larga en el cuadro de texto: si lo pegado es una imagen, se adjunta. */
-  public alPegar(evento: ClipboardEvent): void {
-    const items = Array.from(evento.clipboardData?.items || []);
-    const imagen = items.find(i => i.kind === 'file' && i.type.startsWith('image/'));
-    const fichero = imagen?.getAsFile();
-    if (fichero) {
-      evento.preventDefault();
-      this.adjuntarImagen(fichero);
-    }
-  }
-
-  public async pegarImagen(): Promise<void> {
-    try {
-      const items: any[] = await (navigator.clipboard as any).read();
-      for (const item of items) {
-        const tipo = (item.types as string[]).find(t => t.startsWith('image/'));
-        if (tipo) {
-          const blob: Blob = await item.getType(tipo);
-          await this.adjuntarImagen(blob);
-          return;
-        }
-      }
-      this.errorImagen = 'No hay ninguna imagen copiada.';
-    } catch (error) {
-      console.error('No se ha podido leer el portapapeles', error);
-      this.errorImagen = 'No se ha podido leer el portapapeles.';
-    }
-  }
-
-  /**
-   * En el móvil lo normal es un pantallazo elegido de la galería: si no cabe en los 2 MB de la API o
-   * no es PNG/JPEG, se reduce a un JPEG que sí quepa en vez de rechazarlo.
-   */
-  public async adjuntarImagen(imagen: Blob): Promise<void> {
-    let ajustada: Blob;
-    try {
-      ajustada = await ajustarImagen(imagen, this.tamanoMaximoImagen);
-    } catch (error) {
-      console.error('No se ha podido preparar la imagen', error);
-      this.imagenAdjunta = null;
-      this.errorImagen = 'No se ha podido leer la imagen. Prueba con otra captura (PNG o JPEG).';
-      return;
-    }
-    this.errorImagen = '';
-    this.imagenAdjunta = { dataUrl: await leerComoDataUrl(ajustada), tipo: ajustada.type.toLowerCase() };
-  }
-
-  public quitarImagen(): void {
-    this.imagenAdjunta = null;
-    this.errorImagen = '';
-  }
-}
-
-function leerComoDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = () => resolve(lector.result as string);
-    lector.onerror = () => reject(lector.error);
-    lector.readAsDataURL(blob);
-  });
 }

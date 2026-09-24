@@ -10,7 +10,8 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
-import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria } from 'src/app/services/novedades.service';
+import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, colorEstadoSugerencia } from 'src/app/services/novedades.service';
+import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 
 @Component({
     selector: 'app-profile',
@@ -56,6 +57,7 @@ export class ProfileComponent {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
           this.cargarNovedades();
+          this.cargarSugerencias();
         }
 
   /** NestoApp#192: al volver a la pantalla no se piden otra vez si se cargaron hace menos de esto. */
@@ -71,11 +73,13 @@ export class ProfileComponent {
       return new Promise<void>(resolve => {
           this.novedadesService.leerNovedades().subscribe({
               next: novedades => {
-                  // #192: al refrescar se sigue viendo la misma versión, si sigue existiendo.
+                  // #192: al refrescar se sigue viendo la misma versión (o las sugerencias), si sigue existiendo.
                   const versionVista = this.grupoNovedadesActual?.version;
                   this.gruposNovedades = agruparPorVersion(novedades);
-                  const indice = this.gruposNovedades.findIndex(g => g.version === versionVista);
-                  this.indiceVersionNovedades = indice >= 0 ? indice : 0;
+                  if (!this.viendoSugerencias) {
+                      const indice = this.gruposNovedades.findIndex(g => g.version === versionVista);
+                      this.indiceVersionNovedades = indice >= 0 ? indice : 0;
+                  }
                   resolve();
               },
               error: error => {
@@ -86,15 +90,151 @@ export class ProfileComponent {
       });
   }
 
+  // ---- NestoApp#190 / NestoAPI#526: sugerencias de los usuarios, por delante de la versión actual ----
+
+  /** Las abiertas, en el orden de la API (👍 − 👎). */
+  public sugerencias: Novedad[] = [];
+  /** Sin el endpoint (API vieja o caída) no hay página de sugerencias. */
+  public sugerenciasDisponibles: boolean = false;
+  /** Capturas ya bajadas, por Id de sugerencia (data URL). */
+  public imagenesSugerencias: { [idNovedad: number]: string } = {};
+
+  private cargarSugerencias(): Promise<void> {
+      return new Promise<void>(resolve => {
+          this.novedadesService.leerSugerencias().subscribe({
+              next: sugerencias => {
+                  this.sugerencias = sugerencias;
+                  this.sugerenciasDisponibles = true;
+                  sugerencias.filter(s => s.TieneImagen && !this.imagenesSugerencias[s.Id]).forEach(s => this.cargarImagenSugerencia(s.Id));
+                  resolve();
+              },
+              error: error => {
+                  console.error('No se han podido cargar las sugerencias:', error);
+                  resolve();
+              }
+          });
+      });
+  }
+
+  private cargarImagenSugerencia(idNovedad: number): void {
+      this.novedadesService.leerImagenNovedad(idNovedad).subscribe({
+          next: async blob => { this.imagenesSugerencias[idNovedad] = await leerComoDataUrl(blob); },
+          error: error => console.error('No se ha podido cargar la captura de la sugerencia', error)
+      });
+  }
+
+  public async alCrearSugerencia(creada: Novedad): Promise<void> {
+      await this.cargarSugerencias();
+      await this.mostrarNovedad(creada.Id, null, creada);
+  }
+
+  public colorEstadoSugerencia(estado: string): string {
+      return colorEstadoSugerencia(estado);
+  }
+
+  /** El texto del usuario solo se repite si dice más que el título (que es su primera línea). */
+  public textoOriginalAparte(sugerencia: Novedad): boolean {
+      const texto = (sugerencia.TextoOriginal || '').trim();
+      return !!texto && texto !== (sugerencia.Titulo || '').trim();
+  }
+
+  // ---- NestoApp#190 / NestoAPI#527: buscador ----
+
+  public textoBusqueda: string = '';
+  /** null = no se está buscando (no se pinta la lista de resultados). */
+  public resultadosBusqueda: Novedad[] | null = null;
+  public buscandoNovedades: boolean = false;
+  /** Para descartar las respuestas que lleguen tarde (se busca mientras se escribe). */
+  private peticionBusqueda: number = 0;
+
+  public buscarNovedades(texto: string): void {
+      this.textoBusqueda = texto || '';
+      const limpio = this.textoBusqueda.trim();
+      const peticion = ++this.peticionBusqueda;
+      if (limpio.length < 2) {
+          this.resultadosBusqueda = null;
+          this.buscandoNovedades = false;
+          return;
+      }
+      this.buscandoNovedades = true;
+      this.novedadesService.buscar(limpio).subscribe({
+          next: resultados => {
+              if (peticion === this.peticionBusqueda) {
+                  this.resultadosBusqueda = resultados;
+                  this.buscandoNovedades = false;
+              }
+          },
+          error: error => {
+              console.error('No se ha podido buscar en las novedades:', error);
+              if (peticion === this.peticionBusqueda) {
+                  this.resultadosBusqueda = [];
+                  this.buscandoNovedades = false;
+              }
+          }
+      });
+  }
+
+  public async irAResultado(resultado: Novedad): Promise<void> {
+      this.buscarNovedades('');
+      await this.mostrarNovedad(resultado.Id, resultado.Version, resultado);
+  }
+
+  // ---- Saltar a una novedad concreta: buscador (#190) y push de respuesta (#193) ----
+
+  public novedadResaltada: number | null = null;
+  private temporizadorResaltado: any = null;
+
+  /**
+   * Pone en pantalla la versión (o las sugerencias, si no tiene) de esa novedad, la lleva a la vista y
+   * la resalta un rato. Si no está cargada, se recarga; una sugerencia cerrada (no sale en la lista
+   * de abiertas) se enseña con los datos que ya se tienen (`respaldo`). false si no se encuentra.
+   */
+  public async mostrarNovedad(id: number, version: string | null, respaldo?: Novedad): Promise<boolean> {
+      if (!version) {
+          if (!this.sugerencias.some(s => s.Id === id)) {
+              await this.cargarSugerencias();
+          }
+          if (!this.sugerencias.some(s => s.Id === id)) {
+              if (!respaldo) {
+                  return false;
+              }
+              this.sugerencias = [...this.sugerencias, respaldo];
+              this.sugerenciasDisponibles = true;
+          }
+          this.indiceVersionNovedades = -1;
+      } else {
+          let indice = this.gruposNovedades.findIndex(g => g.version === version);
+          if (indice < 0) {
+              await this.cargarNovedades();
+              indice = this.gruposNovedades.findIndex(g => g.version === version);
+          }
+          if (indice < 0) {
+              return false;
+          }
+          this.indiceVersionNovedades = indice;
+      }
+      this.resaltar(id);
+      return true;
+  }
+
+  private resaltar(id: number): void {
+      this.novedadResaltada = id;
+      // Tras pintar la versión elegida
+      setTimeout(() => document.getElementById('novedad-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+      clearTimeout(this.temporizadorResaltado);
+      this.temporizadorResaltado = setTimeout(() => this.novedadResaltada = null, 4000);
+  }
+
   /** #192: con el gesto de arrastrar se recarga todo lo que cambia solo, y se cierra al acabar. */
   public async refrescar(event: any): Promise<void> {
-      await Promise.all([this.cargarSeEstaVendiendo(), this.cargarNovedades()]);
+      await Promise.all([this.cargarSeEstaVendiendo(), this.cargarNovedades(), this.cargarSugerencias()]);
       event?.target?.complete();
   }
 
   ionViewWillEnter() {
       if (Date.now() - this.ultimaCargaNovedades >= ProfileComponent.MINIMO_ENTRE_RECARGAS_MS) {
           this.cargarNovedades();
+          this.cargarSugerencias();
       }
   }
 
@@ -104,8 +244,17 @@ export class ProfileComponent {
   }
 
   // Como la ventana de Novedades de Nesto: una versión cada vez y flechas para las demás. Si no,
-  // con el tiempo el perfil sería una lista interminable. 0 = la más reciente.
+  // con el tiempo el perfil sería una lista interminable. 0 = la más reciente; -1 = las sugerencias
+  // (#190), que van por delante de la versión actual.
   public indiceVersionNovedades: number = 0;
+
+  get viendoSugerencias(): boolean {
+      return this.indiceVersionNovedades === -1;
+  }
+
+  get hayNovedades(): boolean {
+      return this.gruposNovedades.length > 0 || this.sugerenciasDisponibles;
+  }
 
   get grupoNovedadesActual(): GrupoNovedades | undefined {
       return this.gruposNovedades[this.indiceVersionNovedades];
@@ -116,7 +265,7 @@ export class ProfileComponent {
   }
 
   get hayVersionPosterior(): boolean {
-      return this.indiceVersionNovedades > 0;
+      return this.indiceVersionNovedades > (this.sugerenciasDisponibles ? -1 : 0);
   }
 
   public verVersionAnterior(): void {

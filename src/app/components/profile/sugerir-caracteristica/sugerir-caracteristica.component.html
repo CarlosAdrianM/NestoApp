@@ -1,0 +1,17 @@
+<ion-button *ngIf="!abierto" expand="block" fill="outline" (click)="abrir()">
+  <ion-icon slot="start" name="bulb-outline"></ion-icon>
+  Sugerir nueva característica
+</ion-button>
+
+<div class="formulario" *ngIf="abierto">
+  <ion-item lines="none" class="texto-sugerencia">
+    <ion-textarea [(ngModel)]="texto" [autoGrow]="true" [maxlength]="2000" aria-label="Tu sugerencia"
+      placeholder="¿Qué te vendría bien que hiciera la app? La primera línea será el título."
+      (paste)="captura.alPegar($event)"></ion-textarea>
+  </ion-item>
+
+  <captura-adjunta #captura [(imagen)]="imagenAdjunta">
+    <ion-button size="small" fill="clear" color="medium" (click)="cancelar()">Cancelar</ion-button>
+    <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviar()">Enviar</ion-button>
+  </captura-adjunta>
+</div>

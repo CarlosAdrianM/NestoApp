@@ -10,7 +10,8 @@ import { Configuracion } from '../components/configuracion/configuracion/configu
  */
 export interface Novedad {
   Id: number;
-  Version: string;
+  /** null = sugerencia de un usuario (NestoAPI#526), aún sin versión. */
+  Version: string | null;
   Fecha: string;
   /** Nuevo / Mejorado / Corregido */
   Categoria: string;
@@ -24,6 +25,28 @@ export interface Novedad {
   /** 1 / -1, o null si no ha votado. */
   MiVoto?: number | null;
   NumeroComentarios?: number | null;
+  // NestoApp#190 / NestoAPI#526: solo en las sugerencias (y en los resultados del buscador).
+  /** Lo que escribió el usuario, tal cual. La Descripcion, si la hay, es la versión clara nuestra. */
+  TextoOriginal?: string | null;
+  SugeridaNombre?: string | null;
+  SugeridaFecha?: string | null;
+  /** Pendiente, Aceptada, Implementada o Descartada. */
+  Estado?: string | null;
+  TieneImagen?: boolean;
+}
+
+/** NestoApp#190: sin versión es una sugerencia. */
+export function esSugerencia(novedad: Novedad): boolean {
+  return !novedad?.Version;
+}
+
+/** NestoApp#190: el estado de una sugerencia, con los colores de siempre (sin tocar la paleta). */
+export function colorEstadoSugerencia(estado: string): string {
+  switch (estado) {
+    case 'Aceptada': return 'primary';
+    case 'Implementada': return 'success';
+    default: return 'medium';
+  }
 }
 
 /** NestoApp#188: comentario de una novedad (la imagen se pide aparte, por su Id). */
@@ -121,6 +144,35 @@ export class NovedadesService {
     const params = new HttpParams().set('ambito', 'NestoApp');
     return this.http.get<Novedad[]>(url, { params }).pipe(
       map(novedades => novedades || [])
+    );
+  }
+
+  /**
+   * NestoApp#190 / NestoAPI#526: las sugerencias abiertas de la app, ya ordenadas por la API
+   * (👍 − 👎): no se reordenan aquí.
+   */
+  public leerSugerencias(): Observable<Novedad[]> {
+    const params = new HttpParams().set('ambito', 'NestoApp');
+    return this.http.get<Novedad[]>(`${Configuracion.API_URL}/Novedades/Sugerencias`, { params }).pipe(
+      map(sugerencias => sugerencias || [])
+    );
+  }
+
+  /** Mismo cuerpo que un comentario: la API saca el título de la primera línea. */
+  public crearSugerencia(sugerencia: NuevoComentarioNovedad): Observable<Novedad> {
+    return this.http.post<Novedad>(`${Configuracion.API_URL}/Novedades/Sugerencias`, sugerencia);
+  }
+
+  /** La captura de una sugerencia, como blob por el JWT (igual que las de los comentarios). */
+  public leerImagenNovedad(idNovedad: number): Observable<Blob> {
+    return this.http.get(`${Configuracion.API_URL}/Novedades/${idNovedad}/Imagen`, { responseType: 'blob' });
+  }
+
+  /** NestoAPI#527: todas las palabras, sin distinguir tildes. Version null = sugerencia. */
+  public buscar(texto: string): Observable<Novedad[]> {
+    const params = new HttpParams().set('texto', texto).set('ambito', 'NestoApp');
+    return this.http.get<Novedad[]>(`${Configuracion.API_URL}/Novedades/Buscar`, { params }).pipe(
+      map(resultados => resultados || [])
     );
   }
 

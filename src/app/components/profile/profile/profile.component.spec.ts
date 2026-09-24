@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
@@ -28,7 +28,13 @@ describe('ProfileComponent', () => {
       leerNovedades: jasmine.createSpy('leerNovedades').and.returnValue(of([
         { Id: 2, Version: '2.20.1', Fecha: '2026-09-16', Categoria: 'Nuevo', Titulo: 'Selector de modo de entrega', Descripcion: '', Ambito: 'NestoApp' },
         { Id: 1, Version: '2.20.0', Fecha: '2026-09-09', Categoria: 'Mejorado', Titulo: 'Arranque más rápido', Descripcion: '', Ambito: 'NestoApp' }
-      ]))
+      ])),
+      // #190: sin versión = sugerencia; la API ya las manda ordenadas por votos.
+      leerSugerencias: jasmine.createSpy('leerSugerencias').and.returnValue(of([
+        { Id: 9, Version: null, Fecha: '2026-09-24', Categoria: 'Nuevo', Titulo: 'Filtro por ruta', Ambito: 'NestoApp', TextoOriginal: 'Filtro por ruta', Estado: 'Pendiente', TieneImagen: false }
+      ])),
+      buscar: jasmine.createSpy('buscar').and.returnValue(of([])),
+      leerImagenNovedad: jasmine.createSpy('leerImagenNovedad').and.returnValue(of(new Blob(['x'], { type: 'image/png' })))
     };
     profileService = {
       getSeEstaVendiendo: jasmine.createSpy('getSeEstaVendiendo').and.returnValue(of([]))
@@ -71,7 +77,7 @@ describe('ProfileComponent', () => {
 
     it('#188: se ve una sola versión, la más reciente, y se navega a las anteriores con flechas', () => {
       expect(component.grupoNovedadesActual.version).toBe('2.20.1');
-      expect(component.hayVersionPosterior).toBeFalse();
+      expect(component.hayVersionPosterior).toBeTrue(); // #190: por delante, las sugerencias
       expect(component.hayVersionAnterior).toBeTrue();
 
       component.verVersionAnterior();
@@ -195,6 +201,132 @@ describe('ProfileComponent', () => {
 
     it('las tarjetas se identifican por Id: refrescar no cierra los comentarios abiertos', () => {
       expect(component.idNovedad(0, novedadesNuevas[1] as any)).toBe(2);
+    });
+  });
+
+  // NestoApp#190 / NestoAPI#526/#527: sugerencias por delante de la versión actual y buscador.
+  describe('sugerencias y buscador (#190)', () => {
+    it('las sugerencias son la página por delante de la versión actual', () => {
+      expect(novedadesService.leerSugerencias).toHaveBeenCalled();
+      expect(component.viendoSugerencias).toBeFalse(); // se abre en la versión actual
+
+      component.verVersionPosterior();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.grupoNovedadesActual).toBeUndefined();
+      expect(component.hayVersionPosterior).toBeFalse();
+      expect(component.sugerencias[0].Titulo).toBe('Filtro por ruta');
+
+      component.verVersionAnterior();
+      expect(component.grupoNovedadesActual.version).toBe('2.20.1');
+    });
+
+    it('si la API no tiene sugerencias (endpoint caído), no hay página de sugerencias', () => {
+      novedadesService.leerSugerencias.and.returnValue(throwError(() => new Error('404')));
+
+      const otro = TestBed.createComponent(ProfileComponent).componentInstance;
+
+      expect(otro.hayVersionPosterior).toBeFalse();
+    });
+
+    it('en pantalla, la sugerencia enseña el texto del usuario y la descripción ampliada', () => {
+      novedadesService.leerSugerencias.and.returnValue(of([{
+        Id: 9, Version: null, Categoria: 'Nuevo', Titulo: 'Filtro por ruta', Ambito: 'NestoApp', Estado: 'Aceptada',
+        TextoOriginal: 'Filtro por ruta\nen la lista de clientes, para no ir buscando', Descripcion: 'Filtro por ruta en la lista de clientes.',
+        SugeridaNombre: 'Manuel', SugeridaFecha: '2026-09-24T10:00:00', TieneImagen: false
+      }]));
+      const otraFixture = TestBed.createComponent(ProfileComponent);
+      otraFixture.componentInstance.usuario.nombre = 'carlos';
+      otraFixture.componentInstance.verVersionPosterior();
+      otraFixture.detectChanges();
+
+      const texto = otraFixture.nativeElement.textContent as string;
+      expect(texto).toContain('Sugerencias pendientes');
+      expect(texto).toContain('para no ir buscando');
+      expect(texto).toContain('Filtro por ruta en la lista de clientes.');
+      expect(texto).toContain('Manuel');
+      expect(texto).toContain('Aceptada');
+      expect(texto).not.toContain('Selector de modo de entrega');
+    });
+
+    it('la captura de una sugerencia se baja y se pinta', async () => {
+      novedadesService.leerSugerencias.and.returnValue(of([{ Id: 9, Version: null, Titulo: 'Con captura', Ambito: 'NestoApp', TieneImagen: true }]));
+
+      const otro = TestBed.createComponent(ProfileComponent).componentInstance;
+      await new Promise(r => setTimeout(r, 50)); // FileReader
+
+      expect(novedadesService.leerImagenNovedad).toHaveBeenCalledWith(9);
+      expect(otro.imagenesSugerencias[9]).toContain('data:');
+    });
+
+    it('al crear una sugerencia se recarga la lista y se salta a ella', fakeAsync(() => {
+      const nueva = { Id: 10, Version: null, Titulo: 'Nueva', Ambito: 'NestoApp' };
+      novedadesService.leerSugerencias.and.returnValue(of([nueva]));
+
+      component.alCrearSugerencia(nueva as any);
+      flush();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.sugerencias.map(s => s.Id)).toEqual([10]);
+    }));
+
+    it('el buscador no busca con menos de dos letras', () => {
+      component.buscarNovedades('a');
+
+      expect(novedadesService.buscar).not.toHaveBeenCalled();
+      expect(component.resultadosBusqueda).toBeNull();
+    });
+
+    it('el buscador enseña los resultados, y una respuesta vieja no pisa a la nueva', () => {
+      const vieja = new Subject<any[]>();
+      novedadesService.buscar.and.returnValues(vieja, of([{ Id: 1, Version: '2.20.0', Titulo: 'Arranque más rápido' }]));
+
+      component.buscarNovedades('arra');
+      component.buscarNovedades('arranque');
+      vieja.next([{ Id: 99, Version: '1.0', Titulo: 'Vieja' }]);
+
+      expect(novedadesService.buscar).toHaveBeenCalledWith('arranque');
+      expect(component.resultadosBusqueda.map(r => r.Id)).toEqual([1]);
+    });
+
+    it('elegir un resultado salta a su versión, lo resalta y cierra la búsqueda', fakeAsync(() => {
+      component.buscarNovedades('arranque');
+
+      component.irAResultado({ Id: 1, Version: '2.20.0', Titulo: 'Arranque más rápido' } as any);
+      flush();
+
+      expect(component.grupoNovedadesActual.version).toBe('2.20.0');
+      expect(component.resultadosBusqueda).toBeNull();
+      expect(component.textoBusqueda).toBe('');
+    }));
+
+    it('un resultado sin versión salta a las sugerencias; si ya está cerrada, se enseña igual', fakeAsync(() => {
+      const cerrada = { Id: 50, Version: null, Titulo: 'Descartada', Ambito: 'NestoApp', Estado: 'Descartada' };
+
+      component.irAResultado(cerrada as any);
+      flush();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.sugerencias.some(s => s.Id === 50)).toBeTrue();
+    }));
+
+    it('mostrarNovedad resalta la tarjeta un rato', fakeAsync(() => {
+      component.mostrarNovedad(1, '2.20.0');
+      tick(200);
+      expect(component.novedadResaltada).toBe(1);
+
+      tick(5000);
+      expect(component.novedadResaltada).toBeNull();
+    }));
+
+    it('al refrescar se recargan también las sugerencias y se sigue en su página', async () => {
+      component.verVersionPosterior();
+      novedadesService.leerSugerencias.calls.reset();
+
+      await component.refrescar(null);
+
+      expect(novedadesService.leerSugerencias).toHaveBeenCalledTimes(1);
+      expect(component.viendoSugerencias).toBeTrue();
     });
   });
 });
