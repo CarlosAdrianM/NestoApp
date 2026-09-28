@@ -1,3 +1,4 @@
+import { Configuracion } from 'src/app/components/configuracion/configuracion/configuracion.component';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -104,6 +105,43 @@ describe('ProfileComponent', () => {
       fixture.detectChanges();
       expect(texto()).toContain('Arranque más rápido');
       expect(texto()).not.toContain('Selector de modo de entrega');
+    });
+
+    describe('abre en la versión instalada, no en la última publicada', () => {
+      let versionOriginal: string;
+      beforeEach(() => {
+        versionOriginal = Configuracion.VERSION;
+        Configuracion.VERSION = '2.21.1';
+        novedadesService.leerNovedades.and.returnValue(of([
+          { Id: 3, Version: '2.21.2', Fecha: '2026-09-30', Categoria: 'Nuevo', Titulo: 'Lo que aún no tiene', Descripcion: '', Ambito: 'NestoApp' },
+          { Id: 2, Version: '2.21.1', Fecha: '2026-09-28', Categoria: 'Nuevo', Titulo: 'Lo que tiene', Descripcion: '', Ambito: 'NestoApp' },
+          { Id: 1, Version: '2.21.0', Fecha: '2026-09-24', Categoria: 'Nuevo', Titulo: 'Lo de antes', Descripcion: '', Ambito: 'NestoApp' }
+        ]));
+      });
+      afterEach(() => Configuracion.VERSION = versionOriginal);
+
+      it('por defecto se ve su versión, y la siguiente sale marcada como aún no llegada', () => {
+        const perfil = TestBed.createComponent(ProfileComponent).componentInstance;
+
+        expect(perfil.grupoNovedadesActual.version).toBe('2.21.1');
+        expect(perfil.esVersionFutura(perfil.grupoNovedadesActual)).toBeFalse();
+
+        perfil.verVersionPosterior();
+        expect(perfil.grupoNovedadesActual.version).toBe('2.21.2');
+        expect(perfil.esVersionFutura(perfil.grupoNovedadesActual)).toBeTrue();
+
+        perfil.verVersionPosterior(); // por delante de todo, las sugerencias
+        expect(perfil.viendoSugerencias).toBeTrue();
+      });
+
+      it('en pantalla se avisa de que esa versión aún no ha llegado', () => {
+        const otra = TestBed.createComponent(ProfileComponent);
+        otra.componentInstance.usuario.nombre = 'carlos';
+        otra.componentInstance.verVersionPosterior();
+        otra.detectChanges();
+
+        expect(otra.nativeElement.textContent).toContain('Aún no ha llegado a tu móvil');
+      });
     });
 
     it('si el endpoint falla, la lista queda vacía y la sección no se pinta', () => {

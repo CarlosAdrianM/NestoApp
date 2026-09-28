@@ -55,7 +55,10 @@ Siempre que se vaya a hacer push, hay que:
 2. **Actualizar el changelog** (Issue #177): las novedades viven en la tabla `dbo.Novedades`
    (Nesto#372), NO en el HTML. Crear/actualizar `scripts/Novedades_<version>.sql` con los
    INSERTs de la versión (`Ambito = 'NestoApp'`, `Categoria` = Nuevo/Mejorado/Corregido) y
-   recordarle a Carlos que lo ejecute en la base de datos al publicar.
+   recordarle a Carlos que lo ejecute en la base de datos. Desde 2.21.2 las novedades abren en la
+   versión instalada (`indiceVersionInstalada`) y marcan las posteriores «Aún no ha llegado a tu
+   móvil», así que se puede ejecutar al publicar en Master. **Excepción: el de 2.21.2**, que se
+   ejecuta al promocionar (hasta entonces los vendedores tienen la app que abre la más reciente).
    - Lenguaje de usuario, nunca técnico. Solo cambios que el usuario percibe (ej: portes,
      mensajes de Ganavisiones, PDF con imágenes), no migraciones ni fixes de build.
    - La app lee `GET api/Novedades` y filtra `Ambito === 'NestoApp'` en cliente (chapuza

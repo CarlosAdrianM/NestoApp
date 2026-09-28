@@ -139,6 +139,7 @@
                 <!-- #199: «Versión 2.21.0 · 24/09/26», la fecha de su novedad más antigua (como Nesto). -->
                 <div class="numero-version">Versión {{ grupo.version }}<ng-container *ngIf="grupo.fecha"> · {{ grupo.fecha | date:'dd/MM/yy' }}</ng-container></div>
                 <div class="fecha-novedad">{{ indiceVersionNovedades + 1 }} de {{ gruposNovedades.length }}</div>
+                <div class="fecha-novedad" *ngIf="esVersionFutura(grupo)">Aún no ha llegado a tu móvil</div>
               </div>
               <ion-button fill="clear" [disabled]="!hayVersionPosterior" (click)="verVersionPosterior()" aria-label="Versión siguiente">
                 <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>

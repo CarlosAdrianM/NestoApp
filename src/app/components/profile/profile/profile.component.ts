@@ -12,7 +12,7 @@ import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
-import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, colorEstadoSugerencia } from 'src/app/services/novedades.service';
+import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 
 @Component({
@@ -89,7 +89,9 @@ export class ProfileComponent {
                   this.gruposNovedades = agruparPorVersion(novedades);
                   if (!this.viendoSugerencias) {
                       const indice = this.gruposNovedades.findIndex(g => g.version === versionVista);
-                      this.indiceVersionNovedades = indice >= 0 ? indice : 0;
+                      this.indiceVersionNovedades = indice >= 0
+                          ? indice
+                          : indiceVersionInstalada(this.gruposNovedades, Configuracion.VERSION);
                   }
                   resolve();
               },
@@ -294,8 +296,13 @@ export class ProfileComponent {
 
   // Como la ventana de Novedades de Nesto: una versión cada vez y flechas para las demás. Si no,
   // con el tiempo el perfil sería una lista interminable. 0 = la más reciente; -1 = las sugerencias
-  // (#190), que van por delante de la versión actual.
+  // (#190), que van por delante de todas. Se abre en la versión instalada (indiceVersionInstalada).
   public indiceVersionNovedades: number = 0;
+
+  /** Publicada pero aún no instalada en este móvil (está en Master o sin promocionar). */
+  public esVersionFutura(grupo: GrupoNovedades | undefined): boolean {
+      return !!grupo && compararVersiones(grupo.version, Configuracion.VERSION) > 0;
+  }
 
   get viendoSugerencias(): boolean {
       return this.indiceVersionNovedades === -1;

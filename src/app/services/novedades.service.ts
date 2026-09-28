@@ -144,6 +144,32 @@ export function fechaDeVersion(novedad: Novedad, grupos: GrupoNovedades[]): stri
   return grupo ? grupo.fecha : (novedad.Fecha || null);
 }
 
+/** «2.21.10» > «2.21.9»: por números, segmento a segmento (lo que falta cuenta como 0). */
+export function compararVersiones(a: string, b: string): number {
+  const pa = (a || '').split('.').map(n => parseInt(n, 10) || 0);
+  const pb = (b || '').split('.').map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diferencia = (pa[i] || 0) - (pb[i] || 0);
+    if (diferencia !== 0) {
+      return diferencia;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Las novedades se publican al subir a Master, antes de que la versión llegue a los vendedores. Por
+ * defecto cada uno ve la de la versión que tiene (o la última anterior, si la suya no trae); las
+ * posteriores quedan a un toque de flecha. `grupos` va de la más reciente a la más antigua.
+ */
+export function indiceVersionInstalada(grupos: GrupoNovedades[], versionInstalada: string): number {
+  if (!grupos?.length) {
+    return 0;
+  }
+  const indice = grupos.findIndex(g => compararVersiones(g.version, versionInstalada) <= 0);
+  return indice >= 0 ? indice : grupos.length - 1;
+}
+
 /** Colores de siempre, sin tocar la paleta (regla de CLAUDE.md). */
 export function colorCategoria(categoria: string): string {
   switch (categoria) {

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
-import { NovedadesService, Novedad, agruparPorVersion, fechaDeVersion, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
+import { NovedadesService, Novedad, agruparPorVersion, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
 
 /**
  * NestoApp#177: las novedades del perfil salen de la tabla Novedades de la API (Nesto#372)
@@ -122,6 +122,39 @@ describe('fechaDeVersion (#199)', () => {
 
   it('una sugerencia (sin versión) no tiene fecha de versión', () => {
     expect(fechaDeVersion(novedad(9, null, '2026-09-25'), grupos)).toBeNull();
+  });
+});
+
+// Las novedades se publican al subir a Master, antes de que lleguen a los vendedores: cada uno ve por
+// defecto las de la versión que tiene, y las siguientes quedan a un toque de flecha.
+describe('versión instalada', () => {
+  it('compara versiones por números, no como texto', () => {
+    expect(compararVersiones('2.21.10', '2.21.9')).toBeGreaterThan(0);
+    expect(compararVersiones('2.20.1', '2.21.0')).toBeLessThan(0);
+    expect(compararVersiones('2.21.1', '2.21.1')).toBe(0);
+    expect(compararVersiones('2.21', '2.21.0')).toBe(0);
+  });
+
+  const grupos = ['2.21.2', '2.21.1', '2.20.7'].map(v => ({ version: v, fecha: null, novedades: [] }));
+
+  it('abre en la versión que tiene instalada', () => {
+    expect(indiceVersionInstalada(grupos, '2.21.1')).toBe(1);
+  });
+
+  it('si su versión no tiene novedades, en la última anterior', () => {
+    expect(indiceVersionInstalada(grupos, '2.21.0')).toBe(2);
+  });
+
+  it('si tiene una más nueva que todas, en la más reciente', () => {
+    expect(indiceVersionInstalada(grupos, '2.22.0')).toBe(0);
+  });
+
+  it('si todas son posteriores a la suya, en la más antigua', () => {
+    expect(indiceVersionInstalada(grupos, '2.19.0')).toBe(2);
+  });
+
+  it('sin novedades, 0', () => {
+    expect(indiceVersionInstalada([], '2.21.1')).toBe(0);
   });
 });
 
