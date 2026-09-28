@@ -1,4 +1,4 @@
-import { ajustarImagen } from './ajustar-imagen';
+import { ajustarImagen, leerComoDataUrl } from './ajustar-imagen';
 
 /** NestoApp#188: los pantallazos del móvil se ajustan a lo que admite la API antes de mandarlos. */
 describe('ajustarImagen (#188)', () => {
@@ -55,5 +55,29 @@ describe('ajustarImagen (#188)', () => {
     const ajustada = await ajustarImagen(webp, 1024 * 1024);
 
     expect(ajustada.type).toBe('image/jpeg');
+  });
+});
+
+// Issue #195: en la app, cordova-plugin-file sustituye window.FileReader por el suyo, y su onload no
+// llega nunca: la captura se quedaba «preparándose» y las imágenes bajadas no se pintaban.
+describe('leerComoDataUrl (#195)', () => {
+  const lectorOriginal = (window as any).FileReader;
+  afterEach(() => (window as any).FileReader = lectorOriginal);
+
+  it('no depende de FileReader (el de Cordova no responde nunca)', async () => {
+    (window as any).FileReader = class { readAsDataURL() { /* nunca llama a onload */ } };
+    const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+
+    const dataUrl = await leerComoDataUrl(new Blob([bytes], { type: 'image/png' }));
+
+    expect(dataUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
+  });
+
+  it('una imagen más grande que un trozo sale igual que con el lector del navegador', async () => {
+    const bytes = new Uint8Array(200 * 1024).map((_, i) => (i * 31) % 256);
+    const blob = new Blob([bytes], { type: 'image/jpeg' });
+    const esperado: string = await new Promise(r => { const l = new lectorOriginal(); l.onload = () => r(l.result); l.readAsDataURL(blob); });
+
+    expect(await leerComoDataUrl(blob)).toBe(esperado);
   });
 });

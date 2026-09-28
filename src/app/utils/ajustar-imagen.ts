@@ -77,12 +77,19 @@ function redibujarEnJpeg(bitmap: ImagenDecodificada, escala: number, calidad: nu
     lienzo.toBlob(b => b ? resolve(b) : reject(new Error('No se ha podido convertir la imagen')), 'image/jpeg', calidad));
 }
 
-/** Para pintar la imagen (miniatura) y para mandarla a la API, que admite el prefijo «data:». */
-export function leerComoDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = () => resolve(lector.result as string);
-    lector.onerror = () => reject(lector.error);
-    lector.readAsDataURL(blob);
-  });
+/**
+ * Para pintar la imagen (miniatura) y para mandarla a la API, que admite el prefijo «data:».
+ *
+ * NestoApp#195: sin FileReader. En la app, cordova-plugin-file cambia window.FileReader por el suyo y
+ * su onload no llega nunca (en el navegador y en los tests no pasa, porque el plugin no está). Los
+ * bytes se leen con Blob.arrayBuffer(), que el plugin no toca, y el base64 se monta a trozos.
+ */
+export async function leerComoDataUrl(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const TROZO = 0x8000; // String.fromCharCode con demasiados argumentos revienta la pila
+  let binario = '';
+  for (let i = 0; i < bytes.length; i += TROZO) {
+    binario += String.fromCharCode.apply(null, bytes.subarray(i, i + TROZO) as unknown as number[]);
+  }
+  return `data:${blob.type || 'application/octet-stream'};base64,${btoa(binario)}`;
 }
