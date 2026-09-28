@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
-import { NovedadesService, Novedad, agruparPorVersion, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
+import { NovedadesService, Novedad, agruparPorVersion, fechaDeVersion, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
 
 /**
  * NestoApp#177: las novedades del perfil salen de la tabla Novedades de la API (Nesto#372)
@@ -75,17 +75,53 @@ describe('agruparPorVersion (#177)', () => {
     expect(grupos[1].novedades.map(n => n.Titulo)).toEqual(['c']);
   });
 
-  it('la fecha del grupo es la de su primera entrada', () => {
+  // Issue #199 (como Nesto): la fecha de la versión es la MÁS ANTIGUA de sus novedades, para
+  // saber si un arreglo es anterior o posterior a un día concreto.
+  it('la fecha del grupo es la más antigua de sus novedades', () => {
     const grupos = agruparPorVersion([
-      novedad('2.20.1', 'a', '2026-09-16'),
-      novedad('2.20.1', 'b', '2026-09-17')
+      novedad('2.20.1', 'a', '2026-09-17T10:00:00'),
+      novedad('2.20.1', 'b', '2026-09-16T18:00:00'),
+      novedad('2.20.1', 'c', '2026-09-18')
     ]);
 
-    expect(grupos[0].fecha).toBe('2026-09-16');
+    expect(grupos[0].fecha).toBe('2026-09-16T18:00:00');
+  });
+
+  it('las novedades sin fecha no cuentan, y si ninguna la tiene el grupo queda sin fecha', () => {
+    const grupos = agruparPorVersion([
+      novedad('2.20.1', 'a', null),
+      novedad('2.20.1', 'b', '2026-09-17'),
+      novedad('2.20.0', 'c', null)
+    ]);
+
+    expect(grupos[0].fecha).toBe('2026-09-17');
+    expect(grupos[1].fecha).toBeNull();
   });
 
   it('con lista vacía devuelve vacío', () => {
     expect(agruparPorVersion([])).toEqual([]);
+  });
+});
+
+describe('fechaDeVersion (#199)', () => {
+  const novedad = (id: number, version: string, fecha: string): Novedad => ({
+    Id: id, Version: version, Fecha: fecha, Categoria: 'Nuevo', Titulo: 't', Descripcion: '', Ambito: 'NestoApp'
+  });
+  const grupos = agruparPorVersion([
+    novedad(1, '2.21.0', '2026-09-25'),
+    novedad(2, '2.21.0', '2026-09-24')
+  ]);
+
+  it('un resultado del buscador lleva la fecha de su versión, no la suya', () => {
+    expect(fechaDeVersion(novedad(1, '2.21.0', '2026-09-25'), grupos)).toBe('2026-09-24');
+  });
+
+  it('si su versión no está cargada, vale la fecha de la propia novedad', () => {
+    expect(fechaDeVersion(novedad(9, '1.0.0', '2020-01-01'), grupos)).toBe('2020-01-01');
+  });
+
+  it('una sugerencia (sin versión) no tiene fecha de versión', () => {
+    expect(fechaDeVersion(novedad(9, null, '2026-09-25'), grupos)).toBeNull();
   });
 });
 

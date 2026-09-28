@@ -12,7 +12,7 @@ import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
-import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, colorEstadoSugerencia } from 'src/app/services/novedades.service';
+import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 
 @Component({
@@ -183,6 +183,11 @@ export class ProfileComponent {
               }
           }
       });
+  }
+
+  /** #199: la fecha de la versión de un resultado del buscador. */
+  public fechaVersionDe(resultado: Novedad): string | null {
+      return fechaDeVersion(resultado, this.gruposNovedades);
   }
 
   public async irAResultado(resultado: Novedad): Promise<void> {

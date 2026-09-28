@@ -101,22 +101,47 @@ export const TAMANO_MAXIMO_IMAGEN = 2 * 1024 * 1024;
 
 export interface GrupoNovedades {
   version: string;
-  fecha: string;
+  /** La más antigua de sus novedades (#199), o null si ninguna trae fecha. */
+  fecha: string | null;
   novedades: Novedad[];
 }
 
-/** Agrupa por versión conservando el orden del servidor (versión descendente). */
+/** NestoApp#199: de dos fechas ISO, la más antigua; las vacías no cuentan. */
+function fechaMasAntigua(a: string | null, b: string | null): string | null {
+  if (!a) return b || null;
+  if (!b) return a;
+  return new Date(b).getTime() < new Date(a).getTime() ? b : a;
+}
+
+/**
+ * Agrupa por versión conservando el orden del servidor (versión descendente). La fecha de la
+ * versión es la más antigua de sus novedades (#199, como Nesto): sirve para saber si un arreglo
+ * es anterior o posterior a un día concreto.
+ */
 export function agruparPorVersion(novedades: Novedad[]): GrupoNovedades[] {
   const grupos: GrupoNovedades[] = [];
   for (const novedad of novedades || []) {
     const ultimo = grupos[grupos.length - 1];
     if (ultimo && ultimo.version === novedad.Version) {
       ultimo.novedades.push(novedad);
+      ultimo.fecha = fechaMasAntigua(ultimo.fecha, novedad.Fecha);
     } else {
-      grupos.push({ version: novedad.Version, fecha: novedad.Fecha, novedades: [novedad] });
+      grupos.push({ version: novedad.Version, fecha: novedad.Fecha || null, novedades: [novedad] });
     }
   }
   return grupos;
+}
+
+/**
+ * NestoApp#199: fecha de la versión de una novedad suelta (resultados del buscador). Si su
+ * versión está cargada, la del grupo; si no, la de la propia novedad. Las sugerencias no tienen.
+ */
+export function fechaDeVersion(novedad: Novedad, grupos: GrupoNovedades[]): string | null {
+  if (esSugerencia(novedad)) {
+    return null;
+  }
+  const grupo = (grupos || []).find(g => g.version === novedad.Version);
+  return grupo ? grupo.fecha : (novedad.Fecha || null);
 }
 
 /** Colores de siempre, sin tocar la paleta (regla de CLAUDE.md). */

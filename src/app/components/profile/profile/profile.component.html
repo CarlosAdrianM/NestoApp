@@ -114,7 +114,9 @@
                 <ion-item button detail="true" *ngFor="let resultado of resultadosBusqueda" (click)="irAResultado(resultado)">
                   <ion-label>
                     <h3>{{ resultado.Titulo }}</h3>
-                    <p>{{ resultado.Version ? 'Versión ' + resultado.Version : 'Sugerencia' }}</p>
+                    <!-- #199: la fecha de la versión junto a su número, como en Nesto. -->
+                    <p *ngIf="resultado.Version; else resultadoSugerencia">Versión {{ resultado.Version }}<ng-container *ngIf="fechaVersionDe(resultado) as fecha"> · {{ fecha | date:'dd/MM/yy' }}</ng-container></p>
+                    <ng-template #resultadoSugerencia><p>Sugerencia</p></ng-template>
                   </ion-label>
                 </ion-item>
                 <ion-item *ngIf="resultadosBusqueda.length === 0" lines="none">
@@ -134,8 +136,9 @@
                 <div class="fecha-novedad">Por delante de la versión actual · {{ sugerencias.length }}</div>
               </div>
               <div class="version-actual" *ngIf="grupoNovedadesActual as grupo">
-                <div class="numero-version">Versión {{ grupo.version }}</div>
-                <div class="fecha-novedad">{{ grupo.fecha | date:'dd/MM/yyyy' }} · {{ indiceVersionNovedades + 1 }} de {{ gruposNovedades.length }}</div>
+                <!-- #199: «Versión 2.21.0 · 24/09/26», la fecha de su novedad más antigua (como Nesto). -->
+                <div class="numero-version">Versión {{ grupo.version }}<ng-container *ngIf="grupo.fecha"> · {{ grupo.fecha | date:'dd/MM/yy' }}</ng-container></div>
+                <div class="fecha-novedad">{{ indiceVersionNovedades + 1 }} de {{ gruposNovedades.length }}</div>
               </div>
               <ion-button fill="clear" [disabled]="!hayVersionPosterior" (click)="verVersionPosterior()" aria-label="Versión siguiente">
                 <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
