@@ -45,4 +45,15 @@ describe('ajustarImagen (#188)', () => {
     const basura = new Blob([new Uint8Array(100)], { type: 'image/heic' });
     await expectAsync(ajustarImagen(basura, 1024 * 1024)).toBeRejected();
   });
+
+  // Issue #195: el WebView de Android no siempre sabe leer con createImageBitmap lo que viene de
+  // la galería; el <img> del propio WebView sí, así que se prueba con él antes de rendirse.
+  it('si createImageBitmap no puede, lo intenta con una imagen del navegador (#195)', async () => {
+    const webp = await pantallazo(20, 40, 'image/webp');
+    spyOn(window as any, 'createImageBitmap').and.rejectWith(new DOMException('no', 'InvalidStateError'));
+
+    const ajustada = await ajustarImagen(webp, 1024 * 1024);
+
+    expect(ajustada.type).toBe('image/jpeg');
+  });
 });

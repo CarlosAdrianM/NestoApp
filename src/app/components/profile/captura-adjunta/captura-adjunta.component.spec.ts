@@ -58,4 +58,66 @@ describe('CapturaAdjuntaComponent', () => {
     expect(component.imagen).toBeNull();
     expect(emitidas).toEqual([null]);
   });
+
+  // Issue #195: en Android se elegía la captura de la galería y no pasaba nada: ni miniatura ni
+  // aviso. Nunca debe quedarse sin respuesta, y cada fallo tiene su mensaje para saber cuál fue.
+  describe('la captura de la galería nunca se queda sin respuesta (#195)', () => {
+    const pngPequeno = () => new File([new Uint8Array([137, 80, 78, 71])], 'captura.png', { type: 'image/png' });
+
+    it('si el fichero no se puede leer, se explica (antes el error se perdía)', async () => {
+      const fichero = pngPequeno();
+      spyOn(fichero, 'arrayBuffer').and.rejectWith(new DOMException('no', 'NotReadableError'));
+
+      await component.adjuntarImagen(fichero);
+
+      expect(component.imagen).toBeNull();
+      expect(component.errorImagen).toContain('No se ha podido leer');
+      expect(component.preparandoImagen).toBeFalse();
+    });
+
+    it('si prepararla se queda colgada, al rato avisa en vez de esperar para siempre', async () => {
+      const fichero = pngPequeno();
+      spyOn(fichero, 'arrayBuffer').and.returnValue(new Promise<ArrayBuffer>(() => { }));
+      component.tiempoMaximoPreparacionMs = 30;
+
+      await component.adjuntarImagen(fichero);
+
+      expect(component.imagen).toBeNull();
+      expect(component.errorImagen).toContain('tarda demasiado');
+      expect(component.preparandoImagen).toBeFalse();
+    });
+
+    it('mientras se prepara, se ve que se está preparando', async () => {
+      const fichero = pngPequeno();
+      let soltar: (b: ArrayBuffer) => void;
+      spyOn(fichero, 'arrayBuffer').and.returnValue(new Promise<ArrayBuffer>(r => soltar = r));
+
+      const adjuntando = component.adjuntarImagen(fichero);
+      expect(component.preparandoImagen).toBeTrue();
+      soltar(new Uint8Array([137, 80, 78, 71]).buffer);
+      await adjuntando;
+
+      expect(component.preparandoImagen).toBeFalse();
+      expect(component.imagen!.dataUrl).toContain('data:image/png;base64,');
+    });
+
+    it('si de la galería no llega ningún fichero, se dice', () => {
+      component.alElegirFichero({ target: { files: [], value: '' } } as any);
+
+      expect(component.errorImagen).toContain('No ha llegado');
+    });
+
+    it('no vacía el selector hasta haber leído el fichero elegido', async () => {
+      let terminar: () => void;
+      spyOn(component, 'adjuntarImagen').and.returnValue(new Promise<void>(r => terminar = r));
+      const input = { files: [pngPequeno()], value: 'C:\\fakepath\\captura.png' };
+
+      const eligiendo = component.alElegirFichero({ target: input } as any);
+      expect(input.value).not.toBe('');
+      terminar();
+      await eligiendo;
+
+      expect(input.value).toBe('');
+    });
+  });
 });

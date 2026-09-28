@@ -2,6 +2,7 @@
   <img class="miniatura" [src]="imagen.dataUrl" alt="Imagen que se va a enviar" />
   <ion-button size="small" fill="clear" color="medium" (click)="quitarImagen()">Quitar imagen</ion-button>
 </div>
+<ion-note *ngIf="preparandoImagen" color="medium" class="error-imagen">Preparando la imagen…</ion-note>
 <ion-note *ngIf="errorImagen" color="danger" class="error-imagen">{{ errorImagen }}</ion-note>
 
 <div class="botones">

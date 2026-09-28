@@ -12,7 +12,7 @@ export async function ajustarImagen(imagen: Blob, tamanoMaximo: number): Promise
   if (TIPOS_IMAGEN_DIRECTOS.includes(tipo) && imagen.size <= tamanoMaximo) {
     return imagen;
   }
-  const bitmap = await createImageBitmap(imagen); // lanza si el navegador no sabe leerla
+  const bitmap = await decodificar(imagen); // lanza si el navegador no sabe leerla
   try {
     let escala = Math.min(1, LADO_MAXIMO_IMAGEN / Math.max(bitmap.width, bitmap.height));
     let calidad = 0.85;
@@ -30,14 +30,49 @@ export async function ajustarImagen(imagen: Blob, tamanoMaximo: number): Promise
   }
 }
 
-function redibujarEnJpeg(bitmap: ImageBitmap, escala: number, calidad: number): Promise<Blob> {
+interface ImagenDecodificada {
+  fuente: CanvasImageSource;
+  width: number;
+  height: number;
+  close(): void;
+}
+
+/**
+ * NestoApp#195: el WebView de Android no siempre sabe leer con createImageBitmap lo que llega de la
+ * galería (tamaños grandes, WebP/HEIC según el fabricante). El <img> del propio WebView usa otro
+ * decodificador, así que se prueba con él antes de dar la imagen por ilegible.
+ */
+async function decodificar(imagen: Blob): Promise<ImagenDecodificada> {
+  try {
+    const bitmap = await createImageBitmap(imagen);
+    return { fuente: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close() };
+  } catch (error) {
+    console.warn('createImageBitmap no ha podido con la imagen; se prueba con <img>', error);
+    return decodificarConImg(imagen);
+  }
+}
+
+function decodificarConImg(imagen: Blob): Promise<ImagenDecodificada> {
+  const url = URL.createObjectURL(imagen);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve({ fuente: img, width: img.naturalWidth, height: img.naturalHeight, close: () => URL.revokeObjectURL(url) });
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('El navegador no sabe leer la imagen'));
+    };
+    img.src = url;
+  });
+}
+
+function redibujarEnJpeg(bitmap: ImagenDecodificada, escala: number, calidad: number): Promise<Blob> {
   const lienzo = document.createElement('canvas');
   lienzo.width = Math.max(1, Math.round(bitmap.width * escala));
   lienzo.height = Math.max(1, Math.round(bitmap.height * escala));
   const contexto = lienzo.getContext('2d');
   contexto.fillStyle = '#fff'; // JPEG no tiene transparencia: fondo blanco en vez de negro
   contexto.fillRect(0, 0, lienzo.width, lienzo.height);
-  contexto.drawImage(bitmap, 0, 0, lienzo.width, lienzo.height);
+  contexto.drawImage(bitmap.fuente, 0, 0, lienzo.width, lienzo.height);
   return new Promise((resolve, reject) =>
     lienzo.toBlob(b => b ? resolve(b) : reject(new Error('No se ha podido convertir la imagen')), 'image/jpeg', calidad));
 }
