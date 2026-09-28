@@ -1,18 +1,24 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TAMANO_MAXIMO_IMAGEN } from 'src/app/services/novedades.service';
 import { ajustarImagen, leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
+import { ErroresService } from 'src/app/services/errores.service';
 
 export interface ImagenAdjunta {
   dataUrl: string;
   tipo: string;
 }
 
-class TiempoAgotado extends Error { }
+class TiempoAgotado extends Error {
+  constructor(milisegundos: number) {
+    super(`Sin respuesta en ${milisegundos} ms`);
+    this.name = 'TiempoAgotado';
+  }
+}
 
 function conTiempoMaximo<T>(promesa: Promise<T>, milisegundos: number): Promise<T> {
   let temporizador: any;
   const agotado = new Promise<never>((_, reject) => {
-    temporizador = setTimeout(() => reject(new TiempoAgotado()), milisegundos);
+    temporizador = setTimeout(() => reject(new TiempoAgotado(milisegundos)), milisegundos);
   });
   return Promise.race([promesa, agotado]).finally(() => clearTimeout(temporizador));
 }
@@ -47,6 +53,10 @@ export class CapturaAdjuntaComponent {
   public preparandoImagen: boolean = false;
   /** #195: nunca esperar para siempre; sustituible en los tests. */
   public tiempoMaximoPreparacionMs: number = 20000;
+  /** #195: en qué paso va la preparación, para saber en ELMAH dónde se quedó. */
+  private pasoPreparacion: string = '';
+
+  constructor(private errores: ErroresService) { }
   /** El de la API; sustituible en los tests. */
   public tamanoMaximoImagen: number = TAMANO_MAXIMO_IMAGEN;
 
@@ -95,6 +105,7 @@ export class CapturaAdjuntaComponent {
       this.errorImagen = 'No hay ninguna imagen copiada.';
     } catch (error) {
       console.error('No se ha podido leer el portapapeles', error);
+      this.errores.reportar(error, 'captura-adjunta: pegar imagen');
       this.errorImagen = 'No se ha podido leer el portapapeles.';
     }
   }
@@ -116,6 +127,8 @@ export class CapturaAdjuntaComponent {
       this.cambiarImagen(preparada);
     } catch (error) {
       console.error('No se ha podido preparar la imagen', descripcion, error);
+      // Controlado aquí, el GlobalErrorHandler no lo ve: a ELMAH a mano.
+      this.errores.reportar(error, `captura-adjunta: ${descripcion}; paso: ${this.pasoPreparacion}`);
       this.cambiarImagen(null);
       this.errorImagen = error instanceof TiempoAgotado
         ? `La imagen tarda demasiado en prepararse (${descripcion}). Prueba con otra captura.`
@@ -127,8 +140,11 @@ export class CapturaAdjuntaComponent {
 
   private async prepararImagen(imagen: Blob): Promise<ImagenAdjunta> {
     // Leer los bytes ya: si el fichero de la galería no se deja leer, falla aquí y no más tarde.
+    this.pasoPreparacion = 'leer el fichero';
     const enMemoria = new Blob([await imagen.arrayBuffer()], { type: imagen.type });
+    this.pasoPreparacion = 'ajustar la imagen';
     const ajustada = await ajustarImagen(enMemoria, this.tamanoMaximoImagen);
+    this.pasoPreparacion = 'pasar a data URL';
     return { dataUrl: await leerComoDataUrl(ajustada), tipo: ajustada.type.toLowerCase() };
   }
 

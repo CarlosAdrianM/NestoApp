@@ -3,18 +3,22 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 
 import { CapturaAdjuntaComponent } from './captura-adjunta.component';
+import { ErroresService } from 'src/app/services/errores.service';
 
 /** NestoApp#188 / #190: la captura de los comentarios y de las sugerencias de las novedades. */
 describe('CapturaAdjuntaComponent', () => {
   let component: CapturaAdjuntaComponent;
   let fixture: ComponentFixture<CapturaAdjuntaComponent>;
   let emitidas: any[];
+  let errores: { reportar: jasmine.Spy };
 
   beforeEach(waitForAsync(() => {
+    errores = { reportar: jasmine.createSpy('reportar') };
     TestBed.configureTestingModule({
       declarations: [CapturaAdjuntaComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [IonicModule.forRoot()]
+      imports: [IonicModule.forRoot()],
+      providers: [{ provide: ErroresService, useValue: errores }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CapturaAdjuntaComponent);
@@ -85,6 +89,23 @@ describe('CapturaAdjuntaComponent', () => {
       expect(component.imagen).toBeNull();
       expect(component.errorImagen).toContain('tarda demasiado');
       expect(component.preparandoImagen).toBeFalse();
+    });
+
+    // El catch controla el error, así que el GlobalErrorHandler no lo ve: se manda a ELMAH a mano,
+    // con el paso en el que se quedó, el tipo y el tamaño.
+    it('el fallo llega a ELMAH con el paso en el que se quedó', async () => {
+      const fichero = pngPequeno();
+      spyOn(fichero, 'arrayBuffer').and.returnValue(new Promise<ArrayBuffer>(() => { }));
+      component.tiempoMaximoPreparacionMs = 30;
+
+      await component.adjuntarImagen(fichero);
+
+      expect(errores.reportar).toHaveBeenCalledTimes(1);
+      const [error, contexto] = errores.reportar.calls.mostRecent().args;
+      expect(error.name).toBe('TiempoAgotado');
+      expect(contexto).toContain('captura-adjunta');
+      expect(contexto).toContain('leer el fichero');
+      expect(contexto).toContain('image/png');
     });
 
     it('mientras se prepara, se ve que se está preparando', async () => {
