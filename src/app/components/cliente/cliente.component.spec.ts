@@ -189,7 +189,8 @@ describe('ClienteComponent', () => {
       component.seleccionarSugerenciaDireccion({ placeId: 'abc' });
       tick();
 
-      expect(component.cliente.direccionCalleNumero).toBe('CALLE MAYOR 5');
+      // Issue #201: calle y número con coma, como Nesto y como se guarda en la BD.
+      expect(component.cliente.direccionCalleNumero).toBe('CALLE MAYOR, 5');
       expect(component.cliente.direccionVerificada).toBeTrue();
       expect(component.direccionBloqueada).toBeTrue();
     }));
@@ -311,5 +312,87 @@ describe('ClienteComponent', () => {
 
       expect(component.cliente.diasEnServir).toBe('11101');
     });
+  });
+
+  // Issue #196 (NestoAPI#541): si al guardar la ficha se cierra un día y el cliente ya tiene
+  // pedidos con picking, la API no guarda nada y pregunta. «Sí» reenvía con la confirmación
+  // (y la API avisa a almacén); «No» deja los días como estaban.
+  describe('cerrar días con pedidos en picking (#196)', () => {
+    const clienteGuardado = { Empresa: '1 ', 'Nº_Cliente': '27120 ', Contacto: '3 ' };
+    const errorDiasConPicking = {
+      statusCode: 400,
+      apiError: { error: {
+        code: 'DIAS_CON_PICKING',
+        message: 'El pedido 925633 de este cliente ya está en preparación (tiene picking) y va a salir igual aunque ahora cierre los lunes. ¿Avisamos a almacén? Si no, el cambio de días no se guarda.',
+        timestamp: '', details: { pedidos: [925633] }
+      } }
+    };
+    let envios: any[];
+    let pop: jasmine.Spy;
+
+    beforeEach(() => {
+      envios = [];
+      pop = spyOn(component['nav'], 'pop').and.resolveTo(true);
+      servicio.leerClienteCrear = () => of({ diasEnServir: '11111', direccion: 'CALLE MAYOR, 5', nifValidado: true, formaPago: 'EFC' });
+      component['cargarCliente']('1', '27120', '3');
+      component.cambiarDiaServir(0, false);
+    });
+
+    const boton = (texto: string) => alertCreado.buttons.find((b: any) => b.text === texto);
+
+    it('pregunta con el mensaje de la API y no sale de la ficha', fakeAsync(() => {
+      servicio.modificarCliente = (c: any) => { envios.push({ ...c }); return throwError(() => errorDiasConPicking); };
+
+      component.finalizar();
+      tick();
+
+      expect(alertCreado.message).toContain('El pedido 925633');
+      expect(boton('Avisar a almacén')).toBeDefined();
+      expect(boton('Cancelar')).toBeDefined();
+      expect(envios.length).toBe(1);
+      expect(envios[0].confirmarDiasEnServirConPicking).toBeFalsy();
+      expect(pop).not.toHaveBeenCalled();
+    }));
+
+    it('«Avisar a almacén» reenvía la ficha con la confirmación y entonces sale', fakeAsync(() => {
+      let intento = 0;
+      servicio.modificarCliente = (c: any) => {
+        envios.push({ ...c });
+        return intento++ === 0 ? throwError(() => errorDiasConPicking) : of(clienteGuardado);
+      };
+
+      component.finalizar();
+      tick();
+      boton('Avisar a almacén').handler();
+      tick();
+
+      expect(envios.length).toBe(2);
+      expect(envios[1].confirmarDiasEnServirConPicking).toBeTrue();
+      expect(envios[1].diasEnServir).toBe('01111');
+      expect(pop).toHaveBeenCalled();
+    }));
+
+    it('«Cancelar» deja los días como estaban en la ficha y no reenvía nada', fakeAsync(() => {
+      servicio.modificarCliente = (c: any) => { envios.push({ ...c }); return throwError(() => errorDiasConPicking); };
+
+      component.finalizar();
+      tick();
+      boton('Cancelar').handler();
+      tick();
+
+      expect(envios.length).toBe(1);
+      expect(component.cliente.diasEnServir).toBe('11111');
+      expect(component.cliente.confirmarDiasEnServirConPicking).toBeUndefined();
+    }));
+
+    it('cualquier otro error se enseña como siempre, sin pregunta', fakeAsync(() => {
+      servicio.modificarCliente = () => throwError(() => ({ statusCode: 400, originalError: { error: { Message: 'Días mal formados' } } }));
+
+      component.finalizar();
+      tick();
+
+      expect(alertCreado.header).toBe('Error');
+      expect(alertCreado.buttons).toEqual(['Ok']);
+    }));
   });
 });

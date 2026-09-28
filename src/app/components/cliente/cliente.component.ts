@@ -12,6 +12,7 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { Subject, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { ApiErrorCode } from 'src/app/models/api-error.model';
 
 @Component({
     selector: 'app-cliente',
@@ -133,6 +134,10 @@ export class ClienteComponent implements AfterViewInit {
       return this.diasEnServirNormalizado()[indice] === '1';
   }
 
+  // Issue #196: los días que tiene la ficha en la BD, para dejarlos como estaban si al guardar
+  // la API avisa de pedidos en picking y el vendedor no quiere avisar a almacén.
+  private diasEnServirGuardados: string;
+
   public cambiarDiaServir(indice: number, abierto: boolean): void {
       const dias = this.diasEnServirNormalizado().split('');
       dias[indice] = abierto ? '1' : '0';
@@ -208,6 +213,7 @@ export class ClienteComponent implements AfterViewInit {
               this.cliente.usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
               this.cliente.esUnaModificacion = true;
               this.plazosPagoActuales = this.cliente.plazosPago;
+              this.diasEnServirGuardados = this.cliente.diasEnServir;
               this.goToDatosGenerales();
           },
           async error => {
@@ -355,7 +361,6 @@ export class ClienteComponent implements AfterViewInit {
       this.cliente.direccionVerificada = !!this.cliente.direccionVerificada;
       if (this.cliente.esUnaModificacion) {
           this.modificarCliente();
-          this.nav.pop();
       } else {
           this.crearCliente();
       }
@@ -451,8 +456,17 @@ export class ClienteComponent implements AfterViewInit {
       );
   }
 
-  modificarCliente() {
-      this.servicio.modificarCliente(this.cliente).subscribe(
+  /**
+   * Issue #196 (NestoAPI#541): `confirmarDiasConPicking` solo va a true en el reenvío tras
+   * contestar «Avisar a almacén»; si fuera siempre, almacén recibiría correos sin que nadie lo
+   * hubiera decidido. Se sale de la ficha solo si se ha guardado: con un error el vendedor sigue
+   * en ella y no pierde lo que ha cambiado.
+   */
+  modificarCliente(confirmarDiasConPicking: boolean = false) {
+      const cliente = confirmarDiasConPicking
+          ? { ...this.cliente, confirmarDiasEnServirConPicking: true }
+          : this.cliente;
+      this.servicio.modificarCliente(cliente).subscribe(
           async data => {
             this.firebaseAnalytics.logEvent("modificar_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
               const alert = await this.alertCtrl.create({
@@ -483,8 +497,14 @@ export class ClienteComponent implements AfterViewInit {
                   iban: "",
                   usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
               };
+              this.nav.pop();
           },
           async error => {
+              const diasConPicking = this.leerDiasConPicking(error);
+              if (diasConPicking) {
+                  await this.preguntarAvisarAlmacen(diasConPicking);
+                  return;
+              }
               const textoExcepcion: string = this.motivoDelError(error);
               const alert = await this.alertCtrl.create({
                   header: 'Error',
@@ -494,6 +514,41 @@ export class ClienteComponent implements AfterViewInit {
               await alert.present();
           }
       )
+  }
+
+  /** Issue #196: el mensaje del 400 DIAS_CON_PICKING, o null si el error es otro. */
+  private leerDiasConPicking(error: any): string | null {
+      const apiError = error?.apiError?.error;
+      if (!apiError || apiError.code !== ApiErrorCode.DIAS_CON_PICKING) {
+          return null;
+      }
+      return apiError.message ||
+          'Este cliente tiene pedidos en preparación que van a salir igual aunque ahora cierre ese día. ¿Avisamos a almacén? Si no, el cambio de días no se guarda.';
+  }
+
+  /** Issue #196: la API no ha guardado nada; «Sí» reenvía con la confirmación, «No» deshace los días. */
+  private async preguntarAvisarAlmacen(mensaje: string): Promise<void> {
+      const alert = await this.alertCtrl.create({
+          header: 'Pedidos en preparación',
+          message: mensaje,
+          backdropDismiss: false,
+          buttons: [
+              {
+                  text: 'Cancelar',
+                  role: 'cancel',
+                  handler: () => {
+                      this.cliente.diasEnServir = this.diasEnServirGuardados;
+                  }
+              },
+              {
+                  text: 'Avisar a almacén',
+                  handler: () => {
+                      this.modificarCliente(true);
+                  }
+              }
+          ]
+      });
+      await alert.present();
   }
 
   seleccionarFormaPago(event: any) {
@@ -589,7 +644,7 @@ export class ClienteComponent implements AfterViewInit {
   public seleccionarSugerenciaDireccion(sugerencia: any): void {
       this.servicio.leerDetalleDireccion(sugerencia.placeId, this.sessionTokenDireccion).subscribe(
           (detalle: any) => {
-              this.cliente.direccionCalleNumero = [detalle.calle, detalle.numero].filter(Boolean).join(' ').trim();
+              this.cliente.direccionCalleNumero = [detalle.calle, detalle.numero].filter(Boolean).join(', ').trim();
               this.cliente.codigoPostal = detalle.codigoPostal;
               // Población/provincia de Google, normalizadas a MAYÚSCULAS (cubre CPs con varias poblaciones).
               if (detalle.poblacion) { this.cliente.poblacion = detalle.poblacion.toUpperCase(); }
