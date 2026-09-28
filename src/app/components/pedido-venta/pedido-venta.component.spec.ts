@@ -117,6 +117,20 @@ describe('Recoger Producto: borrado de etiqueta de recogida (#165)', () => {
     expect(cancelarSpy).toHaveBeenCalledWith(55);
   });
 
+  // Issue #200 (NestoAPI#494): con Agencia = 0 la API deja que el comparador elija la agencia
+  // en modo envío + retorno; con 1 siempre era GLS.
+  it('al marcar crea la etiqueta con agencia 0 para que la elija el comparador', async () => {
+    component.recogerProducto = true;
+    component['envioRecogidaExistente'] = null;
+    component.pedido = { empresa: '1', numero: 925633 } as any;
+    spyOn<any>(component, 'cargarSeguimientos');
+    const crearSpy = spyOn(component['servicio'], 'crearEtiquetaPendiente').and.returnValue(of({}));
+
+    await component.sincronizarRecogerProducto();
+
+    expect(crearSpy).toHaveBeenCalledWith('1', 925633, 0, 1);
+  });
+
   it('un 409 al crear muestra un mensaje claro en vez del error crudo', async () => {
     component.recogerProducto = true;
     component['envioRecogidaExistente'] = null;

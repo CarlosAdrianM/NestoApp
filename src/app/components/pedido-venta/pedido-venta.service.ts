@@ -6,6 +6,13 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 
+/**
+ * Issue #200 (NestoAPI#494): con Agencia = 0, CrearEtiquetaPendiente deja que el comparador
+ * elija la agencia en el modo del retorno (envío + retorno para «Recoger producto»). Sin
+ * ninguna con precio, GLS, como antes.
+ */
+export const AGENCIA_LA_ELIGE_EL_COMPARADOR = 0;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,7 +62,7 @@ export class PedidoVentaService {
   }
 
   // Crea una etiqueta de recogida pendiente (EnviosAgencia con Retorno=1, Estado<0).
-  // Para "Recoger Producto" se usa Agencia=1, Retorno=1 (igual que plantilla-venta).
+  // Para "Recoger Producto" se usa Agencia=0, Retorno=1 (igual que plantilla-venta).
   // El backend responde 409 si ya existe otra etiqueta pendiente del pedido.
   public crearEtiquetaPendiente(empresa: string, pedido: number, agencia: number, retorno: number): Observable<any> {
     const url = Configuracion.API_URL + '/EnviosAgencias/CrearEtiquetaPendiente';

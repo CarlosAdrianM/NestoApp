@@ -24,6 +24,7 @@ import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-mo
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
+import { AGENCIA_LA_ELIGE_EL_COMPARADOR } from '../pedido-venta/pedido-venta.service';
 
 @Component({
     selector: 'app-plantilla-venta',
@@ -1552,7 +1553,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                   this.servicio.crearEtiquetaPendiente(
                     this.clienteSeleccionado.empresa.trim(),
                     +numeroPedido,
-                    1,
+                    AGENCIA_LA_ELIGE_EL_COMPARADOR,
                     1
                   ).subscribe(
                     () => console.log('Etiqueta pendiente con recogida creada para pedido', numeroPedido),

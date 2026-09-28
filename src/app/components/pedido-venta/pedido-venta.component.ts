@@ -6,7 +6,7 @@ import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { PedidoVenta } from './pedido-venta';
-import { PedidoVentaService } from './pedido-venta.service';
+import { PedidoVentaService, AGENCIA_LA_ELIGE_EL_COMPARADOR } from './pedido-venta.service';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
@@ -475,7 +475,7 @@ export class PedidoVentaComponent  {
   }
 
   // Aplica el cambio del checkbox "Recoger Producto" contra el backend:
-  // - marcado y sin etiqueta previa -> crea etiqueta pendiente (Agencia=1, Retorno=1)
+  // - marcado y sin etiqueta previa -> crea etiqueta pendiente (Agencia=0, Retorno=1)
   // - desmarcado y con etiqueta previa -> cancela la etiqueta pendiente
   // Tras éxito recarga seguimientos; en error avisa y revierte el checkbox visual.
   public async sincronizarRecogerProducto(): Promise<void> {
@@ -501,7 +501,7 @@ export class PedidoVentaComponent  {
       }
 
       const peticion = debeCrear
-          ? this.servicio.crearEtiquetaPendiente(this.pedido.empresa, this.pedido.numero, 1, 1)
+          ? this.servicio.crearEtiquetaPendiente(this.pedido.empresa, this.pedido.numero, AGENCIA_LA_ELIGE_EL_COMPARADOR, 1)
           : this.servicio.cancelarEtiquetaPendiente(this.envioRecogidaExistente.Numero);
 
       return new Promise<void>((resolve) => {
