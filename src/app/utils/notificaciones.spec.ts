@@ -22,3 +22,28 @@ describe('rutaDeNotificacion (#193)', () => {
     expect(rutaDeNotificacion(undefined)).toBeNull();
   });
 });
+
+describe('rutaDeNotificacion: avisos de un pedido (#202 / NestoAPI#555)', () => {
+  it('cualquier aviso con el dato «pedido» abre ese pedido', () => {
+    const ruta = rutaDeNotificacion({ tipo: 'AvisoPickingConImporte', empresa: '1', pedido: '922500' });
+    expect(ruta).toBe('/pedido-venta?empresa=1&numero=922500');
+  });
+
+  it('también los tipos que todavía no existen', () => {
+    expect(rutaDeNotificacion({ tipo: 'NifIncorrecto', empresa: '3', pedido: '1234' })).toBe('/pedido-venta?empresa=3&numero=1234');
+  });
+
+  it('sin empresa, la 1', () => {
+    expect(rutaDeNotificacion({ pedido: '922500' })).toBe('/pedido-venta?empresa=1&numero=922500');
+    expect(rutaDeNotificacion({ pedido: '922500', empresa: '  ' })).toBe('/pedido-venta?empresa=1&numero=922500');
+  });
+
+  it('una ruta explícita manda sobre el pedido', () => {
+    expect(rutaDeNotificacion({ ruta: '/ofertas-autorizadas', pedido: '922500' })).toBe('/ofertas-autorizadas');
+  });
+
+  it('un pedido que no es un número no lleva a ningún sitio', () => {
+    expect(rutaDeNotificacion({ pedido: 'abc' })).toBeNull();
+    expect(rutaDeNotificacion({ pedido: '' })).toBeNull();
+  });
+});

@@ -16,5 +16,12 @@ export function rutaDeNotificacion(datos: { [clave: string]: any } | null | unde
     const comentario = datos['comentarioId'] ? `&comentario=${datos['comentarioId']}` : '';
     return `/profile?novedad=${datos['novedadId']}${comentario}&aviso=${aviso}`;
   }
+  // NestoApp#202 / NestoAPI#555: regla genérica, como en Nesto: cualquier aviso que lleve el dato
+  // «pedido» abre ese pedido (el de coger picking con importe y los que vengan).
+  const pedido = (datos['pedido'] ?? '').toString().trim();
+  if (/^\d+$/.test(pedido)) {
+    const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
+    return `/pedido-venta?empresa=${encodeURIComponent(empresa)}&numero=${pedido}`;
+  }
   return null;
 }
