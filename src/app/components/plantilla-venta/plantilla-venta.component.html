@@ -146,9 +146,21 @@
                         <p *ngFor="let modo of modosServicioNoPermitidos">No disponible «{{ modo.Nombre }}»<span *ngIf="modo.Motivo">: {{ modo.Motivo }}</span></p>
                     </ion-label>
                 </ion-item>
+                <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación -->
                 <ion-item>
-                    <ion-label>Mantener Junto</ion-label>
-                    <ion-toggle slot="end" aria-label="Mantener Junto" [(ngModel)]="direccionSeleccionada.mantenerJunto"></ion-toggle>
+                    <ion-label>Facturación</ion-label>
+                    <ion-select aria-label="Facturación" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
+                        [value]="modoFacturacion" [disabled]="selectorFacturacionBloqueado" (ionChange)="cambiarModoFacturacion($event.detail.value)">
+                        <ion-select-option *ngFor="let modo of listaModosFacturacion" [value]="modo.codigo" [disabled]="!esModoFacturacionPermitido(modo.codigo)">{{ modo.nombre }}</ion-select-option>
+                    </ion-select>
+                </ion-item>
+                <ion-item lines="none" *ngIf="modoFacturacion === 3">
+                    <ion-label class="ion-text-wrap" color="warning" style="font-size: 0.85em;">{{avisoTodoAhora}}</ion-label>
+                </ion-item>
+                <ion-item lines="none" *ngIf="modosFacturacionNoPermitidos.length > 0">
+                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+                        <p *ngFor="let modo of modosFacturacionNoPermitidos">No disponible «{{ modo.Nombre }}»<span *ngIf="modo.Motivo">: {{ modo.Motivo }}</span></p>
+                    </ion-label>
                 </ion-item>
                 <ion-item>
                     <ion-label>Recoger Producto</ion-label>

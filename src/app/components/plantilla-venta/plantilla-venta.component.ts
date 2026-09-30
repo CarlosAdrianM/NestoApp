@@ -21,6 +21,10 @@ import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaReg
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
+import {
+  LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
+  modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
+} from 'src/app/models/modos-facturacion.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
@@ -321,6 +325,113 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
   public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 
+  // ========================================
+  // NestoApp#197 / NestoAPI#542: modo de facturación (sustituye al toggle «Mantener junto»).
+  // El modo vive en el pedido: el mantenerJunto de la ficha es solo el punto de partida y nunca
+  // se escribe en ella (el objeto de la dirección es una copia en memoria).
+  // ========================================
+  public readonly listaModosFacturacion = LISTA_MODOS_FACTURACION;
+  public readonly avisoTodoAhora = AVISO_TODO_AHORA;
+  /** Lo último que contestó la API (null = sin respuesta: se deja elegir todo). */
+  public sugerenciaFacturacion: ModoFacturacionSugerido | null = null;
+  /** Elección del vendedor (o de un borrador). Null = no lo ha tocado: se manda null a la API. */
+  private modoFacturacionSeleccionado: number | null = null;
+  /** El modo guardado del pedido en edición, hasta que conteste la sugerencia. */
+  private modoFacturacionEdicion: number | null = null;
+  private huellaFacturacion = '';
+
+  get modoFacturacion(): number {
+      return this.modoFacturacionSeleccionado ?? this.sugerenciaFacturacion?.Modo ??
+          modoFacturacionDerivado(this.modoFacturacionEdicion, !!this.direccionSeleccionada?.mantenerJunto);
+  }
+
+  get selectorFacturacionBloqueado(): boolean {
+      return selectorFacturacionBloqueado(this.sugerenciaFacturacion);
+  }
+
+  public esModoFacturacionPermitido(modo: number): boolean {
+      return esModoFacturacionPermitido(this.sugerenciaFacturacion?.Modos, modo);
+  }
+
+  get modosFacturacionNoPermitidos(): ModoFacturacionPermitido[] {
+      if (this.selectorFacturacionBloqueado) {
+          return [];
+      }
+      return (this.sugerenciaFacturacion?.Modos || []).filter(m => !m.Permitido);
+  }
+
+  public cambiarModoFacturacion(nuevo: number): void {
+      if (!nuevo || nuevo === this.modoFacturacion) {
+          return;
+      }
+      this.modoFacturacionSeleccionado = nuevo;
+      this.sincronizarMantenerJunto(nuevo);
+  }
+
+  /** Modo y mantenerJunto siempre coherentes: un mantenerJunto discordante gana en la API y pone el 2. */
+  private sincronizarMantenerJunto(modo: number): void {
+      if (this.direccionSeleccionada) {
+          this.direccionSeleccionada.mantenerJunto = modo === MODOS_FACTURACION.AL_COMPLETAR;
+      }
+  }
+
+  /** Solo los campos de los que depende la sugerencia (no hace falta montar el pedido entero). */
+  private consultaModoFacturacion(): any {
+      if (!this.clienteSeleccionado || !this.direccionSeleccionada) {
+          return null;
+      }
+      return {
+          empresa: this.clienteSeleccionado.empresa?.trim() ?? null,
+          numero: this.pedidoEnEdicionNumero ?? 0,
+          cliente: this.clienteSeleccionado.cliente?.trim() ?? null,
+          contacto: this.direccionSeleccionada.contacto,
+          contactoCobro: this.clienteSeleccionado.contacto?.trim() ?? null,
+          formaPago: this.extraerCodigoFormaPago() || null,
+          plazosPago: this.extraerCodigoPlazosPago().trim() || null,
+          periodoFacturacion: this.direccionSeleccionada.periodoFacturacion,
+          notaEntrega: false,
+          mantenerJunto: !!this.direccionSeleccionada.mantenerJunto,
+          modoFacturacion: this.modoFacturacionSeleccionado,
+          Lineas: []
+      };
+  }
+
+  /**
+   * Se pide al elegir o cambiar la dirección, al cambiar los plazos y tras un error al guardar. La
+   * huella evita repetirla si no ha cambiado nada de lo que la decide (añadir líneas no cuenta).
+   */
+  public pedirModoFacturacionSugerido(forzar: boolean = false): void {
+      const consulta = this.consultaModoFacturacion();
+      if (!consulta) {
+          return;
+      }
+      const huella = huellaModoFacturacion(consulta);
+      if (!forzar && huella === this.huellaFacturacion) {
+          return;
+      }
+      this.huellaFacturacion = huella;
+      this.servicio.modoFacturacionSugerido(consulta).subscribe(
+          (sugerencia: ModoFacturacionSugerido) => {
+              if (!sugerencia || !sugerencia.Modo) {
+                  return;
+              }
+              this.sugerenciaFacturacion = sugerencia;
+              if (this.modoFacturacionSeleccionado !== null && !this.esModoFacturacionPermitido(this.modoFacturacionSeleccionado)) {
+                  // Lo elegido ya no vale (han cambiado los plazos): manda la sugerencia.
+                  this.modoFacturacionSeleccionado = null;
+              }
+              if (this.modoFacturacionSeleccionado === null) {
+                  this.sincronizarMantenerJunto(sugerencia.Modo);
+              }
+          },
+          error => {
+              // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
+              this.huellaFacturacion = '';
+              console.log('No se ha podido calcular el modo de facturación sugerido', error);
+          }
+      );
+  }
+
   private _direccionSeleccionada: any;
   get direccionSeleccionada(): any {
       return this._direccionSeleccionada;
@@ -342,6 +453,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           } else if (direccionCambiando && !this.contactoParaRestaurar) {
               this.modoServicioSeleccionado = this.modoServicioPorDefecto;
               value.servirJunto = esTodoJunto(this.modoServicioPorDefecto);
+              // NestoApp#197: con otra dirección se vuelve a partir de su mantenerJunto y de la sugerencia.
+              this.modoFacturacionSeleccionado = null;
+              this.sugerenciaFacturacion = null;
           } else if (this.modoServicioSeleccionado !== null) {
               // Restauración tardía o re-selección: conservar el modo que ya había.
               value.servirJunto = esTodoJunto(this.modoServicioSeleccionado);
@@ -396,6 +510,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           }
           this.cargarCorreoYMovilTarjeta();
           this.calcularFechaMinima();
+          this.pedirModoFacturacionSugerido();
           // Si estamos restaurando, restaurar la fecha del borrador después de calcularFechaMinima
           if (this.borradorEnRestauracion && this.borradorEnRestauracion.fechaEntrega) {
               this.fechaEntrega = this.borradorEnRestauracion.fechaEntrega;
@@ -1331,6 +1446,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'contactoCobro': this.clienteSeleccionado.contacto?.trim() ?? null, // calcular
           'noComisiona': this.direccionSeleccionada.noComisiona,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
+          // NestoApp#197: null si el vendedor no lo ha elegido (la API deriva de mantenerJunto y nunca rechaza).
+          'modoFacturacion': this.modoFacturacionSeleccionado,
           // NestoApp#174: viaja el modo y el servirJunto derivado (solo el 1 es true), para
           // que un servidor sin migrar no cambie de comportamiento.
           'servirJunto': esTodoJunto(this.modoServicio),
@@ -1784,6 +1901,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.modoServicioSugeridoServidor = null;
       this.modosServicio = null;
       this.motivoModoServicio = '';
+      // NestoApp#197
+      this.modoFacturacionSeleccionado = null;
+      this.modoFacturacionEdicion = null;
+      this.sugerenciaFacturacion = null;
+      this.huellaFacturacion = '';
   }
       
   get importePortesMostrar(): number {
@@ -2026,6 +2148,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.plazosPago = nuevosPlazos;
     this.comprobarSiSePuedeServirPorGlovo();
     this.calcularPortes();
+    this.pedirModoFacturacionSugerido(); // NestoApp#197
   }
 
   public mandarCobroTarjeta: boolean;
@@ -2040,6 +2163,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Maneja errores de creación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorCreacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+    // NestoApp#197: el 400 de modo de facturación no permitido es texto plano; se enseña como
+    // cualquier error y se vuelve a pedir la sugerencia para que el selector diga qué vale.
+    this.pedirModoFacturacionSugerido(true);
     if (await this.tratarModoServicioNoPermitido(error)) {
       return;
     }
@@ -2157,6 +2283,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private async manejarErrorModificacionEnEdicion(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      this.pedirModoFacturacionSugerido(true); // NestoApp#197
       if (await this.tratarModoConPicking(error)) {
           return;
       }
@@ -2250,6 +2377,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       fechaEntrega: this.fechaEntrega || '',
       almacenCodigo: this.almacen || '',
       mantenerJunto: this.direccionSeleccionada?.mantenerJunto || false,
+      modoFacturacion: this.modoFacturacionSeleccionado ?? undefined, // NestoApp#197: solo si es una elección
       servirJunto: esTodoJunto(this.modoServicio),
       modoServicio: this.modoServicio, // NestoApp#174
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
@@ -2513,6 +2641,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       async (dto: any) => {
         this.pedidoEnEdicionNumero = dto.NumeroPedido;
         this.modoServicioGuardadoEdicion = modoEfectivo(dto.ModoServicio, !!dto.ServirJunto);
+        // NestoApp#197: se enseña el guardado, pero no es una elección: si no se toca, viaja null.
+        this.modoFacturacionEdicion = dto.ModoFacturacion ?? null;
         this.lineasEnAlbaranOFactura = dto.LineasEnAlbaranOFactura || 0;
         this.textoBotonCrearPedido = 'Modificar Pedido';
 
@@ -2801,6 +2931,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
       if (borrador.mantenerJunto !== undefined) {
         this.direccionSeleccionada.mantenerJunto = borrador.mantenerJunto;
+      }
+      // NestoApp#197: un modo guardado en el borrador es una elección (la sugerencia no lo pisa);
+      // un borrador anterior no lo trae y manda su mantenerJunto.
+      if (borrador.modoFacturacion) {
+        this.modoFacturacionSeleccionado = borrador.modoFacturacion;
+        this.sincronizarMantenerJunto(borrador.modoFacturacion);
       }
       if (borrador.comentarioRuta) {
         this.direccionSeleccionada.comentarioRuta = borrador.comentarioRuta;

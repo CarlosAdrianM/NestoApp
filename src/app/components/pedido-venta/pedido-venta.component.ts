@@ -13,6 +13,10 @@ import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking } from 'src/app/models/modos-servicio.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
+import {
+    LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
+    modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
+} from 'src/app/models/modos-facturacion.model';
 
 @Component({
     selector: 'app-pedido-venta',
@@ -66,7 +70,13 @@ export class PedidoVentaComponent  {
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
       this.loadingCtrl = loadingCtrl;
-      this.cargarPedido(this.route.snapshot.queryParams.empresa,this.route.snapshot.queryParams.numero);
+      // NestoApp#197: por queryParams y no por el snapshot, para que abrir el pedido origen de una
+      // nota de entrega recargue aunque Ionic reutilice esta misma página.
+      this.route.queryParams.subscribe(params => {
+          if (params?.numero && (!this.pedido || +params.numero !== +this.pedido.numero)) {
+              this.cargarPedido(params.empresa || '1', params.numero);
+          }
+      });
   }
 
   public async cargarPedido(empresa: string, numero: number): Promise<void> {
@@ -81,6 +91,10 @@ export class PedidoVentaComponent  {
               this.firebaseAnalytics.logEvent("cargar_pedido", {empresa: empresa, pedido: numero});
               this.pedido = data as PedidoVenta;
               this.modoServicioGuardado = this.modoServicioPedido;
+              // NestoApp#197: lo que trae la API es lo guardado, no una elección del vendedor.
+              this.modoFacturacionTocado = false;
+              this.huellaFacturacion = '';
+              this.sugerenciaFacturacion = null;
               for (let i = 0; i < this.pedido.Lineas.length; i++) {
                   this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
               }
@@ -93,6 +107,7 @@ export class PedidoVentaComponent  {
               // Cargar parámetros de IVA y asignarlos a las líneas
               this.cargarParametrosIva();
               this.cargarSeguimientos(empresa, numero);
+              this.pedirModoFacturacionSugerido();
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
@@ -196,6 +211,103 @@ export class PedidoVentaComponent  {
       );
   }
 
+  // ========================================
+  // NestoApp#197 / NestoAPI#542: modo de facturación (sustituye al toggle «Mantener junto»).
+  // ========================================
+  public readonly listaModosFacturacion = LISTA_MODOS_FACTURACION;
+  public readonly avisoTodoAhora = AVISO_TODO_AHORA;
+  /** Lo último que contestó la API para este pedido (null = sin respuesta: se deja elegir todo). */
+  public sugerenciaFacturacion: ModoFacturacionSugerido | null = null;
+  /** Solo si el vendedor lo ha cambiado se manda el modo; si no, null (la API nunca lo rechaza). */
+  private modoFacturacionTocado = false;
+  /** Huella de los campos de los que depende la sugerencia: si no cambian, no se vuelve a pedir. */
+  private huellaFacturacion = '';
+
+  get modoFacturacionPedido(): number {
+      return modoFacturacionDerivado(this.pedido?.modoFacturacion, !!this.pedido?.mantenerJunto);
+  }
+
+  get selectorFacturacionBloqueado(): boolean {
+      return selectorFacturacionBloqueado(this.sugerenciaFacturacion);
+  }
+
+  public esModoFacturacionPermitido(modo: number): boolean {
+      return esModoFacturacionPermitido(this.sugerenciaFacturacion?.Modos, modo);
+  }
+
+  get modosFacturacionNoPermitidos(): ModoFacturacionPermitido[] {
+      if (this.selectorFacturacionBloqueado) {
+          return [];
+      }
+      return (this.sugerenciaFacturacion?.Modos || []).filter(m => !m.Permitido);
+  }
+
+  public cambiarModoFacturacion(nuevo: number): void {
+      if (!this.pedido || !nuevo || nuevo === this.modoFacturacionPedido) {
+          return;
+      }
+      this.pedido.modoFacturacion = nuevo;
+      // Siempre coherentes: un mantenerJunto discordante gana en la API y pone el 2.
+      this.pedido.mantenerJunto = nuevo === MODOS_FACTURACION.AL_COMPLETAR;
+      this.modoFacturacionTocado = true;
+  }
+
+  /**
+   * Se pide al cargar, al cambiar la dirección o los plazos y tras un error al guardar. Con el
+   * número del pedido, la API contesta con el modo que rige (p. ej. un 3 guardado).
+   */
+  public pedirModoFacturacionSugerido(forzar: boolean = false): void {
+      if (!this.pedido) {
+          return;
+      }
+      const consulta = { ...this.pedido, Lineas: [] };
+      const huella = huellaModoFacturacion(consulta);
+      if (!forzar && huella === this.huellaFacturacion) {
+          return;
+      }
+      this.huellaFacturacion = huella;
+      this.plantillaVentaService.modoFacturacionSugerido(consulta).subscribe(
+          (sugerencia: ModoFacturacionSugerido) => {
+              if (!sugerencia || !sugerencia.Modo) {
+                  return;
+              }
+              this.sugerenciaFacturacion = sugerencia;
+              // Si lo elegido ya no vale (han cambiado los plazos), se vuelve a lo que propone la API.
+              if (this.modoFacturacionTocado && !this.esModoFacturacionPermitido(this.modoFacturacionPedido)) {
+                  this.pedido.modoFacturacion = sugerencia.Modo;
+                  this.pedido.mantenerJunto = sugerencia.Modo === MODOS_FACTURACION.AL_COMPLETAR;
+                  this.modoFacturacionTocado = false;
+              }
+          },
+          error => {
+              // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
+              this.huellaFacturacion = '';
+              console.log('No se ha podido calcular el modo de facturación sugerido', error);
+          }
+      );
+  }
+
+  public cambiarContacto(contacto: string): void {
+      if (!this.pedido) {
+          return;
+      }
+      this.pedido.contacto = contacto;
+      this.pedirModoFacturacionSugerido();
+  }
+
+  /** El pedido tal como se manda al PUT: sin modo de facturación si el vendedor no lo ha tocado. */
+  public pedidoParaGuardar(): any {
+      return this.modoFacturacionTocado ? this.pedido : { ...this.pedido, modoFacturacion: null };
+  }
+
+  /** En una nota de entrega automática, abre el pedido del que sale. */
+  public abrirPedidoOrigen(): void {
+      if (!this.pedido?.pedidoOrigen) {
+          return;
+      }
+      this.nav.navigateForward('pedido-venta', { queryParams: { empresa: this.pedido.empresa, numero: this.pedido.pedidoOrigen } });
+  }
+
   public seleccionarFormaPago(evento: any): void {
       this.firebaseAnalytics.logEvent("pedido_seleccionar_forma_pago", {pedido:this.pedido.numero, formaPago: evento});
       this.pedido.formaPago = evento;
@@ -205,6 +317,7 @@ export class PedidoVentaComponent  {
     this.firebaseAnalytics.logEvent("pedido_seleccionar_plazos_pago", {pedido:this.pedido.numero, plazosPago: evento});
     this.pedido.plazosPago = evento.plazoPago;
     this.pedido.DescuentoPP = evento.descuentoPP;
+    this.pedirModoFacturacionSugerido();
   }
 
   public cambiarIVA(): void {
@@ -266,7 +379,7 @@ export class PedidoVentaComponent  {
 
                       await loading.present();
 
-                      this.servicio.modificarPedido(this.pedido).subscribe(
+                      this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
                           async data => {
                               this.firebaseAnalytics.logEvent("modificar_pedido_venta", {pedido: this.pedido.numero});
                               // Sincronizar la etiqueta de recogida según el checkbox, igual que
@@ -322,7 +435,7 @@ export class PedidoVentaComponent  {
                       await loading.present();
 
                       this.pedido.EsPresupuesto = false;
-                      this.servicio.modificarPedido(this.pedido).subscribe(
+                      this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
                           async data => {
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
                               const alert = await this.alertCtrl.create({
@@ -403,7 +516,7 @@ export class PedidoVentaComponent  {
                       });
                       this.pedido.EsPresupuesto = true;
 
-                      this.servicio.modificarPedido(this.pedido).subscribe(
+                      this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
                           async data => {
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
                               const alert = await this.alertCtrl.create({
@@ -626,6 +739,9 @@ export class PedidoVentaComponent  {
    * Maneja errores de modificación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      // NestoApp#197: el 400 de modo de facturación no permitido es texto plano (sin código); se enseña
+      // como cualquier error y se vuelve a pedir la sugerencia para que el selector diga qué vale.
+      this.pedirModoFacturacionSugerido(true);
       // NestoApp#187 / NestoAPI#518: el PUT que cambia el modo lo rechaza si ya no tiene sentido
       // para el pedido. Se preselecciona el que vale y el vendedor vuelve a guardar.
       // NestoApp#191 / NestoAPI#533: con picking el modo ya no se cambia desde aquí. Se vuelve al
@@ -700,7 +816,7 @@ export class PedidoVentaComponent  {
       });
       await loading.present();
 
-      this.servicio.modificarPedido(this.pedido, true).subscribe(
+      this.servicio.modificarPedido(this.pedidoParaGuardar(), true).subscribe(
           async data => {
               this.firebaseAnalytics.logEvent("modificar_pedido_venta_forzado", { pedido: this.pedido.numero });
               await this.sincronizarRecogerProducto();

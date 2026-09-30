@@ -79,6 +79,8 @@ export interface BorradorPlantillaVenta {
   fechaEntrega: string;
   almacenCodigo: string;
   mantenerJunto: boolean;
+  /** NestoApp#197 / NestoAPI#542: modo de facturación elegido (1..3). Sin él, manda mantenerJunto. */
+  modoFacturacion?: number;
   servirJunto: boolean;
   /** NestoApp#174 / NestoAPI#482: modo de servicio (1..4). Un borrador viejo no lo trae
    * y se deriva de servirJunto al restaurar. */

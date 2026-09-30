@@ -33,7 +33,7 @@
               <ion-item>
                   <ion-label>{{pedido.usuario}}</ion-label>
               </ion-item>
-              <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="pedido.contacto = $event.contacto" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
+              <selector-direcciones-entrega cliente="{{pedido.cliente}}" (seleccionar)="cambiarContacto($event.contacto)" seleccionado="{{pedido.contacto}}"></selector-direcciones-entrega>
               <ion-item>
                   <ion-label>Fecha Pedido</ion-label>
                   <ion-datetime-button datetime="fechaPedido"></ion-datetime-button>
@@ -67,7 +67,11 @@
                   </ion-modal>
               </ion-item>
               <ion-item *ngIf="pedido.notaEntrega">
-                  <ion-label><strong>Nota de entrega</strong></ion-label>
+                  <ion-label class="ion-text-wrap">
+                      <strong>Nota de entrega</strong>
+                      <!-- NestoApp#197: la que crea la API con lo pendiente de un pedido facturado entero -->
+                      <p *ngIf="pedido.pedidoOrigen">Lo pendiente del pedido <a href="javascript:void(0)" (click)="abrirPedidoOrigen()">{{pedido.pedidoOrigen}}</a><span *ngIf="pedido.albaranOrigen"> (albarán {{pedido.albaranOrigen}})</span>, que ya está facturado</p>
+                  </ion-label>
               </ion-item>
               <ion-row>
                 <ion-col class="ion-text-center">{{pedido.periodoFacturacion}}</ion-col>
@@ -81,9 +85,21 @@
                       <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
                   </ion-select>
               </ion-item>
+              <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación -->
               <ion-item>
-                  <ion-label>Mantener Junto</ion-label>
-                  <ion-toggle slot="end" [(ngModel)]="pedido.mantenerJunto"></ion-toggle>
+                  <ion-label>Facturación</ion-label>
+                  <ion-select aria-label="Facturación" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
+                      [value]="modoFacturacionPedido" [disabled]="selectorFacturacionBloqueado" (ionChange)="cambiarModoFacturacion($event.detail.value)">
+                      <ion-select-option *ngFor="let modo of listaModosFacturacion" [value]="modo.codigo" [disabled]="!esModoFacturacionPermitido(modo.codigo)">{{ modo.nombre }}</ion-select-option>
+                  </ion-select>
+              </ion-item>
+              <ion-item lines="none" *ngIf="modoFacturacionPedido === 3">
+                  <ion-label class="ion-text-wrap" color="warning" style="font-size: 0.85em;">{{avisoTodoAhora}}</ion-label>
+              </ion-item>
+              <ion-item lines="none" *ngIf="modosFacturacionNoPermitidos.length > 0">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+                      <p *ngFor="let modo of modosFacturacionNoPermitidos">No disponible «{{ modo.Nombre }}»<span *ngIf="modo.Motivo">: {{ modo.Motivo }}</span></p>
+                  </ion-label>
               </ion-item>
               <ion-item>
                   <ion-button expand="block" *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</ion-button>
@@ -118,6 +134,9 @@
                         <ion-badge color="success" *ngIf="linea.estado == 1 && linea.picking > 0">Picking</ion-badge>
                         <ion-badge *ngIf="linea.estado == 4">Factura</ion-badge>
                         <ion-badge *ngIf="linea.estado == 2">Albarán</ion-badge>
+                        <!-- NestoApp#197 / NestoAPI#542 -->
+                        <ion-badge color="tertiary" *ngIf="linea.yaFacturado">Ya facturada</ion-badge>
+                        <ion-badge color="warning" *ngIf="linea.recoger > 0">A recoger: {{linea.recoger}}</ion-badge>
                         <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>                        
                       </span>
                     </ion-label>

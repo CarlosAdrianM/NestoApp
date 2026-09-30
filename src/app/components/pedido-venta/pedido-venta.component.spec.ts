@@ -7,6 +7,7 @@ import { Usuario } from 'src/app/models/Usuario';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 
 import { PedidoVentaComponent } from './pedido-venta.component';
+import { sinCamposSoloLectura } from './pedido-venta.service';
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
@@ -282,4 +283,141 @@ describe('Modo de servicio en pedido-venta (#174)', () => {
     expect(component.pedido.modoServicio).toBe(2);
     expect(component.pedido.servirJunto).toBeFalse();
   }));
+});
+
+/**
+ * NestoApp#197 / NestoAPI#542: modo de facturación en el pedido (sustituye a «Mantener junto»).
+ */
+describe('Modo de facturación en el pedido (#197)', () => {
+  let component: PedidoVentaComponent;
+  let fixture: ComponentFixture<PedidoVentaComponent>;
+  let sugerido: jasmine.Spy;
+
+  const sugerencia = (modo: number, permitidos: number[] = [1, 2, 3]) => of({
+    Modo: modo, Nombre: 'X', Motivo: '', ModosPermitidos: permitidos,
+    Modos: [1, 2, 3].map(m => ({ Modo: m, Nombre: 'M' + m, Permitido: permitidos.includes(m), Motivo: permitidos.includes(m) ? null : 'Los plazos no son los de la ficha' }))
+  });
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PedidoVentaComponent);
+    component = fixture.componentInstance;
+    component.pedido = {
+      empresa: '1', numero: 901234, cliente: '15191', contacto: '0', contactoCobro: '0',
+      plazosPago: 'CONTADO', periodoFacturacion: 'NRM', notaEntrega: false,
+      mantenerJunto: false, modoFacturacion: 3, Lineas: []
+    } as any;
+    sugerido = spyOn(component['plantillaVentaService'], 'modoFacturacionSugerido').and.returnValue(sugerencia(3));
+  }));
+
+  it('pide la sugerencia con el número del pedido y sin líneas', () => {
+    component.pedirModoFacturacionSugerido();
+
+    const enviado = sugerido.calls.mostRecent().args[0];
+    expect(enviado.numero).toBe(901234);
+    expect(enviado.Lineas).toEqual([]);
+    expect(component.modoFacturacionPedido).toBe(3);
+  });
+
+  it('no vuelve a pedirla si no cambian cliente, dirección, plazos ni periodo', () => {
+    component.pedirModoFacturacionSugerido();
+    component.cambiarModoFacturacion(2);
+    component.pedirModoFacturacionSugerido();
+    expect(sugerido).toHaveBeenCalledTimes(1);
+
+    component.cambiarContacto('1');
+    expect(sugerido).toHaveBeenCalledTimes(2);
+
+    component.seleccionarPlazosPago({ plazoPago: '30D', descuentoPP: 0 });
+    expect(sugerido).toHaveBeenCalledTimes(3);
+  });
+
+  it('si el vendedor no toca el selector, se guarda con modoFacturacion null', () => {
+    const guardado = component.pedidoParaGuardar();
+    expect(guardado.modoFacturacion).toBeNull();
+    expect(component.pedido.modoFacturacion).toBe(3); // la pantalla sigue enseñando el que rige
+  });
+
+  it('elegir «Al completar» marca mantenerJunto y viaja el modo', () => {
+    component.cambiarModoFacturacion(2);
+    const guardado = component.pedidoParaGuardar();
+    expect(guardado.modoFacturacion).toBe(2);
+    expect(guardado.mantenerJunto).toBeTrue();
+  });
+
+  it('elegir 1 o 3 desmarca mantenerJunto', () => {
+    component.pedido.mantenerJunto = true;
+    component.pedido.modoFacturacion = 2;
+    component.cambiarModoFacturacion(3);
+    expect(component.pedido.mantenerJunto).toBeFalse();
+    component.cambiarModoFacturacion(1);
+    expect(component.pedido.mantenerJunto).toBeFalse();
+  });
+
+  it('si el modo elegido deja de estar permitido, vuelve al sugerido y ya no cuenta como elección', () => {
+    component.cambiarModoFacturacion(1);
+    sugerido.and.returnValue(sugerencia(2, [2, 3]));
+
+    component.seleccionarPlazosPago({ plazoPago: '60D', descuentoPP: 0 });
+
+    expect(component.modoFacturacionPedido).toBe(2);
+    expect(component.pedido.mantenerJunto).toBeTrue();
+    expect(component.esModoFacturacionPermitido(1)).toBeFalse();
+    expect(component.modosFacturacionNoPermitidos.map(m => m.Modo)).toEqual([1]);
+  });
+
+  it('una nota de entrega bloquea el selector', () => {
+    sugerido.and.returnValue(of({ Modo: 1, Nombre: 'X', Motivo: '', ModosPermitidos: [], Modos: [] }));
+    component.pedirModoFacturacionSugerido();
+    expect(component.selectorFacturacionBloqueado).toBeTrue();
+  });
+
+  it('si la sugerencia falla, se deja elegir todo', () => {
+    sugerido.and.returnValue(throwError(() => ({ status: 500 })));
+    component.pedirModoFacturacionSugerido();
+    expect(component.esModoFacturacionPermitido(1)).toBeTrue();
+    expect(component.selectorFacturacionBloqueado).toBeFalse();
+  });
+
+  it('un error al guardar vuelve a pedir la sugerencia aunque no haya cambiado nada', async () => {
+    component.pedirModoFacturacionSugerido();
+    spyOn(component['alertCtrl'], 'create').and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
+
+    await component['manejarErrorModificacionPedido']({ message: 'Los plazos de pago no son de la ficha' } as any, false);
+
+    expect(sugerido).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('Campos de solo lectura del modo de facturación (#197)', () => {
+  it('la línea conserva recoger y yaFacturado que manda la API', () => {
+    const linea = new LineaVenta({ id: 1, recoger: 2, yaFacturado: true });
+    expect(linea.recoger).toBe(2);
+    expect(linea.yaFacturado).toBeTrue();
+  });
+
+  it('no se mandan nunca al guardar', () => {
+    const pedido = {
+      numero: 1, pedidoOrigen: 5, albaranOrigen: 7, modoFacturacion: 2,
+      Lineas: [new LineaVenta({ id: 1, recoger: 2, yaFacturado: true, Producto: '38093' })]
+    };
+    const json = JSON.parse(JSON.stringify(pedido, sinCamposSoloLectura));
+    expect(json.pedidoOrigen).toBeUndefined();
+    expect(json.albaranOrigen).toBeUndefined();
+    expect(json.Lineas[0].recoger).toBeUndefined();
+    expect(json.Lineas[0].yaFacturado).toBeUndefined();
+    expect(json.Lineas[0].Producto).toBe('38093');
+    expect(json.modoFacturacion).toBe(2);
+  });
 });

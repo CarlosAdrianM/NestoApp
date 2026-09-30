@@ -13,6 +13,16 @@ import { ParametrosIva } from 'src/app/models/parametros-iva.model';
  */
 export const AGENCIA_LA_ELIGE_EL_COMPARADOR = 0;
 
+/**
+ * NestoApp#197 / NestoAPI#542: campos que la API devuelve pero que solo escribe ella (el picking,
+ * la factura o la nota de entrega automática). No se mandan nunca al guardar.
+ */
+const CAMPOS_SOLO_LECTURA = ['recoger', 'yaFacturado', 'pedidoOrigen', 'albaranOrigen'];
+
+export function sinCamposSoloLectura(clave: string, valor: any): any {
+  return CAMPOS_SOLO_LECTURA.includes(clave) ? undefined : valor;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -58,7 +68,7 @@ export class PedidoVentaService {
 
     console.log('Modificar pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
 
-    return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
+    return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar, sinCamposSoloLectura), { headers: headers });
   }
 
   // Crea una etiqueta de recogida pendiente (EnviosAgencia con Retorno=1, Estado<0).

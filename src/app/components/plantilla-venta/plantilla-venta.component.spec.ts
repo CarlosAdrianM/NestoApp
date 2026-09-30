@@ -158,6 +158,7 @@ describe('Ampliar pedido cuando el servidor lo rechaza (#172)', () => {
   beforeEach(waitForAsync(() => {
     logEvent = jasmine.createSpy('logEvent');
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       unirPedidos: jasmine.createSpy('unirPedidos')
         .and.returnValue(throwError(() => ({ Message: 'No se puede servir junto' }))),
       calcularFechaEntrega: () => of(new Date().toISOString()),
@@ -236,6 +237,7 @@ describe('Borrar el borrador al crear el pedido (#173)', () => {
     botonesPulsados = [];
 
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: '925001' })),
       calcularFechaEntrega: () => of(new Date().toISOString()),
       cargarGruposBonificables: () => of(['COS', 'ACC'])
@@ -350,6 +352,7 @@ describe('Modo de servicio (#174)', () => {
   beforeEach(waitForAsync(() => {
     alertasCreadas = [];
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       validarServirJunto: jasmine.createSpy('validarServirJunto')
         .and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
       calcularFechaEntrega: () => of(new Date().toISOString()),
@@ -528,6 +531,7 @@ describe('Slide de pago sin dirección ni condiciones de pago (#179 / #182)', ()
   beforeEach(waitForAsync(() => {
     alertasCreadas = [];
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       sePuedeServirPorGlovo: jasmine.createSpy('sePuedeServirPorGlovo').and.returnValue(of(null)),
       calcularPortes: jasmine.createSpy('calcularPortes').and.returnValue(of({})),
       validarServirJunto: () => of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }),
@@ -691,7 +695,7 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: { calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]) } },
+        { provide: PlantillaVentaService, useValue: { calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         {
           provide: ActionSheetController, useValue: {
@@ -803,6 +807,7 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
 
   beforeEach(waitForAsync(() => {
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       ofertasSugeridas: jasmine.createSpy('ofertasSugeridas').and.returnValue(of([sugerenciaAmpliar])),
       calcularFechaEntrega: () => of(new Date().toISOString()),
       cargarGruposBonificables: () => of([]),
@@ -971,6 +976,7 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
 
   beforeEach(waitForAsync(() => {
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(1)),
       ofertasSugeridas: () => of([]),
       validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
@@ -1110,6 +1116,7 @@ describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
   beforeEach(waitForAsync(() => {
     alertasCreadas = [];
     servicio = {
+      modoFacturacionSugerido: () => of(null), // NestoApp#197
       modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(1)),
       ofertasSugeridas: jasmine.createSpy('ofertasSugeridas').and.returnValue(of([])),
       validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
@@ -1310,4 +1317,155 @@ describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
     expect(component.motivoModoServicio).toContain('almacén');
     expect(alertasCreadas.length).toBe(0); // la alerta es la de la solicitud, no la de error genérico
   }));
+});
+
+/**
+ * NestoApp#197 / NestoAPI#542: modo de facturación en la plantilla. El modo vive en el pedido: el
+ * mantenerJunto de la ficha es solo el punto de partida. Si el vendedor no lo toca, viaja null.
+ */
+describe('Modo de facturación en la plantilla (#197)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+
+  const sugerencia = (modo: number, permitidos: number[] = [1, 2, 3]) => of({
+    Modo: modo, Nombre: 'X', Motivo: '', ModosPermitidos: permitidos,
+    Modos: [1, 2, 3].map(m => ({ Modo: m, Nombre: 'M' + m, Permitido: permitidos.includes(m), Motivo: permitidos.includes(m) ? null : 'Los plazos no son los de la ficha' }))
+  });
+
+  beforeEach(waitForAsync(() => {
+    servicio = {
+      modoFacturacionSugerido: jasmine.createSpy('modoFacturacionSugerido').and.returnValue(sugerencia(1)),
+      modoServicioSugerido: () => of(null),
+      ofertasSugeridas: () => of([]),
+      validarServirJunto: () => of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({}),
+      leerCliente: () => of({}),
+      sePuedeServirPorGlovo: () => of({ servirPorGlovo: false })
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0', cifNif: 'B1' };
+    component['plazosPago'] = 'CONTADO';
+    component['productosResumen'] = [];
+  }));
+
+  const elegirDireccion = (dir: any) => {
+    component.direccionSeleccionada = { contacto: '0', iva: 'G21', periodoFacturacion: 'NRM', plazosPago: 'CONTADO', mantenerJunto: false, ...dir };
+  };
+
+  it('al elegir la dirección pide la sugerencia, sin líneas ni número en un pedido nuevo', () => {
+    elegirDireccion({});
+
+    const enviado = servicio.modoFacturacionSugerido.calls.mostRecent().args[0];
+    expect(enviado.numero).toBe(0);
+    expect(enviado.Lineas).toEqual([]);
+    expect(enviado.modoFacturacion).toBeNull();
+    expect(component.modoFacturacion).toBe(1);
+  });
+
+  it('el mantenerJunto de la ficha es el punto de partida', () => {
+    servicio.modoFacturacionSugerido.and.returnValue(sugerencia(2));
+    elegirDireccion({ mantenerJunto: true });
+    expect(component.modoFacturacion).toBe(2);
+  });
+
+  it('si el vendedor no lo toca, el pedido viaja con modoFacturacion null y mantenerJunto coherente', () => {
+    servicio.modoFacturacionSugerido.and.returnValue(sugerencia(2, [2, 3]));
+    elegirDireccion({ mantenerJunto: false });
+
+    // la ficha decía «por entregas», pero sus plazos no lo permiten: se propone el 2
+    expect(component.modoFacturacion).toBe(2);
+    expect(component.direccionSeleccionada.mantenerJunto).toBeTrue();
+    expect(component['modoFacturacionSeleccionado']).toBeNull();
+  });
+
+  it('elegir «Todo ahora» desmarca mantenerJunto y viaja el 3', () => {
+    elegirDireccion({ mantenerJunto: true });
+    component.cambiarModoFacturacion(3);
+
+    expect(component.modoFacturacion).toBe(3);
+    expect(component.direccionSeleccionada.mantenerJunto).toBeFalse();
+    expect(component['consultaModoFacturacion']().modoFacturacion).toBe(3);
+  });
+
+  it('la sugerencia no pisa lo que ha elegido el vendedor si sigue permitido', () => {
+    elegirDireccion({});
+    component.cambiarModoFacturacion(3);
+    servicio.modoFacturacionSugerido.and.returnValue(sugerencia(1));
+
+    component.cambiarPlazosPago('30D');
+
+    expect(component.modoFacturacion).toBe(3);
+  });
+
+  it('si lo elegido deja de estar permitido, manda la sugerencia', () => {
+    elegirDireccion({});
+    component.cambiarModoFacturacion(1);
+    servicio.modoFacturacionSugerido.and.returnValue(sugerencia(2, [2, 3]));
+
+    component.cambiarPlazosPago('60D');
+
+    expect(component.modoFacturacion).toBe(2);
+    expect(component.direccionSeleccionada.mantenerJunto).toBeTrue();
+    expect(component.modosFacturacionNoPermitidos.map(m => m.Modo)).toEqual([1]);
+  });
+
+  it('cambiar de dirección reinicia la elección', () => {
+    elegirDireccion({});
+    component.cambiarModoFacturacion(3);
+
+    elegirDireccion({ contacto: '1' });
+
+    expect(component['modoFacturacionSeleccionado']).toBeNull();
+    expect(servicio.modoFacturacionSugerido).toHaveBeenCalledTimes(2);
+  });
+
+  it('no repite la petición si no cambia nada de lo que la decide', () => {
+    elegirDireccion({});
+    component.pedirModoFacturacionSugerido();
+    component.pedirModoFacturacionSugerido();
+    expect(servicio.modoFacturacionSugerido).toHaveBeenCalledTimes(1);
+
+    component.pedirModoFacturacionSugerido(true);
+    expect(servicio.modoFacturacionSugerido).toHaveBeenCalledTimes(2);
+  });
+
+  it('en edición manda el número del pedido y enseña el modo guardado', () => {
+    component.pedidoEnEdicionNumero = 901234;
+    component['modoFacturacionEdicion'] = 3;
+    servicio.modoFacturacionSugerido.and.returnValue(throwError(() => ({ status: 500 })));
+
+    elegirDireccion({ mantenerJunto: false });
+
+    expect(servicio.modoFacturacionSugerido.calls.mostRecent().args[0].numero).toBe(901234);
+    expect(component.modoFacturacion).toBe(3);
+    expect(component['consultaModoFacturacion']().modoFacturacion).toBeNull();
+  });
+
+  it('el borrador guarda la elección, y sin elección no guarda modo', () => {
+    elegirDireccion({});
+    expect(component['crearBorradorDesdeEstadoActual']().modoFacturacion).toBeUndefined();
+
+    component.cambiarModoFacturacion(3);
+    expect(component['crearBorradorDesdeEstadoActual']().modoFacturacion).toBe(3);
+  });
 });

@@ -6,6 +6,7 @@ import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonific
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
 import { ModoServicioSugerido } from '../../models/modos-servicio.model';
+import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
 
 @Injectable({
   providedIn: 'root'
@@ -91,6 +92,12 @@ export class PlantillaVentaService {
     headers = headers.append('Content-Type', 'application/json');
 
     return this.http.post<ModoServicioSugerido>(this._baseUrl + '/ModoServicioSugerido', JSON.stringify(pedido), { headers: headers });
+  }
+
+  /** NestoApp#197 / NestoAPI#542: qué modos de facturación se pueden elegir y cuál se propone. */
+  public modoFacturacionSugerido(pedido: any): Observable<ModoFacturacionSugerido> {
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<ModoFacturacionSugerido>(this._baseUrl + '/ModoFacturacionSugerido', JSON.stringify(pedido), { headers });
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {

@@ -25,6 +25,8 @@ export class LineaVenta {
             this.vistoBueno = linea.vistoBueno;
             this.PorcentajeIva = linea.PorcentajeIva || 0;
             this.PorcentajeRecargoEquivalencia = linea.PorcentajeRecargoEquivalencia || 0;
+            this.recoger = linea.recoger || 0;
+            this.yaFacturado = !!linea.yaFacturado;
         } else {
             this.id = 0;
             this.AplicarDescuento = true;
@@ -78,6 +80,11 @@ export class LineaVenta {
     public tipoLinea: number;
     public Usuario: string;
     public vistoBueno: boolean;
+    /** NestoApp#197 / NestoAPI#542: unidades que se facturan pero no se entregan con el albarán.
+     * Solo lectura (lo escribe el picking); no se manda al guardar. */
+    public recoger: number = 0;
+    /** NestoApp#197 / NestoAPI#542: la línea ya está facturada y falta entregarla. Solo lectura. */
+    public yaFacturado: boolean = false;
 
     public PorcentajeIva: number;
     public PorcentajeRecargoEquivalencia: number;
