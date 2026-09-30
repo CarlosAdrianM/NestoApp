@@ -64,7 +64,6 @@ import { MsalModule,
          MSAL_INSTANCE } from '@azure/msal-angular';
 import { OAuthSettings } from '../oauth';
 import { AlertsComponent } from '../app/alerts/alerts.component';
-import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ResumenVentasComponent } from './components/resumen-ventas/resumen-ventas.component';
 import { ImporteOTextoPipe } from './pipes/importe-o-texto.pipe';
 import { TrozosMencionPipe } from './pipes/trozos-mencion.pipe';
@@ -165,7 +164,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
             useFactory: MSALInstanceFactory
         },
         MsalService,
-        HTTP,
         {
             provide: APP_INITIALIZER,
             useFactory: initializeStorage,

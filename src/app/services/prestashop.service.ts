@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { HTTP } from '@awesome-cordova-plugins/http/ngx';
+import { CapacitorHttp, HttpOptions, HttpResponse } from '@capacitor/core';
 import { environment } from '../../environments/environment';
 
 const IMAGEN_POR_DEFECTO = 'https://www.productosdeesteticaypeluqueriaprofesional.com/img/p/es-default-home_default.jpg';
@@ -11,12 +11,13 @@ const IMAGEN_POR_DEFECTO = 'https://www.productosdeesteticaypeluqueriaprofesiona
 export class PrestashopService {
 
   private imageCache: Map<string, string> = new Map();
+  /** La petición nativa, sustituible en los tests (CapacitorHttp es un proxy de Capacitor y no se puede espiar). */
+  private peticionNativa: (opciones: HttpOptions) => Promise<HttpResponse> = opciones => CapacitorHttp.get(opciones);
   private readonly apiKey: string;
   private readonly baseUrl: string;
 
   constructor(
-    private http: HttpClient,
-    private nativeHttp: HTTP
+    private http: HttpClient
   ) {
     this.apiKey = environment.prestashop.apiKey;
     this.baseUrl = environment.prestashop.baseUrl;
@@ -45,16 +46,19 @@ export class PrestashopService {
   }
 
   /**
-   * En producción: HTTP nativo (Cordova) → sin CORS
+   * En producción: HTTP nativo → sin CORS. #159: CapacitorHttp (viene dentro de Capacitor, ya está en
+   * cualquier APK de Capacitor 8) en vez de cordova-plugin-advanced-http, para poder quitar el plugin.
    */
   private async fetchNativo(url: string): Promise<string> {
-    this.nativeHttp.setDataSerializer('utf8');
-    const response = await this.nativeHttp.get(
+    const response = await this.peticionNativa({
       url,
-      {},
-      { 'Authorization': 'Basic ' + btoa(this.apiKey + ':') }
-    );
-    return response.data;
+      headers: { 'Authorization': 'Basic ' + btoa(this.apiKey + ':') },
+      responseType: 'text'
+    });
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`Prestashop respondió HTTP ${response.status}`);
+    }
+    return typeof response.data === 'string' ? response.data : String(response.data ?? '');
   }
 
   /**
