@@ -11,8 +11,11 @@
     que hay que pasarle los usuarios: los que tienen dispositivo activo de NestoApp en la base de datos:
       SELECT DISTINCT Usuario FROM dbo.DispositivosNotificaciones WHERE Aplicacion = 'NestoApp' AND Activo = 1
 
-    Uso (desde Windows, con el usuario de alguien de Dirección o Informática):
+    Uso (desde Windows, con el usuario de alguien de Dirección o Informática). Desde un equipo que no está en el
+    dominio (sesión local, como el portátil de Carlos) la API da 401: añadir -PedirCredenciales y escribir
+    NUEVAVISION\usuario y su contraseña.
       .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba                       # solo a Carlos
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba -PedirCredenciales    # fuera del dominio
       .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios Marta,Israel,Jesus  # a esos
       .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios ... -Texto "Otro texto"
 #>
@@ -21,6 +24,7 @@ param(
     [string[]]$Usuarios = @(),
     [string]$Texto,
     [switch]$Prueba,
+    [switch]$PedirCredenciales,
     [string]$Api = "http://api.nuevavision.es"
 )
 
@@ -36,7 +40,11 @@ if (-not $Texto) {
 # PowerShell 7 no manda las credenciales de Windows por http sin este permiso explícito (la API va por http).
 $sinCifrar = @{}
 if ($PSVersionTable.PSVersion.Major -ge 6 -and $Api.StartsWith("http:")) { $sinCifrar.AllowUnencryptedAuthentication = $true }
-$token = (Invoke-RestMethod -Method Post -Uri "$Api/api/auth/windows-token" -UseDefaultCredentials @sinCifrar).token
+$autenticacion = @{ UseDefaultCredentials = $true }
+if ($PedirCredenciales) {
+    $autenticacion = @{ Credential = (Get-Credential -Message "Usuario del dominio (NUEVAVISION\usuario)") }
+}
+$token = (Invoke-RestMethod -Method Post -Uri "$Api/api/auth/windows-token" @autenticacion @sinCifrar).token
 if (-not $token) { throw "No se ha obtenido el token de Windows." }
 
 $avisados = 0
