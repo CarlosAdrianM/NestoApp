@@ -66,6 +66,24 @@ Siempre que se vaya a hacer push, hay que:
      `?ambitos=NestoApp,NestoAPI&desdeId=<última vista>` y parámetro `UltimaNovedadVistaApp`
      (por Id, no por versión). El popup «qué hay de nuevo» se hace ya con ese criterio.
 
+## Al promocionar a Production
+
+Después de que Carlos promocione la versión en AppFlow y ejecute `scripts/Novedades_<version>.sql`,
+avisar a los vendedores por push con `scripts/AvisarNuevaVersionNestoApp.ps1` (gemelo del
+`AvisarNuevaVersionNesto.ps1` de NestoAPI). Lo lanza Carlos desde Windows: pide el `windows-token`
+con su usuario del dominio, y desde WSL da 401.
+
+```powershell
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba            # primero, solo a Carlos
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios Marta,... # luego, al resto
+```
+- Mientras no exista NestoAPI#579 (`POST api/Notificaciones/NuevaVersionNestoApp`, a todos de una vez),
+  hay que pasarle los usuarios. Sacarlos (BD de solo lectura) con
+  `SELECT DISTINCT Usuario FROM dbo.DispositivosNotificaciones WHERE Aplicacion = 'NestoApp' AND Activo = 1`.
+- El texto dice que cierren la app **dos veces**: Live Updates (`autoUpdateMethod: 'background'`)
+  descarga la versión al arrancar en frío y la estrena en el **siguiente** arranque en frío. Volver
+  desde segundo plano no cuenta. Al tocar la push se abre el perfil (`ruta: /profile`).
+
 ## Build local de APK release firmado (WSL2)
 
 Requisitos (una sola vez):
