@@ -25,6 +25,7 @@ import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
   modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
+import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
@@ -1617,16 +1618,29 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             async data => {
                 this.firebaseAnalytics.logEvent("plantilla_venta_crear_pedido", {pedido: data.numero});
                 numeroPedido = data.numero;
-                if (this.esTarjetaPrepago() && this.mandarCobroTarjeta) {
+                // NestoApp#206: si el vendedor ha marcado descontar el saldo a favor, el enlace sale
+                // por la diferencia; si lo cubre entero, no se manda. En ambos casos hay que aplicar
+                // después ese saldo al pedido en el extracto (no se compensa solo).
+                const saldoDescontado = this.descontarSaldoAFavor && this.saldoAFavor ? this.saldoAFavor.Total : 0;
+                const importeEnlace = this.importeEnlacePago;
+                const mandarEnlace = this.esTarjetaPrepago() && this.mandarCobroTarjeta && importeEnlace > 0;
+                const avisoSaldo = this.esTarjetaPrepago() && this.mandarCobroTarjeta && saldoDescontado > 0
+                  ? textoSaldoAFavorAplicado(numeroPedido, saldoDescontado, importeEnlace)
+                  : '';
+                if (mandarEnlace) {
+                  // Se copian antes: la plantilla se reinicializa antes de que conteste el cobro.
+                  const clienteCobro = this.clienteSeleccionado.cliente.trim();
+                  const correoCobro = this.cobroTarjetaCorreo;
+                  const movilCobro = this.cobroTarjetaMovil;
                   const descripcionPago = 'Pedido ' + numeroPedido + ' de Nueva Visión';
                   this.servicio.crearPago({
                     Empresa: this.clienteSeleccionado.empresa?.trim(),
-                    Cliente: this.clienteSeleccionado.cliente.trim(),
+                    Cliente: clienteCobro,
                     Contacto: this.direccionSeleccionada.contacto?.toString().trim(),
-                    Importe: this.redondea(this.totalPedido),
+                    Importe: importeEnlace,
                     Descripcion: descripcionPago,
-                    Correo: this.cobroTarjetaCorreo,
-                    Movil: this.cobroTarjetaMovil
+                    Correo: correoCobro,
+                    Movil: movilCobro
                   }).subscribe(
                       async d => {
                           this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
@@ -1650,11 +1664,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                           } else {
                             // Motor Paygold: enviar también por P2F
                             this.servicio.mandarCobroTarjeta(
-                              this.cobroTarjetaCorreo,
-                              this.cobroTarjetaMovil,
-                              this.redondea(this.totalPedido),
+                              correoCobro,
+                              movilCobro,
+                              importeEnlace,
                               numeroPedido,
-                              this.clienteSeleccionado.cliente.trim()
+                              clienteCobro
                             ).subscribe(
                               () => {},
                               err => console.log('Error enviando por Paygold:', err)
@@ -1679,7 +1693,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 }
                 const alert = await this.alertCtrl.create({
                     header: 'Creado',
-                    message: 'Pedido ' + numeroPedido + ' creado correctamente',
+                    message: 'Pedido ' + numeroPedido + ' creado correctamente' + (avisoSaldo ? '. ' + avisoSaldo : ''),
                     buttons: ['Ok'],
                 });
                 await alert.present();
@@ -1883,6 +1897,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.portesGratis = false;
       this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
+      // NestoApp#206
+      this.saldoAFavor = null;
+      this.descontarSaldoAFavor = false;
       // Issue #150: salir del modo edición.
       this.pedidoEnEdicionNumero = null;
       this.modoServicioGuardadoEdicion = null;
@@ -2154,6 +2171,43 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public mandarCobroTarjeta: boolean;
   public cobroTarjetaCorreo: string;
   public cobroTarjetaMovil: string;
+
+  // NestoApp#206 (Nesto#505): lo que el cliente tiene a su favor. Solo se informa; se descuenta del
+  // enlace únicamente si el vendedor lo marca (puede ser una entrega a cuenta de otro pedido).
+  public saldoAFavor: SaldoAFavor | null = null;
+  public descontarSaldoAFavor: boolean = false;
+  public readonly textoMovimientoAFavor = textoMovimientoAFavor;
+  public readonly formatearEuros = formatearEuros;
+
+  public alCambiarMandarCobroTarjeta(valor: boolean): void {
+    this.mandarCobroTarjeta = valor;
+    if (valor) {
+      this.cargarSaldoAFavor();
+    } else {
+      this.descontarSaldoAFavor = false;
+    }
+  }
+
+  public cargarSaldoAFavor(cliente: string = this.clienteSeleccionado?.cliente): void {
+    this.saldoAFavor = null;
+    this.descontarSaldoAFavor = false;
+    const numero = (cliente || '').toString().trim();
+    if (!numero) {
+      return;
+    }
+    this.servicio.leerSaldoAFavor(numero).subscribe(saldo => {
+      this.saldoAFavor = saldo && saldo.Total > 0 ? saldo : null;
+    });
+  }
+
+  get hayPendienteDePago(): boolean {
+    return hayPendienteDePago(this.saldoAFavor);
+  }
+
+  /** Por cuánto sale el enlace de pago. */
+  get importeEnlacePago(): number {
+    return importeEnlacePago(this.totalPedido, this.saldoAFavor, this.descontarSaldoAFavor);
+  }
 
   private redondea(value) {
     return Number(Math.round(value * 100) / 100);
@@ -2611,6 +2665,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.mandarCobroTarjeta = borrador.mandarCobroTarjeta || false;
     this.cobroTarjetaCorreo = borrador.cobroTarjetaCorreo || '';
     this.cobroTarjetaMovil = borrador.cobroTarjetaMovil || '';
+    if (this.mandarCobroTarjeta) {
+      this.cargarSaldoAFavor(borrador.cliente); // NestoApp#206
+    }
 
     // Fase 2: Cargar cliente (esto disparará la carga de productos)
     if (borrador.cliente) {

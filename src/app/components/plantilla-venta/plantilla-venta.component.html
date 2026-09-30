@@ -218,8 +218,27 @@
         <selector-plazos-pago *ngIf="direccionSeleccionada?.iva && direccionSeleccionada?.plazosPago !== 'CR'" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarPlazosPago($event.plazoPago)" [seleccionado]="plazosPago" [formaPago]="formaPago" [totalPedido]="totalPedidoPlazosPago"></selector-plazos-pago>
         <ion-item *ngIf="esTarjetaPrepago()">
             <ion-label>¿Mandar cobro por tarjeta?</ion-label>
-            <ion-toggle slot="end" aria-label="¿Mandar cobro por tarjeta?" [(ngModel)]="mandarCobroTarjeta"></ion-toggle>
+            <ion-toggle slot="end" aria-label="¿Mandar cobro por tarjeta?" [ngModel]="mandarCobroTarjeta" (ngModelChange)="alCambiarMandarCobroTarjeta($event)"></ion-toggle>
         </ion-item>
+        <!-- NestoApp#206 (Nesto#505): avisar de lo que el cliente tiene a su favor; solo se descuenta si se marca -->
+        <ion-card *ngIf="esTarjetaPrepago() && mandarCobroTarjeta && saldoAFavor" color="light">
+            <ion-card-content>
+                <p><strong>El cliente tiene {{ formatearEuros(saldoAFavor.Total) }} a su favor</strong>. Míralo en el extracto antes de descontarlo: puede ser una entrega a cuenta de otro pedido o una reserva.</p>
+                <p *ngFor="let movimiento of saldoAFavor.Movimientos">{{ textoMovimientoAFavor(movimiento) }}</p>
+                <p *ngIf="hayPendienteDePago">Ojo: también debe {{ formatearEuros(saldoAFavor.PendienteDePago) }}; parte de lo que tiene a favor puede ser un cobro sin casar con su factura.</p>
+            </ion-card-content>
+            <ion-item lines="none" color="light">
+                <ion-label class="ion-text-wrap">Descontar {{ formatearEuros(saldoAFavor.Total) }} del enlace de pago</ion-label>
+                <ion-checkbox slot="end" aria-label="Descontar el saldo a favor del enlace de pago" [(ngModel)]="descontarSaldoAFavor"></ion-checkbox>
+            </ion-item>
+            <ion-item lines="none" color="light" *ngIf="descontarSaldoAFavor">
+                <ion-label class="ion-text-wrap">
+                    <span *ngIf="importeEnlacePago > 0">El enlace saldrá por {{ formatearEuros(importeEnlacePago) }}.</span>
+                    <span *ngIf="importeEnlacePago <= 0">El saldo cubre el pedido: no se mandará enlace.</span>
+                    Después hay que aplicar ese saldo al pedido en el extracto.
+                </ion-label>
+            </ion-item>
+        </ion-card>
         <ion-item *ngIf="esTarjetaPrepago() && mandarCobroTarjeta">
             <ion-input label="Correo tarjeta" label-placement="floating" type="email" [(ngModel)]="cobroTarjetaCorreo"></ion-input>
         </ion-item>

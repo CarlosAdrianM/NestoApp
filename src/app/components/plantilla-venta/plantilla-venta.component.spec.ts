@@ -1469,3 +1469,127 @@ describe('Modo de facturación en la plantilla (#197)', () => {
     expect(component['crearBorradorDesdeEstadoActual']().modoFacturacion).toBe(3);
   });
 });
+
+/**
+ * NestoApp#206 (gemela de Nesto#505): al mandar el cobro por tarjeta se avisa de lo que el cliente
+ * tiene a su favor. Solo se descuenta si el vendedor lo marca; si lo cubre todo, no hay enlace.
+ */
+describe('Saldo a favor al mandar el cobro por tarjeta (#206)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+
+  const saldo = (total: number) => ({
+    Total: total, PendienteDePago: 0,
+    Movimientos: [{ Id: 1, Empresa: '1', Contacto: '0', Fecha: '2026-09-12T00:00:00', Documento: '926100', Concepto: 'Entrega a cuenta', FormaPago: 'TRN', Importe: total }]
+  });
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    servicio = {
+      modoFacturacionSugerido: () => of(null),
+      leerSaldoAFavor: jasmine.createSpy('leerSaldoAFavor').and.returnValue(of(saldo(42.5))),
+      crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: '925001' })),
+      crearPago: jasmine.createSpy('crearPago').and.returnValue(of({ UrlPaginaPago: 'https://pago' })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC'])
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191 ', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0' };
+    spyOnProperty(component, 'totalPedido', 'get').and.returnValue(100);
+  }));
+
+  const crear = () => {
+    spyOn<any>(component, 'reinicializar');
+    spyOn<any>(component, 'detectarOfertasSinBeneficio').and.returnValue([]);
+    spyOn<any>(component, 'prepararPedido').and.returnValue({});
+    spyOn<any>(component, 'esTarjetaPrepago').and.returnValue(true);
+    spyOn(component, 'preguntarBorrarBorrador');
+    component['usuario'].motorPagos = 'NestoPago';
+    component.crearPedido();
+    tick();
+  };
+
+  it('al marcar el cobro por tarjeta se consulta el saldo del cliente', () => {
+    component.alCambiarMandarCobroTarjeta(true);
+
+    expect(servicio.leerSaldoAFavor).toHaveBeenCalledWith('15191');
+    expect(component.saldoAFavor.Total).toBe(42.5);
+    expect(component.descontarSaldoAFavor).toBeFalse();
+  });
+
+  it('sin nada a favor (o si la API falla) no se enseña nada', () => {
+    servicio.leerSaldoAFavor.and.returnValue(of({ Total: 0, PendienteDePago: 0, Movimientos: [] }));
+    component.alCambiarMandarCobroTarjeta(true);
+    expect(component.saldoAFavor).toBeNull();
+
+    servicio.leerSaldoAFavor.and.returnValue(of(null));
+    component.alCambiarMandarCobroTarjeta(true);
+    expect(component.saldoAFavor).toBeNull();
+  });
+
+  it('sin marcar la casilla, el enlace sale por el total, como siempre', fakeAsync(() => {
+    component.alCambiarMandarCobroTarjeta(true);
+    crear();
+
+    expect(servicio.crearPago.calls.mostRecent().args[0].Importe).toBe(100);
+    expect(alertasCreadas.some(a => (a.message || '').includes('extracto'))).toBeFalse();
+  }));
+
+  it('marcada, el enlace sale por la diferencia y se recuerda aplicar el saldo', fakeAsync(() => {
+    component.alCambiarMandarCobroTarjeta(true);
+    component.descontarSaldoAFavor = true;
+    expect(component.importeEnlacePago).toBe(57.5);
+
+    crear();
+
+    expect(servicio.crearPago.calls.mostRecent().args[0].Importe).toBe(57.5);
+    expect(alertasCreadas.some(a => (a.message || '').includes('Recuerda aplicar ese saldo al pedido 925001'))).toBeTrue();
+  }));
+
+  it('si el saldo cubre el pedido no se manda enlace y se avisa', fakeAsync(() => {
+    servicio.leerSaldoAFavor.and.returnValue(of(saldo(150)));
+    component.alCambiarMandarCobroTarjeta(true);
+    component.descontarSaldoAFavor = true;
+
+    crear();
+
+    expect(servicio.crearPago).not.toHaveBeenCalled();
+    expect(alertasCreadas.some(a => (a.message || '').includes('no se manda enlace'))).toBeTrue();
+  }));
+
+  it('desmarcar el cobro por tarjeta quita el descuento', () => {
+    component.alCambiarMandarCobroTarjeta(true);
+    component.descontarSaldoAFavor = true;
+    component.alCambiarMandarCobroTarjeta(false);
+    expect(component.descontarSaldoAFavor).toBeFalse();
+  });
+});

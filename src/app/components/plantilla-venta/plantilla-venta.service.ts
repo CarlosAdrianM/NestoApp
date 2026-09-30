@@ -1,12 +1,14 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
 import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
+import { SaldoAFavor } from '../../models/saldo-a-favor.model';
 
 @Injectable({
   providedIn: 'root'
@@ -98,6 +100,17 @@ export class PlantillaVentaService {
   public modoFacturacionSugerido(pedido: any): Observable<ModoFacturacionSugerido> {
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     return this.http.post<ModoFacturacionSugerido>(this._baseUrl + '/ModoFacturacionSugerido', JSON.stringify(pedido), { headers });
+  }
+
+  /**
+   * NestoApp#206 (Nesto#505): lo que el cliente tiene a su favor. Si falla o la API todavía no lo
+   * tiene, null: no se enseña nada y se sigue como siempre.
+   */
+  public leerSaldoAFavor(cliente: string): Observable<SaldoAFavor | null> {
+    const params = new HttpParams().set('cliente', cliente);
+    return this.http.get<SaldoAFavor>(Configuracion.API_URL + '/ExtractosCliente/SaldoAFavor', { params }).pipe(
+      catchError(() => of(null))
+    );
   }
 
   public mandarCobroTarjeta(cobroTarjetaCorreo: string, cobroTarjetaMovil: string, totalPedido: number, numeroPedido: string, cliente: string) {
