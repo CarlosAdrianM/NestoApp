@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
+import { CambiarClientePedidoPeticion, CambiarClientePedidoRespuesta } from 'src/app/models/cambio-cliente-pedido.model';
 
 /**
  * Issue #200 (NestoAPI#494): con Agencia = 0, CrearEtiquetaPendiente deja que el comparador
@@ -69,6 +70,12 @@ export class PedidoVentaService {
     console.log('Modificar pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
 
     return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar, sinCamposSoloLectura), { headers: headers });
+  }
+
+  /** NestoApp#198 / NestoAPI#519: pasa el pedido guardado a otro cliente y lo recalcula. */
+  public cambiarCliente(empresa: string, numero: number, peticion: CambiarClientePedidoPeticion): Observable<CambiarClientePedidoRespuesta> {
+    const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${numero}/CambiarCliente`;
+    return this.http.post<CambiarClientePedidoRespuesta>(url, peticion);
   }
 
   // Crea una etiqueta de recogida pendiente (EnviosAgencia con Retorno=1, Estado<0).

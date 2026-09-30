@@ -31,3 +31,8 @@ ion-input.has-focus {
   --highlight-color-valid: var(--ion-color-success);
   --highlight-color-invalid: var(--ion-color-danger);
 }
+
+// NestoApp#198: lo que ha cambiado al pasar el pedido a otro cliente, alineado a la izquierda.
+.alerta-cambios-cliente .alert-message {
+  text-align: left;
+}

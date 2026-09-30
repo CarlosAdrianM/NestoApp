@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { NavController, AlertController, LoadingController, NavParams } from '@ionic/angular';
+import { NavController, AlertController, LoadingController, NavParams, ModalController, IonicSafeString } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
@@ -17,6 +17,8 @@ import {
     LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
     modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
+import { CambiarClientePedidoRespuesta, puedeCambiarClientePedido, mensajeCambiosCliente } from 'src/app/models/cambio-cliente-pedido.model';
+import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 
 @Component({
     selector: 'app-pedido-venta',
@@ -64,7 +66,8 @@ export class PedidoVentaComponent  {
     private firebaseAnalytics: FirebaseAnalytics,
     private errorHandler: ErrorHandlerService,
     private plantillaVentaService: PlantillaVentaService,
-    private solicitudCambioModo: SolicitudCambioModoService
+    private solicitudCambioModo: SolicitudCambioModoService,
+    private modalCtrl: ModalController
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -104,6 +107,7 @@ export class PedidoVentaComponent  {
               if (this.pedido.Lineas && this.pedido.Lineas.length > 0) {
                   this.fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
               }
+              this.huellaGuardada = this.huellaPedido(); // NestoApp#198
               // Cargar parámetros de IVA y asignarlos a las líneas
               this.cargarParametrosIva();
               this.cargarSeguimientos(empresa, numero);
@@ -306,6 +310,126 @@ export class PedidoVentaComponent  {
           return;
       }
       this.nav.navigateForward('pedido-venta', { queryParams: { empresa: this.pedido.empresa, numero: this.pedido.pedidoOrigen } });
+  }
+
+  // ========================================
+  // NestoApp#198 / NestoAPI#519: pasar el pedido a otro cliente.
+  // ========================================
+  /** El pedido tal como llegó de la API, para saber si hay cambios sin guardar. */
+  private huellaGuardada: string | null = null;
+  /** Lo que se rellena solo al cargar (IVA de las líneas) no cuenta como cambio del vendedor. */
+  private static readonly NO_CUENTAN_COMO_CAMBIO = ['parametrosIva', 'PorcentajeIva', 'PorcentajeRecargoEquivalencia'];
+
+  private huellaPedido(): string {
+      return JSON.stringify(this.pedido, (clave, valor) =>
+          PedidoVentaComponent.NO_CUENTAN_COMO_CAMBIO.includes(clave) ? undefined : valor);
+  }
+
+  public hayCambiosSinGuardar(): boolean {
+      return !!this.pedido && this.huellaGuardada !== null && this.huellaPedido() !== this.huellaGuardada;
+  }
+
+  get puedeCambiarCliente(): boolean {
+      return puedeCambiarClientePedido(this.pedido);
+  }
+
+  public async cambiarCliente(): Promise<void> {
+      if (!this.puedeCambiarCliente) {
+          return;
+      }
+      const modal = await this.modalCtrl.create({ component: ModalElegirClienteComponent });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      if (role !== 'elegido' || !data?.cliente) {
+          return;
+      }
+      const cliente = data.cliente.toString().trim();
+      const contacto = (data.contacto ?? '').toString().trim();
+      if (cliente === (this.pedido.cliente || '').trim() && contacto === (this.pedido.contacto || '').trim()) {
+          await this.avisar('Cambiar cliente', 'El pedido ya es de ese cliente.');
+          return;
+      }
+      const perdida = this.hayCambiosSinGuardar()
+          ? ' Tienes cambios sin guardar en el pedido: se perderán, porque se cambia el pedido tal como está guardado.'
+          : '';
+      const nombre = data.nombre ? ` (${data.nombre.toString().trim()})` : '';
+      const confirmado = await this.confirmar('Cambiar cliente',
+          `¿Pasar el pedido ${this.pedido.numero} al cliente ${cliente}/${contacto}${nombre}? Se recalculan las condiciones de pago, los precios y los portes.${perdida}`,
+          'Cambiar');
+      if (confirmado) {
+          await this.enviarCambioCliente(cliente, contacto, false);
+      }
+  }
+
+  public async enviarCambioCliente(cliente: string, contacto: string, sinValidar: boolean): Promise<void> {
+      const loading: any = await this.loadingCtrl.create({ message: 'Cambiando el cliente...' });
+      await loading.present();
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      return new Promise<void>(resolve => {
+          this.servicio.cambiarCliente(empresa, numero, {
+              Cliente: cliente,
+              Contacto: contacto,
+              Usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+              CreadoSinPasarValidacion: sinValidar
+          }).subscribe({
+              next: async (respuesta: CambiarClientePedidoRespuesta) => {
+                  await loading.dismiss();
+                  this.firebaseAnalytics.logEvent('pedido_venta_cambiar_cliente', { pedido: numero });
+                  // Han cambiado cabecera, precios y quizá portes: se recarga lo que ha guardado la API.
+                  this.cargarPedido(empresa, numero);
+                  const alert = await this.alertCtrl.create({
+                      header: 'Cliente cambiado',
+                      message: new IonicSafeString(mensajeCambiosCliente(respuesta)),
+                      cssClass: 'alerta-cambios-cliente',
+                      buttons: ['Ok']
+                  });
+                  await alert.present();
+                  resolve();
+              },
+              error: async error => {
+                  await loading.dismiss();
+                  await this.tratarErrorCambioCliente(error, cliente, contacto, sinValidar);
+                  resolve();
+              }
+          });
+      });
+  }
+
+  private async tratarErrorCambioCliente(error: any, cliente: string, contacto: string, yaSinValidar: boolean): Promise<void> {
+      const mensaje = error?.status === 404 || error?.statusCode === 404
+          ? 'El pedido ya no existe.'
+          : this.errorHandler.extractErrorMessage(error);
+      // Como en el PUT: con el cliente nuevo no pasa la validación (ofertas/descuentos). Quien tiene
+      // permiso puede seguir sin validar.
+      if (error?.apiError?.error?.code === ApiErrorCode.PEDIDO_VALIDACION_FALLO &&
+          this.usuario.permitirCrearPedidoConErroresValidacion && !yaSinValidar) {
+          const seguir = await this.confirmar('Error de Validación', mensaje + '\n\n¿Desea cambiar el cliente de todas formas?', 'Cambiar sin validar');
+          if (seguir) {
+              await this.enviarCambioCliente(cliente, contacto, true);
+          }
+          return;
+      }
+      await this.avisar('No se ha podido cambiar el cliente', mensaje);
+  }
+
+  private async avisar(header: string, message: string): Promise<void> {
+      const alert = await this.alertCtrl.create({ header, message, buttons: ['Ok'] });
+      await alert.present();
+  }
+
+  private confirmar(header: string, message: string, textoSi: string): Promise<boolean> {
+      return new Promise<boolean>(async resolve => {
+          const alert = await this.alertCtrl.create({
+              header,
+              message,
+              buttons: [
+                  { text: 'Cancelar', role: 'cancel', handler: () => resolve(false) },
+                  { text: textoSi, handler: () => resolve(true) }
+              ]
+          });
+          await alert.present();
+      });
   }
 
   public seleccionarFormaPago(evento: any): void {
