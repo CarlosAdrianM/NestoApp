@@ -1,16 +1,23 @@
-<ion-button *ngIf="!abierto" expand="block" fill="outline" (click)="abrir()">
-  <ion-icon slot="start" name="bulb-outline"></ion-icon>
-  Sugerir nueva característica
-</ion-button>
+<!-- NestoApp#203 / NestoAPI#558: los usuarios no sabían dónde avisar de un error -->
+<div class="botones" *ngIf="!abierto">
+  <ion-button expand="block" fill="outline" (click)="abrir('sugerencia')">
+    <ion-icon slot="start" name="bulb-outline"></ion-icon>
+    Sugerir una mejora
+  </ion-button>
+  <ion-button expand="block" fill="outline" color="danger" (click)="abrir('incidencia')">
+    <ion-icon slot="start" name="bug-outline"></ion-icon>
+    Algo no funciona
+  </ion-button>
+</div>
 
 <div class="formulario" *ngIf="abierto">
   <!-- #194: también se puede mencionar a alguien al sugerir -->
-  <textarea-menciones [(texto)]="texto" etiqueta="Tu sugerencia"
-    placeholder="¿Qué te vendría bien que hiciera la app? La primera línea será el título."
+  <textarea-menciones [(texto)]="texto" [etiqueta]="etiqueta"
+    [placeholder]="placeholder"
     (pegar)="captura.alPegar($event)"></textarea-menciones>
 
   <captura-adjunta #captura [(imagen)]="imagenAdjunta">
     <ion-button size="small" fill="clear" color="medium" (click)="cancelar()">Cancelar</ion-button>
-    <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviar()">Enviar</ion-button>
+    <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviar()">{{ textoBotonEnviar }}</ion-button>
   </captura-adjunta>
 </div>

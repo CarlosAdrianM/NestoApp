@@ -159,6 +159,20 @@ swiper-container {
     color: var(--ion-color-medium);
   }
 
+  // NestoApp#203: el contexto de un aviso (versión, pantalla, errores), tal cual lo manda la API.
+  .contexto-incidencia {
+    font-family: monospace;
+    font-size: 0.7rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 6px;
+    border-radius: 4px;
+    background: var(--ion-color-step-50);
+    color: var(--ion-color-step-800);
+    max-height: 200px;
+    overflow: auto;
+  }
+
   .sin-sugerencias {
     text-align: center;
     font-size: 0.85rem;

@@ -14,6 +14,7 @@ import { Router } from '@angular/router';
 import { ErroresService } from './services/errores.service';
 import { rutaDeNotificacion } from './utils/notificaciones';
 import { BuzonNotificacionesService, textoContador } from './services/buzon-notificaciones.service';
+import { HistorialRutasService } from './services/historial-rutas.service';
 
 
 @Component({
@@ -35,7 +36,9 @@ export class AppComponent {
     private router: Router,
     private erroresService: ErroresService,
     public buzon: BuzonNotificacionesService,
-    cache: CacheService
+    cache: CacheService,
+    // NestoApp#203: se pide aquí para que recuerde las pantallas desde el arranque.
+    historialRutas: HistorialRutasService
   ) {
     this.initializeApp();
     this.registrarCapturaPromesasRechazadas();

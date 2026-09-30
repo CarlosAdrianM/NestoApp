@@ -116,7 +116,7 @@
                     <h3>{{ resultado.Titulo }}</h3>
                     <!-- #199: la fecha de la versión junto a su número, como en Nesto. -->
                     <p *ngIf="resultado.Version; else resultadoSugerencia">Versión {{ resultado.Version }}<ng-container *ngIf="fechaVersionDe(resultado) as fecha"> · {{ fecha | date:'dd/MM/yy' }}</ng-container></p>
-                    <ng-template #resultadoSugerencia><p>Sugerencia</p></ng-template>
+                    <ng-template #resultadoSugerencia><p>{{ resultado.EsIncidencia ? 'Aviso de algo que no funciona' : 'Sugerencia' }}</p></ng-template>
                   </ion-label>
                 </ion-item>
                 <ion-item *ngIf="resultadosBusqueda.length === 0" lines="none">
@@ -154,6 +154,8 @@
                 [id]="'novedad-' + sugerencia.Id" [class.resaltada]="novedadResaltada === sugerencia.Id">
                 <ion-card-header>
                   <div class="cabecera-novedad">
+                    <!-- NestoApp#203: los avisos de algo que no funciona se distinguen de las sugerencias -->
+                    <ion-badge *ngIf="sugerencia.EsIncidencia" color="danger">Incidencia</ion-badge>
                     <ion-badge [color]="colorEstadoSugerencia(sugerencia.Estado)">{{ sugerencia.Estado || 'Pendiente' }}</ion-badge>
                     <ion-card-title>{{ sugerencia.Titulo }}</ion-card-title>
                   </div>
@@ -161,9 +163,11 @@
                 <ion-card-content>
                   <p *ngIf="sugerencia.Descripcion" class="descripcion-novedad">{{ sugerencia.Descripcion }}</p>
                   <p *ngIf="textoOriginalAparte(sugerencia)" class="texto-original">«<span *ngFor="let trozo of sugerencia.TextoOriginal | trozosMencion" [class.mencion]="trozo.mencion">{{ trozo.texto }}</span>»</p>
+                  <!-- NestoApp#203: el contexto que añade la API (solo le llega a Dirección / Informática) -->
+                  <pre *ngIf="sugerencia.Contexto" class="contexto-incidencia">{{ sugerencia.Contexto }}</pre>
                   <img *ngIf="imagenesSugerencias[sugerencia.Id]" class="captura-sugerencia" [src]="imagenesSugerencias[sugerencia.Id]" alt="Captura de la sugerencia" />
                   <p class="autor-sugerencia" *ngIf="sugerencia.SugeridaNombre || sugerencia.SugeridaFecha">
-                    Sugerida<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>
+                    {{ sugerencia.EsIncidencia ? 'Avisado' : 'Sugerida' }}<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>
                   </p>
                   <novedad-feedback [novedad]="sugerencia" [comentarioResaltado]="comentarioDelAviso(sugerencia)"></novedad-feedback>
                 </ion-card-content>

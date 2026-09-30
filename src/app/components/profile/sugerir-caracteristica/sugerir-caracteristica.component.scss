@@ -3,6 +3,12 @@
   margin: 8px 0;
 }
 
+.botones {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .formulario {
   padding: 8px;
   border-radius: 6px;

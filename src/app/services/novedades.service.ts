@@ -34,6 +34,10 @@ export interface Novedad {
   /** Pendiente, Aceptada, Implementada o Descartada. */
   Estado?: string | null;
   TieneImagen?: boolean;
+  /** NestoApp#203 / NestoAPI#558: aviso de algo que no funciona (Categoria = «Incidencia»). */
+  EsIncidencia?: boolean;
+  /** NestoApp#203: versión, pantalla y errores recientes. Solo llega a Dirección / Informática. */
+  Contexto?: string | null;
 }
 
 /** NestoApp#190: sin versión es una sugerencia. */
@@ -70,6 +74,10 @@ export interface NuevoComentarioNovedad {
   ImagenBase64?: string;
   ImagenTipo?: string;
   VersionCliente?: string;
+  /** NestoApp#203 / NestoAPI#558: true = «Algo no funciona»; sin él, una sugerencia de siempre. */
+  EsIncidencia?: boolean;
+  /** NestoApp#203: la pantalla en la que estaba el usuario (máx. 100). */
+  Pantalla?: string;
 }
 
 /** La API trae los contadores de votos: se puede votar y comentar. */

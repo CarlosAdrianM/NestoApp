@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { SugerirCaracteristicaComponent } from './sugerir-caracteristica.component';
 import { NovedadesService } from 'src/app/services/novedades.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
+import { HistorialRutasService } from 'src/app/services/historial-rutas.service';
 
 /** NestoApp#190 / NestoAPI#526: los vendedores sugieren características desde las Novedades. */
 describe('SugerirCaracteristicaComponent (#190)', () => {
@@ -27,6 +28,7 @@ describe('SugerirCaracteristicaComponent (#190)', () => {
       imports: [IonicModule.forRoot()],
       providers: [
         { provide: NovedadesService, useValue: servicio },
+        { provide: HistorialRutasService, useValue: { pantallaAnterior: () => '/pedido-venta' } },
         { provide: ToastController, useValue: { create: (o: any) => { toasts.push(o); return Promise.resolve({ present: () => Promise.resolve() }); } } },
         { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve() }); } } }
       ]
@@ -82,5 +84,61 @@ describe('SugerirCaracteristicaComponent (#190)', () => {
     expect(alertas.some(a => (a.message || '').includes('máximo 2 MB'))).toBeTrue();
     expect(component.texto).toBe('Filtro por ruta');
     expect(component.abierto).toBeTrue();
+  }));
+
+  // NestoApp#203 / NestoAPI#558: «Algo no funciona» usa el mismo formulario en modo aviso.
+  it('sin abrir, ofrece los dos botones; abrir sin decir nada es una sugerencia', () => {
+    expect(component.abierto).toBeFalse();
+    component.abrir();
+    expect(component.esIncidencia).toBeFalse();
+    expect(component.textoBotonEnviar).toBe('Enviar');
+  });
+
+  it('en modo aviso cambian la ayuda y el botón', () => {
+    component.abrir('incidencia');
+    expect(component.abierto).toBeTrue();
+    expect(component.esIncidencia).toBeTrue();
+    expect(component.placeholder).toContain('¿Qué no funciona?');
+    expect(component.textoBotonEnviar).toBe('Enviar aviso');
+  });
+
+  it('el aviso viaja con EsIncidencia, la versión y la pantalla de la que venía', fakeAsync(() => {
+    component.abrir('incidencia');
+    component.texto = 'Al guardar el pedido se queda colgado';
+
+    component.enviar();
+    tick();
+
+    expect(servicio.crearSugerencia).toHaveBeenCalledWith({
+      Texto: 'Al guardar el pedido se queda colgado',
+      VersionCliente: Configuracion.VERSION,
+      EsIncidencia: true,
+      Pantalla: '/pedido-venta'
+    });
+    expect(toasts[0].message).toBe('¡Gracias por avisar! Lo revisaremos y te diremos en qué versión queda arreglado.');
+    expect(component.abierto).toBeFalse();
+  }));
+
+  it('una sugerencia no manda EsIncidencia ni pantalla', fakeAsync(() => {
+    component.abrir('sugerencia');
+    component.texto = 'Filtro por ruta';
+
+    component.enviar();
+    tick();
+
+    const enviada = servicio.crearSugerencia.calls.mostRecent().args[0];
+    expect(enviada.EsIncidencia).toBeUndefined();
+    expect(enviada.Pantalla).toBeUndefined();
+  }));
+
+  it('si falla el aviso, el título del error habla de aviso', fakeAsync(() => {
+    servicio.crearSugerencia.and.returnValue(throwError(() => ({ status: 500 })));
+    component.abrir('incidencia');
+    component.texto = 'No va';
+
+    component.enviar();
+    tick();
+
+    expect(alertas[0].header).toBe('No se ha podido enviar el aviso');
   }));
 });
