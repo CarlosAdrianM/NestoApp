@@ -41,6 +41,8 @@ export interface OfertaFamilia {
   CantidadConPrecio: number;
   CantidadRegalo: number;
   FiltroProducto: string;
+  /** NestoAPI#564: regla que NIEGA la oferta. El endpoint agregado ya no las trae; el listado viejo sí. */
+  Denegar?: boolean;
 }
 
 export interface OfertaEscalonada {

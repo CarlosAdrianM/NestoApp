@@ -3,7 +3,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 
 import { OfertasAutorizadasComponent } from './ofertas-autorizadas.component';
@@ -14,6 +14,7 @@ describe('OfertasAutorizadasComponent (#137)', () => {
   let fixture: ComponentFixture<OfertasAutorizadasComponent>;
   let servicio: any;
   let queryParams: any;
+  let queryParams$: Subject<any>;
 
   const datos = () => ({
     combinadas: [{
@@ -36,6 +37,7 @@ describe('OfertasAutorizadasComponent (#137)', () => {
 
   beforeEach(waitForAsync(() => {
     queryParams = {};
+    queryParams$ = new Subject<any>();
     servicio = { cargarTodas: jasmine.createSpy('cargarTodas').and.returnValue(of(datos())) };
 
     TestBed.configureTestingModule({
@@ -44,7 +46,7 @@ describe('OfertasAutorizadasComponent (#137)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         { provide: OfertasAutorizadasService, useValue: servicio },
-        { provide: ActivatedRoute, useValue: { snapshot: { get queryParams() { return queryParams; } } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParams() { return queryParams; } }, queryParams: queryParams$ } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } }
       ]
     }).compileComponents();
@@ -84,6 +86,28 @@ describe('OfertasAutorizadasComponent (#137)', () => {
 
     expect(component.tipoSeleccionado).toBe('escalonada');
     expect(component.estaAbierta('escalonada', 11)).toBeTrue();
+  });
+
+  // NestoApp#204: si ya se está en la pantalla, tocar la push solo cambia los query params y
+  // ionViewWillEnter no vuelve a ejecutarse. La oferta es nueva: hay que recargar y abrirla.
+  it('estando ya en la pantalla, una push de otra oferta recarga y la abre', () => {
+    component.ionViewWillEnter();
+    expect(servicio.cargarTodas).toHaveBeenCalledTimes(1);
+
+    queryParams = { tipo: 'familia', id: '3' };
+    queryParams$.next(queryParams);
+
+    expect(servicio.cargarTodas).toHaveBeenCalledTimes(2);
+    expect(component.tipoSeleccionado).toBe('familia');
+    expect(component.estaAbierta('familia', 3)).toBeTrue();
+  });
+
+  it('los query params de la primera entrada no cargan dos veces', () => {
+    queryParams = { tipo: 'escalonada', id: '11' };
+    queryParams$.next(queryParams);
+    component.ionViewWillEnter();
+
+    expect(servicio.cargarTodas).toHaveBeenCalledTimes(1);
   });
 
   it('ignora un tipo desconocido en el deeplink', () => {

@@ -37,7 +37,18 @@ export class OfertasAutorizadasComponent {
     private toastCtrl: ToastController,
     private errorHandler: ErrorHandlerService,
     private firebaseAnalytics: FirebaseAnalytics
-  ) { }
+  ) {
+    // NestoApp#204: estando ya en la pantalla, tocar la push de otra oferta solo cambia los query
+    // params (navigateByUrl reutiliza la página) y ionViewWillEnter no se vuelve a ejecutar. La
+    // oferta acaba de autorizarse, así que tampoco está en lo cargado: se recarga y se abre.
+    this.route.queryParams?.subscribe(params => {
+      if (!this.cargaInicialHecha || !params || (!params.tipo && !params.id)) {
+        return; // la primera entrada la hace ionViewWillEnter
+      }
+      this.aplicarParametrosDeeplink(params);
+      this.cargar();
+    });
+  }
 
   ionViewWillEnter(): void {
     this.aplicarParametrosDeeplink();
@@ -50,8 +61,7 @@ export class OfertasAutorizadasComponent {
    * La push manda `tipo` e `id` en los datos de la notificación y el deeplink los pasa como
    * query params. Si no vienen (o vienen mal), se enseña el listado entero.
    */
-  private aplicarParametrosDeeplink(): void {
-    const params = this.route.snapshot.queryParams || {};
+  private aplicarParametrosDeeplink(params: any = this.route.snapshot.queryParams || {}): void {
     const tipo: string = params.tipo;
     if (tipo === 'combinada' || tipo === 'familia' || tipo === 'escalonada') {
       this.tipoSeleccionado = tipo;
