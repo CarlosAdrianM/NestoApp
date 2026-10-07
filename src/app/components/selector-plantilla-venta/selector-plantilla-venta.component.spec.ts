@@ -39,6 +39,29 @@ describe('SelectorPlantillaVentaComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('aplicarDescuento (#211, oferta escalonada)', () => {
+    beforeEach(() => {
+      component['inicializarDatos']([
+        { producto: '40919', cantidad: 1, cantidadOferta: 0, precio: 30, descuento: 0, aplicarDescuento: false },
+        { producto: '38167', cantidad: 1, cantidadOferta: 0, precio: 25, descuento: 0, aplicarDescuento: true }
+      ]);
+    });
+
+    it('pone el descuento en la línea del producto, la marca para aplicar descuento y respeta las unidades', () => {
+      expect(component.aplicarDescuento('40919 ', 0.2)).toBeTrue();
+
+      const linea = component.obtenerDatosIniciales().find(l => l.producto === '40919');
+      expect(linea.descuento).toBe(0.2);
+      expect(linea.aplicarDescuento).toBeTrue();
+      expect(linea.cantidad).toBe(1);
+      expect(component.obtenerDatosIniciales().find(l => l.producto === '38167').descuento).toBe(0);
+    });
+
+    it('devuelve false si el producto no está en la plantilla', () => {
+      expect(component.aplicarDescuento('99999', 0.2)).toBeFalse();
+    });
+  });
+
   describe('cambiar el almacén a mitad de pedido (issue #166)', () => {
     beforeEach(() => {
       // Toast sin DOM real

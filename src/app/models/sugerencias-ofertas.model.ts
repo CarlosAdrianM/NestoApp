@@ -33,6 +33,17 @@ export function esAccionable(sugerencia: SugerenciaOferta): boolean {
     && +sugerencia.CantidadSugerida > 0;
 }
 
+/**
+ * NestoApp#211: el pedido ya alcanza un tramo de una oferta escalonada y la línea no lleva su
+ * descuento. Lo que se aplica es `Descuento`; las unidades ya están (CantidadSugerida = CantidadActual).
+ */
+export function esDescuentoEscalonado(sugerencia: SugerenciaOferta): boolean {
+  return !!sugerencia
+    && sugerencia.Tipo === 'DescuentoNoAplicado'
+    && sugerencia.OfertaEscalonada != null
+    && +sugerencia.Descuento > 0;
+}
+
 /** Texto del plegable, que es lo único que se ve hasta que el vendedor lo abre. */
 export function resumenSugerencias(sugerencias: SugerenciaOferta[]): string {
   const total = (sugerencias || []).length;

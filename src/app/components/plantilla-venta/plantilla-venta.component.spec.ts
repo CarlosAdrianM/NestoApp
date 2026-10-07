@@ -881,6 +881,37 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
     expect(component.sugerenciasOfertas.length).toBe(0);
   }));
 
+  it('#211: aplicar un descuento escalonado pone el descuento en todas las líneas de esa oferta, no las unidades', fakeAsync(() => {
+    const escalonada = (producto: string) => ({
+      Tipo: 'DescuentoNoAplicado', Producto: producto, CantidadActual: 1, CantidadSugerida: 1,
+      CantidadRegalo: 0, ImporteQueFalta: 0, ImportePedido: 0, Descuento: 0.2, OfertaEscalonada: 3,
+      Texto: `Con 4 unidades de la oferta «Pack tratamiento Anubis» te corresponde un 20 % de descuento en el producto ${producto} y no lo estás aplicando.`
+    });
+    const otraOferta = { ...escalonada('11111'), OfertaEscalonada: 7, Descuento: 0.1 };
+    servicio.ofertasSugeridas.and.returnValue(of([
+      escalonada('40919'), escalonada('38167'), escalonada('42649'), escalonada('41527'), otraOferta
+    ]));
+    component['_selectorPlantillaVenta'] = {
+      aplicarCantidades: jasmine.createSpy('aplicarCantidades').and.returnValue(true),
+      aplicarDescuento: jasmine.createSpy('aplicarDescuento').and.returnValue(true),
+      cargarResumen: () => [], hayAlgunProducto: () => true
+    } as any;
+    component.cargarSugerenciasOfertas();
+    tick();
+
+    servicio.ofertasSugeridas.and.returnValue(of([otraOferta]));
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    const selector = component['_selectorPlantillaVenta'] as any;
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+    expect(selector.aplicarDescuento.calls.allArgs()).toEqual([
+      ['40919', 0.2], ['38167', 0.2], ['42649', 0.2], ['41527', 0.2]
+    ]);
+    expect(servicio.ofertasSugeridas).toHaveBeenCalledTimes(2);
+    expect(component.sugerenciasOfertas).toEqual([otraOferta]);
+  }));
+
   it('el plegable de ofertas nace cerrado y se abre y se cierra de verdad (no solo la flecha)', fakeAsync(() => {
     component.cargarSugerenciasOfertas();
     tick();

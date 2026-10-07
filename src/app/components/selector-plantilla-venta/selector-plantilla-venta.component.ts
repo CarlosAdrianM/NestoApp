@@ -353,6 +353,21 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       return true;
   }
 
+  /**
+   * NestoApp#211: pone en la línea de un producto el descuento de una oferta escalonada que ya
+   * alcanza el pedido (NestoAPI#457, corte 3). Como en la comprobación del servidor, la línea pasa
+   * a aplicar descuento. Las unidades no se tocan.
+   */
+  public aplicarDescuento(producto: string, descuento: number): boolean {
+      const linea = (this.datosIniciales() || []).find(d => d.producto?.trim() === producto?.trim());
+      if (!linea) {
+          return false;
+      }
+      linea.aplicarDescuento = true;
+      linea.descuento = descuento;
+      return true;
+  }
+
   public ponerStocks(ordenar: boolean): void {
       this.servicio.ponerStocks(this.datosFiltrados, this.almacen, ordenar, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
           async data => {

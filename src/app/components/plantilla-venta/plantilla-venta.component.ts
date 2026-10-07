@@ -27,7 +27,7 @@ import {
 } from 'src/app/models/modos-facturacion.model';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
-import { SugerenciaOferta, esAccionable, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
+import { SugerenciaOferta, esAccionable, esDescuentoEscalonado, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 import { AGENCIA_LA_ELIGE_EL_COMPARADOR } from '../pedido-venta/pedido-venta.service';
 
@@ -1211,20 +1211,27 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   /**
    * Aplica la sugerencia de un toque: pone en la línea las unidades cobradas y de regalo que
-   * dice el servidor. Las de importe de pedido solo informan (no hay línea que tocar).
+   * dice el servidor, o el descuento si es de una oferta escalonada ya alcanzada (#211). Las de
+   * importe de pedido solo informan (no hay línea que tocar).
    */
   public aplicarSugerenciaOferta(sugerencia: SugerenciaOferta): void {
     if (!esAccionable(sugerencia) || !this._selectorPlantillaVenta) {
       return;
     }
-    const aplicada = this._selectorPlantillaVenta.aplicarCantidades(
-      sugerencia.Producto, +sugerencia.CantidadSugerida, +sugerencia.CantidadRegalo);
-    if (!aplicada) {
+    // #211: en el descuento escalonado ya están las unidades; lo que falta es el descuento. El tramo
+    // se calcula con todas las unidades de la oferta, así que se pone en todas las líneas a las que
+    // el servidor se lo sugiere (las ha validado juntas), no solo en la que se ha pulsado.
+    const aplicadas = esDescuentoEscalonado(sugerencia)
+      ? this.sugerenciasOfertas.filter(s => esDescuentoEscalonado(s) && s.OfertaEscalonada === sugerencia.OfertaEscalonada)
+          .filter(s => this._selectorPlantillaVenta.aplicarDescuento(s.Producto, +s.Descuento))
+      : [sugerencia].filter(s => this._selectorPlantillaVenta.aplicarCantidades(
+          s.Producto, +s.CantidadSugerida, +s.CantidadRegalo));
+    if (aplicadas.length === 0) {
       return;
     }
     this.firebaseAnalytics.logEvent('plantilla_venta_aplicar_oferta_sugerida',
       { producto: sugerencia.Producto, tipo: sugerencia.Tipo });
-    this.sugerenciasOfertas = this.sugerenciasOfertas.filter(s => s !== sugerencia);
+    this.sugerenciasOfertas = this.sugerenciasOfertas.filter(s => !aplicadas.includes(s));
     this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
     this.calcularPortes();
     // Al cambiar las unidades cambian las demás sugerencias (puede aparecer otra o caerse una),
