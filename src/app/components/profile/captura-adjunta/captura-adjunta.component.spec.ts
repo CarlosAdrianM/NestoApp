@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 
-import { CapturaAdjuntaComponent } from './captura-adjunta.component';
+import { CapturaAdjuntaComponent, sePuedeLeerPortapapeles } from './captura-adjunta.component';
 import { ErroresService } from 'src/app/services/errores.service';
 
 /** NestoApp#188 / #190: la captura de los comentarios y de las sugerencias de las novedades. */
@@ -26,6 +26,45 @@ describe('CapturaAdjuntaComponent', () => {
     emitidas = [];
     component.imagenChange.subscribe(i => emitidas.push(i));
   }));
+
+  describe('«Pegar imagen» (#210)', () => {
+    it('en la app nativa no sale: el WebView de Android siempre deniega leer el portapapeles', () => {
+      expect(sePuedeLeerPortapapeles(true, { read: () => null })).toBeFalse();
+    });
+
+    it('en el navegador sale si se puede leer el portapapeles', () => {
+      expect(sePuedeLeerPortapapeles(false, { read: () => null })).toBeTrue();
+      expect(sePuedeLeerPortapapeles(false, {})).toBeFalse();
+      expect(sePuedeLeerPortapapeles(false, undefined)).toBeFalse();
+    });
+
+    it('si se deniega el permiso se explica y no va a ELMAH, porque no es un fallo del programa', async () => {
+      const denegado = Object.assign(new Error('Read permission denied.'), { name: 'NotAllowedError' });
+      spyOn(navigator.clipboard as any, 'read').and.returnValue(Promise.reject(denegado));
+
+      await component.pegarImagen();
+
+      expect(component.errorImagen).toContain('permiso');
+      expect(errores.reportar).not.toHaveBeenCalled();
+    });
+
+    it('sin imagen copiada se dice y no va a ELMAH', async () => {
+      spyOn(navigator.clipboard as any, 'read').and.returnValue(Promise.resolve([{ types: ['text/plain'] }]));
+
+      await component.pegarImagen();
+
+      expect(component.errorImagen).toBe('No hay ninguna imagen copiada.');
+      expect(errores.reportar).not.toHaveBeenCalled();
+    });
+
+    it('otro fallo al leer sí va a ELMAH', async () => {
+      spyOn(navigator.clipboard as any, 'read').and.returnValue(Promise.reject(new Error('raro')));
+
+      await component.pegarImagen();
+
+      expect(errores.reportar).toHaveBeenCalled();
+    });
+  });
 
   it('un pantallazo grande de la galería se reduce hasta caber, en vez de rechazarlo', async () => {
     const lienzo = document.createElement('canvas');

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TAMANO_MAXIMO_IMAGEN } from 'src/app/services/novedades.service';
 import { ajustarImagen, leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { ErroresService } from 'src/app/services/errores.service';
+import { Capacitor } from '@capacitor/core';
 
 export interface ImagenAdjunta {
   dataUrl: string;
@@ -27,6 +28,16 @@ function conTiempoMaximo<T>(promesa: Promise<T>, milisegundos: number): Promise<
 function describirFichero(imagen: Blob): string {
   const megas = (imagen.size / (1024 * 1024)).toLocaleString('es-ES', { maximumFractionDigits: 1 });
   return `${imagen.type || 'tipo desconocido'}, ${megas} MB`;
+}
+
+/**
+ * #210: «Pegar imagen» solo en el navegador. En la app de Android `navigator.clipboard.read` existe,
+ * pero el WebView siempre lo deniega (NotAllowedError) y Capacitor no puede conceder ese permiso:
+ * hace falta leerlo de forma nativa, con un plugin que irá en un APK futuro. Hasta entonces el botón
+ * no sale en nativo (pegar con pulsación larga en el cuadro de texto y la galería siguen valiendo).
+ */
+export function sePuedeLeerPortapapeles(esNativo: boolean, portapapeles: any): boolean {
+  return !esNativo && !!portapapeles?.read;
 }
 
 /**
@@ -60,8 +71,9 @@ export class CapturaAdjuntaComponent {
   /** El de la API; sustituible en los tests. */
   public tamanoMaximoImagen: number = TAMANO_MAXIMO_IMAGEN;
 
-  /** El portapapeles del sistema solo se puede leer donde el WebView lo permite. */
-  public readonly puedeLeerPortapapeles: boolean = typeof navigator !== 'undefined' && !!(navigator.clipboard as any)?.read;
+  /** El portapapeles del sistema solo se puede leer donde el WebView lo permite (ver sePuedeLeerPortapapeles). */
+  public readonly puedeLeerPortapapeles: boolean = sePuedeLeerPortapapeles(
+    Capacitor.isNativePlatform(), typeof navigator !== 'undefined' ? navigator.clipboard : undefined);
 
   /**
    * #195: se espera a tener el fichero leído antes de vaciar el selector. En Android lo elegido en la
@@ -104,6 +116,11 @@ export class CapturaAdjuntaComponent {
       }
       this.errorImagen = 'No hay ninguna imagen copiada.';
     } catch (error) {
+      // #210: si el usuario (o el navegador) no da permiso no es un fallo del programa: no va a ELMAH.
+      if ((error as any)?.name === 'NotAllowedError') {
+        this.errorImagen = 'No se ha dado permiso para leer el portapapeles. Pega la captura en el cuadro de texto o adjúntala de la galería.';
+        return;
+      }
       console.error('No se ha podido leer el portapapeles', error);
       this.errores.reportar(error, 'captura-adjunta: pegar imagen');
       this.errorImagen = 'No se ha podido leer el portapapeles.';
