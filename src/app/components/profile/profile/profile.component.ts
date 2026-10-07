@@ -10,10 +10,11 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { AppVersion } from 'src/app/services/app-version.service';
 import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
 import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
+import { TipoAportacion } from '../sugerir-caracteristica/sugerir-caracteristica.component';
 
 @Component({
     selector: 'app-profile',
@@ -63,13 +64,39 @@ export class ProfileComponent {
           this.cargarNovedades();
           this.cargarSugerencias();
           // #193: la push «Te han contestado en Novedades» trae aquí ?novedad=…&comentario=…
-          this.route.queryParamMap.subscribe(parametros => {
-              const novedad = Number(parametros.get('novedad'));
-              if (novedad) {
-                  this.abrirAviso(novedad, Number(parametros.get('comentario')) || null);
-              }
-          });
+          this.route.queryParamMap.subscribe(parametros => this.aplicarParametros(parametros));
         }
+
+  /**
+   * #193: la push «Te han contestado en Novedades» trae ?novedad=…&comentario=…
+   * #209: el menú trae ?vista=sugerencias&modo=sugerencia|incidencia.
+   */
+  public aplicarParametros(parametros: ParamMap): void {
+      const novedad = Number(parametros.get('novedad'));
+      if (novedad) {
+          this.abrirAviso(novedad, Number(parametros.get('comentario')) || null);
+          return;
+      }
+      if (parametros.get('vista') === 'sugerencias') {
+          this.abrirAportacion(parametros.get('modo') === 'incidencia' ? 'incidencia' : 'sugerencia');
+      }
+  }
+
+  /** NestoApp#209: lo que se le pide abrir al formulario de sugerencias (ver SugerirCaracteristicaComponent.abrirComo). */
+  public aportacionPedida: { tipo: TipoAportacion } | null = null;
+
+  /**
+   * NestoApp#209: «Sugerir una mejora» / «Algo no funciona» sin tener que pasar de la última versión:
+   * se va a la página de sugerencias con el formulario ya abierto y se baja hasta él.
+   */
+  public abrirAportacion(tipo: TipoAportacion): void {
+      this.firebaseAnalytics.logEvent('profile_abrir_aportacion', { tipo });
+      this.textoBusqueda = '';
+      this.resultadosBusqueda = null;
+      this.indiceVersionNovedades = -1;
+      this.aportacionPedida = { tipo };
+      setTimeout(() => document.getElementById('formulario-sugerencias')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+  }
 
   /** NestoApp#192: al volver a la pantalla no se piden otra vez si se cargaron hace menos de esto. */
   private static readonly MINIMO_ENTRE_RECARGAS_MS = 60 * 1000;

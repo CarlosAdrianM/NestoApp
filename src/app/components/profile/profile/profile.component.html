@@ -102,6 +102,17 @@
                Si el endpoint falla o no hay entradas, la sección no se pinta. -->
           <h4 class="seccion-titulo" *ngIf="hayNovedades">Novedades</h4>
           <div class="novedades" *ngIf="hayNovedades">
+            <!-- #209: nadie pasaba de la última versión, así que nadie encontraba dónde sugerir o avisar -->
+            <div class="accesos-aportacion" *ngIf="!viendoSugerencias && sugerenciasDisponibles">
+              <ion-button size="small" fill="outline" (click)="abrirAportacion('sugerencia')">
+                <ion-icon slot="start" name="bulb-outline"></ion-icon>
+                Sugerir una mejora
+              </ion-button>
+              <ion-button size="small" fill="outline" color="danger" (click)="abrirAportacion('incidencia')">
+                <ion-icon slot="start" name="bug-outline"></ion-icon>
+                Algo no funciona
+              </ion-button>
+            </div>
             <!-- #190 / NestoAPI#527: buscador. Al elegir un resultado se salta a su versión (o a las sugerencias). -->
             <ion-searchbar class="buscador-novedades" placeholder="Buscar en las novedades" [debounce]="400"
               [value]="textoBusqueda" (ionInput)="buscarNovedades($event.detail.value)"></ion-searchbar>
@@ -148,7 +159,7 @@
 
             <!-- #190 / NestoAPI#526: lo que sugieren los usuarios; se vota y se comenta como las novedades. -->
             <ng-container *ngIf="viendoSugerencias">
-              <sugerir-caracteristica (creada)="alCrearSugerencia($event)"></sugerir-caracteristica>
+              <sugerir-caracteristica id="formulario-sugerencias" [abrirComo]="aportacionPedida" (creada)="alCrearSugerencia($event)"></sugerir-caracteristica>
               <p class="sin-sugerencias" *ngIf="sugerencias.length === 0">Todavía no hay sugerencias. ¿Qué te vendría bien?</p>
               <ion-card class="novedad" *ngFor="let sugerencia of sugerencias; trackBy: idNovedad"
                 [id]="'novedad-' + sugerencia.Id" [class.resaltada]="novedadResaltada === sugerencia.Id">

@@ -25,7 +25,7 @@ import { HistorialRutasService } from './services/historial-rutas.service';
 })
 export class AppComponent {
   rootPage : any;
-  pages: Array<{ title: string, url: string, icon: string }>;
+  pages: Array<{ title: string, url: string, icon: string, queryParams?: { [clave: string]: string } }>;
   public tokenFCM: string = null;
   constructor(
     private platform: Platform,
@@ -55,6 +55,9 @@ export class AppComponent {
       { title: 'Ofertas autorizadas', url: '/ofertas-autorizadas', icon: 'pricetags' },
       { title: 'Avisos', url: '/avisos', icon: 'notifications' },
       { title: 'Usuario', url: '/profile', icon: 'person' },
+      // #209: sin pasar de la última versión de las Novedades nadie los encontraba
+      { title: 'Sugerir una mejora', url: '/profile', icon: 'bulb-outline', queryParams: { vista: 'sugerencias', modo: 'sugerencia' } },
+      { title: 'Algo no funciona', url: '/profile', icon: 'bug-outline', queryParams: { vista: 'sugerencias', modo: 'incidencia' } },
     ];
 
     cache.setDefaultTTL(60 * 60); //set default cache TTL for 1 hour

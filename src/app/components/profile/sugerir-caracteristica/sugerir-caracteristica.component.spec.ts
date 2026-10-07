@@ -38,6 +38,28 @@ describe('SugerirCaracteristicaComponent (#190)', () => {
     component = fixture.componentInstance;
   }));
 
+  it('#209: llegando desde el menú se abre ya en el modo pedido', () => {
+    component.abrirComo = { tipo: 'incidencia' };
+
+    expect(component.abierto).toBeTrue();
+    expect(component.esIncidencia).toBeTrue();
+  });
+
+  it('#209: pedir el modo que ya está abierto no borra lo escrito', () => {
+    component.abrir('sugerencia');
+    component.texto = 'Filtro por ruta';
+
+    component.abrirComo = { tipo: 'sugerencia' };
+
+    expect(component.texto).toBe('Filtro por ruta');
+  });
+
+  it('#209: sin petición sigue cerrado', () => {
+    component.abrirComo = null;
+
+    expect(component.abierto).toBeFalse();
+  });
+
   it('sin texto no se puede enviar', () => {
     component.abrir();
     component.texto = '   ';

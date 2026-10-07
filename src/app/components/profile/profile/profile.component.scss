@@ -199,3 +199,11 @@ swiper-container {
   font-size: 0.6rem;
   padding: 2px 4px;
 }
+
+// #209: accesos a «Sugerir una mejora» y «Algo no funciona» encima de las novedades
+.accesos-aportacion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}

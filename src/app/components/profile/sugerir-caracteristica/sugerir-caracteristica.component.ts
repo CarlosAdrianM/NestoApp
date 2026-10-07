@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Novedad, NovedadesService, NuevoComentarioNovedad } from 'src/app/services/novedades.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
@@ -25,6 +25,16 @@ export type TipoAportacion = 'sugerencia' | 'incidencia';
 export class SugerirCaracteristicaComponent {
 
   @Output() public creada = new EventEmitter<Novedad>();
+
+  /**
+   * NestoApp#209: al llegar desde el menú («Sugerir una mejora» / «Algo no funciona») el formulario
+   * se abre ya en ese modo. Es un objeto para que pedir dos veces el mismo modo lo vuelva a abrir.
+   */
+  @Input() public set abrirComo(peticion: { tipo: TipoAportacion } | null) {
+    if (peticion?.tipo && this.tipo !== peticion.tipo) {
+      this.abrir(peticion.tipo);
+    }
+  }
 
   /** Null = cerrado (se ven los dos botones). */
   public tipo: TipoAportacion | null = null;

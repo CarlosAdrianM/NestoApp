@@ -18,6 +18,7 @@ import { NovedadesService } from 'src/app/services/novedades.service';
 import { ProfileService } from './profile.service';
 import { TrozosMencionPipe } from 'src/app/pipes/trozos-mencion.pipe';
 import { Subject, of, throwError } from 'rxjs';
+import { convertToParamMap } from '@angular/router';
 
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
@@ -370,6 +371,55 @@ describe('ProfileComponent', () => {
   });
 
   // NestoApp#193: al tocar la push «Te han contestado en Novedades» se abre la novedad en el comentario.
+  describe('acceso directo a sugerir o avisar (#209)', () => {
+    it('desde el menú (?vista=sugerencias&modo=incidencia) va a las sugerencias con «Algo no funciona» abierto', () => {
+      component.aplicarParametros(convertToParamMap({ vista: 'sugerencias', modo: 'incidencia' }));
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(component.aportacionPedida).toEqual({ tipo: 'incidencia' });
+    });
+
+    it('sin modo, o con uno desconocido, abre «Sugerir una mejora»', () => {
+      component.aplicarParametros(convertToParamMap({ vista: 'sugerencias', modo: 'xxx' }));
+
+      expect(component.aportacionPedida).toEqual({ tipo: 'sugerencia' });
+    });
+
+    it('sin parámetros no se mueve de la versión', () => {
+      const indice = component.indiceVersionNovedades;
+
+      component.aplicarParametros(convertToParamMap({}));
+
+      expect(component.indiceVersionNovedades).toBe(indice);
+      expect(component.aportacionPedida).toBeNull();
+    });
+
+    it('los botones de encima de las novedades llevan al formulario y se ven sin pasar de versión', async () => {
+      component.usuario.nombre = 'carlos'; // la sección solo se pinta con sesión iniciada
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const texto = () => fixture.nativeElement.textContent as string;
+      expect(component.viendoSugerencias).toBeFalse();
+      expect(texto()).toContain('Sugerir una mejora');
+      expect(texto()).toContain('Algo no funciona');
+
+      component.abrirAportacion('sugerencia');
+      fixture.detectChanges();
+
+      expect(component.viendoSugerencias).toBeTrue();
+      expect(fixture.nativeElement.querySelector('#formulario-sugerencias')).not.toBeNull();
+    });
+
+    it('volver a pedir el mismo modo crea una petición nueva (para reabrir el formulario)', () => {
+      component.abrirAportacion('incidencia');
+      const primera = component.aportacionPedida;
+
+      component.abrirAportacion('incidencia');
+
+      expect(component.aportacionPedida).not.toBe(primera);
+    });
+  });
+
   describe('abrir la novedad desde la push (#193)', () => {
     it('recarga, salta a la versión de la novedad y le marca el comentario', fakeAsync(() => {
       novedadesService.leerNovedades.calls.reset();
