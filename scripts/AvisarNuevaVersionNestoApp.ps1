@@ -30,6 +30,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 if ($Prueba) { $Usuarios = @("Carlos") }
+# Con «powershell -File …» la lista llega como un único texto «Marta,Israel,…»: se parte aquí.
+$Usuarios = @($Usuarios | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 if ($Usuarios.Count -eq 0) { throw "Falta -Usuarios (o -Prueba). Ver la consulta de la cabecera." }
 
 if (-not $Texto) {
