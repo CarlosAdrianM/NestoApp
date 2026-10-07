@@ -22,3 +22,45 @@ ion-segment {
     width: 90%;
     max-width: 320px;
   }
+
+/* NestoApp#212: panel de ritmo y lista de clientes para contactar */
+.ritmo-contacto {
+    margin: 8px;
+}
+
+.ritmo-cifras {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+
+    strong {
+        display: block;
+        font-size: 1.6em;
+        color: var(--ion-text-color);
+    }
+
+    span {
+        font-size: 0.8em;
+    }
+}
+
+.ritmo-pendientes {
+    margin-top: 8px;
+
+    ion-badge {
+        margin-right: 4px;
+    }
+}
+
+.ritmo-frase {
+    margin-top: 6px;
+    font-style: italic;
+}
+
+.motivo {
+    color: var(--ion-text-color);
+}
+
+ion-item.atendida {
+    opacity: 0.6;
+}

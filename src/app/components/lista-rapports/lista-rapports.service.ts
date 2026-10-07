@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from '../../services/cache.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
+import { SugerenciasContactoRespuesta } from 'src/app/models/sugerencias-contacto.model';
 
 @Injectable({
   providedIn: 'root'
@@ -86,6 +87,23 @@ export class ListaRapportsService {
       params = params.append('filtro', filtroBuscar);
 
       return this.http.get(this._baseUrl, { params });
+  }
+
+  /**
+   * NestoApp#212 / NestoAPI#603: clientes para contactar hoy y ritmo del vendedor. La lista es fija
+   * durante el día (la primera consulta la registra). Devuelve null si la API publicada no tiene el
+   * endpoint (404), para que la pantalla lo diga en vez de dar un error.
+   */
+  public cargarSugerenciasContacto(vendedor: string): Observable<SugerenciasContactoRespuesta | null> {
+      let params: HttpParams = new HttpParams();
+      params = params.append('vendedor', vendedor);
+      params = params.append('tipoInteraccion', ''); // vacío = llamada, como en Nesto
+      params = params.append('numero', '20');
+      params = params.append('grupoSubgrupo', '');
+
+      return this.http.get<SugerenciasContactoRespuesta>(Configuracion.API_URL + '/Clientes/SugerenciasContacto', { params }).pipe(
+          catchError(error => (error?.status === 404 || error?.statusCode === 404) ? of(null) : throwError(() => error))
+      );
   }
 
     public cargarResumenRapports(cliente: string, contacto: string): Observable<string> {

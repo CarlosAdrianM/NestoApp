@@ -1,4 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { NavController, AlertController, LoadingController, ToastController, ModalController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
@@ -9,6 +10,7 @@ import { ListaRapportsService } from './lista-rapports.service';
 import { ModalResumenVentasComponent } from '../resumen-ventas/modal-resumen-ventas.component';
 import { Geolocation } from '../../services/geolocation.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
+import { RitmoContactos, SugerenciaContacto, colorPrioridad, marcarAtendida, ordenarSugerenciasContacto, telefonoParaLlamar } from 'src/app/models/sugerencias-contacto.model';
 
 
 @Component({
@@ -63,6 +65,13 @@ export class ListaRapportsComponent extends SelectorBase {
   public mostrarPopoverFiltros = false;
   public filtroCodigosPostales: 'filtrado' | 'todos' = 'filtrado';
   public filtroClientesSinVisitar: 'visitables' | 'todos' = 'visitables';
+
+  /** NestoApp#212 / NestoAPI#603: clientes para contactar hoy, por prioridad y cadencia. */
+  public sugerenciasContacto: SugerenciaContacto[] = [];
+  public ritmoContacto: RitmoContactos | null = null;
+  public cargandoSugerenciasContacto = false;
+  /** Lo que se dice en lugar de la lista cuando no hay (sin endpoint, error o lista vacía). */
+  public mensajeSugerenciasContacto = '';
 
   public segmentoAnterior: string | null = null;
   public clienteAnterior: string | null = null;
@@ -122,6 +131,9 @@ export class ListaRapportsComponent extends SelectorBase {
               if (clienteEncontrado != undefined) {
                   this.listadoClientesSinVisitarFiltrado = this.listadoClientesSinVisitarFiltrado.filter(obj => obj !== clienteEncontrado);
               }
+          }
+          if (rapportCreado?.Cliente && this.sugerenciasContacto.length > 0) {
+              this.sugerenciasContacto = marcarAtendida(this.sugerenciasContacto, rapportCreado.Cliente, rapportCreado.Contacto);
           }
           if (this.listadoClientesSinVisitar)
           {
@@ -260,6 +272,8 @@ export class ListaRapportsComponent extends SelectorBase {
           }, 150);
       } else if (this.segmentoRapports == 'codigoPostal' && this.usuario.vendedor) {
           this.cargarCodigosPostalesSinVisitar();
+      } else if (this.segmentoRapports == 'contactar') {
+          this.cargarSugerenciasContacto();
       } else if (this.segmentoRapports == 'buscar') {
           setTimeout(() => {
               this.myFiltroInput.setFocus();
@@ -270,7 +284,63 @@ export class ListaRapportsComponent extends SelectorBase {
   seleccionarVendedor(vendedor: string) {
       this.firebaseAnalytics.logEvent("seleccionar_vendedor_rapport", {vendedor: vendedor});
       this.vendedorSeleccionado = vendedor;
+      if (this.segmentoRapports === 'contactar') {
+          this.cargarSugerenciasContacto();
+          return;
+      }
       this.cargarCodigosPostalesSinVisitar();
+  }
+
+  /**
+   * NestoApp#212: la lista es fija durante el día (la registra la API en la primera consulta), así
+   * que volver a pedirla solo trae las atendidas al día. Nunca bloquea: si no hay, se dice.
+   */
+  public async cargarSugerenciasContacto(): Promise<void> {
+      if (!this.vendedorSeleccionado) {
+          this.sugerenciasContacto = [];
+          this.ritmoContacto = null;
+          this.mensajeSugerenciasContacto = 'Elige un vendedor para ver a quién llamar hoy.';
+          return;
+      }
+      this.firebaseAnalytics.logEvent('rapport_sugerencias_contacto', { vendedor: this.vendedorSeleccionado });
+      this.cargandoSugerenciasContacto = true;
+      this.mensajeSugerenciasContacto = '';
+      try {
+          const respuesta = await firstValueFrom(this.servicio.cargarSugerenciasContacto(this.vendedorSeleccionado));
+          if (!respuesta) {
+              this.sugerenciasContacto = [];
+              this.ritmoContacto = null;
+              this.mensajeSugerenciasContacto = 'La lista de clientes para contactar todavía no está disponible.';
+              return;
+          }
+          this.sugerenciasContacto = ordenarSugerenciasContacto(respuesta.Sugerencias);
+          this.ritmoContacto = respuesta.Ritmo || null;
+          if (this.sugerenciasContacto.length === 0) {
+              this.mensajeSugerenciasContacto = 'Hoy no hay ningún cliente sugerido para contactar.';
+          }
+      } catch (error) {
+          this.sugerenciasContacto = [];
+          this.ritmoContacto = null;
+          this.mensajeSugerenciasContacto = 'No se han podido cargar los clientes para contactar.';
+          console.log('No se han podido cargar las sugerencias de contacto', error);
+      } finally {
+          this.cargandoSugerenciasContacto = false;
+      }
+  }
+
+  /** Como con cualquier cliente: se abre un rapport nuevo y, al guardarlo, la API marca la sugerencia atendida. */
+  public contactarSugerencia(sugerencia: SugerenciaContacto): void {
+      this.firebaseAnalytics.logEvent('rapport_contactar_sugerencia', { cliente: sugerencia.Cliente, prioridad: sugerencia.Prioridad });
+      this.annadirRapport({ Cliente: sugerencia.Cliente, Contacto: sugerencia.Contacto });
+  }
+
+  public colorPrioridad(prioridad: string): string {
+      return colorPrioridad(prioridad);
+  }
+
+  public enlaceLlamada(telefono: string): string | null {
+      const numero = telefonoParaLlamar(telefono);
+      return numero ? 'tel:' + numero : null;
   }
   
   async cargarCodigosPostalesSinVisitar(forzarTodos: boolean = false) {

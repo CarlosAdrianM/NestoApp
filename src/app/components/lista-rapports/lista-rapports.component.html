@@ -21,6 +21,9 @@
     <ion-segment-button value="codigoPostal">
       Cód. Postal
     </ion-segment-button>
+    <ion-segment-button value="contactar">
+      Llamar
+    </ion-segment-button>
     <ion-segment-button value="buscar">
       <ion-icon name="search"></ion-icon>
     </ion-segment-button>
@@ -116,6 +119,9 @@
         </ion-select>
       </ion-item>
     </div>
+    <div *ngSwitchCase="'contactar'">
+      <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+    </div>
     <div *ngSwitchCase="'buscar'">
     <form (ngSubmit)="buscarRapports()">
       <ion-item>
@@ -129,7 +135,7 @@
 </ion-header>
 
 <ion-content>
-<ion-list *ngIf="segmentoRapports !== 'codigoPostal'">
+<ion-list *ngIf="segmentoRapports !== 'codigoPostal' && segmentoRapports !== 'contactar'">
   <ion-item *ngFor="let rapport of datosFiltrados" (click)="abrirRapport(rapport)" class="ion-text-wrap">
     <ion-label class="ion-text-wrap">
       <ion-icon name="contact" slot="start"></ion-icon>
@@ -160,6 +166,61 @@
     </ion-label>
   </ion-item>
 </ion-list>
+
+<!-- NestoApp#212 / NestoAPI#603: a quién llamar hoy, con el ritmo del vendedor arriba -->
+<ng-container *ngIf="segmentoRapports === 'contactar'">
+  <ion-card *ngIf="ritmoContacto" class="ritmo-contacto">
+    <ion-card-content>
+      <div class="ritmo-cifras">
+        <div><strong>{{ritmoContacto.ContactosHoy}}</strong><span>de {{ritmoContacto.ObjetivoHoy}} hoy</span></div>
+        <div><strong>{{ritmoContacto.ContactosSemana}}</strong><span>esta semana</span></div>
+        <div><strong>{{ritmoContacto.ContactosMes}}</strong><span>de {{ritmoContacto.ObjetivoMes}} este mes</span></div>
+      </div>
+      <p class="ritmo-pendientes">
+        Pendientes:
+        <ion-badge color="danger" *ngIf="ritmoContacto.PendientesMaxima">{{ritmoContacto.PendientesMaxima}} máxima</ion-badge>
+        <ion-badge color="warning" *ngIf="ritmoContacto.PendientesAlta">{{ritmoContacto.PendientesAlta}} alta</ion-badge>
+        <ion-badge color="primary" *ngIf="ritmoContacto.PendientesMedia">{{ritmoContacto.PendientesMedia}} media</ion-badge>
+        <ion-badge color="medium" *ngIf="ritmoContacto.PendientesBaja">{{ritmoContacto.PendientesBaja}} baja</ion-badge>
+        <span *ngIf="ritmoContacto.DiasLaborablesRestantesMes"> · quedan {{ritmoContacto.DiasLaborablesRestantesMes}} días laborables</span>
+      </p>
+      <p *ngIf="ritmoContacto.Frase" class="ritmo-frase">{{ritmoContacto.Frase}}</p>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-item *ngIf="cargandoSugerenciasContacto" lines="none">
+    <ion-spinner name="crescent" slot="start"></ion-spinner>
+    <ion-label>Cargando clientes para contactar…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="!cargandoSugerenciasContacto && mensajeSugerenciasContacto" lines="none">
+    <ion-label class="ion-text-wrap">{{mensajeSugerenciasContacto}}</ion-label>
+  </ion-item>
+
+  <ion-list *ngIf="!cargandoSugerenciasContacto">
+    <ion-item *ngFor="let sugerencia of sugerenciasContacto" button detail="false" (click)="contactarSugerencia(sugerencia)" [class.atendida]="sugerencia.Atendida">
+      <ion-label class="ion-text-wrap">
+        <p>
+          <ion-badge [color]="sugerencia.Atendida ? 'success' : colorPrioridad(sugerencia.Prioridad)">{{sugerencia.Atendida ? 'Atendida' : sugerencia.Prioridad}}</ion-badge>
+          {{sugerencia.Cliente}}/{{sugerencia.Contacto}}
+        </p>
+        <h2>{{sugerencia.Nombre}}</h2>
+        <h3>{{sugerencia.Direccion}}<span *ngIf="sugerencia.Poblacion"> · {{sugerencia.Poblacion}}</span></h3>
+        <p *ngIf="sugerencia.Motivo" class="motivo">{{sugerencia.Motivo}}</p>
+        <p>
+          {{sugerencia.DiasDesdeUltimoContacto === null ? 'Sin contactos' : 'Último contacto hace ' + sugerencia.DiasDesdeUltimoContacto + ' días'}}
+          · último pedido hace {{sugerencia.DiasDesdeUltimoPedido}} días
+        </p>
+        <p>{{sugerencia.PedidosUltimos12Meses}} pedidos en 12 meses · {{sugerencia.ImporteUltimos12Meses | currency:'EUR'}}</p>
+      </ion-label>
+      <ion-button *ngIf="enlaceLlamada(sugerencia.Telefono) as enlace" fill="clear" slot="end" [href]="enlace" (click)="$event.stopPropagation()" aria-label="Llamar">
+        <ion-icon name="call-outline"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" size="small" slot="end" (click)="$event.stopPropagation(); verRapportsDeCliente(sugerencia.Cliente, sugerencia.Contacto)" aria-label="Ver rapports del cliente">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+</ng-container>
 
 <ion-list *ngIf="segmentoRapports === 'codigoPostal'">
   <ion-searchbar #barraFiltrar [hidden]="!listadoClientesSinVisitar || listadoClientesSinVisitar.length == 0" placeholder="Filtrar..." [(ngModel)]="filtro" (ionChange)="cambiaFiltro($event)" (ionCancel)="listadoClientesSinVisitarFiltrado = listadoClientesSinVisitar"></ion-searchbar>
