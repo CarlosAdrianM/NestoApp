@@ -9,11 +9,9 @@
     <ion-content>
         <ion-list *ngFor="let page of pages">
           <ion-menu-toggle auto-hide="true">
-            <ion-item [routerLink]="page.url" [queryParams]="page.queryParams" routerDirection="forward">
+            <ion-item [routerLink]="page.url" routerDirection="forward">
                 <ion-icon [name]="page.icon" slot="start"></ion-icon>
                    {{page.title}} 
-                <!-- #176: avisos sin leer -->
-                <ion-badge slot="end" color="danger" *ngIf="page.url === '/avisos' && textoContador(buzon.noLeidas$ | async) as contador">{{ contador }}</ion-badge>
             </ion-item>
           </ion-menu-toggle>
         </ion-list>

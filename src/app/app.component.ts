@@ -13,7 +13,7 @@ import { Configuracion } from './components/configuracion/configuracion/configur
 import { Router } from '@angular/router';
 import { ErroresService } from './services/errores.service';
 import { rutaDeNotificacion } from './utils/notificaciones';
-import { BuzonNotificacionesService, textoContador } from './services/buzon-notificaciones.service';
+import { BuzonNotificacionesService } from './services/buzon-notificaciones.service';
 import { HistorialRutasService } from './services/historial-rutas.service';
 
 
@@ -25,7 +25,7 @@ import { HistorialRutasService } from './services/historial-rutas.service';
 })
 export class AppComponent {
   rootPage : any;
-  pages: Array<{ title: string, url: string, icon: string, queryParams?: { [clave: string]: string } }>;
+  pages: Array<{ title: string, url: string, icon: string }>;
   public tokenFCM: string = null;
   constructor(
     private platform: Platform,
@@ -53,11 +53,9 @@ export class AppComponent {
       { title: 'Clientes', url: '/cliente', icon: 'people' },
       { title: 'NIF incorrectos', url: '/nif-incorrectos', icon: 'alert-circle' },
       { title: 'Ofertas autorizadas', url: '/ofertas-autorizadas', icon: 'pricetags' },
-      { title: 'Avisos', url: '/avisos', icon: 'notifications' },
+      // Los avisos se abren con la campana del perfil (o desde la push); sugerir y «Algo no
+      // funciona», al pie de las novedades del perfil (#209).
       { title: 'Usuario', url: '/profile', icon: 'person' },
-      // #209: sin pasar de la última versión de las Novedades nadie los encontraba
-      { title: 'Sugerir una mejora', url: '/profile', icon: 'bulb-outline', queryParams: { vista: 'sugerencias', modo: 'sugerencia' } },
-      { title: 'Algo no funciona', url: '/profile', icon: 'bug-outline', queryParams: { vista: 'sugerencias', modo: 'incidencia' } },
     ];
 
     cache.setDefaultTTL(60 * 60); //set default cache TTL for 1 hour
@@ -73,10 +71,6 @@ export class AppComponent {
     if (this.usuario?.nombre) {
       this.buzon.refrescarContador();
     }
-  }
-
-  public textoContador(noLeidas: number | null): string {
-    return textoContador(noLeidas || 0);
   }
 
   // Issue #123: ErrorHandler de Angular sólo cubre lo que pasa por Zone; las promesas

@@ -3,11 +3,16 @@
     <ion-buttons slot="start">
       <ion-back-button></ion-back-button>
     </ion-buttons>
-    <ion-title>Lista de Rapports</ion-title>
-    <ion-buttons slot="end" *ngIf="vendedorSeleccionado && segmentoRapports === 'codigoPostal'">
-      <ion-button (click)="mostrarPopoverFiltros = !mostrarPopoverFiltros">
+    <ion-title>Rapports</ion-title>
+    <ion-buttons slot="end">
+      <ion-button *ngIf="vendedorSeleccionado && segmentoRapports === 'codigoPostal'" (click)="mostrarPopoverFiltros = !mostrarPopoverFiltros">
         <ion-icon name="funnel"></ion-icon>
-      </ion-button>      
+      </ion-button>
+      <!-- #212: a quién llamar hoy. En la barra y no en el segmento, donde no cabían las cinco opciones -->
+      <ion-button [fill]="segmentoRapports === 'contactar' ? 'solid' : 'clear'" color="primary" (click)="verClientesParaLlamar()">
+        <ion-icon slot="start" name="call-outline"></ion-icon>
+        Llamar
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 
@@ -20,9 +25,6 @@
     </ion-segment-button>
     <ion-segment-button value="codigoPostal">
       Cód. Postal
-    </ion-segment-button>
-    <ion-segment-button value="contactar">
-      Llamar
     </ion-segment-button>
     <ion-segment-button value="buscar">
       <ion-icon name="search"></ion-icon>

@@ -328,6 +328,16 @@ export class ListaRapportsComponent extends SelectorBase {
       }
   }
 
+  /** #212: el botón «Llamar» de la barra. Mientras se ve, ningún segmento queda marcado. */
+  public verClientesParaLlamar(): void {
+      if (this.segmentoRapports === 'contactar') {
+          return;
+      }
+      this.inicializarLosDatos(null);
+      this.segmentoRapports = 'contactar';
+      this.cambiarSegmento();
+  }
+
   /** Como con cualquier cliente: se abre un rapport nuevo y, al guardarlo, la API marca la sugerencia atendida. */
   public contactarSugerencia(sugerencia: SugerenciaContacto): void {
       this.firebaseAnalytics.logEvent('rapport_contactar_sugerencia', { cliente: sugerencia.Cliente, prioridad: sugerencia.Prioridad });

@@ -394,7 +394,7 @@ describe('ProfileComponent', () => {
       expect(component.aportacionPedida).toBeNull();
     });
 
-    it('los botones de encima de las novedades llevan al formulario y se ven sin pasar de versión', async () => {
+    it('los botones del pie de las novedades llevan al formulario y se ven sin pasar de versión', async () => {
       component.usuario.nombre = 'carlos'; // la sección solo se pinta con sesión iniciada
       await fixture.whenStable();
       fixture.detectChanges();

@@ -68,8 +68,7 @@ describe('ListaRapportsComponent', () => {
         Sugerencias: [sugerencia('1', 1, true), sugerencia('3', 3), sugerencia('2', 2)]
       }) as any);
 
-      component.segmentoRapports = 'contactar';
-      component.cambiarSegmento();
+      component.verClientesParaLlamar();
       await fixture.whenStable();
 
       expect(servicio.cargarSugerenciasContacto).toHaveBeenCalledWith('MPP');
@@ -79,6 +78,25 @@ describe('ListaRapportsComponent', () => {
       const texto = fixture.nativeElement.textContent as string;
       expect(texto).toContain('Vas bien, sigue así');
       expect(texto).toContain('Le toca por cadencia');
+    });
+
+    it('«Llamar» va en la barra, no como un segmento más (no cabían)', () => {
+      spyOn(servicio, 'cargarSugerenciasContacto').and.returnValue(of(null));
+      fixture.detectChanges();
+
+      const segmentos = Array.from(fixture.nativeElement.querySelectorAll('ion-segment-button')).map((b: any) => b.getAttribute('value'));
+      expect(segmentos).not.toContain('contactar');
+      const botones = Array.from(fixture.nativeElement.querySelectorAll('ion-toolbar ion-button')) as HTMLElement[];
+      expect(botones.some(b => b.innerHTML.includes('Llamar'))).toBeTrue();
+    });
+
+    it('volver a pulsar «Llamar» estando ya en la lista no la vuelve a pedir', () => {
+      spyOn(servicio, 'cargarSugerenciasContacto').and.returnValue(of(null));
+
+      component.verClientesParaLlamar();
+      component.verClientesParaLlamar();
+
+      expect(servicio.cargarSugerenciasContacto).toHaveBeenCalledTimes(1);
     });
 
     it('si la API no tiene el endpoint (null) lo dice y no deja la lista a medias', async () => {
