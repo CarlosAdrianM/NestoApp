@@ -11,3 +11,12 @@
   padding-left: 18px;
   font-size: 0.9em;
 }
+
+// #208: con varias cuentas, que la etiqueta no se encoja y el desplegable recorte la cuenta elegida
+.etiqueta-cuenta {
+  flex: 0 0 auto;
+}
+
+.cuenta-elegida {
+  max-width: 60%;
+}

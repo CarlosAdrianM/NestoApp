@@ -47,6 +47,19 @@ describe('SelectorCCCComponent (#189)', () => {
     expect(servicio.getCCCs).toHaveBeenCalledWith('1', '12345', '0');
   }));
 
+  it('#208: con una sola cuenta, la cuenta va debajo de la etiqueta y no al lado (si no, la etiqueta se queda sin ancho)', fakeAsync(() => {
+    servicio.getCCCs.and.returnValue(of([ccc('1')]));
+    cargar();
+    fixture.detectChanges();
+
+    const item: HTMLElement = fixture.nativeElement.querySelector('ion-item');
+    expect(item.querySelector('[slot="end"]')).toBeNull();
+    const etiqueta: HTMLElement = item.querySelector('ion-label');
+    expect(etiqueta.classList).toContain('ion-text-wrap');
+    expect(etiqueta.innerHTML).toContain('Cuenta del recibo');
+    expect(etiqueta.innerHTML).toContain('CAIXABANK');
+  }));
+
   it('con la cuenta de la dirección válida, no la cambia', fakeAsync(() => {
     component.seleccionado = '2';
     cargar();

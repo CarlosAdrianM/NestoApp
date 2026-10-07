@@ -2,13 +2,17 @@
   <ion-label>Cuenta del recibo</ion-label>
   <ion-spinner slot="end" name="crescent"></ion-spinner>
 </ion-item>
+<!-- #208: la cuenta debajo de la etiqueta. Al lado (ion-note slot="end"), un banco de nombre largo
+     dejaba la etiqueta sin ancho y el item crecía en altura, con un hueco grande en blanco -->
 <ion-item *ngIf="!cargando && cccsValidos.length === 1">
-  <ion-label>Cuenta del recibo</ion-label>
-  <ion-note slot="end">{{ descripcion(cccsValidos[0]) }}</ion-note>
+  <ion-label class="ion-text-wrap">
+    <h3>Cuenta del recibo</h3>
+    <p>{{ descripcion(cccsValidos[0]) }}</p>
+  </ion-label>
 </ion-item>
 <ion-item *ngIf="!cargando && cccsValidos.length > 1">
-  <ion-label>Cuenta del recibo</ion-label>
-  <ion-select slot="end" aria-label="Cuenta del recibo" interface="action-sheet" [cancelText]="'Cancelar'"
+  <ion-label class="etiqueta-cuenta">Cuenta del recibo</ion-label>
+  <ion-select slot="end" class="cuenta-elegida" aria-label="Cuenta del recibo" interface="action-sheet" [cancelText]="'Cancelar'"
     [value]="numeroSeleccionado" (ionChange)="seleccionarCCC($event.detail.value)">
     <ion-select-option *ngFor="let ccc of cccsValidos" [value]="ccc.numero.trim()">{{ descripcion(ccc) }}</ion-select-option>
   </ion-select>
