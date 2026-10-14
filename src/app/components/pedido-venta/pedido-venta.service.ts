@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { FechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
@@ -40,6 +41,12 @@ export class PedidoVentaService {
       params = params.append('numero', numero.toString());
 
       return this.http.get<PedidoVenta>(this._baseUrl, { params: params });
+  }
+
+  /** NestoApp#215 (NestoAPI#606): fecha de entrega a la agencia, calculada ahora y prometida. null si no hay o falla. */
+  public cargarFechaEntregaAgencia(empresa: string, numero: number): Observable<FechaEntregaAgencia | null> {
+      const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${numero}/FechaEntregaAgencia`;
+      return this.http.get<FechaEntregaAgencia>(url).pipe(catchError(() => of(null)));
   }
 
   public cargarEnlacesSeguimiento(empresa: string, numero: number): Observable<any> {

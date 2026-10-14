@@ -23,3 +23,8 @@ selector-almacenes {
 .ion-text-right {
     margin-right: 10px;
 }
+
+// NestoApp#215: aviso de la fecha de entrega a la agencia (no es un error)
+.aviso-fecha-agencia {
+  color: var(--ion-color-warning-shade) !important;
+}

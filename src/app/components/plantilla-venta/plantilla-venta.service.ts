@@ -11,6 +11,7 @@ import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
 import { SaldoAFavor } from '../../models/saldo-a-favor.model';
 import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
 import { SustitucionProducto } from '../../models/sustitucion-producto.model';
+import { FechaEntregaAgencia } from '../../models/fecha-entrega-agencia.model';
 
 @Injectable({
   providedIn: 'root'
@@ -91,6 +92,14 @@ export class PlantillaVentaService {
    * stock real de sus líneas (o el que fuerce el parámetro del usuario). La regla vive entera
    * en el servidor, que es quien ve el stock de todos los almacenes.
    */
+  /** NestoApp#215 (NestoAPI#606): qué día se entrega a la agencia el pedido que se está montando. null si falla o la API es vieja. */
+  public fechaEntregaAgencia(pedido: any): Observable<FechaEntregaAgencia | null> {
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<FechaEntregaAgencia>(this._baseUrl + '/FechaEntregaAgencia', JSON.stringify(pedido), { headers }).pipe(
+      catchError(() => of(null))
+    );
+  }
+
   public modoServicioSugerido(pedido: any): Observable<ModoServicioSugerido> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');

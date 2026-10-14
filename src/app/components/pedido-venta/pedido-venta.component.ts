@@ -20,6 +20,7 @@ import {
 import { CambiarClientePedidoRespuesta, puedeCambiarClientePedido, mensajeCambiosCliente } from 'src/app/models/cambio-cliente-pedido.model';
 import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 
+import { FechaEntregaAgencia, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
 @Component({
     selector: 'app-pedido-venta',
     templateUrl: './pedido-venta.component.html',
@@ -111,6 +112,7 @@ export class PedidoVentaComponent  {
               // Cargar parámetros de IVA y asignarlos a las líneas
               this.cargarParametrosIva();
               this.cargarSeguimientos(empresa, numero);
+              this.cargarFechaEntregaAgencia(empresa, numero); // NestoApp#215
               this.pedirModoFacturacionSugerido();
           },
           async error => {
@@ -130,6 +132,22 @@ export class PedidoVentaComponent  {
       );
   }
   
+  // NestoApp#215 (NestoAPI#606): qué día se entrega a la agencia (ahora) y qué se prometió al crearlo.
+  public fechaEntregaAgencia: FechaEntregaAgencia | null = null;
+
+  public cargarFechaEntregaAgencia(empresa: string, numero: number): void {
+      this.fechaEntregaAgencia = null;
+      this.servicio.cargarFechaEntregaAgencia(empresa, numero).subscribe(fecha => this.fechaEntregaAgencia = fecha);
+  }
+
+  get textoFechaEntregaAgencia(): string {
+      return textoFechaEntregaAgencia(this.fechaEntregaAgencia);
+  }
+
+  get textoFechaPrometida(): string {
+      return textoFechaPrometida(this.fechaEntregaAgencia);
+  }
+
   // NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo.
   public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 

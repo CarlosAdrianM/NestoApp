@@ -66,6 +66,15 @@
                       </ng-template>
                   </ion-modal>
               </ion-item>
+              <!-- NestoApp#215 (NestoAPI#606): entrega a la agencia calculada ahora y la prometida si difiere -->
+              <ion-item lines="none" *ngIf="textoFechaEntregaAgencia">
+                  <ion-icon slot="start" name="calendar-outline" color="primary"></ion-icon>
+                  <ion-label class="ion-text-wrap">
+                      <strong>{{ textoFechaEntregaAgencia }}</strong>
+                      <p *ngIf="textoFechaPrometida" class="fecha-prometida">{{ textoFechaPrometida }}</p>
+                      <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
+                  </ion-label>
+              </ion-item>
               <ion-item *ngIf="pedido.notaEntrega">
                   <ion-label class="ion-text-wrap">
                       <strong>Nota de entrega</strong>

@@ -563,3 +563,42 @@ describe('Cambiar el cliente del pedido (#198)', () => {
     expect(cambiar.calls.mostRecent().args[2].CreadoSinPasarValidacion).toBeTrue();
   }));
 });
+
+/** NestoApp#215 (NestoAPI#606): fecha de entrega a la agencia en el detalle del pedido. */
+describe('PedidoVentaComponent: fecha de entrega a la agencia (#215)', () => {
+  let component: PedidoVentaComponent;
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PedidoVentaComponent).componentInstance;
+  }));
+
+  it('enseña la de ahora y, si difiere, la prometida', () => {
+    spyOn(component['servicio'], 'cargarFechaEntregaAgencia').and.returnValue(of({
+      PrimeraEntrega: '2026-10-16T00:00:00', EntregaCompleta: '2026-10-16T00:00:00', FechaEntregaAgencia: '2026-10-16T00:00:00',
+      Aplica: 'Completa', Entregas: [], Motivo: null, FechaPrometida: '2026-10-15T00:00:00'
+    }));
+
+    component.cargarFechaEntregaAgencia('1', 928170);
+
+    expect(component['servicio'].cargarFechaEntregaAgencia).toHaveBeenCalledWith('1', 928170);
+    expect(component.textoFechaEntregaAgencia).toBe('Se entrega a la agencia el viernes 16/10');
+    expect(component.textoFechaPrometida).toBe('Al crear el pedido se prometió el jueves 15/10');
+  });
+
+  it('con una API sin el endpoint no enseña nada', () => {
+    spyOn(component['servicio'], 'cargarFechaEntregaAgencia').and.returnValue(of(null));
+    component.cargarFechaEntregaAgencia('1', 928170);
+    expect(component.textoFechaEntregaAgencia).toBe('');
+  });
+});

@@ -25,6 +25,7 @@ import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
   modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
+import { FechaEntregaAgencia, textoFechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
 import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitucion-producto.model';
 import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque } from 'src/app/models/cheque-regalo.model';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
@@ -371,6 +372,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
       this.modoFacturacionSeleccionado = nuevo;
       this.sincronizarMantenerJunto(nuevo);
+      this.cargarFechaEntregaAgencia(); // NestoApp#215
   }
 
   /** Modo y mantenerJunto siempre coherentes: un mantenerJunto discordante gana en la API y pone el 2. */
@@ -775,6 +777,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (esTodoJunto(anterior) && !esTodoJunto(nuevo)) {
       this.validarSalidaDeTodoJunto(nuevo, !elegidoPorUsuario);
     }
+    this.cargarFechaEntregaAgencia(); // NestoApp#215
   }
 
   /**
@@ -814,6 +817,30 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (this.direccionSeleccionada) {
       this.direccionSeleccionada.servirJunto = true;
     }
+    this.cargarFechaEntregaAgencia(); // NestoApp#215
+  }
+
+  // NestoApp#215 (NestoAPI#606): qué día entregamos el pedido a la agencia. Se recalcula al llegar
+  // al resumen y al cambiar el modo de servicio, el de facturación o la dirección.
+  public fechaEntregaAgencia: FechaEntregaAgencia | null = null;
+  private peticionFechaEntregaAgencia = 0;
+
+  public cargarFechaEntregaAgencia(): void {
+    const pedido = this.productosResumen ? this.prepararPedido() : null;
+    const peticion = ++this.peticionFechaEntregaAgencia;
+    if (!pedido) {
+      this.fechaEntregaAgencia = null;
+      return;
+    }
+    this.servicio.fechaEntregaAgencia(pedido).subscribe(fecha => {
+      if (peticion === this.peticionFechaEntregaAgencia) {
+        this.fechaEntregaAgencia = fecha;
+      }
+    });
+  }
+
+  get textoFechaEntregaAgencia(): string {
+    return textoFechaEntregaAgencia(this.fechaEntregaAgencia);
   }
 
   /**
@@ -1083,6 +1110,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
         // NestoApp#184: y con qué modo de servicio nacería el pedido según su stock real.
         this.cargarModoServicioSugerido();
+
+        // NestoApp#215: y qué día lo entregamos a la agencia.
+        this.cargarFechaEntregaAgencia();
 
         // Actualizar slider para que reconozca la slide de regalos si aplica
         console.log("baseImponibleBonificable:", this.baseImponibleBonificable, "hayGanavisiones:", this.hayGanavisionesDisponibles, "productosBonificablesCount:", this.productosBonificablesCount);
@@ -1516,6 +1546,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       if (!cliente) return;
       this.direccionSeleccionada = cliente;
       this.iva = cliente.iva;
+      this.cargarFechaEntregaAgencia(); // NestoApp#215: los días de servir son del contacto
       // Inicializar formaPago/plazosPago desde los defaults de la dirección
       // para que estén disponibles antes de llegar a la slide de pago
       if (cliente.formaPago) {
@@ -2056,6 +2087,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
       this.sustitucionesRechazadas.clear(); // NestoApp#220
+      this.fechaEntregaAgencia = null; // NestoApp#215
+      this.peticionFechaEntregaAgencia++;
       // NestoApp#222
       this.chequeRegalo = null;
       this.usarChequeRegalo = false;

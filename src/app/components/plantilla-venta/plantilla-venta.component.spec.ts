@@ -21,6 +21,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 const conChequeRegalo = (servicio: any): any => {
   servicio.leerChequeRegalo = servicio.leerChequeRegalo ?? (() => of(null));
   servicio.leerSustitucion = servicio.leerSustitucion ?? (() => of(null));
+  servicio.fechaEntregaAgencia = servicio.fechaEntregaAgencia ?? (() => of(null)); // NestoApp#215
   return servicio;
 };
 
@@ -705,7 +706,7 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: { leerChequeRegalo: () => of(null), calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
+        { provide: PlantillaVentaService, useValue: { leerChequeRegalo: () => of(null), fechaEntregaAgencia: () => of(null), calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         {
           provide: ActionSheetController, useValue: {
@@ -1969,5 +1970,82 @@ describe('Sustitución de productos que pide Compras (#220)', () => {
     servicio.leerSustitucion.and.returnValue(of(null));
     expect(await component.comprobarSustitucionesProducto()).toBeFalse();
     expect(alertasCreadas.length).toBe(0);
+  });
+});
+
+/** NestoApp#215 (NestoAPI#606): la fecha de entrega a la agencia en la plantilla. */
+describe('Fecha de entrega a la agencia en la plantilla (#215)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+
+  const respuesta = (dia: string, aviso: string = null) => of({
+    PrimeraEntrega: dia, EntregaCompleta: dia, FechaEntregaAgencia: dia, Aplica: 'Completa', Entregas: [dia],
+    Motivo: 'Todo tiene stock', FechaPrometida: null, Aviso: aviso
+  });
+
+  beforeEach(waitForAsync(() => {
+    servicio = {
+      fechaEntregaAgencia: jasmine.createSpy('fechaEntregaAgencia').and.returnValue(respuesta('2026-10-15T00:00:00')),
+      validarServirJunto: () => of({ PuedeDesmarcar: true }),
+      modoFacturacionSugerido: () => of(null),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false };
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', cantidad: 2, cantidadOferta: 0 }];
+  }));
+
+  it('pide la fecha con el pedido que se está montando y la enseña', () => {
+    component.cargarFechaEntregaAgencia();
+
+    expect(servicio.fechaEntregaAgencia).toHaveBeenCalledWith(jasmine.objectContaining({ cliente: '12345', modoServicio: 3 }));
+    expect(component.textoFechaEntregaAgencia).toBe('Se entrega a la agencia el jueves 15/10');
+  });
+
+  it('cambiar el modo de servicio la recalcula', () => {
+    component.cambiarModoServicio(4);
+    expect(servicio.fechaEntregaAgencia).toHaveBeenCalledWith(jasmine.objectContaining({ modoServicio: 4 }));
+  });
+
+  it('cambiar el modo de facturación la recalcula', () => {
+    component.cambiarModoFacturacion(3);
+    expect(servicio.fechaEntregaAgencia).toHaveBeenCalled();
+  });
+
+  it('sin líneas todavía no pregunta', () => {
+    component['productosResumen'] = null;
+    component.cargarFechaEntregaAgencia();
+    expect(servicio.fechaEntregaAgencia).not.toHaveBeenCalled();
+    expect(component.textoFechaEntregaAgencia).toBe('');
+  });
+
+  it('una respuesta vieja no pisa a la nueva', () => {
+    const vieja = new Subject<any>();
+    servicio.fechaEntregaAgencia.and.returnValues(vieja, respuesta('2026-10-20T00:00:00'));
+    component.cargarFechaEntregaAgencia();
+    component.cargarFechaEntregaAgencia();
+    vieja.next({ FechaEntregaAgencia: '2026-10-15T00:00:00', Aplica: 'Completa' });
+
+    expect(component.textoFechaEntregaAgencia).toBe('Se entrega a la agencia el martes 20/10');
   });
 });

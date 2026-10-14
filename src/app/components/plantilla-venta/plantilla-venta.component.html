@@ -135,6 +135,15 @@
                     <ion-note slot="end" color="dark" class="ion-text-wrap ion-text-end">{{ nombreModoServicio }}</ion-note>
                     <ion-icon slot="end" name="caret-down-outline" color="medium" size="small"></ion-icon>
                 </ion-item>
+                <!-- NestoApp#215 (NestoAPI#606): qué día lo entregamos a la agencia -->
+                <ion-item lines="none" *ngIf="textoFechaEntregaAgencia">
+                    <ion-icon slot="start" name="calendar-outline" color="primary"></ion-icon>
+                    <ion-label class="ion-text-wrap">
+                        <strong>{{ textoFechaEntregaAgencia }}</strong>
+                        <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
+                        <p *ngIf="fechaEntregaAgencia?.Aviso" class="aviso-fecha-agencia">{{ fechaEntregaAgencia.Aviso }}</p>
+                    </ion-label>
+                </ion-item>
                 <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo -->
                 <ion-item lines="none" *ngIf="motivoModoServicio">
                     <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{motivoModoServicio}}</ion-label>
