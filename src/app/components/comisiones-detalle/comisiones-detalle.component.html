@@ -13,7 +13,9 @@
       <ion-label class="ion-text-wrap">
         <h2>{{detalle.Nombre}}</h2>
         <h3>{{detalle.Direccion}}</h3>
-        <p>Fecha: {{detalle.Fecha_Factura | date:'shortDate'}}</p>
+        <p *ngIf="detalle.Fecha_Factura || !detalle.EstadoFacturacion">Fecha: {{detalle.Fecha_Factura | date:'shortDate'}}</p>
+        <!-- NestoApp#225: servido sin factura (o en picking): el texto lo manda la API -->
+        <p *ngIf="!detalle.Fecha_Factura && detalle.EstadoFacturacion" class="estado-facturacion">{{detalle.EstadoFacturacion}}</p>
         <p>Importe: {{detalle.BaseImponible | currency:'EUR'}}</p>
       </ion-label>
     </ion-item>
