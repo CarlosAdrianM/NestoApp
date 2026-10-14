@@ -4,6 +4,12 @@
       <ion-back-button></ion-back-button>
     </ion-buttons>
     <ion-title>Extracto del Cliente</ion-title>
+    <!-- NestoApp#217 (NestoAPI#611): inscribir al cliente en un evento y mandarle el enlace de pago -->
+    <ion-buttons slot="end" *ngIf="!mostrarClientes && clienteSeleccionado">
+      <ion-button (click)="abrirModalEventos()" aria-label="Inscribir en un evento">
+        <ion-icon slot="icon-only" name="calendar-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 

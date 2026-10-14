@@ -8,6 +8,7 @@ import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { Usuario } from 'src/app/models/Usuario';
 import { firstValueFrom } from 'rxjs';
 import { hayQuePreguntarConcepto, textoPreguntaConcepto } from 'src/app/models/revision-concepto.model';
+import { ModalInscribirEventoComponent } from '../inscribir-evento/modal-inscribir-evento.component';
 
 @Component({
     selector: 'app-extracto-cliente',
@@ -237,6 +238,16 @@ export class ExtractoClienteComponent implements AfterViewInit {
 
   public estaSeleccionado(movimiento: any): boolean {
       return this.movimientosSeleccionados.indexOf(movimiento) > -1;
+  }
+
+  /** NestoApp#217: inscribir al cliente en un evento (curso) y mandarle el enlace de pago. */
+  public async abrirModalEventos(): Promise<void> {
+      this.firebaseAnalytics.logEvent("extracto_cliente_abrir_eventos", {});
+      const modal = await this.modalCtrl.create({
+          component: ModalInscribirEventoComponent,
+          componentProps: { cliente: this.clienteSeleccionado }
+      });
+      await modal.present();
   }
 
   public async abrirModalEnlaceCobro(): Promise<void> {

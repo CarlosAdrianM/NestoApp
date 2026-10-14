@@ -40,6 +40,7 @@ import { RapportComponent } from './components/rapport/rapport.component';
 import { ListaPedidosVentaComponent } from './components/lista-pedidos-venta/lista-pedidos-venta.component';
 import { PedidoVentaComponent } from './components/pedido-venta/pedido-venta.component';
 import { ModalElegirClienteComponent } from './components/pedido-venta/modal-elegir-cliente.component';
+import { ModalInscribirEventoComponent } from './components/inscribir-evento/modal-inscribir-evento.component';
 import { LineaVentaComponent } from './components/linea-venta/linea-venta.component';
 import { NifIncorrectosComponent } from './components/nif-incorrectos/nif-incorrectos.component';
 import { OfertasAutorizadasComponent } from './components/ofertas-autorizadas/ofertas-autorizadas.component';
@@ -137,6 +138,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         SelectorRegalosComponent,
         ModalResumenVentasComponent,
         ModalElegirClienteComponent,
+        ModalInscribirEventoComponent,
         ImporteOTextoPipe,
         TrozosMencionPipe,
         BuzonNotificacionesComponent,
