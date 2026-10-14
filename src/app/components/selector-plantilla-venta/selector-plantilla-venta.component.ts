@@ -6,6 +6,7 @@ import { SelectorPlantillaVentaService } from './selector-plantilla-venta.servic
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
 import { Usuario } from 'src/app/models/Usuario';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'selector-plantilla-venta',
@@ -365,6 +366,44 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       }
       linea.aplicarDescuento = true;
       linea.descuento = descuento;
+      return true;
+  }
+
+  /**
+   * NestoApp#220 (NestoAPI#581): Compras pide servir otra referencia mientras no haya stock. Pasa las
+   * unidades (y las de oferta) del original al sustituto y deja el original a cero. Si el sustituto
+   * no está en la plantilla del cliente, se busca como cuando el vendedor lo busca en todos los
+   * productos, así que entra con su precio. Devuelve false si no se ha podido sustituir.
+   */
+  public async sustituirProducto(original: string, sustituto: string): Promise<boolean> {
+      const mismo = (a: any, b: any) => (a ?? '').toString().trim() === (b ?? '').toString().trim();
+      const lineaOriginal = this.datosIniciales().find(d => mismo(d.producto, original));
+      if (!lineaOriginal) {
+          return false;
+      }
+      let lineaSustituto = this.datosIniciales().find(d => mismo(d.producto, sustituto));
+      if (!lineaSustituto) {
+          const encontrados: any[] = await firstValueFrom(this.servicio.buscarProductos(sustituto)).catch(() => []);
+          const producto = (encontrados || []).find(p => mismo(p.producto, sustituto));
+          if (!producto) {
+              return false;
+          }
+          lineaSustituto = {
+              ...producto,
+              cantidad: 0,
+              cantidadOferta: 0,
+              aplicarDescuentoFicha: producto.aplicarDescuento,
+              esSobrePedido: producto.estado != 0,
+              personalizarOferta: false,
+              precioOferta: 0,
+              descuentoOferta: 0
+          };
+          this.agregarDato(lineaSustituto);
+      }
+      lineaSustituto.cantidad = (+lineaSustituto.cantidad || 0) + (+lineaOriginal.cantidad || 0);
+      lineaSustituto.cantidadOferta = (+lineaSustituto.cantidadOferta || 0) + (+lineaOriginal.cantidadOferta || 0);
+      lineaOriginal.cantidad = 0;
+      lineaOriginal.cantidadOferta = 0;
       return true;
   }
 

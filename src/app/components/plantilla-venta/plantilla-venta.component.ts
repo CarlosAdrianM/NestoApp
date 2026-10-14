@@ -25,6 +25,7 @@ import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
   modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
+import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitucion-producto.model';
 import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque } from 'src/app/models/cheque-regalo.model';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
@@ -1035,6 +1036,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (this.indexActivo === 2 && indexPrevio === 1) {
         console.log("Resumen");
         this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+        // NestoApp#220: antes de nada, lo que Compras pide sustituir (puede cambiar las líneas).
+        try {
+            if (await this.comprobarSustitucionesProducto()) {
+                this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+            }
+        } catch (error) {
+            console.error('Error comprobando sustituciones de productos:', error);
+        }
         this.servicio.cargarListaPendientes(this.clienteSeleccionado.empresa, this.clienteSeleccionado.cliente).subscribe(
             data => {
                 this.listaPedidosPendientes = data;
@@ -1097,6 +1106,67 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
 
     this.actualizarBloqueoAvanceSinDireccion();
+  }
+
+  /** NestoApp#220: productos por los que el vendedor ya dijo «No» en este pedido (no se vuelve a preguntar). */
+  private sustitucionesRechazadas = new Set<string>();
+
+  /**
+   * NestoApp#220 (NestoAPI#581): por cada línea, si Compras pide servir otra referencia, se avisa
+   * (sin bloquear) y se ofrece cambiarla. Devuelve true si se ha sustituido alguna.
+   */
+  public async comprobarSustitucionesProducto(): Promise<boolean> {
+    const empresa = this.clienteSeleccionado?.empresa?.toString().trim();
+    if (!empresa || !this._selectorPlantillaVenta) {
+      return false;
+    }
+    const lineas = (this.productosResumen || [])
+      .filter(l => l.producto && (+l.cantidad || 0) + (+l.cantidadOferta || 0) > 0)
+      .filter(l => !this.sustitucionesRechazadas.has(l.producto.toString().trim()));
+    const sustituciones = await Promise.all(lineas.map(l => firstValueFrom(
+      this.servicio.leerSustitucion(empresa, l.producto.toString().trim(), (+l.cantidad || 0) + (+l.cantidadOferta || 0))
+    ).catch(() => null)));
+
+    let haySustituida = false;
+    for (let i = 0; i < lineas.length; i++) {
+      const sustitucion = sustituciones[i];
+      if (!sustitucion?.ProductoSustituto) {
+        continue;
+      }
+      const producto = lineas[i].producto.toString().trim();
+      if (!(await this.preguntarSustitucion(sustitucion))) {
+        this.sustitucionesRechazadas.add(producto);
+        continue;
+      }
+      this.firebaseAnalytics.logEvent('plantilla_venta_sustituir_producto', { producto, sustituto: sustitucion.ProductoSustituto });
+      if (await this._selectorPlantillaVenta.sustituirProducto(producto, sustitucion.ProductoSustituto)) {
+        haySustituida = true;
+      } else {
+        const alerta = await this.alertCtrl.create({
+          header: 'No se ha podido cambiar',
+          message: `No se ha encontrado la ${sustitucion.ProductoSustituto.trim()}. Búscala y cámbiala a mano.`,
+          buttons: ['Ok']
+        });
+        await alerta.present();
+      }
+    }
+    return haySustituida;
+  }
+
+  private preguntarSustitucion(sustitucion: SustitucionProducto): Promise<boolean> {
+    return new Promise<boolean>(async resolve => {
+      const alerta = await this.alertCtrl.create({
+        header: 'Compras pide otra referencia',
+        message: preguntaSustitucion(sustitucion),
+        cssClass: 'alerta-texto-con-saltos',
+        backdropDismiss: false,
+        buttons: [
+          { text: 'No', role: 'cancel', handler: () => resolve(false) },
+          { text: `Sí, poner la ${sustitucion.ProductoSustituto.trim()}`, handler: () => resolve(true) }
+        ]
+      });
+      await alerta.present();
+    });
   }
 
   /**
@@ -1985,6 +2055,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.portesGratis = false;
       this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
+      this.sustitucionesRechazadas.clear(); // NestoApp#220
       // NestoApp#222
       this.chequeRegalo = null;
       this.usarChequeRegalo = false;

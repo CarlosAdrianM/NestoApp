@@ -36,3 +36,8 @@ ion-input.has-focus {
 .alerta-cambios-cliente .alert-message {
   text-align: left;
 }
+
+// NestoApp#220: alertas cuyo mensaje lleva saltos de línea (aviso + pregunta)
+.alerta-texto-con-saltos .alert-message {
+  white-space: pre-line;
+}

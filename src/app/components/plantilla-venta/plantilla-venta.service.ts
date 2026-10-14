@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, timeout } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
@@ -10,6 +10,7 @@ import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
 import { SaldoAFavor } from '../../models/saldo-a-favor.model';
 import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
+import { SustitucionProducto } from '../../models/sustitucion-producto.model';
 
 @Injectable({
   providedIn: 'root'
@@ -118,6 +119,18 @@ export class PlantillaVentaService {
   public leerChequeRegalo(empresa: string, cliente: string): Observable<ChequeRegaloCliente | null> {
     const params = new HttpParams().set('empresa', empresa).set('cliente', cliente);
     return this.http.get<ChequeRegaloCliente>(Configuracion.API_URL + '/ChequesRegalo/Cliente', { params }).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /**
+   * NestoApp#220 (NestoAPI#581): la sustitución que Compras pide avisar ahora al pedir esa cantidad.
+   * null si no hay que avisar, si falla, si tarda o si la API es anterior (404): todo sigue como siempre.
+   */
+  public leerSustitucion(empresa: string, producto: string, cantidad: number): Observable<SustitucionProducto | null> {
+    const params = new HttpParams().set('empresa', empresa).set('cantidad', String(cantidad));
+    return this.http.get<SustitucionProducto>(Configuracion.API_URL + '/Productos/' + encodeURIComponent(producto) + '/Sustitucion', { params }).pipe(
+      timeout(5000),
       catchError(() => of(null))
     );
   }

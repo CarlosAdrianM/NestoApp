@@ -14,9 +14,13 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
-/** NestoApp#222: la plantilla pregunta por el cheque regalo al elegir cliente; los mocks no lo tienen. */
+/**
+ * NestoApp#222 / #220: la plantilla pregunta por el cheque regalo al elegir cliente y por las
+ * sustituciones al llegar al resumen; los mocks de antes no lo tienen.
+ */
 const conChequeRegalo = (servicio: any): any => {
   servicio.leerChequeRegalo = servicio.leerChequeRegalo ?? (() => of(null));
+  servicio.leerSustitucion = servicio.leerSustitucion ?? (() => of(null));
   return servicio;
 };
 
@@ -1870,5 +1874,100 @@ describe('Cheque regalo en la plantilla (#222)', () => {
     servicio.leerChequeRegalo.and.returnValue(of(null));
     component.clienteSeleccionado = { empresa: '1', cliente: '11111', contacto: '0', cifNif: 'B3' };
     expect(component.chequeRegalo).toBeNull();
+  });
+});
+
+/** NestoApp#220 (NestoAPI#581): avisar al llegar al resumen de lo que Compras pide sustituir. */
+describe('Sustitución de productos que pide Compras (#220)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+  let respuesta: 'si' | 'no';
+  let selector: any;
+
+  const sustitucion = {
+    Id: 7, Empresa: '1', Producto: '25539', NombreProducto: 'PANTALON LOTE RT', ProductoSustituto: '45685',
+    NombreSustituto: 'PANTALON COD040308', Motivo: 'El proveedor tarda', MientrasNoHayaStock: true, FechaHasta: null,
+    Estado: 'Vigente', Vigente: true, Aviso: 'Compras pide servir la 45685 (PANTALON COD040308) en lugar de la 25539 mientras no haya stock.'
+  };
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    respuesta = 'si';
+    servicio = {
+      leerSustitucion: jasmine.createSpy('leerSustitucion').and.callFake((e: string, p: string) => of(p === '25539' ? sustitucion : null)),
+      modoFacturacionSugerido: () => of(null),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: () => {
+                  const boton = (opts.buttons || []).find((b: any) => typeof b === 'object' && (respuesta === 'no' ? b.role === 'cancel' : b.role !== 'cancel'));
+                  boton?.handler?.();
+                  return Promise.resolve();
+                }
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    selector = { sustituirProducto: jasmine.createSpy('sustituirProducto').and.returnValue(Promise.resolve(true)) };
+    component['_selectorPlantillaVenta'] = selector;
+    component['productosResumen'] = [
+      { producto: '25539', cantidad: 100, cantidadOferta: 10 },
+      { producto: '38093', cantidad: 2, cantidadOferta: 0 }
+    ];
+  }));
+
+  it('pregunta con el aviso de Compras y la cantidad total (unidades + oferta)', async () => {
+    await component.comprobarSustitucionesProducto();
+
+    expect(servicio.leerSustitucion).toHaveBeenCalledWith('1', '25539', 110);
+    const pregunta = alertasCreadas.find(a => a.header === 'Compras pide otra referencia');
+    expect(pregunta.message).toContain('Compras pide servir la 45685');
+    expect(pregunta.message).toContain('¿Poner la 45685 en su lugar?');
+  });
+
+  it('con «Sí» cambia la línea por el sustituto', async () => {
+    expect(await component.comprobarSustitucionesProducto()).toBeTrue();
+    expect(selector.sustituirProducto).toHaveBeenCalledWith('25539', '45685');
+  });
+
+  it('con «No» sigue con el original y no vuelve a preguntar por ese producto en el pedido', async () => {
+    respuesta = 'no';
+    expect(await component.comprobarSustitucionesProducto()).toBeFalse();
+    expect(selector.sustituirProducto).not.toHaveBeenCalled();
+
+    servicio.leerSustitucion.calls.reset();
+    await component.comprobarSustitucionesProducto();
+    expect(servicio.leerSustitucion).not.toHaveBeenCalledWith('1', '25539', jasmine.anything());
+  });
+
+  it('sin sustitución (o API vieja) no se avisa', async () => {
+    servicio.leerSustitucion.and.returnValue(of(null));
+    expect(await component.comprobarSustitucionesProducto()).toBeFalse();
+    expect(alertasCreadas.length).toBe(0);
   });
 });

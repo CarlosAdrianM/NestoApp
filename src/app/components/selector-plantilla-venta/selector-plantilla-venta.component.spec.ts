@@ -39,6 +39,52 @@ describe('SelectorPlantillaVentaComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('sustituirProducto (#220, Compras pide servir otra referencia)', () => {
+    beforeEach(() => {
+      component['inicializarDatos']([
+        { producto: '25539', texto: 'PANTALON LOTE RT', cantidad: 100, cantidadOferta: 10, precio: 30, descuento: 0 },
+        { producto: '38167', texto: 'OTRO', cantidad: 1, cantidadOferta: 0, precio: 25, descuento: 0 }
+      ]);
+    });
+
+    it('si el sustituto ya está en la plantilla, le pasa las unidades y las de oferta y deja el original a cero', async () => {
+      component['inicializarDatos']([
+        ...component.obtenerDatosIniciales(),
+        { producto: '45685', texto: 'PANTALON COD040308', cantidad: 0, cantidadOferta: 0, precio: 32, descuento: 0 }
+      ]);
+
+      expect(await component.sustituirProducto('25539', '45685')).toBeTrue();
+
+      const datos = component.obtenerDatosIniciales();
+      expect(datos.find(l => l.producto === '45685').cantidad).toBe(100);
+      expect(datos.find(l => l.producto === '45685').cantidadOferta).toBe(10);
+      expect(datos.find(l => l.producto === '25539').cantidad).toBe(0);
+      expect(datos.find(l => l.producto === '25539').cantidadOferta).toBe(0);
+    });
+
+    it('si no está, lo busca como si lo metiera el vendedor (con su precio) y lo añade', async () => {
+      spyOn(component['servicio'], 'buscarProductos').and.returnValue(of([
+        { producto: '456850', texto: 'OTRA COSA', precio: 1, estado: 0 },
+        { producto: '45685 ', texto: 'PANTALON COD040308', precio: 32, estado: 0, aplicarDescuento: true }
+      ]));
+
+      expect(await component.sustituirProducto('25539', '45685')).toBeTrue();
+
+      const sustituto = component.obtenerDatosIniciales().find(l => l.producto.trim() === '45685');
+      expect(sustituto.precio).toBe(32);
+      expect(sustituto.cantidad).toBe(100);
+      expect(sustituto.cantidadOferta).toBe(10);
+      expect(sustituto.aplicarDescuentoFicha).toBeTrue();
+    });
+
+    it('si no encuentra el sustituto, no toca nada', async () => {
+      spyOn(component['servicio'], 'buscarProductos').and.returnValue(of([]));
+
+      expect(await component.sustituirProducto('25539', '45685')).toBeFalse();
+      expect(component.obtenerDatosIniciales().find(l => l.producto === '25539').cantidad).toBe(100);
+    });
+  });
+
   describe('aplicarDescuento (#211, oferta escalonada)', () => {
     beforeEach(() => {
       component['inicializarDatos']([
