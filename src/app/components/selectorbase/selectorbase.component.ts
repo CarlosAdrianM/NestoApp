@@ -61,6 +61,10 @@ export abstract class SelectorBase {
         this.quitarTodosLosFiltros();
     } else {
         this.filtrosFijados = this.filtrosFijados.filter(f => f != filtro);
+        if (!this.datosInicial) {
+            // Issue #228: los filtros se fijaron antes de que llegaran los datos
+            return;
+        }
         this.datos = this.datosInicial;
         this.datosFiltrados = this.datosInicial;
         for (const filtroPoner of this.filtrosFijados){
@@ -83,7 +87,7 @@ export abstract class SelectorBase {
   }
 
   protected aplicarFiltro(datos: any[], filtro: string): any[] {
-      return datos.filter(
+      return (datos ?? []).filter(
           f => Object.keys(f).some(
               (key) => (f[key] && (typeof f[key] === 'string' || f[key] instanceof String)) ?
                   f[key].toUpperCase().indexOf(filtro) > -1 :
