@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { FechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
+import { BultoPedido, EnlaceFotoBulto } from 'src/app/models/bultos-pedido.model';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
@@ -47,6 +48,20 @@ export class PedidoVentaService {
   public cargarFechaEntregaAgencia(empresa: string, numero: number): Observable<FechaEntregaAgencia | null> {
       const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${numero}/FechaEntregaAgencia`;
       return this.http.get<FechaEntregaAgencia>(url).pipe(catchError(() => of(null)));
+  }
+
+  /** NestoApp#223 (NestoAPI#556): bultos del pedido con su foto del packing. [] si falla o no hay. */
+  public cargarBultos(empresa: string, numero: number): Observable<BultoPedido[]> {
+      const params = new HttpParams().set('empresa', (empresa || '1').trim());
+      return this.http.get<BultoPedido[]>(`${Configuracion.API_URL}/Almacen/Pedidos/${numero}/Bultos`, { params }).pipe(
+          map(bultos => bultos || []),
+          catchError(() => of([]))
+      );
+  }
+
+  /** NestoApp#223: enlace temporal para enseñar la foto de un bulto. */
+  public enlaceFotoBulto(id: number): Observable<EnlaceFotoBulto | null> {
+      return this.http.get<EnlaceFotoBulto>(`${Configuracion.API_URL}/Almacen/Bultos/${id}/Foto`).pipe(catchError(() => of(null)));
   }
 
   public cargarEnlacesSeguimiento(empresa: string, numero: number): Observable<any> {

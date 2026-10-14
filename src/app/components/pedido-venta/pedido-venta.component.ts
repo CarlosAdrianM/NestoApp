@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { NavController, AlertController, LoadingController, NavParams, ModalController, IonicSafeString } from '@ionic/angular';
+import { NavController, AlertController, LoadingController, NavParams, ModalController, IonicSafeString, ActionSheetController, ToastController } from '@ionic/angular';
+import { Browser } from '@capacitor/browser';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
@@ -21,6 +22,8 @@ import { CambiarClientePedidoRespuesta, puedeCambiarClientePedido, mensajeCambio
 import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 
 import { FechaEntregaAgencia, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
+import { BultoPedido, enlacePublicoFotoBulto, textoBulto } from 'src/app/models/bultos-pedido.model';
+import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
 @Component({
     selector: 'app-pedido-venta',
     templateUrl: './pedido-venta.component.html',
@@ -68,7 +71,9 @@ export class PedidoVentaComponent  {
     private errorHandler: ErrorHandlerService,
     private plantillaVentaService: PlantillaVentaService,
     private solicitudCambioModo: SolicitudCambioModoService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private actionSheetCtrl: ActionSheetController,
+    private toastCtrl: ToastController
     ) {
       this.nav = nav;
       this.servicio = servicio;
@@ -113,6 +118,7 @@ export class PedidoVentaComponent  {
               this.cargarParametrosIva();
               this.cargarSeguimientos(empresa, numero);
               this.cargarFechaEntregaAgencia(empresa, numero); // NestoApp#215
+              this.cargarBultos(empresa, numero); // NestoApp#223
               this.pedirModoFacturacionSugerido();
           },
           async error => {
@@ -146,6 +152,96 @@ export class PedidoVentaComponent  {
 
   get textoFechaPrometida(): string {
       return textoFechaPrometida(this.fechaEntregaAgencia);
+  }
+
+  // ---- NestoApp#223 (Nesto#522): fotos del packing de cada bulto, para enseñarlas tras una reclamación ----
+
+  public bultos: BultoPedido[] = [];
+  /** Enlace temporal de cada foto (por Id de bulto), para la miniatura y el visor. */
+  public fotosBultos: { [id: number]: string } = {};
+  public readonly textoBulto = textoBulto;
+
+  public cargarBultos(empresa: string, numero: number): void {
+      this.bultos = [];
+      this.fotosBultos = {};
+      this.servicio.cargarBultos(empresa, numero).subscribe(bultos => {
+          this.bultos = bultos;
+          for (const bulto of bultos.filter(b => b.TieneFoto)) {
+              this.servicio.enlaceFotoBulto(bulto.Id).subscribe(enlace => {
+                  if (enlace?.Url) {
+                      this.fotosBultos[bulto.Id] = enlace.Url;
+                  }
+              });
+          }
+      });
+  }
+
+  public async verFotoBulto(bulto: BultoPedido): Promise<void> {
+      const url = this.fotosBultos[bulto.Id];
+      if (!url) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('pedido_ver_foto_bulto', { pedido: bulto.Pedido, bulto: bulto.Bulto });
+      const modal = await this.modalCtrl.create({ component: VisorImagenComponent, componentProps: { imgSrc: url }, cssClass: 'visor-imagen-modal' });
+      await modal.present();
+  }
+
+  public enlacePublicoFoto(bulto: BultoPedido): string | null {
+      return enlacePublicoFotoBulto(bulto, Configuracion.URL_SERVIDOR);
+  }
+
+  /**
+   * La hoja de compartir del sistema si el WebView la tiene; si no (lo normal en Android), WhatsApp o
+   * copiar el enlace. Se comparte el enlace público: el cliente lo abre sin usuario.
+   */
+  public async compartirFotoBulto(bulto: BultoPedido): Promise<void> {
+      const enlace = this.enlacePublicoFoto(bulto);
+      if (!enlace) {
+          return;
+      }
+      const texto = `Foto del ${textoBulto(bulto).toLowerCase()} del pedido ${bulto.Pedido}: ${enlace}`;
+      this.firebaseAnalytics.logEvent('pedido_compartir_foto_bulto', { pedido: bulto.Pedido, bulto: bulto.Bulto });
+      const nav: any = navigator;
+      if (nav.share) {
+          try {
+              await nav.share({ title: `Pedido ${bulto.Pedido}`, text: texto, url: enlace });
+              return;
+          } catch (error) {
+              if (error?.name === 'AbortError') {
+                  return;
+              }
+          }
+      }
+      const hoja = await this.actionSheetCtrl.create({
+          header: 'Compartir la foto',
+          buttons: [
+              { text: 'Mandar por WhatsApp', icon: 'logo-whatsapp', handler: () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_system'); } },
+              { text: 'Copiar el enlace', icon: 'copy-outline', handler: () => { this.copiarEnlaceFoto(enlace); } },
+              { text: 'Cancelar', role: 'cancel' }
+          ]
+      });
+      await hoja.present();
+  }
+
+  private async copiarEnlaceFoto(enlace: string): Promise<void> {
+      let mensaje = 'Enlace copiado';
+      try {
+          await navigator.clipboard.writeText(enlace);
+      } catch {
+          mensaje = 'No se ha podido copiar el enlace';
+      }
+      const toast = await this.toastCtrl.create({ message: mensaje, duration: 2000 });
+      await toast.present();
+  }
+
+  /** «Guardar»: se abre la foto en el navegador, donde se guarda manteniéndola pulsada. */
+  public async guardarFotoBulto(bulto: BultoPedido): Promise<void> {
+      const enlace = this.enlacePublicoFoto(bulto) || this.fotosBultos[bulto.Id];
+      if (!enlace) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('pedido_guardar_foto_bulto', { pedido: bulto.Pedido, bulto: bulto.Bulto });
+      await Browser.open({ url: enlace });
   }
 
   // NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo.

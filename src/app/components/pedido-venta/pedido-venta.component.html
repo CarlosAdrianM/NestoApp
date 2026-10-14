@@ -124,7 +124,27 @@
                   <ion-button expand="block" color="warning" *ngIf="puedePasarAPresupuesto()" (click)="pasarAPresupuesto()">Pasar a presupuesto</ion-button>
               </ion-item>
           </ion-list>
-      </div>
+          <!-- NestoApp#223 (Nesto#522): fotos del packing de cada bulto (Ariadna) -->
+    <ion-list *ngIf="bultos.length > 0" class="bultos-pedido">
+      <ion-list-header><ion-label>Bultos</ion-label></ion-list-header>
+      <ion-item *ngFor="let bulto of bultos">
+        <ion-thumbnail slot="start" *ngIf="fotosBultos[bulto.Id]" (click)="verFotoBulto(bulto)">
+          <img [src]="fotosBultos[bulto.Id]" [alt]="textoBulto(bulto)" />
+        </ion-thumbnail>
+        <ion-label class="ion-text-wrap">
+          <h3>{{ textoBulto(bulto) }}</h3>
+          <p *ngIf="bulto.FechaFoto">Foto del {{ bulto.FechaFoto | date:'dd/MM/yy HH:mm' }}</p>
+          <p *ngIf="!bulto.TieneFoto">Sin foto</p>
+        </ion-label>
+        <ion-button *ngIf="enlacePublicoFoto(bulto)" fill="clear" slot="end" (click)="compartirFotoBulto(bulto)" aria-label="Compartir la foto">
+          <ion-icon slot="icon-only" name="share-social-outline"></ion-icon>
+        </ion-button>
+        <ion-button *ngIf="bulto.TieneFoto" fill="clear" slot="end" (click)="guardarFotoBulto(bulto)" aria-label="Guardar la foto">
+          <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+</div>
       <div *ngSwitchCase="'lineas'">
           <ion-list>
               <ion-item-sliding *ngFor="let linea of pedido.Lineas">

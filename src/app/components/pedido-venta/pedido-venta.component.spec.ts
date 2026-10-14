@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { AlertController, IonicModule, LoadingController, ModalController } from '@ionic/angular';
+import { ActionSheetController, AlertController, IonicModule, LoadingController, ModalController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
@@ -600,5 +600,59 @@ describe('PedidoVentaComponent: fecha de entrega a la agencia (#215)', () => {
     spyOn(component['servicio'], 'cargarFechaEntregaAgencia').and.returnValue(of(null));
     component.cargarFechaEntregaAgencia('1', 928170);
     expect(component.textoFechaEntregaAgencia).toBe('');
+  });
+});
+
+/** NestoApp#223 (Nesto#522): fotos del packing de cada bulto en el detalle del pedido. */
+describe('PedidoVentaComponent: fotos de los bultos (#223)', () => {
+  let component: PedidoVentaComponent;
+  let hojas: any[];
+
+  const bulto = (id: number, tieneFoto = true) => ({
+    Id: id, Empresa: '1', Pedido: 926940, Picking: 5, Bulto: id, Peso: 2, TieneFoto: tieneFoto, NumeroEnvio: null,
+    Usuario: 'mozo', FechaFoto: '2026-10-09T10:00:00', RutaFotoPublica: tieneFoto ? `api/Almacen/Fotos/${id}-abc` : null
+  });
+
+  beforeEach(waitForAsync(() => {
+    hojas = [];
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: ActionSheetController, useValue: { create: (o: any) => { hojas.push(o); return Promise.resolve({ present: () => Promise.resolve() }); } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PedidoVentaComponent).componentInstance;
+  }));
+
+  it('carga los bultos y pide el enlace de la foto solo de los que la tienen', () => {
+    spyOn(component['servicio'], 'cargarBultos').and.returnValue(of([bulto(1), bulto(2, false)] as any));
+    const enlace = spyOn(component['servicio'], 'enlaceFotoBulto').and.returnValue(of({ Url: 'https://blob/1.jpg?sas', MinutosDeVigencia: 15 }));
+
+    component.cargarBultos('1', 926940);
+
+    expect(component.bultos.length).toBe(2);
+    expect(enlace).toHaveBeenCalledTimes(1);
+    expect(component.fotosBultos[1]).toBe('https://blob/1.jpg?sas');
+  });
+
+  it('sin hoja de compartir del sistema, ofrece WhatsApp o copiar el enlace público', async () => {
+    const nav: any = navigator;
+    const share = nav.share;
+    nav.share = undefined;
+    try {
+      await component.compartirFotoBulto(bulto(1) as any);
+    } finally {
+      nav.share = share;
+    }
+
+    expect(hojas.length).toBe(1);
+    expect(hojas[0].buttons.map((b: any) => b.text)).toEqual(['Mandar por WhatsApp', 'Copiar el enlace', 'Cancelar']);
+    expect(component.enlacePublicoFoto(bulto(1) as any)).toContain('/api/Almacen/Fotos/1-abc');
   });
 });
