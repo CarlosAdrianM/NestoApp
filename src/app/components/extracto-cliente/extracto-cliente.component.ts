@@ -6,6 +6,8 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { Usuario } from 'src/app/models/Usuario';
+import { firstValueFrom } from 'rxjs';
+import { hayQuePreguntarConcepto, textoPreguntaConcepto } from 'src/app/models/revision-concepto.model';
 
 @Component({
     selector: 'app-extracto-cliente',
@@ -452,6 +454,8 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
     }
 
     this.enviando = true;
+    // NestoApp#216: antes de mandarlo, «¿Quisiste decir…?» si la API propone corregir el concepto.
+    this.concepto = await this.revisarConcepto(this.concepto);
     this.firebaseAnalytics.logEvent("enviar_enlace_cobro", {cliente: this.cliente.cliente, importe: this.importe});
 
     const efectos: EfectoAPagar[] = this.movimientosSeleccionados.map(mov => ({
@@ -530,6 +534,29 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
         await alert.present();
       }
     );
+  }
+
+  /** NestoApp#216 (NestoAPI#609): devuelve el concepto que elige el vendedor (el suyo si no hay propuesta). */
+  async revisarConcepto(concepto: string): Promise<string> {
+    const respuesta = await firstValueFrom(
+      this.servicio.revisarConcepto(concepto, this.cliente.empresa?.trim(), this.cliente.cliente?.trim())
+    ).catch(() => null);
+    if (!hayQuePreguntarConcepto(respuesta)) {
+      return concepto;
+    }
+    return new Promise<string>(async resolve => {
+      const alerta = await this.alertCtrl.create({
+        header: '¿Quisiste decir…?',
+        message: textoPreguntaConcepto(respuesta),
+        cssClass: 'alerta-texto-con-saltos',
+        backdropDismiss: false,
+        buttons: [
+          { text: 'Dejar el mío', role: 'cancel', handler: () => resolve(concepto) },
+          { text: 'Usar la corrección', handler: () => resolve(respuesta.Propuesto) }
+        ]
+      });
+      await alerta.present();
+    });
   }
 
   async copiarEnlace(): Promise<void> {

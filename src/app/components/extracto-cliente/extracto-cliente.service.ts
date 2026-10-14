@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
+import { RespuestaRevisarConcepto } from 'src/app/models/revision-concepto.model';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { PdfStorage } from 'src/app/services/pdf-storage.service';
@@ -75,6 +77,19 @@ export class ExtractoClienteService {
     const url = Configuracion.API_URL + '/Pagos';
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     return this.http.post<RespuestaIniciarPago>(url, solicitud, { headers });
+  }
+
+  /**
+   * NestoApp#216 (NestoAPI#609): propuesta de corrección del concepto. Si falla, tarda más de 3 s o la
+   * API es anterior (404), null: se sigue con lo escrito sin avisar.
+   */
+  public revisarConcepto(concepto: string, empresa: string, cliente?: string): Observable<RespuestaRevisarConcepto | null> {
+    const url = Configuracion.API_URL + '/Pagos/RevisarConcepto';
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<RespuestaRevisarConcepto>(url, { Concepto: concepto, Empresa: empresa, Cliente: cliente }, { headers }).pipe(
+      timeout(3000),
+      catchError(() => of(null))
+    );
   }
 
   public mandarReclamacionDeuda(reclamacion: ReclamacionDeuda): Observable<ReclamacionDeuda> {
