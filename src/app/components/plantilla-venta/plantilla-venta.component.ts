@@ -25,6 +25,7 @@ import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
   modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
+import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque } from 'src/app/models/cheque-regalo.model';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, esDescuentoEscalonado, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
@@ -233,6 +234,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           }
       } else {
           this._clienteSeleccionado = value;
+          this.cargarChequeRegalo(value); // NestoApp#222
       }
   }
   private _pedidoPendienteSeleccionado: number;
@@ -274,6 +276,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           text: 'Continuar',
           handler: () => {
             this._clienteSeleccionado = value;
+            this.cargarChequeRegalo(value); // NestoApp#222
             this.cargarProductos(this.clienteSeleccionado);
           }
         }
@@ -434,15 +437,28 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private _direccionSeleccionada: any;
+  /** NestoApp#230: cliente/contacto con el que se fijó el modo de servicio. */
+  private claveDireccionModo: string | null = null;
+  private claveDireccion(direccion: any): string {
+      return `${this.clienteSeleccionado?.cliente?.toString().trim() ?? ''}/${direccion?.contacto?.toString().trim() ?? ''}`;
+  }
   get direccionSeleccionada(): any {
       return this._direccionSeleccionada;
   }
   set direccionSeleccionada(value: any) {
-      // Verificar si la dirección está cambiando ANTES de actualizar _direccionSeleccionada
-      const direccionCambiando = !this._direccionSeleccionada ||
-          this._direccionSeleccionada.contacto?.toString().trim() !== value?.contacto?.toString().trim();
+      // Verificar si la dirección está cambiando ANTES de actualizar _direccionSeleccionada.
+      // NestoApp#230: se compara con el último cliente/contacto que fijó el modo, no con la
+      // instancia actual: un null intermedio (reentrada, recarga del selector) no es un cambio.
+      const claveAnterior = this.claveDireccionModo ??
+          (this._direccionSeleccionada ? this.claveDireccion(this._direccionSeleccionada) : null);
+      const clave = value ? this.claveDireccion(value) : null;
+      const direccionCambiando = clave !== claveAnterior;
+      const modoAnterior = this.modoServicio;
+      const habiaElegidoModo = this.modoServicioElegidoPorUsuario;
 
       this._direccionSeleccionada = value;
+      // Un null de paso conserva la clave: si luego vuelve el mismo contacto, no es un cambio.
+      this.claveDireccionModo = value ? clave : claveAnterior;
       if (value) {
           // NestoApp#174: el pedido nace en el modo de servicio por defecto y NO se arrastra
           // el servirJunto de la ficha (una referencia agotada dejaba pedidos «todo junto»
@@ -454,6 +470,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           } else if (direccionCambiando && !this.contactoParaRestaurar) {
               this.modoServicioSeleccionado = this.modoServicioPorDefecto;
               value.servirJunto = esTodoJunto(this.modoServicioPorDefecto);
+              // NestoApp#230: cambiar de contacto de verdad recalcula, pero nunca en silencio.
+              this.modoServicioElegidoPorUsuario = false;
+              if (habiaElegidoModo && modoAnterior !== this.modoServicioPorDefecto) {
+                  this.avisarCambioModoElegido(`Has cambiado la dirección de entrega: el modo de entrega vuelve a ` +
+                      `«${nombreModo(this.modoServicioPorDefecto)}» (habías elegido «${nombreModo(modoAnterior)}»). Revísalo antes de guardar.`);
+              }
               // NestoApp#197: con otra dirección se vuelve a partir de su mantenerJunto y de la sugerencia.
               this.modoFacturacionSeleccionado = null;
               this.sugerenciaFacturacion = null;
@@ -732,12 +754,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    */
   public cambiarModoServicio(nuevo: number, elegidoPorUsuario: boolean = true): void {
     const anterior = this.modoServicio;
-    if (anterior === nuevo) {
-      return;
-    }
     if (elegidoPorUsuario) {
       // NestoApp#184: a partir de aquí manda el vendedor, no la sugerencia del servidor.
+      // NestoApp#230: también si elige el modo que ya se veía (antes no contaba y la siguiente
+      // sugerencia se lo cambiaba sin avisar).
       this.modoServicioElegidoPorUsuario = true;
+    }
+    if (anterior === nuevo) {
+      return;
     }
     this.modoServicioSeleccionado = nuevo;
     if (this.direccionSeleccionada) {
@@ -750,6 +774,37 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (esTodoJunto(anterior) && !esTodoJunto(nuevo)) {
       this.validarSalidaDeTodoJunto(nuevo, !elegidoPorUsuario);
     }
+  }
+
+  /**
+   * NestoApp#230: el selector es una hoja de acciones propia porque ion-select no avisa cuando se
+   * elige el valor que ya tiene, y elegir el modo que se ve también es una elección del vendedor.
+   */
+  public async elegirModoServicio(): Promise<void> {
+    const actual = this.modoServicio;
+    const hoja = await this.actionSheetCtrl.create({
+      header: 'Entrega',
+      buttons: [
+        ...this.listaModosServicio.map(modo => ({
+          text: (modo.codigo === actual ? '✓ ' : '') + modo.nombre,
+          disabled: !this.esModoServicioPermitido(modo.codigo),
+          handler: () => { this.cambiarModoServicio(modo.codigo); }
+        })),
+        { text: 'Cancelar', role: 'cancel' }
+      ]
+    });
+    await hoja.present();
+  }
+
+  public get nombreModoServicio(): string {
+    return nombreModo(this.modoServicio);
+  }
+
+  /** NestoApp#230: si el modo que eligió el vendedor cambia, se le dice con una alerta, no solo bajo el selector. */
+  private avisarCambioModoElegido(mensaje: string): void {
+    this.alertCtrl.create({ header: 'Modo de entrega', message: mensaje, buttons: ['Ok'] })
+      .then(alerta => alerta.present())
+      .catch(error => console.log('No se ha podido avisar del cambio de modo', error));
   }
 
   /** Vuelve a «Todo junto» cuando el servidor o el usuario no aceptan salir de él. */
@@ -1092,6 +1147,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           this.motivoModoServicio = `«${nombreModo(elegido)}» ya no tiene sentido para este pedido` +
             (motivo ? `: ${motivo}` : '.') + ` Se pasa a «${nombreModo(sugerencia.Modo)}».`;
           this.cambiarModoServicio(sugerencia.Modo, false);
+          this.avisarCambioModoElegido(this.motivoModoServicio); // NestoApp#230
           return;
         }
 
@@ -1564,6 +1620,31 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           pedido.Lineas.push(lineaRegalo);
       }
 
+      // NestoApp#222: canje del cheque regalo. Basta el producto con cantidad 1; el servidor pone
+      // cantidad −1, precio = importe, IVA y texto de la campaña, y comprueba el mínimo.
+      if (this.usarChequeRegalo && this.puedeUsarChequeRegalo) {
+          const ivaProducto = (this.productosResumen || []).find(l => l.iva)?.iva ?? this.direccionSeleccionada.iva;
+          pedido.Lineas.push({
+              'estado': this.esPresupuesto ? -3 : 1,
+              'tipoLinea': 1,
+              'producto': this.chequeRegalo.Producto,
+              'texto': this.chequeRegalo.TextoLinea,
+              'Cantidad': 1,
+              'fechaEntrega': this.fechaEntrega,
+              'PrecioUnitario': this.chequeRegalo.Importe,
+              'DescuentoLinea': 0,
+              'AplicarDescuento': false,
+              'vistoBueno': 0,
+              'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+              'almacen': this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen,
+              'iva': ivaProducto,
+              'delegacion': this.usuario.delegacion,
+              'formaVenta': this.usuario.formaVenta,
+              'oferta': null,
+              ...(this.pedidoEnEdicionNumero != null ? { id: 0 } : {})
+          });
+      }
+
       console.log(pedido);
       return pedido;
   }
@@ -1904,6 +1985,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.portesGratis = false;
       this.noCobrarComisionReembolso = false;
       this.recogerProducto = false;
+      // NestoApp#222
+      this.chequeRegalo = null;
+      this.usarChequeRegalo = false;
+      this.clienteChequeRegalo = null;
       // NestoApp#206
       this.saldoAFavor = null;
       this.descontarSaldoAFavor = false;
@@ -1917,6 +2002,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.borradorOrigen = null;
       // NestoApp#174: el próximo pedido vuelve a nacer en el modo por defecto.
       this.modoServicioSeleccionado = null;
+      this.claveDireccionModo = null; // NestoApp#230
       // NestoApp#169: las sugerencias son del pedido que se acaba de cerrar.
       this.sugerenciasOfertas = [];
       this.verSugerenciasOfertas = false;
@@ -1974,6 +2060,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           const comisionConIva = this.direccionSeleccionada.iva ? comision * 1.21 : comision;
           total += comisionConIva;
       }
+      total -= this.descuentoChequeRegalo; // NestoApp#222
       return total;
   }
 
@@ -2205,6 +2292,54 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.servicio.leerSaldoAFavor(numero).subscribe(saldo => {
       this.saldoAFavor = saldo && saldo.Total > 0 ? saldo : null;
     });
+  }
+
+  // NestoApp#222 (NestoAPI#593 c5): cheque regalo del cliente. Se enseña siempre que lo tenga;
+  // solo se canjea si el vendedor lo marca (añade la línea del cheque y el servidor la normaliza).
+  public chequeRegalo: ChequeRegaloCliente | null = null;
+  public usarChequeRegalo: boolean = false;
+  private clienteChequeRegalo: string | null = null;
+
+  public cargarChequeRegalo(cliente: any): void {
+    const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}` : null;
+    if (clave === this.clienteChequeRegalo) {
+      return;
+    }
+    this.clienteChequeRegalo = clave;
+    this.chequeRegalo = null;
+    this.usarChequeRegalo = false;
+    if (!clave) {
+      return;
+    }
+    this.servicio.leerChequeRegalo(cliente.empresa.toString().trim(), cliente.cliente.toString().trim()).subscribe(cheque => {
+      if (clave === this.clienteChequeRegalo) {
+        this.chequeRegalo = cheque;
+      }
+    });
+  }
+
+  /** La línea del cheque ya está en el pedido (al editar uno en el que se canjeó). */
+  get chequeRegaloYaEnPedido(): boolean {
+    return (this.productosResumen || []).some(l => esLineaChequeRegalo(l, this.chequeRegalo));
+  }
+
+  get puedeUsarChequeRegalo(): boolean {
+    return !!this.chequeRegalo?.SePuedeUsar && !this.chequeRegaloYaEnPedido;
+  }
+
+  /** Lo que se descuenta del total que se enseña (con IVA si el pedido lo lleva). */
+  get descuentoChequeRegalo(): number {
+    if (!this.usarChequeRegalo || !this.puedeUsarChequeRegalo) {
+      return 0;
+    }
+    return this.direccionSeleccionada?.iva ? this.chequeRegalo.Importe * 1.21 : this.chequeRegalo.Importe;
+  }
+
+  get faltaParaMinimoChequeRegalo(): number {
+    if (!this.chequeRegalo) {
+      return 0;
+    }
+    return faltaParaMinimoCheque(baseComputableCheque(this.productosResumen, this.chequeRegalo), this.chequeRegalo);
   }
 
   get hayPendienteDePago(): boolean {

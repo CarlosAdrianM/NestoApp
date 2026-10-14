@@ -14,6 +14,12 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
+/** NestoApp#222: la plantilla pregunta por el cheque regalo al elegir cliente; los mocks no lo tienen. */
+const conChequeRegalo = (servicio: any): any => {
+  servicio.leerChequeRegalo = servicio.leerChequeRegalo ?? (() => of(null));
+  return servicio;
+};
+
 describe('PlantillaVentaComponent', () => {
   let component: PlantillaVentaComponent;
   let fixture: ComponentFixture<PlantillaVentaComponent>;
@@ -171,7 +177,7 @@ describe('Ampliar pedido cuando el servidor lo rechaza (#172)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         { provide: AlertController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }) } },
         { provide: FirebaseAnalytics, useValue: { logEvent } },
@@ -254,7 +260,7 @@ describe('Borrar el borrador al crear el pedido (#173)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: borradorService },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         {
@@ -367,7 +373,7 @@ describe('Modo de servicio (#174)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         {
@@ -546,7 +552,7 @@ describe('Slide de pago sin dirección ni condiciones de pago (#179 / #182)', ()
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         {
@@ -695,7 +701,7 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: { calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
+        { provide: PlantillaVentaService, useValue: { leerChequeRegalo: () => of(null), calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         {
           provide: ActionSheetController, useValue: {
@@ -820,7 +826,7 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: {} },
@@ -1022,7 +1028,7 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: {} },
@@ -1164,7 +1170,7 @@ describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         {
@@ -1383,7 +1389,7 @@ describe('Modo de facturación en la plantilla (#197)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: {} },
@@ -1533,7 +1539,7 @@ describe('Saldo a favor al mandar el cobro por tarjeta (#206)', () => {
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
         Usuario,
-        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         {
@@ -1622,5 +1628,247 @@ describe('Saldo a favor al mandar el cobro por tarjeta (#206)', () => {
     component.descontarSaldoAFavor = true;
     component.alCambiarMandarCobroTarjeta(false);
     expect(component.descontarSaldoAFavor).toBeFalse();
+  });
+});
+
+/**
+ * NestoApp#230 (gemela de Nesto#525, pedido 928170 de David): el modo de servicio que elige el
+ * vendedor no se pierde sin aviso. Elegir el modo que ya se ve también cuenta como elección.
+ */
+describe('El modo de servicio elegido por el vendedor se respeta (#230)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+  let hojasCreadas: any[];
+  const avisosModo = () => alertasCreadas.filter(a => a.header === 'Modo de entrega');
+
+  const todosPermitidos = [1, 2, 3, 4].map(m => ({ Modo: m, Nombre: 'X', Permitido: true, Motivo: null }));
+  const sugerencia = (modo: number, modos: any[] = todosPermitidos) =>
+    of({ Modo: modo, Nombre: 'X', LineasVerdes: 0, LineasRosas: 0, LineasRojas: 0, Motivo: 'Motivo del servidor', Modos: modos });
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    hojasCreadas = [];
+    servicio = {
+      modoFacturacionSugerido: () => of(null),
+      modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(1)),
+      ofertasSugeridas: () => of([]),
+      validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({ role: 'cancel' }) });
+            }
+          }
+        },
+        {
+          provide: ActionSheetController, useValue: {
+            create: (opts: any) => {
+              hojasCreadas.push(opts);
+              return Promise.resolve({ present: () => Promise.resolve() });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '2043', contacto: '2', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '2', iva: 'G21', servirJunto: false };
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', cantidad: 2, cantidadOferta: 0 }];
+  }));
+
+  it('elegir «Todo junto» con «Todo junto» ya puesto cuenta: la sugerencia 4 no lo pisa (pedido 928170)', fakeAsync(() => {
+    component.cargarModoServicioSugerido(); // la sugerencia pone «Todo junto»
+    tick();
+    expect(component.modoServicio).toBe(1);
+
+    component.cambiarModoServicio(1); // el vendedor elige el que ya se ve
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(4));
+    component.cargarModoServicioSugerido(); // toca una línea: se recalcula
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+  }));
+
+  it('la hoja de «Entrega» deja elegir el modo que ya está y lo marca como elegido', fakeAsync(() => {
+    component.cargarModoServicioSugerido();
+    tick();
+
+    component.elegirModoServicio();
+    tick();
+    const botonTodoJunto = hojasCreadas[0].buttons.find((b: any) => b.text.includes('Todo junto'));
+    expect(botonTodoJunto.text).toContain('✓');
+    botonTodoJunto.handler();
+
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(4));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+  }));
+
+  it('la hoja de «Entrega» deshabilita los modos que el servidor no permite', fakeAsync(() => {
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(1, [
+      { Modo: 1, Nombre: 'Todo junto', Permitido: true, Motivo: null },
+      { Modo: 2, Nombre: 'Según vaya entrando', Permitido: false, Motivo: 'Todo tiene stock' }
+    ]));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    component.elegirModoServicio();
+    tick();
+
+    const boton2 = hojasCreadas[0].buttons.find((b: any) => b.text.includes('Según vaya entrando'));
+    expect(boton2.disabled).toBeTrue();
+  }));
+
+  it('la misma dirección con otra instancia (y un null por medio) no cambia el modo elegido', fakeAsync(() => {
+    component.cambiarModoServicio(4);
+    tick();
+
+    component.direccionSeleccionada = null;
+    component.direccionSeleccionada = { contacto: '2', iva: 'G21', servirJunto: true };
+    tick();
+
+    expect(component.modoServicio).toBe(4);
+    expect(avisosModo().length).toBe(0);
+  }));
+
+  it('cambiar de contacto de verdad con una elección previa recalcula y avisa', fakeAsync(() => {
+    component.cambiarModoServicio(4);
+    tick();
+
+    component.direccionSeleccionada = { contacto: '0', iva: 'G21', servirJunto: false };
+    tick();
+
+    expect(component.modoServicio).toBe(3);
+    expect(avisosModo().length).toBe(1);
+    expect(avisosModo()[0].message).toContain('habías elegido');
+  }));
+
+  it('si la sugerencia pisa una elección porque ya no tiene sentido, hay alerta', fakeAsync(() => {
+    component.cambiarModoServicio(4);
+    tick();
+
+    servicio.modoServicioSugerido.and.returnValue(sugerencia(1, [
+      { Modo: 1, Nombre: 'Todo junto', Permitido: true, Motivo: null },
+      { Modo: 4, Nombre: 'Ahora lo que hay', Permitido: false, Motivo: 'Todo tiene stock' }
+    ]));
+    component.cargarModoServicioSugerido();
+    tick();
+
+    expect(component.modoServicio).toBe(1);
+    expect(avisosModo().length).toBe(1);
+    expect(avisosModo()[0].message).toContain('ya no tiene sentido');
+  }));
+});
+
+/** NestoApp#222 (NestoAPI#593 c5): ver y aplicar el cheque regalo del cliente en el pedido. */
+describe('Cheque regalo en la plantilla (#222)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+
+  const cheque = (estado = 'Disponible') => ({
+    Producto: 'CHEQUE50_OCT26', Importe: 50, MinimoCanje: 250, CanjeHasta: '2026-11-07T00:00:00',
+    PrefijosNombreExcluidosMinimo: ['PACK 26'], GruposExcluidosMinimo: ['PEL'],
+    Estado: estado, SePuedeUsar: estado === 'Disponible', Mensaje: 'Tiene un cheque regalo de 50 €', PedidoCanje: null, TextoLinea: 'CHEQUE REGALO OCTUBRE'
+  });
+
+  beforeEach(waitForAsync(() => {
+    servicio = {
+      leerChequeRegalo: jasmine.createSpy('leerChequeRegalo').and.returnValue(of(cheque())),
+      modoFacturacionSugerido: () => of(null),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '37320', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false };
+    component['productosResumen'] = [{ producto: '38093', texto: 'CREMA', grupo: 'COS', cantidad: 3, precio: 100, descuento: 0, iva: 'G21' }];
+  }));
+
+  it('al elegir cliente se pregunta por su cheque', () => {
+    expect(servicio.leerChequeRegalo).toHaveBeenCalledWith('1', '37320');
+    expect(component.chequeRegalo.Producto).toBe('CHEQUE50_OCT26');
+    expect(component.puedeUsarChequeRegalo).toBeTrue();
+  });
+
+  it('sin marcar «Usar», el pedido no lleva la línea del cheque', () => {
+    const pedido = component['prepararPedido']();
+    expect(pedido.Lineas.some((l: any) => l.producto === 'CHEQUE50_OCT26')).toBeFalse();
+  });
+
+  it('marcado, el pedido lleva una línea del producto del cheque con cantidad 1', () => {
+    component.usarChequeRegalo = true;
+    const pedido = component['prepararPedido']();
+    const linea = pedido.Lineas.find((l: any) => l.producto === 'CHEQUE50_OCT26');
+    expect(linea).toBeTruthy();
+    expect(linea.Cantidad).toBe(1);
+    expect(linea.tipoLinea).toBe(1);
+  });
+
+  it('marcado, el total que se enseña baja el importe con IVA', () => {
+    component.usarChequeRegalo = true;
+    expect(component.descuentoChequeRegalo).toBeCloseTo(60.5, 2);
+  });
+
+  it('un cheque que no se puede usar solo informa', () => {
+    servicio.leerChequeRegalo.and.returnValue(of(cheque('Canjeado')));
+    component.clienteSeleccionado = { empresa: '1', cliente: '99999', contacto: '0', cifNif: 'B2' };
+    component.usarChequeRegalo = true;
+
+    expect(component.puedeUsarChequeRegalo).toBeFalse();
+    expect(component['prepararPedido']().Lineas.some((l: any) => l.producto === 'CHEQUE50_OCT26')).toBeFalse();
+  });
+
+  it('si el pedido ya lleva la línea del cheque (edición), no se ofrece otra vez', () => {
+    component['productosResumen'].push({ producto: 'CHEQUE50_OCT26', cantidad: -1, precio: 50 });
+    expect(component.chequeRegaloYaEnPedido).toBeTrue();
+    expect(component.puedeUsarChequeRegalo).toBeFalse();
+  });
+
+  it('sin cheque (404) no se enseña nada', () => {
+    servicio.leerChequeRegalo.and.returnValue(of(null));
+    component.clienteSeleccionado = { empresa: '1', cliente: '11111', contacto: '0', cifNif: 'B3' };
+    expect(component.chequeRegalo).toBeNull();
   });
 });

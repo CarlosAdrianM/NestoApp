@@ -9,6 +9,7 @@ import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
 import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
 import { SaldoAFavor } from '../../models/saldo-a-favor.model';
+import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
 
 @Injectable({
   providedIn: 'root'
@@ -109,6 +110,14 @@ export class PlantillaVentaService {
   public leerSaldoAFavor(cliente: string): Observable<SaldoAFavor | null> {
     const params = new HttpParams().set('cliente', cliente);
     return this.http.get<SaldoAFavor>(Configuracion.API_URL + '/ExtractosCliente/SaldoAFavor', { params }).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /** NestoApp#222: el cheque regalo del cliente en una campaña activa; null si no tiene (404) o falla. */
+  public leerChequeRegalo(empresa: string, cliente: string): Observable<ChequeRegaloCliente | null> {
+    const params = new HttpParams().set('empresa', empresa).set('cliente', cliente);
+    return this.http.get<ChequeRegaloCliente>(Configuracion.API_URL + '/ChequesRegalo/Cliente', { params }).pipe(
       catchError(() => of(null))
     );
   }
