@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
-import { NovedadesService, Novedad, agruparPorVersion, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
+import { NovedadesService, Novedad, unirConY, filtraPorPerfiles, textoFiltroPerfiles, textoParaPerfiles, iconoAdjunto, agruparPorVersion, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorCategoria, aplicarVoto, tieneFeedback } from './novedades.service';
 
 /**
  * NestoApp#177: las novedades del perfil salen de la tabla Novedades de la API (Nesto#372)
@@ -46,6 +46,27 @@ describe('NovedadesService (#177)', () => {
     ]);
 
     expect(resultado.map(n => n.Titulo)).toEqual(['Cosa de la app', 'Otra de la app']);
+  });
+
+  it('#221: con «Ver todas» pide &todas=true; sin él, no lo manda', () => {
+    service.leerNovedades(true).subscribe();
+    expect(httpMock.expectOne(r => r.url.endsWith('/Novedades')).request.params.get('todas')).toBe('true');
+    service.leerNovedades().subscribe();
+    expect(httpMock.expectOne(r => r.url.endsWith('/Novedades')).request.params.has('todas')).toBeFalse();
+  });
+
+  it('#221: MisPerfiles que falla (API vieja) es null', () => {
+    let resultado: any = 'sin llamar';
+    service.leerMisPerfiles().subscribe(r => resultado = r);
+    httpMock.expectOne(r => r.url.endsWith('/Novedades/MisPerfiles')).flush('no', { status: 404, statusText: 'Not Found' });
+    expect(resultado).toBeNull();
+  });
+
+  it('#218: el adjunto se baja como fichero', () => {
+    service.descargarAdjunto(7).subscribe();
+    const req = httpMock.expectOne(r => r.url.endsWith('/Novedades/Adjuntos/7'));
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['%PDF']));
   });
 
   it('una respuesta vacía o rara devuelve lista vacía sin reventar', () => {
@@ -336,5 +357,35 @@ describe('Mencionables (#194)', () => {
 
     service.leerMencionables().subscribe();
     httpMock.expectOne(r => r.url.endsWith('/Novedades/Mencionables')).flush([]);
+  });
+});
+
+/** NestoApp#221 (sugerencia 551) y #218: textos de perfiles y adjuntos. */
+describe('Novedades por perfil y adjuntos (#221 / #218)', () => {
+  const mis = (perfiles: string[], veTodas = false) => ({ Perfiles: perfiles, VeTodas: veTodas, PuedeEditar: false, Disponibles: [] });
+
+  it('une con comas y la última con «y»', () => {
+    expect(unirConY(['Vendedores'])).toBe('Vendedores');
+    expect(unirConY(['Almacén', 'Tiendas'])).toBe('Almacén y Tiendas');
+    expect(unirConY(['Almacén', 'Tiendas', 'Administración'])).toBe('Almacén, Tiendas y Administración');
+  });
+
+  it('solo se explica el filtro (y se ofrece «Ver todas») si la API filtra', () => {
+    expect(filtraPorPerfiles(mis(['Vendedores']))).toBeTrue();
+    expect(textoFiltroPerfiles(mis(['Vendedores']))).toBe('Te enseñamos las novedades de Vendedores y las que son para todos.');
+    expect(filtraPorPerfiles(mis(['Vendedores'], true))).toBeFalse();
+    expect(filtraPorPerfiles(mis([]))).toBeFalse();
+    expect(filtraPorPerfiles(null)).toBeFalse();
+  });
+
+  it('«Para: …» solo en las que no son para todos', () => {
+    expect(textoParaPerfiles({ Perfiles: ['Almacén', 'Tiendas'] } as any)).toBe('Para: Almacén y Tiendas');
+    expect(textoParaPerfiles({ Perfiles: null } as any)).toBe('');
+    expect(textoParaPerfiles({} as any)).toBe('');
+  });
+
+  it('icono según el tipo del adjunto', () => {
+    expect(iconoAdjunto({ Id: 1, Nombre: 'normas.pdf', Tipo: 'application/pdf', Tamano: 1 })).toBe('document-text-outline');
+    expect(iconoAdjunto({ Id: 2, Nombre: 'foto.jpg', Tipo: 'image/jpeg', Tamano: 1 })).toBe('image-outline');
   });
 });

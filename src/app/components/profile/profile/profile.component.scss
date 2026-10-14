@@ -208,3 +208,23 @@ swiper-container {
   gap: 4px;
   margin: 8px 0 16px;
 }
+
+// NestoApp#221: explicación del filtro por perfiles y «Para: …» en cada novedad
+.filtro-perfiles p {
+  margin: 4px 0 0;
+  font-size: 0.85em;
+  color: var(--ion-color-medium);
+}
+
+.para-perfiles {
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--ion-color-medium);
+}
+
+// NestoApp#218: chips de los adjuntos
+.adjuntos-novedad {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}

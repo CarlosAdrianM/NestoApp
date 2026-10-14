@@ -12,10 +12,12 @@ import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
-import { GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia } from 'src/app/services/novedades.service';
+import { AdjuntoNovedad, MisPerfilesNovedades, filtraPorPerfiles, iconoAdjunto, textoFiltroPerfiles, textoParaPerfiles, GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia } from 'src/app/services/novedades.service';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { TipoAportacion } from '../sugerir-caracteristica/sugerir-caracteristica.component';
 
+import { firstValueFrom } from 'rxjs';
+import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
 @Component({
     selector: 'app-profile',
     templateUrl: './profile.component.html',
@@ -57,10 +59,12 @@ export class ProfileComponent {
       private appComponent: AppComponent,
       private novedadesService: NovedadesService,
       private route: ActivatedRoute,
+      private visorFicheros: VisorFicheros,
       public buzon: BuzonNotificacionesService,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
+          this.cargarMisPerfiles();
           this.cargarNovedades();
           this.cargarSugerencias();
           // #193: la push «Te han contestado en Novedades» trae aquí ?novedad=…&comentario=…
@@ -109,7 +113,7 @@ export class ProfileComponent {
   private cargarNovedades(): Promise<void> {
       this.ultimaCargaNovedades = Date.now();
       return new Promise<void>(resolve => {
-          this.novedadesService.leerNovedades().subscribe({
+          this.novedadesService.leerNovedades(this.verTodasNovedades).subscribe({
               next: novedades => {
                   // #192: al refrescar se sigue viendo la misma versión (o las sugerencias), si sigue existiendo.
                   const versionVista = this.grupoNovedadesActual?.version;
@@ -128,6 +132,62 @@ export class ProfileComponent {
               }
           });
       });
+  }
+
+  // ---- NestoApp#221 (sugerencia 551): la API solo manda las novedades de los perfiles de cada uno ----
+
+  public misPerfilesNovedades: MisPerfilesNovedades | null = null;
+  public verTodasNovedades: boolean = false;
+  public readonly textoParaPerfiles = textoParaPerfiles;
+  public readonly iconoAdjunto = iconoAdjunto;
+
+  private cargarMisPerfiles(): void {
+      this.novedadesService.leerMisPerfiles().subscribe(mis => this.misPerfilesNovedades = mis);
+  }
+
+  get filtraNovedadesPorPerfil(): boolean {
+      return filtraPorPerfiles(this.misPerfilesNovedades);
+  }
+
+  get textoFiltroPerfiles(): string {
+      return textoFiltroPerfiles(this.misPerfilesNovedades);
+  }
+
+  public cambiarVerTodasNovedades(valor: boolean): Promise<void> {
+      this.verTodasNovedades = !!valor;
+      this.firebaseAnalytics.logEvent('profile_ver_todas_novedades', { valor: this.verTodasNovedades });
+      return this.cargarNovedades();
+  }
+
+  /** #221: si se salta (campana, buscador) a una que el filtro deja fuera, se piden todas. */
+  private async pedirTodasSiHaceFalta(): Promise<boolean> {
+      if (this.verTodasNovedades || !this.filtraNovedadesPorPerfil) {
+          return false;
+      }
+      await this.cambiarVerTodasNovedades(true);
+      return true;
+  }
+
+  // ---- NestoApp#218 / NestoAPI#616: adjuntos (PDF e imágenes) abiertos con el visor del móvil ----
+
+  public async abrirAdjunto(adjunto: AdjuntoNovedad): Promise<void> {
+      this.firebaseAnalytics.logEvent('profile_abrir_adjunto_novedad', { adjunto: adjunto.Id });
+      const loading = await this.loadingCtrl.create({ message: 'Abriendo ' + adjunto.Nombre + '...' });
+      await loading.present();
+      try {
+          const blob = await firstValueFrom(this.novedadesService.descargarAdjunto(adjunto.Id));
+          await this.visorFicheros.abrir(blob, adjunto.Nombre, adjunto.Tipo);
+      } catch (error) {
+          console.error('No se ha podido abrir el adjunto:', error);
+          const alerta = await this.alertCtrl.create({
+              header: 'No se ha podido abrir',
+              message: `No se ha podido abrir «${adjunto.Nombre}». Inténtalo otra vez en un rato.`,
+              buttons: ['Ok']
+          });
+          await alerta.present();
+      } finally {
+          await loading.dismiss();
+      }
   }
 
   // ---- NestoApp#190 / NestoAPI#526: sugerencias de los usuarios, por delante de la versión actual ----
@@ -253,6 +313,9 @@ export class ProfileComponent {
               await this.cargarNovedades();
               indice = this.gruposNovedades.findIndex(g => g.version === version);
           }
+          if (indice < 0 && await this.pedirTodasSiHaceFalta()) {
+              indice = this.gruposNovedades.findIndex(g => g.version === version);
+          }
           if (indice < 0) {
               return false;
           }
@@ -281,7 +344,10 @@ export class ProfileComponent {
    */
   public async abrirAviso(novedadId: number, comentarioId: number | null): Promise<void> {
       await Promise.all([this.cargarNovedades(), this.cargarSugerencias()]);
-      const version = this.versionDeNovedad(novedadId);
+      let version = this.versionDeNovedad(novedadId);
+      if (version === undefined && await this.pedirTodasSiHaceFalta()) {
+          version = this.versionDeNovedad(novedadId);
+      }
       if (version === undefined) {
           console.warn(`La novedad ${novedadId} del aviso ya no está en la lista`);
           return;

@@ -38,6 +38,55 @@ export interface Novedad {
   EsIncidencia?: boolean;
   /** NestoApp#203: versión, pantalla y errores recientes. Solo llega a Dirección / Informática. */
   Contexto?: string | null;
+  /** NestoApp#218 / NestoAPI#616: ficheros adjuntos (sin contenido). Una API vieja no los manda. */
+  Adjuntos?: AdjuntoNovedad[];
+  /** NestoApp#221 (sugerencia 551): a quién afecta. null = para todos. */
+  Perfiles?: string[] | null;
+}
+
+/** NestoApp#218 / NestoAPI#616: lo justo para pintar el chip; el fichero se baja con GET Novedades/Adjuntos/{Id}. */
+export interface AdjuntoNovedad {
+  Id: number;
+  Nombre: string;
+  /** application/pdf, image/png, image/jpeg, image/gif o image/webp */
+  Tipo: string;
+  /** En bytes. */
+  Tamano: number;
+}
+
+export function iconoAdjunto(adjunto: AdjuntoNovedad): string {
+  return (adjunto?.Tipo || '').startsWith('image/') ? 'image-outline' : 'document-text-outline';
+}
+
+/** NestoApp#221 (sugerencia 551): GET api/Novedades/MisPerfiles. */
+export interface MisPerfilesNovedades {
+  Perfiles: string[];
+  VeTodas: boolean;
+  PuedeEditar: boolean;
+  Disponibles: string[];
+}
+
+/** «Vendedores», «Almacén y Tiendas», «Almacén, Tiendas y Administración». */
+export function unirConY(lista: string[]): string {
+  const elementos = (lista || []).filter(e => !!e);
+  if (elementos.length <= 1) {
+    return elementos[0] || '';
+  }
+  return elementos.slice(0, -1).join(', ') + ' y ' + elementos[elementos.length - 1];
+}
+
+/** NestoApp#221: la API filtra por perfil (y se puede pedir que no) solo si quien pregunta no lo ve todo. */
+export function filtraPorPerfiles(mis: MisPerfilesNovedades | null): boolean {
+  return !!mis && !mis.VeTodas && (mis.Perfiles || []).length > 0;
+}
+
+export function textoFiltroPerfiles(mis: MisPerfilesNovedades | null): string {
+  return filtraPorPerfiles(mis) ? `Te enseñamos las novedades de ${unirConY(mis.Perfiles)} y las que son para todos.` : '';
+}
+
+/** «Para: Almacén y Tiendas»; nada si es para todos. */
+export function textoParaPerfiles(novedad: Novedad): string {
+  return novedad?.Perfiles?.length ? `Para: ${unirConY(novedad.Perfiles)}` : '';
 }
 
 /** NestoApp#190: sin versión es una sugerencia. */
@@ -221,12 +270,28 @@ export class NovedadesService {
    * #186: solo las de la app. Sin ámbito, NestoAPI (#489) devuelve las del escritorio y nunca
    * las de NestoApp. Sin desdeVersion: el perfil enseña el histórico completo.
    */
-  public leerNovedades(): Observable<Novedad[]> {
+  public leerNovedades(todas: boolean = false): Observable<Novedad[]> {
     const url = Configuracion.API_URL + '/Novedades';
-    const params = new HttpParams().set('ambito', 'NestoApp');
+    let params = new HttpParams().set('ambito', 'NestoApp');
+    if (todas) {
+      // NestoApp#221: sin él, la API solo manda las de los perfiles de quien pregunta.
+      params = params.set('todas', 'true');
+    }
     return this.http.get<Novedad[]>(url, { params }).pipe(
       map(novedades => novedades || [])
     );
+  }
+
+  /** NestoApp#221: con qué perfiles filtra la API. null si falla o la API es vieja (entonces no se ofrece nada). */
+  public leerMisPerfiles(): Observable<MisPerfilesNovedades | null> {
+    return this.http.get<MisPerfilesNovedades>(`${Configuracion.API_URL}/Novedades/MisPerfiles`).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  /** NestoApp#218 / NestoAPI#616: el fichero de un adjunto. */
+  public descargarAdjunto(idAdjunto: number): Observable<Blob> {
+    return this.http.get(`${Configuracion.API_URL}/Novedades/Adjuntos/${idAdjunto}`, { responseType: 'blob' });
   }
 
   /**

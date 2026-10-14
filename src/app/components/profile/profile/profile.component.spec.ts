@@ -19,12 +19,14 @@ import { ProfileService } from './profile.service';
 import { TrozosMencionPipe } from 'src/app/pipes/trozos-mencion.pipe';
 import { Subject, of, throwError } from 'rxjs';
 import { convertToParamMap } from '@angular/router';
+import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
 
 describe('ProfileComponent', () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
   let novedadesService: any;
   let profileService: any;
+  let visorFicheros: any;
 
   beforeEach(waitForAsync(() => {
     novedadesService = {
@@ -37,8 +39,12 @@ describe('ProfileComponent', () => {
         { Id: 9, Version: null, Fecha: '2026-09-24', Categoria: 'Nuevo', Titulo: 'Filtro por ruta', Ambito: 'NestoApp', TextoOriginal: 'Filtro por ruta', Estado: 'Pendiente', TieneImagen: false }
       ])),
       buscar: jasmine.createSpy('buscar').and.returnValue(of([])),
-      leerImagenNovedad: jasmine.createSpy('leerImagenNovedad').and.returnValue(of(new Blob(['x'], { type: 'image/png' })))
+      leerImagenNovedad: jasmine.createSpy('leerImagenNovedad').and.returnValue(of(new Blob(['x'], { type: 'image/png' }))),
+      // NestoApp#221 / #218
+      leerMisPerfiles: jasmine.createSpy('leerMisPerfiles').and.returnValue(of(null)),
+      descargarAdjunto: jasmine.createSpy('descargarAdjunto').and.returnValue(of(new Blob(['%PDF'], { type: 'application/pdf' })))
     };
+    visorFicheros = { abrir: jasmine.createSpy('abrir').and.returnValue(Promise.resolve()) };
     profileService = {
       getSeEstaVendiendo: jasmine.createSpy('getSeEstaVendiendo').and.returnValue(of([]))
     };
@@ -56,6 +62,7 @@ describe('ProfileComponent', () => {
         { provide: AppComponent, useValue: { registrarDispositivoPush: () => { } } },
         { provide: NovedadesService, useValue: novedadesService },
         { provide: ProfileService, useValue: profileService },
+        { provide: VisorFicheros, useValue: visorFicheros },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
     ]
@@ -455,5 +462,44 @@ describe('ProfileComponent', () => {
       expect(component.grupoNovedadesActual.version).toBe('2.20.1');
       expect(component.avisoComentario).toBeNull();
     }));
+  });
+
+  // NestoApp#221 (sugerencia 551): la API filtra por perfil; «Ver todas las novedades» lo quita.
+  describe('novedades por perfil (#221)', () => {
+    it('sin perfiles conocidos (API vieja) no se ofrece nada', () => {
+      expect(component.filtraNovedadesPorPerfil).toBeFalse();
+    });
+
+    it('con el filtro activo lo explica y «Ver todas» vuelve a pedir con todas=true', async () => {
+      component.misPerfilesNovedades = { Perfiles: ['Vendedores'], VeTodas: false, PuedeEditar: false, Disponibles: [] };
+      expect(component.textoFiltroPerfiles).toContain('Vendedores');
+
+      await component.cambiarVerTodasNovedades(true);
+
+      expect(novedadesService.leerNovedades).toHaveBeenCalledWith(true);
+    });
+
+    it('si la campana lleva a una novedad que el filtro deja fuera, se piden todas', fakeAsync(() => {
+      component.misPerfilesNovedades = { Perfiles: ['Vendedores'], VeTodas: false, PuedeEditar: false, Disponibles: [] };
+      novedadesService.leerNovedades.and.callFake((todas: boolean) => of(todas
+        ? [{ Id: 5, Version: '2.20.1', Fecha: '2026-09-16', Categoria: 'Nuevo', Titulo: 'Para almacén', Ambito: 'NestoApp', Perfiles: ['Almacén'] }]
+        : []));
+
+      component.abrirAviso(5, null);
+      tick(5000);
+
+      expect(component.verTodasNovedades).toBeTrue();
+      expect(component.grupoNovedadesActual.version).toBe('2.20.1');
+    }));
+  });
+
+  // NestoApp#218 / NestoAPI#616: adjuntos abiertos con el visor del móvil
+  describe('adjuntos de las novedades (#218)', () => {
+    it('baja el fichero y lo abre con su nombre y tipo', async () => {
+      await component.abrirAdjunto({ Id: 7, Nombre: 'Normas cupones.pdf', Tipo: 'application/pdf', Tamano: 1000 });
+
+      expect(novedadesService.descargarAdjunto).toHaveBeenCalledWith(7);
+      expect(visorFicheros.abrir).toHaveBeenCalledWith(jasmine.any(Blob), 'Normas cupones.pdf', 'application/pdf');
+    });
   });
 });

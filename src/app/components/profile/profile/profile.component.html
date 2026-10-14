@@ -125,6 +125,15 @@
               </ng-container>
             </ion-list>
 
+            <!-- NestoApp#221 (sugerencia 551): la API filtra por perfil; se puede pedir que no -->
+            <div class="filtro-perfiles" *ngIf="filtraNovedadesPorPerfil">
+              <p>{{ textoFiltroPerfiles }}</p>
+              <ion-item lines="none">
+                <ion-label>Ver todas las novedades</ion-label>
+                <ion-toggle slot="end" aria-label="Ver todas las novedades" [ngModel]="verTodasNovedades" (ngModelChange)="cambiarVerTodasNovedades($event)"></ion-toggle>
+              </ion-item>
+            </div>
+
             <!-- #188: una versión cada vez (como Nesto) y cada novedad en su tarjeta, con sus votos y
                  comentarios dentro, para que se vea de qué novedad son. -->
             <div class="navegacion-versiones">
@@ -185,6 +194,15 @@
                 </ion-card-header>
                 <ion-card-content>
                   <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
+                  <!-- NestoApp#221: a quién afecta (útil con «Ver todas») -->
+                  <p *ngIf="textoParaPerfiles(novedad) as para" class="para-perfiles">{{ para }}</p>
+                  <!-- NestoApp#218 / NestoAPI#616: adjuntos, abiertos con el visor del móvil -->
+                  <div class="adjuntos-novedad" *ngIf="novedad.Adjuntos?.length">
+                    <ion-chip *ngFor="let adjunto of novedad.Adjuntos" (click)="abrirAdjunto(adjunto)" [attr.aria-label]="'Abrir ' + adjunto.Nombre">
+                      <ion-icon [name]="iconoAdjunto(adjunto)"></ion-icon>
+                      <ion-label>{{ adjunto.Nombre }}</ion-label>
+                    </ion-chip>
+                  </div>
                   <!-- NestoApp#188 / NestoAPI#520: votos y comentarios (sin contadores de la API, no sale) -->
                   <novedad-feedback [novedad]="novedad" [comentarioResaltado]="comentarioDelAviso(novedad)"></novedad-feedback>
                 </ion-card-content>
