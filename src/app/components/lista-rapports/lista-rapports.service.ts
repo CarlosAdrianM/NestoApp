@@ -5,7 +5,8 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
-import { SugerenciasContactoRespuesta } from 'src/app/models/sugerencias-contacto.model';
+import { SugerenciasContactoRespuesta, VendedorVisible } from 'src/app/models/sugerencias-contacto.model';
+import { ChequeRegaloPendiente, ResumenChequesRegalo } from 'src/app/models/cheques-regalo-vendedor.model';
 
 @Injectable({
   providedIn: 'root'
@@ -104,6 +105,36 @@ export class ListaRapportsService {
       return this.http.get<SugerenciasContactoRespuesta>(Configuracion.API_URL + '/Clientes/SugerenciasContacto', { params }).pipe(
           catchError(error => (error?.status === 404 || error?.statusCode === 404) ? of(null) : throwError(() => error))
       );
+  }
+
+  /** NestoApp#219 (Nesto#521): de qué vendedores puede ver la lista el usuario. null si falla o la API es vieja: sin selector. */
+  public cargarVendedoresVisibles(): Observable<VendedorVisible[] | null> {
+      const params = new HttpParams().set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+      return this.http.get<VendedorVisible[]>(Configuracion.API_URL + '/Vendedores/VisiblesEnSugerencias', { params }).pipe(
+          catchError(() => of(null))
+      );
+  }
+
+  /** NestoApp#226: resumen de la campaña de cheques por vendedor. null = 404 (sin campaña en curso): no se enseña. */
+  public cargarResumenChequesRegalo(): Observable<ResumenChequesRegalo | null> {
+      const params = new HttpParams().set('empresa', Configuracion.EMPRESA_POR_DEFECTO);
+      return this.http.get<ResumenChequesRegalo>(Configuracion.API_URL + '/ChequesRegalo/Resumen', { params }).pipe(
+          catchError(error => (error?.status === 404 || error?.statusCode === 404) ? of(null) : throwError(() => error))
+      );
+  }
+
+  /** NestoApp#226: cheques sin usar del vendedor, para la barrida telefónica. */
+  public cargarChequesRegaloPendientes(vendedor: string): Observable<ChequeRegaloPendiente[]> {
+      const params = new HttpParams().set('empresa', Configuracion.EMPRESA_POR_DEFECTO).set('vendedor', vendedor);
+      return this.http.get<ChequeRegaloPendiente[]>(Configuracion.API_URL + '/ChequesRegalo/Pendientes', { params }).pipe(
+          map(cheques => cheques || [])
+      );
+  }
+
+  /** NestoApp#226: el PDF de la factura que generó el cheque (en la serie GB la empresa es la 3: la manda la API). */
+  public descargarFactura(empresa: string, numeroFactura: string): Observable<Blob> {
+      const params = new HttpParams().set('empresa', (empresa || '').trim()).set('numeroFactura', (numeroFactura || '').trim());
+      return this.http.get(Configuracion.API_URL + '/Facturas', { params, responseType: 'blob' });
   }
 
     public cargarResumenRapports(cliente: string, contacto: string): Observable<string> {

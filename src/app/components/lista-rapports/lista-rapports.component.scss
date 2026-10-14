@@ -64,3 +64,48 @@ ion-segment {
 ion-item.atendida {
     opacity: 0.6;
 }
+
+/* NestoApp#226: cheques regalo por vendedor */
+.distintivo-cheque {
+    margin-left: 4px;
+}
+
+.resumen-cheques {
+    margin: 8px;
+}
+
+.tabla-cheques {
+    padding: 0;
+    font-size: 0.9em;
+
+    ion-col {
+        padding: 4px 2px;
+        text-align: center;
+    }
+
+    ion-col[size="5"] {
+        text-align: left;
+    }
+
+    .cabecera {
+        color: var(--ion-color-medium);
+        font-size: 0.85em;
+    }
+
+    .seleccionado {
+        background: var(--ion-color-step-100);
+        border-radius: 4px;
+    }
+
+    .total {
+        font-weight: bold;
+        border-top: 1px solid var(--ion-color-step-200);
+    }
+}
+
+.acciones-cheque {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}

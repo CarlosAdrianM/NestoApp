@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, LoadingController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { Geolocation } from '../../services/geolocation.service';
@@ -14,6 +14,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { of, throwError } from 'rxjs';
 import { ListaRapportsService } from './lista-rapports.service';
 import { Events } from 'src/app/services/events.service';
+import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
 
 describe('ListaRapportsComponent', () => {
   let component: ListaRapportsComponent;
@@ -134,5 +135,105 @@ describe('ListaRapportsComponent', () => {
 
       expect(component.annadirRapport).toHaveBeenCalledWith({ Cliente: '1', Contacto: '0' });
     });
+  });
+});
+
+/** NestoApp#219 (Nesto#521) y #226 (NestoAPI#593): otros vendedores y cheques regalo en «Llamar». */
+describe('ListaRapportsComponent: vendedores visibles y cheques regalo (#219 / #226)', () => {
+  let component: ListaRapportsComponent;
+  let servicio: ListaRapportsService;
+  let visor: any;
+
+  const resumen = {
+    Campana: { Codigo: 'CHEQUE50_OCT_2026', Descripcion: 'Cheque regalo octubre', Importe: 50, GeneraDesde: '', GeneraHasta: '', CanjeHasta: '2026-11-07T00:00:00', DiasRestantes: 25, Activa: true, InicioImpulsoLlamadas: '', EnImpulsoLlamadas: false },
+    Vendedores: [{ Vendedor: 'JGP', Nombre: 'Javier', Generados: 2, Usados: 0, EnPedido: 0, Servidos: 0, Pendientes: 2, PendientesDeActivar: 0, Caducados: 0, Anulados: 0 }],
+    Total: { Vendedor: null, Nombre: 'Total', Generados: 2, Usados: 0, EnPedido: 0, Servidos: 0, Pendientes: 2, PendientesDeActivar: 0, Caducados: 0, Anulados: 0 }
+  };
+
+  beforeEach(waitForAsync(() => {
+    visor = { abrir: jasmine.createSpy('abrir').and.returnValue(Promise.resolve()) };
+    TestBed.configureTestingModule({
+      declarations: [ListaRapportsComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
+        { provide: Geolocation, useValue: {} },
+        { provide: NativeGeocoder, useValue: {} },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: VisorFicheros, useValue: visor },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(ListaRapportsComponent).componentInstance;
+    servicio = TestBed.inject(ListaRapportsService);
+    component.vendedorSeleccionado = 'ASH';
+    spyOn(servicio, 'cargarSugerenciasContacto').and.returnValue(of(null));
+  }));
+
+  it('#219: con varios vendedores visibles hay selector; si el elegido no es de ellos, pasa al primero y recarga', async () => {
+    spyOn(servicio, 'cargarVendedoresVisibles').and.returnValue(of([{ Vendedor: 'JGP', Nombre: 'Javier' }, { Vendedor: 'MPP', Nombre: 'Marta' }]));
+
+    await component.cargarVendedoresVisibles();
+
+    expect(component.hayVariosVendedoresVisibles).toBeTrue();
+    expect(component.vendedorSeleccionado).toBe('JGP');
+  });
+
+  it('#219: sin el endpoint (null) no hay selector y el vendedor no cambia', async () => {
+    spyOn(servicio, 'cargarVendedoresVisibles').and.returnValue(of(null));
+
+    await component.cargarVendedoresVisibles();
+
+    expect(component.hayVariosVendedoresVisibles).toBeFalse();
+    expect(component.vendedorSeleccionado).toBe('ASH');
+  });
+
+  it('#219: un 403 tiene su propio mensaje', async () => {
+    (servicio.cargarSugerenciasContacto as jasmine.Spy).and.returnValue(throwError(() => ({ status: 403 })));
+
+    await component.cargarSugerenciasContacto();
+
+    expect(component.mensajeSugerenciasContacto).toBe('No puedes ver los clientes para contactar de ese vendedor.');
+  });
+
+  it('#226: sin campaña (404 → null) no hay pestaña de cheques', async () => {
+    spyOn(servicio, 'cargarResumenChequesRegalo').and.returnValue(of(null));
+    await component.cargarResumenCheques();
+    expect(component.resumenCheques).toBeNull();
+  });
+
+  it('#226: con campaña, la pestaña carga los pendientes del vendedor elegido y tocar una fila cambia de vendedor', async () => {
+    spyOn(servicio, 'cargarResumenChequesRegalo').and.returnValue(of(resumen as any));
+    const pendientes = spyOn(servicio, 'cargarChequesRegaloPendientes').and.returnValue(of([]));
+    await component.cargarResumenCheques();
+
+    component.segmentoRapports = 'contactar';
+    component.cambiarVistaContactar('cheques');
+    expect(pendientes).toHaveBeenCalledWith('ASH');
+
+    component.elegirVendedorResumen(resumen.Vendedores[0]);
+    expect(component.vendedorSeleccionado).toBe('JGP');
+    expect(pendientes).toHaveBeenCalledWith('JGP');
+  });
+
+  it('#226: «Factura» baja el PDF con la empresa de la factura y lo abre', async () => {
+    const descarga = spyOn(servicio, 'descargarFactura').and.returnValue(of(new Blob(['%PDF'])));
+
+    await component.verFacturaCheque({ EmpresaFactura: '3', FacturaOrigen: 'GB2600012 ', Cliente: '1', Contacto: '0' } as any);
+
+    expect(descarga).toHaveBeenCalledWith('3', 'GB2600012 ');
+    expect(visor.abrir).toHaveBeenCalledWith(jasmine.any(Blob), 'Factura_GB2600012.pdf', 'application/pdf');
+  });
+
+  it('#226: llamar o WhatsApp abren el rapport nuevo de teléfono o de WhatsApp', () => {
+    spyOn(component, 'annadirRapport');
+
+    component.abrirRapportCheque({ Cliente: '37320', Contacto: '0' } as any, 'W');
+
+    expect(component.annadirRapport).toHaveBeenCalledWith({ Cliente: '37320', Contacto: '0' }, 'W');
   });
 });

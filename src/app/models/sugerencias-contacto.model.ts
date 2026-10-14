@@ -44,6 +44,31 @@ export interface SugerenciaContacto {
   ImporteUltimos12Meses: number;
   /** True si ya hay un rapport de este cliente hoy. */
   Atendida: boolean;
+  /** NestoApp#226: tiene un cheque regalo sin usar (del 29/10 al 07/11 vienen los primeros). */
+  TieneChequeRegalo?: boolean;
+}
+
+/** NestoApp#219 (Nesto#521): GET api/Vendedores/VisiblesEnSugerencias. Primero el del usuario. */
+export interface VendedorVisible {
+  Vendedor: string;
+  Nombre: string;
+}
+
+/**
+ * NestoApp#219: el vendedor que se ve en «contactar» tiene que ser uno de los visibles; si no (p. ej.
+ * uno elegido libremente en el segmento de códigos postales), el primero, que es el del usuario.
+ */
+export function vendedorVisibleParaContactar(visibles: VendedorVisible[] | null, actual: string): string {
+  if (!visibles?.length) {
+    return actual;
+  }
+  const mismo = (a: string, b: string) => (a || '').trim() === (b || '').trim();
+  return visibles.some(v => mismo(v.Vendedor, actual)) ? actual : visibles[0].Vendedor;
+}
+
+/** La API devuelve 403 si el vendedor no es el propio, ni de su equipo, ni el usuario es Dirección. */
+export function esProhibido(error: any): boolean {
+  return error?.status === 403 || error?.statusCode === 403;
 }
 
 export interface SugerenciasContactoRespuesta {

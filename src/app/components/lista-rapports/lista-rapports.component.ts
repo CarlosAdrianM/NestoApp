@@ -10,7 +10,9 @@ import { ListaRapportsService } from './lista-rapports.service';
 import { ModalResumenVentasComponent } from '../resumen-ventas/modal-resumen-ventas.component';
 import { Geolocation } from '../../services/geolocation.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { RitmoContactos, SugerenciaContacto, colorPrioridad, marcarAtendida, ordenarSugerenciasContacto, telefonoParaLlamar } from 'src/app/models/sugerencias-contacto.model';
+import { RitmoContactos, SugerenciaContacto, VendedorVisible, colorPrioridad, esProhibido, marcarAtendida, ordenarSugerenciasContacto, telefonoParaLlamar, vendedorVisibleParaContactar } from 'src/app/models/sugerencias-contacto.model';
+import { ChequeRegaloPendiente, ResumenChequesRegalo, ResumenChequesVendedor, enlaceWhatsApp, textoDiasRestantesCheque, textoFacturaCheque, textoUltimoContactoCheque } from 'src/app/models/cheques-regalo-vendedor.model';
+import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
 
 
 @Component({
@@ -107,7 +109,7 @@ export class ListaRapportsComponent extends SelectorBase {
           private geolocation: Geolocation, private nativeGeocoder: NativeGeocoder,
           public events: Events,
           private firebaseAnalytics: FirebaseAnalytics, private toastController: ToastController,
-          private modalCtrl: ModalController) {
+          private modalCtrl: ModalController, private visorFicheros: VisorFicheros) {
       super();
       this.servicio = servicio;
       this.nav = nav;
@@ -237,7 +239,7 @@ export class ListaRapportsComponent extends SelectorBase {
       this.nav.navigateForward('rapport', { queryParams:{ rapport: rapport }});
   }
   
-  public annadirRapport(cliente: any) {
+  public annadirRapport(cliente: any, tipo: string = 'V') {
       const rapport: any = new Object();
       rapport.Id = 0;
       rapport.Fecha = this.fechaRapports;
@@ -247,7 +249,7 @@ export class ListaRapportsComponent extends SelectorBase {
           rapport.Contacto = cliente.Contacto;
       }
       //rapport.Vendedor = this.usuario.vendedor; // tiene que ser el del cliente desde la API
-      rapport.Tipo = "V"; // Visita
+      rapport.Tipo = tipo; // V = visita, T = teléfono, W = WhatsApp (#226)
       rapport.Usuario = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
       rapport.TipoCentro = 0; // No se sabe
       rapport.Estado = 0; // Vigente
@@ -273,7 +275,7 @@ export class ListaRapportsComponent extends SelectorBase {
       } else if (this.segmentoRapports == 'codigoPostal' && this.usuario.vendedor) {
           this.cargarCodigosPostalesSinVisitar();
       } else if (this.segmentoRapports == 'contactar') {
-          this.cargarSugerenciasContacto();
+          this.entrarEnContactar();
       } else if (this.segmentoRapports == 'buscar') {
           setTimeout(() => {
               this.myFiltroInput.setFocus();
@@ -286,6 +288,9 @@ export class ListaRapportsComponent extends SelectorBase {
       this.vendedorSeleccionado = vendedor;
       if (this.segmentoRapports === 'contactar') {
           this.cargarSugerenciasContacto();
+          if (this.vistaContactar === 'cheques') {
+              this.cargarChequesPendientes(); // #226
+          }
           return;
       }
       this.cargarCodigosPostalesSinVisitar();
@@ -321,7 +326,9 @@ export class ListaRapportsComponent extends SelectorBase {
       } catch (error) {
           this.sugerenciasContacto = [];
           this.ritmoContacto = null;
-          this.mensajeSugerenciasContacto = 'No se han podido cargar los clientes para contactar.';
+          this.mensajeSugerenciasContacto = esProhibido(error)
+              ? 'No puedes ver los clientes para contactar de ese vendedor.' // #219
+              : 'No se han podido cargar los clientes para contactar.';
           console.log('No se han podido cargar las sugerencias de contacto', error);
       } finally {
           this.cargandoSugerenciasContacto = false;
@@ -336,6 +343,132 @@ export class ListaRapportsComponent extends SelectorBase {
       this.inicializarLosDatos(null);
       this.segmentoRapports = 'contactar';
       this.cambiarSegmento();
+  }
+
+  // ---- NestoApp#219 (Nesto#521): jefes de ventas y Dirección ven la lista de otros vendedores ----
+
+  /** null = sin pedir o la API no lo tiene: sin selector (como antes). */
+  public vendedoresVisibles: VendedorVisible[] | null = null;
+  private vendedoresVisiblesPedidos = false;
+
+  get hayVariosVendedoresVisibles(): boolean {
+      return (this.vendedoresVisibles?.length || 0) > 1;
+  }
+
+  /**
+   * Al entrar en «Llamar»: la lista del vendedor de siempre y, a la vez, quién más se puede ver y,
+   * si hay campaña, los cheques regalo (#226). Si el vendedor no era de los visibles, se recarga.
+   */
+  private entrarEnContactar(): Promise<void> {
+      this.cargarResumenCheques();
+      this.cargarVendedoresVisibles();
+      return this.cargarSugerenciasContacto();
+  }
+
+  public async cargarVendedoresVisibles(): Promise<void> {
+      if (this.vendedoresVisiblesPedidos) {
+          return;
+      }
+      this.vendedoresVisiblesPedidos = true;
+      this.vendedoresVisibles = await firstValueFrom(this.servicio.cargarVendedoresVisibles()).catch(() => null);
+      const visible = vendedorVisibleParaContactar(this.vendedoresVisibles, this.vendedorSeleccionado);
+      if (visible !== this.vendedorSeleccionado) {
+          this.seleccionarVendedor(visible);
+      }
+  }
+
+  // ---- NestoApp#226 (NestoAPI#593): cheques regalo por vendedor para la barrida telefónica ----
+
+  /** «clientes» (las sugerencias de siempre) o «cheques». La pestaña de cheques solo sale con campaña en curso. */
+  public vistaContactar: 'clientes' | 'cheques' = 'clientes';
+  public resumenCheques: ResumenChequesRegalo | null = null;
+  public chequesPendientes: ChequeRegaloPendiente[] = [];
+  public cargandoCheques = false;
+  public mensajeCheques = '';
+  public readonly textoDiasRestantesCheque = textoDiasRestantesCheque;
+  public readonly textoFacturaCheque = textoFacturaCheque;
+  public readonly textoUltimoContactoCheque = textoUltimoContactoCheque;
+  public readonly enlaceWhatsApp = enlaceWhatsApp;
+
+  public async cargarResumenCheques(): Promise<void> {
+      try {
+          this.resumenCheques = await firstValueFrom(this.servicio.cargarResumenChequesRegalo());
+      } catch (error) {
+          this.resumenCheques = null;
+          console.log('No se ha podido cargar el resumen de cheques regalo', error);
+      }
+      if (!this.resumenCheques && this.vistaContactar === 'cheques') {
+          this.vistaContactar = 'clientes';
+      }
+  }
+
+  public cambiarVistaContactar(vista: string): void {
+      this.vistaContactar = vista === 'cheques' ? 'cheques' : 'clientes';
+      if (this.vistaContactar === 'cheques') {
+          this.firebaseAnalytics.logEvent('rapport_cheques_regalo', { vendedor: this.vendedorSeleccionado });
+          this.cargarChequesPendientes();
+      }
+  }
+
+  public async cargarChequesPendientes(): Promise<void> {
+      if (!this.vendedorSeleccionado) {
+          this.chequesPendientes = [];
+          this.mensajeCheques = 'Elige un vendedor para ver sus cheques pendientes.';
+          return;
+      }
+      this.cargandoCheques = true;
+      this.mensajeCheques = '';
+      try {
+          this.chequesPendientes = await firstValueFrom(this.servicio.cargarChequesRegaloPendientes(this.vendedorSeleccionado));
+          if (this.chequesPendientes.length === 0) {
+              this.mensajeCheques = 'No hay cheques pendientes de usar.';
+          }
+      } catch (error) {
+          this.chequesPendientes = [];
+          this.mensajeCheques = esProhibido(error)
+              ? 'No puedes ver los cheques de ese vendedor.'
+              : 'No se han podido cargar los cheques pendientes.';
+          console.log('No se han podido cargar los cheques regalo pendientes', error);
+      } finally {
+          this.cargandoCheques = false;
+      }
+  }
+
+  /** Tocar una fila del resumen cambia de vendedor (la del total no). */
+  public elegirVendedorResumen(fila: ResumenChequesVendedor): void {
+      if (!fila?.Vendedor) {
+          return;
+      }
+      this.seleccionarVendedor(fila.Vendedor.trim());
+  }
+
+  public esVendedorSeleccionado(fila: ResumenChequesVendedor): boolean {
+      return (fila?.Vendedor || '').trim() === (this.vendedorSeleccionado || '').trim();
+  }
+
+  public async verFacturaCheque(cheque: ChequeRegaloPendiente): Promise<void> {
+      this.firebaseAnalytics.logEvent('rapport_cheque_factura', { cliente: cheque.Cliente, factura: cheque.FacturaOrigen });
+      const loading = await this.loadingCtrl.create({ message: 'Descargando factura...' });
+      await loading.present();
+      try {
+          const blob = await firstValueFrom(this.servicio.descargarFactura(cheque.EmpresaFactura, cheque.FacturaOrigen));
+          await this.visorFicheros.abrir(blob, `Factura_${(cheque.FacturaOrigen || '').trim()}.pdf`, 'application/pdf');
+      } catch (error) {
+          const alerta = await this.alertCtrl.create({
+              header: 'Factura',
+              message: 'No se ha podido abrir la factura ' + (cheque.FacturaOrigen || '').trim() + '.',
+              buttons: ['Ok']
+          });
+          await alerta.present();
+      } finally {
+          await loading.dismiss();
+      }
+  }
+
+  /** Llamar o escribir por WhatsApp abre, igual que desde clientes para contactar, el rapport nuevo de ese cliente. */
+  public abrirRapportCheque(cheque: ChequeRegaloPendiente, tipo: 'T' | 'W'): void {
+      this.firebaseAnalytics.logEvent('rapport_cheque_contactar', { cliente: cheque.Cliente, tipo });
+      this.annadirRapport({ Cliente: cheque.Cliente, Contacto: cheque.Contacto }, tipo);
   }
 
   /** Como con cualquier cliente: se abre un rapport nuevo y, al guardarlo, la API marca la sugerencia atendida. */

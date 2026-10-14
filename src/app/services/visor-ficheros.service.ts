@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PdfStorage } from './pdf-storage.service';
 import { FileOpener } from './file-opener.service';
@@ -16,12 +16,13 @@ export function nombreFicheroSeguro(nombre: string): string {
  */
 @Injectable({ providedIn: 'root' })
 export class VisorFicheros {
-  constructor(private pdfStorage: PdfStorage, private fileOpener: FileOpener) { }
+  // PdfStorage depende del File de Cordova, que no se provee en raíz: se pide solo al usarlo en el móvil.
+  constructor(private injector: Injector, private fileOpener: FileOpener) { }
 
   async abrir(blob: Blob, nombre: string, tipo?: string): Promise<void> {
     const mime = tipo || blob.type || 'application/octet-stream';
     if (Capacitor.isNativePlatform()) {
-      const ruta = await this.pdfStorage.savePdfBlob(blob, nombreFicheroSeguro(nombre));
+      const ruta = await this.injector.get(PdfStorage).savePdfBlob(blob, nombreFicheroSeguro(nombre));
       await this.fileOpener.open(ruta, mime);
       return;
     }

@@ -122,7 +122,19 @@
       </ion-item>
     </div>
     <div *ngSwitchCase="'contactar'">
-      <selector-vendedores *ngIf="!usuario.vendedor" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+      <!-- NestoApp#219 (Nesto#521): jefes de ventas, su equipo; Dirección, todos -->
+      <ion-item *ngIf="hayVariosVendedoresVisibles">
+        <ion-label>Vendedor</ion-label>
+        <ion-select slot="end" aria-label="Vendedor" interface="action-sheet" [cancelText]="'Cancelar'" [value]="vendedorSeleccionado" (ionChange)="seleccionarVendedor($event.detail.value)">
+          <ion-select-option *ngFor="let visible of vendedoresVisibles" [value]="visible.Vendedor">{{visible.Nombre || visible.Vendedor}}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <selector-vendedores *ngIf="!usuario.vendedor && !vendedoresVisibles?.length" etiqueta="Vendedor" seleccionado="vendedorSeleccionado" (seleccionar)="seleccionarVendedor($event)"></selector-vendedores>
+      <!-- NestoApp#226: solo con campaña de cheques regalo en curso -->
+      <ion-segment *ngIf="resumenCheques" [value]="vistaContactar" (ionChange)="cambiarVistaContactar($event.detail.value)">
+        <ion-segment-button value="clientes"><ion-label>Clientes</ion-label></ion-segment-button>
+        <ion-segment-button value="cheques"><ion-label>Cheques regalo</ion-label></ion-segment-button>
+      </ion-segment>
     </div>
     <div *ngSwitchCase="'buscar'">
     <form (ngSubmit)="buscarRapports()">
@@ -170,7 +182,7 @@
 </ion-list>
 
 <!-- NestoApp#212 / NestoAPI#603: a quién llamar hoy, con el ritmo del vendedor arriba -->
-<ng-container *ngIf="segmentoRapports === 'contactar'">
+<ng-container *ngIf="segmentoRapports === 'contactar' && vistaContactar === 'clientes'">
   <ion-card *ngIf="ritmoContacto" class="ritmo-contacto">
     <ion-card-content>
       <div class="ritmo-cifras">
@@ -203,6 +215,7 @@
       <ion-label class="ion-text-wrap">
         <p>
           <ion-badge [color]="sugerencia.Atendida ? 'success' : colorPrioridad(sugerencia.Prioridad)">{{sugerencia.Atendida ? 'Atendida' : sugerencia.Prioridad}}</ion-badge>
+          <ion-badge *ngIf="sugerencia.TieneChequeRegalo" color="success" class="distintivo-cheque">Cheque</ion-badge>
           {{sugerencia.Cliente}}/{{sugerencia.Contacto}}
         </p>
         <h2>{{sugerencia.Nombre}}</h2>
@@ -220,6 +233,77 @@
       <ion-button fill="clear" size="small" slot="end" (click)="$event.stopPropagation(); verRapportsDeCliente(sugerencia.Cliente, sugerencia.Contacto)" aria-label="Ver rapports del cliente">
         <ion-icon name="chevron-forward-outline"></ion-icon>
       </ion-button>
+    </ion-item>
+  </ion-list>
+</ng-container>
+
+<!-- NestoApp#226 (NestoAPI#593): cheques regalo por vendedor, para la barrida telefónica -->
+<ng-container *ngIf="segmentoRapports === 'contactar' && vistaContactar === 'cheques' && resumenCheques">
+  <ion-card class="resumen-cheques">
+    <ion-card-header>
+      <ion-card-subtitle>{{resumenCheques.Campana.Descripcion || resumenCheques.Campana.Codigo}}</ion-card-subtitle>
+      <ion-card-title>{{textoDiasRestantesCheque(resumenCheques.Campana.DiasRestantes)}} para canjearlos</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid class="tabla-cheques">
+        <ion-row class="cabecera">
+          <ion-col size="5"></ion-col>
+          <ion-col>Gen.</ion-col>
+          <ion-col>Usados</ion-col>
+          <ion-col>Pend.</ion-col>
+          <ion-col>Cad.</ion-col>
+        </ion-row>
+        <ion-row *ngFor="let fila of resumenCheques.Vendedores" (click)="elegirVendedorResumen(fila)" [class.seleccionado]="esVendedorSeleccionado(fila)">
+          <ion-col size="5">{{fila.Nombre || fila.Vendedor}}</ion-col>
+          <ion-col>{{fila.Generados}}</ion-col>
+          <ion-col>{{fila.Usados}}</ion-col>
+          <ion-col><strong>{{fila.Pendientes}}</strong></ion-col>
+          <ion-col>{{fila.Caducados}}</ion-col>
+        </ion-row>
+        <ion-row *ngIf="resumenCheques.Vendedores?.length > 1 && resumenCheques.Total" class="total">
+          <ion-col size="5">Total</ion-col>
+          <ion-col>{{resumenCheques.Total.Generados}}</ion-col>
+          <ion-col>{{resumenCheques.Total.Usados}}</ion-col>
+          <ion-col>{{resumenCheques.Total.Pendientes}}</ion-col>
+          <ion-col>{{resumenCheques.Total.Caducados}}</ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-item *ngIf="cargandoCheques" lines="none">
+    <ion-spinner name="crescent" slot="start"></ion-spinner>
+    <ion-label>Cargando cheques pendientes…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="!cargandoCheques && mensajeCheques" lines="none">
+    <ion-label class="ion-text-wrap">{{mensajeCheques}}</ion-label>
+  </ion-item>
+
+  <ion-list *ngIf="!cargandoCheques">
+    <ion-item *ngFor="let cheque of chequesPendientes" lines="full">
+      <ion-label class="ion-text-wrap">
+        <p>
+          <ion-badge [color]="cheque.DiasRestantes <= 3 ? 'danger' : 'success'">{{textoDiasRestantesCheque(cheque.DiasRestantes)}}</ion-badge>
+          <ion-badge *ngIf="cheque.Estado === 'PendienteDeActivar'" color="medium">Pendiente de activar</ion-badge>
+          {{cheque.Cliente}}/{{cheque.Contacto}}
+        </p>
+        <h2>{{cheque.Nombre}}</h2>
+        <h3 *ngIf="cheque.PersonaContacto">{{cheque.PersonaContacto}}</h3>
+        <p>{{cheque.Direccion}}<span *ngIf="cheque.Poblacion"> · {{cheque.Poblacion}}</span></p>
+        <p>{{textoFacturaCheque(cheque)}}</p>
+        <p>{{textoUltimoContactoCheque(cheque)}}</p>
+        <div class="acciones-cheque">
+          <ion-button size="small" fill="outline" (click)="verFacturaCheque(cheque)" *ngIf="cheque.FacturaOrigen">
+            <ion-icon slot="start" name="document-text-outline"></ion-icon>Factura
+          </ion-button>
+          <ion-button size="small" fill="outline" *ngIf="enlaceLlamada(cheque.Telefono) as enlace" [href]="enlace" (click)="abrirRapportCheque(cheque, 'T')">
+            <ion-icon slot="start" name="call-outline"></ion-icon>Llamar
+          </ion-button>
+          <ion-button size="small" fill="outline" color="success" *ngIf="enlaceWhatsApp(cheque.Telefono) as enlace" [href]="enlace" target="_blank" (click)="abrirRapportCheque(cheque, 'W')">
+            <ion-icon slot="start" name="logo-whatsapp"></ion-icon>WhatsApp
+          </ion-button>
+        </div>
+      </ion-label>
     </ion-item>
   </ion-list>
 </ng-container>
