@@ -36,6 +36,11 @@ describe('PedidoVentaComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('#237: el estado de envío 5 es «Cerrado a mano», en gris', () => {
+    expect(component.textoEstadoEnvio(5)).toBe('Cerrado a mano');
+    expect(component.colorEstadoEnvio(5)).toBe('medium');
+  });
 });
 
 describe('Setter fechaEntrega sin conversión a Date (#85)', () => {

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { ApiErrorResponse, ApiErrorCode, ErrorDetails, ProcessedApiError } from '../models/api-error.model';
@@ -34,6 +35,8 @@ export class ErrorHandlerService {
 
     if (error.isBusinessError && error.apiError) {
       await this.handleBusinessError(error.apiError);
+    } else if ([502, 503, 504].includes(error.statusCode)) {
+      await this.showToast(ErrorHandlerService.MENSAJE_SERVIDOR_NO_DISPONIBLE, 'warning');
     } else if (error.isServerError) {
       await this.showToast('Error interno del servidor. Por favor, inténtelo más tarde.', 'danger');
     } else {
@@ -206,6 +209,29 @@ export class ErrorHandlerService {
    * Soporta tanto el nuevo formato estructurado como el formato antiguo de NestoAPI
    */
   extractErrorMessage(error: any): string {
+    const mensaje = this.mensajeDelError(error);
+    if (mensaje) {
+      return mensaje;
+    }
+
+    // Issue #231: sin mensaje del servidor, decir al menos por qué no ha contestado.
+    const status: number = error?.statusCode ?? (error instanceof HttpErrorResponse ? error.status : undefined);
+    if (status === 0 || error?.name === 'TimeoutError') {
+      return ErrorHandlerService.MENSAJE_SIN_CONEXION;
+    }
+    if (status === 502 || status === 503 || status === 504) {
+      return ErrorHandlerService.MENSAJE_SERVIDOR_NO_DISPONIBLE;
+    }
+
+    return 'Ha ocurrido un error inesperado';
+  }
+
+  static readonly MENSAJE_SIN_CONEXION =
+    'No se ha podido conectar con el servidor o ha tardado demasiado. Inténtelo de nuevo en un momento.';
+  static readonly MENSAJE_SERVIDOR_NO_DISPONIBLE =
+    'El servidor no está disponible ahora mismo (puede que se esté actualizando). Inténtelo de nuevo en un par de minutos.';
+
+  private mensajeDelError(error: any): string | undefined {
     // Nuevo formato estructurado (ProcessedApiError con apiError)
     if (error?.apiError?.error?.message) {
       return error.apiError.error.message;
@@ -240,10 +266,12 @@ export class ErrorHandlerService {
     if (error?.Message) {
       return error.Message;
     }
-    if (error?.message) {
+    // El message de un HttpErrorResponse es el técnico de Angular («Http failure response for…»)
+    // y el de un TimeoutError, «Timeout has occurred»: no le dicen nada al usuario.
+    if (error?.message && !(error instanceof HttpErrorResponse) && error?.name !== 'TimeoutError') {
       return error.message;
     }
 
-    return 'Ha ocurrido un error inesperado';
+    return undefined;
   }
 }

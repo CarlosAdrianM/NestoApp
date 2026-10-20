@@ -207,7 +207,7 @@
                   </h3>
                   <a href="#" (click)="abrirEnlace(enlace.EnlaceSeguimiento)">{{enlace.EnlaceSeguimiento}}</a>
                 </ion-label>
-                <ion-button slot="end" fill="clear" (click)="actualizarSeguimiento(enlace)">
+                <ion-button slot="end" fill="clear" *ngIf="enlace.Estado !== 5" (click)="actualizarSeguimiento(enlace)">
                   <ion-icon slot="icon-only" name="refresh"></ion-icon>
                 </ion-button>
               </ion-item>

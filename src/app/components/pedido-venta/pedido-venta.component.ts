@@ -916,6 +916,7 @@ export class PedidoVentaComponent  {
           case 2: return 'Entregado';
           case 3: return 'Incidentado';
           case 4: return 'Devuelto';
+          case 5: return 'Cerrado a mano'; // NestoAPI#676: incidentado que la agencia nunca cerró
           default: return 'Desconocido';
       }
   }
@@ -926,7 +927,7 @@ export class PedidoVentaComponent  {
           case 3: return 'danger';     // Incidentado
           case 4: return 'warning';    // Devuelto
           case 1: return 'primary';    // Tramitado
-          default: return 'medium';    // Pendiente / En curso / Desconocido
+          default: return 'medium';    // Pendiente / En curso / Cerrado a mano / Desconocido
       }
   }
 
