@@ -1,0 +1,38 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Puede ofrecer</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cerrar()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <p class="sin-sugerencias" *ngIf="sugerencias.length === 0">Ahora mismo no hay más sugerencias para este cliente.</p>
+
+  <ion-card class="sugerencia" *ngFor="let sugerencia of sugerencias; trackBy: identificador">
+    <ion-card-content>
+      <div class="cabecera-sugerencia">
+        <img *ngIf="sugerencia.UrlFoto" class="foto" [src]="sugerencia.UrlFoto" [alt]="nombre(sugerencia)" loading="lazy" />
+        <div>
+          <h2>{{ nombre(sugerencia) }}</h2>
+          <p class="producto">{{ productoYFamilia(sugerencia) }}</p>
+          <ion-badge color="medium">{{ etiquetaMotivo(sugerencia.Motivo) }}</ion-badge>
+        </div>
+      </div>
+      <p class="frase" *ngIf="sugerencia.Texto">{{ sugerencia.Texto }}</p>
+      <div class="botones-sugerencia">
+        <ion-button color="success" [disabled]="ocupado" (click)="aceptar(sugerencia)">✓ Añadir</ion-button>
+        <ion-button color="medium" fill="outline" (click)="rechazar(sugerencia, 'NoLeInteresa')">✗ No le interesa</ion-button>
+      </div>
+      <ion-button class="quitar" size="small" fill="clear" color="medium" (click)="rechazar(sugerencia, 'DescartadoVendedor')">
+        🚫 Quitar (no se lo ofrezco)
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-button expand="block" fill="clear" (click)="verAyuda()">
+    <ion-icon slot="start" name="help-circle-outline"></ion-icon>
+    ¿Cómo funciona?
+  </ion-button>
+</ion-content>

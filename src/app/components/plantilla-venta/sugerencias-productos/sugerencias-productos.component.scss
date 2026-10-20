@@ -1,0 +1,76 @@
+.cabecera-sugerencia {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+
+  h2 {
+    margin: 0 0 2px;
+    font-size: 1.05em;
+    font-weight: 600;
+    color: var(--ion-text-color);
+  }
+}
+
+.foto {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--ion-color-step-50);
+}
+
+.producto {
+  margin: 0 0 4px;
+  font-size: 0.85em;
+  color: var(--ion-color-step-600);
+}
+
+.frase {
+  margin: 10px 0;
+  font-style: italic;
+}
+
+.botones-sugerencia {
+  display: flex;
+  gap: 8px;
+
+  ion-button {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+.quitar {
+  margin-top: 4px;
+}
+
+.sin-sugerencias {
+  color: var(--ion-color-step-600);
+}
+
+.ayuda {
+  h3 {
+    margin-top: 20px;
+  }
+
+  .resumen {
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--ion-color-step-50);
+  }
+
+  .boton-ayuda {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--ion-color-step-150);
+
+    p {
+      margin: 4px 0;
+    }
+  }
+
+  .pregunta {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+}

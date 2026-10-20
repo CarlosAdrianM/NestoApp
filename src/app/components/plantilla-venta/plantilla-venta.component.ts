@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChild, ElementRef, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterStateSnapshot } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ActionSheetController, AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
@@ -20,6 +20,10 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO, ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
+import { SugerenciasProductosService } from 'src/app/services/sugerencias-productos.service';
+import { SugerenciaProducto } from 'src/app/models/sugerencias-productos.model';
+import { DatosSugerenciasProductos, EstadoSugerenciasProductos } from './sugerencias-productos/estado-sugerencias-productos';
+import { SugerenciasProductosComponent } from './sugerencias-productos/sugerencias-productos.component';
 import { muestrasPorEncimaDeAlgete, saleDeAlgetePorRuta, textoMuestrasAlgete } from 'src/app/models/muestras-ruta.model';
 import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
@@ -42,7 +46,9 @@ import { AGENCIA_LA_ELIGE_EL_COMPARADOR } from '../pedido-venta/pedido-venta.ser
     styleUrls: ['./plantilla-venta.component.scss'],
     standalone: false
 })
-export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit, AfterViewInit  {
+export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit, AfterViewInit, OnDestroy  {
+  /** NestoApp#235 (Nesto#537): productos que el vendedor puede ofrecer al cliente. */
+  public sugerenciasProductos: EstadoSugerenciasProductos;
   private ultimoClienteAbierto: string = "";
 
   constructor(
@@ -61,8 +67,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private pedidoVentaService: PedidoVentaService,
     private route: ActivatedRoute,
     private parametros: Parametros,
-    private solicitudCambioModo: SolicitudCambioModoService
+    private solicitudCambioModo: SolicitudCambioModoService,
+    servicioSugerenciasProductos: SugerenciasProductosService
     ) {
+      this.sugerenciasProductos = new EstadoSugerenciasProductos(servicioSugerenciasProductos, () => this.datosSugerenciasProductos());
       this.almacen = this.usuario.almacen;
       // NestoApp#174: el parámetro de usuario ModoServicioPorDefecto permite excepciones al 3.
       this.parametros.leer('ModoServicioPorDefecto').subscribe(
@@ -77,6 +85,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           if (this.swiper && this.swiper.activeIndex === this.indexSlideResumen) {
             this._selectorPlantillaVenta.cargarResumen();
           }
+          this.sugerenciasProductos.programar(); // NestoApp#235
       });
       // Issue #183: aquí había un subscribeWithPriority de depuración que no encadenaba
       // (sin processNextHandler), no se desuscribía y, al estar en el constructor, dejaba el
@@ -1736,6 +1745,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'servirJunto': esTodoJunto(this.modoServicio),
           'modoServicio': this.modoServicio,
           'EsPresupuesto': this.esPresupuesto,
+          // NestoApp#235 / NestoAPI#670: enlaza las sugerencias que se han enseñado con el pedido.
+          'IdSesionSugerencias': this.sugerenciasProductos?.idSesion ?? null,
           'NoCobrarComisionReembolso': this.noCobrarComisionReembolso,
           'suPedido': this.suPedido ? this.suPedido.trim() : null,
           'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
@@ -3290,7 +3301,62 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Callback cuando el selector de productos termina de cargar
    * Se llama desde el evento productosCargados del selector
    */
+  ngOnDestroy(): void {
+    this.sugerenciasProductos.cancelar();
+  }
+
+  private datosSugerenciasProductos(): DatosSugerenciasProductos | null {
+    const cliente = this.clienteSeleccionado;
+    if (!cliente?.cliente) {
+      return null;
+    }
+    return {
+      empresa: cliente.empresa,
+      cliente: cliente.cliente,
+      contacto: this.direccionSeleccionada?.contacto ?? cliente.contacto,
+      vendedor: this.usuario.vendedor,
+      lineas: this._selectorPlantillaVenta?.obtenerDatosIniciales() || []
+    };
+  }
+
+  /** NestoApp#235: la hoja inferior con las tarjetas; se queda abierta al añadir para seguir con las demás. */
+  public async abrirSugerenciasProductos(): Promise<void> {
+    this.firebaseAnalytics.logEvent('plantilla_venta_abrir_sugerencias_productos', { cliente: this.clienteSeleccionado?.cliente });
+    const modal = await this.modalCtrl.create({
+      component: SugerenciasProductosComponent,
+      componentProps: {
+        estado: this.sugerenciasProductos,
+        anadir: (sugerencia: SugerenciaProducto) => this.anadirProductoSugerido(sugerencia)
+      },
+      breakpoints: [0, 0.6, 1],
+      initialBreakpoint: 0.6
+    });
+    await modal.present();
+  }
+
+  /** Entra en la plantilla con 1 unidad más; luego se cambia la cantidad como en cualquier línea. */
+  public async anadirProductoSugerido(sugerencia: SugerenciaProducto): Promise<boolean> {
+    const linea = this._selectorPlantillaVenta ? await this._selectorPlantillaVenta.lineaDeProducto(sugerencia.Producto).catch(() => null) : null;
+    if (!linea) {
+      const alerta = await this.alertCtrl.create({
+        header: 'Puede ofrecer',
+        message: `No se ha encontrado el producto ${(sugerencia.Producto || '').trim()}. Búsquelo a mano, por favor.`,
+        buttons: ['Ok']
+      });
+      await alerta.present();
+      return false;
+    }
+    linea.cantidad = (+linea.cantidad || 0) + 1;
+    this.firebaseAnalytics.logEvent('plantilla_venta_anadir_sugerencia_producto', { producto: sugerencia.Producto, motivo: sugerencia.Motivo });
+    if (this.productosResumen) {
+      this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+    }
+    this.sugerenciasProductos.programar();
+    return true;
+  }
+
   public onProductosCargados(): void {
+    this.sugerenciasProductos.programar(); // NestoApp#235
     if (this.borradorEnRestauracion && !this.borradorRestauradoEnProductos) {
       this.borradorRestauradoEnProductos = true;
       this.aplicarLineasProductoBorrador();

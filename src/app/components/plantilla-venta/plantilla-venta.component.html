@@ -5,6 +5,11 @@
     </ion-buttons>
     <ion-title>{{ pedidoEnEdicionNumero != null ? 'Modificando pedido ' + pedidoEnEdicionNumero : 'Plantilla Venta' }}</ion-title>
     <ion-buttons slot="end">
+      <!-- NestoApp#235: «Puede ofrecer»; sin sugerencias (o si la API falla) no sale -->
+      <ion-button *ngIf="sugerenciasProductos.sugerencias.length > 0" (click)="abrirSugerenciasProductos()"
+                  title="Puede ofrecer" aria-label="Productos que puede ofrecer">
+        💡 {{ sugerenciasProductos.sugerencias.length }}
+      </ion-button>
       <ion-button (click)="abrirMenuBorradores()" title="Borradores">
         <ion-icon slot="icon-only" name="folder-outline"></ion-icon>
       </ion-button>

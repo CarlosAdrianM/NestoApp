@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>¿Cómo funciona?</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cerrar()">Cerrar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding ayuda">
+  <h2>«Puede ofrecer»: ideas para vender más en cada pedido</h2>
+  <p class="resumen"><strong>En resumen.</strong> Cuando hace un pedido en la plantilla, la app le propone tres productos que
+    a ese cliente le pueden encajar. Usted decide si se los ofrece. Con un solo toque en cada sugerencia le dice a la app si
+    ha acertado, y así las siguientes son cada vez más a su gusto y al de sus clientes.</p>
+
+  <h3>1. Qué le propone y por qué</h3>
+  <p>Toque el botón 💡 de arriba de la plantilla: aparecen tres tarjetas con foto, nombre, tamaño y familia. Cada una sale por
+    un motivo que tiene sentido para ese cliente:</p>
+  <ul>
+    <li><strong>🔁 Ya le toca:</strong> lo compra con regularidad y, por las fechas, debería estar a punto de acabarlo.</li>
+    <li><strong>🔗 Va con lo que lleva:</strong> otros clientes que compran lo que lleva en el pedido suelen llevarse también esto.</li>
+    <li><strong>👥 Lo compran clientes parecidos:</strong> clientes con compras como las suyas lo piden, y él todavía no.</li>
+    <li><strong>⭐ A potenciar:</strong> ofertas y productos que conviene mover ahora.</li>
+  </ul>
+  <p>En cada tarjeta verá el motivo con una frase que puede decirle al cliente tal cual.</p>
+
+  <h3>2. Los tres botones</h3>
+  <div class="boton-ayuda">
+    <p><strong>✓ Añadir</strong> — Se lo ha ofrecido y lo quiere.</p>
+    <p>Entra en el pedido con 1 unidad (puede cambiar la cantidad como en cualquier línea) y aparece otra sugerencia en su lugar.</p>
+  </div>
+  <div class="boton-ayuda">
+    <p><strong>✗ No le interesa</strong> — Se lo ha ofrecido y ha dicho que no.</p>
+    <p>Sale otra en su lugar, y a ese cliente no se le vuelve a proponer ese producto en dos meses.</p>
+  </div>
+  <div class="boton-ayuda">
+    <p><strong>🚫 Quitar</strong> — No se lo ofrezco: quitar y mostrar otro. Ni se lo va a ofrecer: sabe que no lo quiere,
+      no se lo puede vender (por ejemplo, por zona o por marca) o no tiene sentido para él.</p>
+    <p>Sale otra en su lugar y tampoco se le vuelve a proponer en dos meses. No cuenta como que el cliente lo ha rechazado:
+      es usted quien ha decidido no ofrecerlo.</p>
+  </div>
+  <p class="resumen"><strong>¿Y si no toca nada?</strong> No pasa nada. Las sugerencias no son obligatorias: si no le encajan,
+    siga con su pedido como siempre. Si añade a mano un producto que estaba sugerido, la tarjeta cambia sola por otra.</p>
+
+  <h3>3. Por qué le compensa pulsar</h3>
+  <ul>
+    <li><strong>Las sugerencias aprenden de usted.</strong> Cada ✓, ✗ o 🚫 le dice a la app qué funciona con sus clientes. Al cabo
+      de unas semanas, las sugerencias se parecen mucho más a lo que usted ofrecería.</li>
+    <li><strong>Menos ruido.</strong> Lo que no tiene sentido para un cliente deja de aparecer, y su sitio lo ocupan ideas mejores.</li>
+    <li><strong>Más venta en cada pedido, sin buscar.</strong> Una buena sugerencia es un producto más en el pedido. Eso es más venta
+      para el cliente y más comisión para usted.</li>
+    <li><strong>Es un segundo.</strong> Un toque, sin escribir nada, en el momento en que ya está hablando con el cliente.</li>
+  </ul>
+
+  <h3>4. Pequeños trucos</h3>
+  <ul>
+    <li>Al cambiar de cliente o de contacto, las sugerencias se renuevan solas.</li>
+    <li>El cliente no ve nada de esto: es una ayuda solo para usted.</li>
+  </ul>
+
+  <h3>5. Preguntas frecuentes</h3>
+  <p class="pregunta">¿Tengo que usarlo en todos los pedidos?</p>
+  <p>No. Úselo cuando le venga bien. Eso sí, cuantas más veces pulse un botón, antes se ajustan las sugerencias a sus clientes.</p>
+  <p class="pregunta">Me sale un producto que no puedo vender a ese cliente. ¿Qué hago?</p>
+  <p>Pulse 🚫 Quitar. Saldrá otro y la app lo tendrá en cuenta para las próximas veces.</p>
+  <p class="pregunta">¿Qué diferencia hay entre «No le interesa» y «Quitar»?</p>
+  <p>«No le interesa» es la respuesta del cliente después de ofrecérselo. «Quitar» es su decisión de no ofrecerlo. Distinguirlos
+    ayuda a que no se deje de proponer algo que nunca llegó a ofrecerse.</p>
+  <p class="pregunta">¿Y si me equivoco de botón?</p>
+  <p>No pasa nada: el producto simplemente no se vuelve a proponer a ese cliente durante un tiempo.</p>
+  <p>Si algo no funciona como aquí se explica, o se le ocurre cómo mejorarlo, díganoslo desde «Novedades» en su perfil.</p>
+
+  <ion-button expand="block" (click)="cerrar()">Entendido</ion-button>
+</ion-content>
