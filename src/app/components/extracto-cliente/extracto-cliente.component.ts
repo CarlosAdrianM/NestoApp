@@ -3,7 +3,7 @@ import { AlertController, LoadingController, NavController, ModalController } fr
 import { ExtractoClienteService } from './extracto-cliente.service';
 import { FileOpener } from 'src/app/services/file-opener.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { RespuestaIniciarPago, EfectoAPagar } from 'src/app/models/pago-tpv.model';
+import { RespuestaIniciarPago, EfectoAPagar, textoAvisosEnlacePago } from 'src/app/models/pago-tpv.model';
 import { ReclamacionDeuda } from 'src/app/models/ReclamacionDeuda';
 import { Usuario } from 'src/app/models/Usuario';
 import { firstValueFrom } from 'rxjs';
@@ -492,6 +492,7 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
       Efectos: efectos.length > 0 ? efectos : undefined
     }).subscribe(
       async (respuesta: RespuestaIniciarPago) => {
+        this.avisarEnlacePago(respuesta); // NestoAPI#679
         if (this.usuario.motorPagos === 'NestoPago') {
           // Motor NestoPago: usar URL de la página propia
           this.resultado = {
@@ -588,6 +589,19 @@ export class ModalEnviarEnlaceCobroComponent implements OnInit {
         }
       }
     }
+  }
+
+  /**
+   * NestoAPI#679: si el concepto nombra un pedido que va contra reembolso (o que ya va en camino con
+   * reembolso), la API avisa al crear el enlace. No bloquea: el enlace ya está hecho.
+   */
+  private async avisarEnlacePago(respuesta: RespuestaIniciarPago): Promise<void> {
+    const avisos = textoAvisosEnlacePago(respuesta);
+    if (!avisos) {
+      return;
+    }
+    const alert = await this.alertCtrl.create({ header: 'Ojo con el enlace de pago', message: avisos, buttons: ['Entendido'] });
+    await alert.present();
   }
 
   private extraerMensajeError(error: any): string {

@@ -10,6 +10,7 @@ import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
 import { SaldoAFavor } from '../../models/saldo-a-favor.model';
 import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
+import { CuponCliente } from '../../models/cupon.model';
 import { SustitucionProducto } from '../../models/sustitucion-producto.model';
 import { FechaEntregaAgencia } from '../../models/fecha-entrega-agencia.model';
 
@@ -129,6 +130,14 @@ export class PlantillaVentaService {
     const params = new HttpParams().set('empresa', empresa).set('cliente', cliente);
     return this.http.get<ChequeRegaloCliente>(Configuracion.API_URL + '/ChequesRegalo/Cliente', { params }).pipe(
       catchError(() => of(null))
+    );
+  }
+
+  /** NestoApp#217 (NestoAPI#613): cupones del cliente. Lista vacía si no tiene, si falla o si la API es anterior (404). */
+  public leerCupones(empresa: string, cliente: string): Observable<CuponCliente[]> {
+    const url = `${Configuracion.API_URL}/Clientes/${encodeURIComponent(empresa)}/${encodeURIComponent(cliente)}/Cupones`;
+    return this.http.get<CuponCliente[]>(url).pipe(
+      catchError(() => of([] as CuponCliente[]))
     );
   }
 

@@ -20,6 +20,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
  */
 const conChequeRegalo = (servicio: any): any => {
   servicio.leerChequeRegalo = servicio.leerChequeRegalo ?? (() => of(null));
+  servicio.leerCupones = servicio.leerCupones ?? (() => of([])); // NestoApp#217
   servicio.leerSustitucion = servicio.leerSustitucion ?? (() => of(null));
   servicio.fechaEntregaAgencia = servicio.fechaEntregaAgencia ?? (() => of(null)); // NestoApp#215
   return servicio;
@@ -2351,4 +2352,77 @@ describe('Ofertas combinadas en «Aplicar oferta» (#229)', () => {
     expect(selector.ponerCantidad).toHaveBeenCalledWith('45664', 6);
     expect(selector.aplicarCantidades).not.toHaveBeenCalled();
   }));
+});
+
+describe('Cupones del cliente en la plantilla (#217)', () => {
+  let component: PlantillaVentaComponent;
+  const cupon: any = { Codigo: 'EV-2610-7K3Q', Producto: 'CUPONEVENTO', TextoLinea: 'Cupón EV-2610-7K3Q (Curso PDRN)', Importe: 50,
+    PedidoMinimo: 100, SePuedeUsar: true, Estado: 'Activo', Mensaje: 'Tiene un cupón de 50,00 € (EV-2610-7K3Q)…' };
+  let servicio: any;
+
+  beforeEach(waitForAsync(() => {
+    servicio = conChequeRegalo({
+      leerCupones: jasmine.createSpy('leerCupones').and.returnValue(of([cupon])),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([])
+    });
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: servicio },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PlantillaVentaComponent).componentInstance;
+  }));
+
+  it('al cargar el cliente se piden sus cupones, una vez por cliente', () => {
+    component.cargarCupones({ empresa: '1 ', cliente: '15191 ' });
+    component.cargarCupones({ empresa: '1', cliente: '15191' });
+    expect(servicio.leerCupones).toHaveBeenCalledOnceWith('1', '15191');
+    expect(component.cuponesParaAplicar).toEqual([cupon]);
+  });
+
+  it('sin elegir no se aplica; tocar el elegido lo quita', () => {
+    component.cargarCupones({ empresa: '1', cliente: '15191' });
+    expect(component.cuponAplicado).toBeNull();
+
+    component.elegirCupon(cupon);
+    expect(component.cuponAplicado).toBe(cupon);
+
+    component.elegirCupon(cupon);
+    expect(component.cuponAplicado).toBeNull();
+  });
+
+  it('el pedido lleva la línea del cupón con su código y la sesión de sugerencias (#235)', () => {
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0', cifNif: 'B1', comentarioPicking: null };
+    component['_direccionSeleccionada'] = { contacto: '0', servirJunto: false, iva: 'G21', formaPago: 'EFC', plazosPago: 'CONTADO',
+      periodoFacturacion: 'NRM', vendedor: 'NV', ruta: '00', ccc: null, noComisiona: 0, comentarioRuta: '' };
+    component['productosResumen'] = [];
+    component.formaPago = 'EFC';
+    component.plazosPago = 'CONTADO';
+    component.cargarCupones({ empresa: '1', cliente: '15191' });
+    component.elegirCupon(cupon);
+    component.sugerenciasProductos.idSesion = 'sesion-1';
+
+    const pedido = component['prepararPedido']();
+
+    const linea = pedido.Lineas.find((l: any) => l.CodigoCupon);
+    expect(linea.CodigoCupon).toBe('EV-2610-7K3Q');
+    expect(linea.producto).toBe('CUPONEVENTO');
+    expect(pedido.IdSesionSugerencias).toBe('sesion-1');
+  });
+
+  it('si el pedido ya lleva un cupón, no se ofrece otro', () => {
+    component.cargarCupones({ empresa: '1', cliente: '15191' });
+    component['productosResumen'] = [{ producto: 'CUPONEVENTO', cantidad: -1 }];
+    expect(component.cuponesParaAplicar).toEqual([]);
+  });
 });

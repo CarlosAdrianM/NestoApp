@@ -24,6 +24,8 @@ import { SugerenciasProductosService } from 'src/app/services/sugerencias-produc
 import { SugerenciaProducto } from 'src/app/models/sugerencias-productos.model';
 import { DatosSugerenciasProductos, EstadoSugerenciasProductos } from './sugerencias-productos/estado-sugerencias-productos';
 import { SugerenciasProductosComponent } from './sugerencias-productos/sugerencias-productos.component';
+import { CuponCliente, cuponesUsables, esLineaCupon } from 'src/app/models/cupon.model';
+import { textoAvisosEnlacePago } from 'src/app/models/pago-tpv.model';
 import { muestrasPorEncimaDeAlgete, saleDeAlgetePorRuta, textoMuestrasAlgete } from 'src/app/models/muestras-ruta.model';
 import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
@@ -248,6 +250,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       } else {
           this._clienteSeleccionado = value;
           this.cargarChequeRegalo(value); // NestoApp#222
+          this.cargarCupones(value); // NestoApp#217
       }
   }
   private _pedidoPendienteSeleccionado: number;
@@ -290,6 +293,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           handler: () => {
             this._clienteSeleccionado = value;
             this.cargarChequeRegalo(value); // NestoApp#222
+            this.cargarCupones(value); // NestoApp#217
             this.cargarProductos(this.clienteSeleccionado);
           }
         }
@@ -1875,6 +1879,30 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           });
       }
 
+      // NestoApp#217 (NestoAPI#613): basta el código; el servidor pone el resto de la línea y comprueba las reglas.
+      const cupon = this.cuponAplicado;
+      if (cupon) {
+          pedido.Lineas.push({
+              'estado': this.esPresupuesto ? -3 : 1,
+              'tipoLinea': 1,
+              'producto': cupon.Producto,
+              'texto': cupon.TextoLinea,
+              'CodigoCupon': cupon.Codigo,
+              'Cantidad': -1,
+              'fechaEntrega': this.fechaEntrega,
+              'PrecioUnitario': 0,
+              'DescuentoLinea': 0,
+              'AplicarDescuento': false,
+              'vistoBueno': 0,
+              'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
+              'almacen': this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen,
+              'delegacion': this.usuario.delegacion,
+              'formaVenta': this.usuario.formaVenta,
+              'oferta': null,
+              ...(this.pedidoEnEdicionNumero != null ? { id: 0 } : {})
+          });
+      }
+
       console.log(pedido);
       return pedido;
   }
@@ -2002,6 +2030,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                   }).subscribe(
                       async d => {
                           this.firebaseAnalytics.logEvent("plantilla_venta_mandar_cobro_tarjeta", {pedido: data.numero});
+                          // NestoAPI#679: avisos al crear el enlace (p. ej. el pedido va contra reembolso).
+                          const avisosEnlace = textoAvisosEnlacePago(d);
+                          if (avisosEnlace) {
+                            const alertAvisos = await this.alertCtrl.create({ header: 'Ojo con el enlace de pago', message: avisosEnlace, buttons: ['Entendido'] });
+                            await alertAvisos.present();
+                          }
                           if (this.usuario.motorPagos === 'NestoPago') {
                             // Motor NestoPago: mostrar URL de pago al usuario
                             const enlace = d.UrlPaginaPago;
@@ -2262,6 +2296,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.chequeRegalo = null;
       this.usarChequeRegalo = false;
       this.clienteChequeRegalo = null;
+      this.cupones = [];
+      this.codigoCuponElegido = null;
+      this.clienteCupones = null;
       // NestoApp#206
       this.saldoAFavor = null;
       this.descontarSaldoAFavor = false;
@@ -2334,6 +2371,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           total += comisionConIva;
       }
       total -= this.descuentoChequeRegalo; // NestoApp#222
+      total -= this.cuponAplicado?.Importe ?? 0; // NestoApp#217: el importe del cupón ya lleva el IVA
       return total;
   }
 
@@ -2589,6 +2627,48 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         this.chequeRegalo = cheque;
       }
     });
+  }
+
+  // NestoApp#217 (NestoAPI#613): cupones del cliente. Se enseñan siempre; solo se aplica el que
+  // elija el vendedor (uno por pedido).
+  public cupones: CuponCliente[] = [];
+  public codigoCuponElegido: string | null = null;
+  private clienteCupones: string | null = null;
+
+  public cargarCupones(cliente: any): void {
+    const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}` : null;
+    if (clave === this.clienteCupones) {
+      return;
+    }
+    this.clienteCupones = clave;
+    this.cupones = [];
+    this.codigoCuponElegido = null;
+    if (!clave) {
+      return;
+    }
+    this.servicio.leerCupones(cliente.empresa.toString().trim(), cliente.cliente.toString().trim()).subscribe(cupones => {
+      if (clave === this.clienteCupones) {
+        this.cupones = cupones || [];
+      }
+    });
+  }
+
+  /** Al editar un pedido que ya lleva un cupón, no se puede poner otro (uno por pedido). */
+  get cuponYaEnPedido(): boolean {
+    return (this.productosResumen || []).some(l => esLineaCupon(l, this.cupones));
+  }
+
+  get cuponesParaAplicar(): CuponCliente[] {
+    return this.cuponYaEnPedido ? [] : cuponesUsables(this.cupones);
+  }
+
+  get cuponAplicado(): CuponCliente | null {
+    return this.cuponesParaAplicar.find(c => c.Codigo === this.codigoCuponElegido) ?? null;
+  }
+
+  /** Tocar el elegido lo quita: así se puede dejar sin cupón. */
+  public elegirCupon(cupon: CuponCliente): void {
+    this.codigoCuponElegido = this.codigoCuponElegido === cupon.Codigo ? null : cupon.Codigo;
   }
 
   /** La línea del cheque ya está en el pedido (al editar uno en el que se canjeó). */

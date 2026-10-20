@@ -29,4 +29,20 @@ export interface RespuestaIniciarPago {
     Ds_Signature: string;
     TokenAcceso: string;
     UrlPaginaPago: string;
+    /**
+     * NestoAPI#679: avisos al generar el enlace (p. ej. el pedido va contra reembolso). Nunca
+     * bloquean: el enlace ya está creado. Una API vieja no los manda.
+     */
+    Avisos?: AvisoEnlacePago[];
+}
+
+export interface AvisoEnlacePago {
+    /** EnvioEnCaminoConReembolso | PedidoContraReembolso */
+    Codigo: string;
+    Texto: string;
+}
+
+/** Los textos de los avisos, uno por párrafo; vacío si no hay ninguno. */
+export function textoAvisosEnlacePago(respuesta: RespuestaIniciarPago | null | undefined): string {
+    return (respuesta?.Avisos || []).map(a => (a?.Texto || '').trim()).filter(t => !!t).join('\n\n');
 }

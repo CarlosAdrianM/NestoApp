@@ -230,6 +230,27 @@
                 </ion-label>
             </ion-item>
         </ion-card>
+        <!-- NestoApp#217 (NestoAPI#613): cupones del cliente; solo se aplica el que se marque (uno por pedido) -->
+        <ion-card *ngIf="cupones.length > 0" [color]="cuponesParaAplicar.length > 0 ? 'success' : 'light'">
+            <ion-card-content>
+                <p *ngFor="let cupon of cupones"><strong>{{ cupon.Mensaje }}</strong></p>
+                <p *ngIf="cuponYaEnPedido">El pedido ya lleva un cupón: solo se puede aplicar uno.</p>
+            </ion-card-content>
+            <ion-item lines="none" *ngFor="let cupon of cuponesParaAplicar" [color]="'success'">
+                <ion-label class="ion-text-wrap">Aplicar el cupón {{ cupon.Codigo }} de {{ formatearEuros(cupon.Importe) }}</ion-label>
+                <ion-checkbox slot="end" [attr.aria-label]="'Aplicar el cupón ' + cupon.Codigo"
+                    [checked]="codigoCuponElegido === cupon.Codigo" (ionChange)="elegirCupon(cupon)"></ion-checkbox>
+            </ion-item>
+            <ion-item lines="none" *ngIf="cuponAplicado" [color]="'success'">
+                <ion-label class="ion-text-wrap" style="font-size: 0.85em;">
+                    El pedido tiene que llevar al menos {{ formatearEuros(cuponAplicado.PedidoMinimo) }} de productos (IVA incluido, sin contar cursos ni portes). Al guardar lo comprueba el servidor.
+                </ion-label>
+            </ion-item>
+        </ion-card>
+        <ion-item *ngIf="cuponAplicado">
+            <div>Cupón:</div>
+            <div slot="end" class="ion-text-right">-{{cuponAplicado.Importe | currency:'EUR'}}</div>
+        </ion-item>
         <ion-item *ngIf="descuentoChequeRegalo > 0">
             <div>Cheque regalo:</div>
             <div slot="end" class="ion-text-right">-{{descuentoChequeRegalo | currency:'EUR'}}</div>
