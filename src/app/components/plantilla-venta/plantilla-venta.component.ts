@@ -20,6 +20,7 @@ import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantil
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO, ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
+import { muestrasPorEncimaDeAlgete, saleDeAlgetePorRuta, textoMuestrasAlgete } from 'src/app/models/muestras-ruta.model';
 import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
 import {
@@ -1829,6 +1830,41 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           .map(l => ({ producto: l.producto, texto: l.texto }));
   }
 
+  /**
+   * NestoApp#233 (Nesto#531): si el pedido sale por ruta desde Algete y alguna muestra nueva pide más
+   * de lo que hay allí, se ofrece dejarla en lo que hay (o quitarla). Devuelve false si no se graba.
+   * Las líneas ya grabadas de un pedido en edición no se miran: para esas manda el rechazo de la API.
+   */
+  public async ajustarMuestrasAAlgete(): Promise<boolean> {
+      if (this.esPresupuesto || this.servirPorGlovo || !saleDeAlgetePorRuta(this.direccionSeleccionada?.ruta, this.almacen)) {
+          return true;
+      }
+      const enEdicion = this.pedidoEnEdicionNumero != null;
+      const muestras = muestrasPorEncimaDeAlgete(this.productosResumen,
+          l => !enEdicion || !this.edicionMetaLineas.get(l.producto)?.idLineaPago);
+      if (muestras.length === 0) {
+          return true;
+      }
+      const alert = await this.alertCtrl.create({
+          header: 'Muestras sin stock en Algete',
+          message: textoMuestrasAlgete(muestras),
+          buttons: [
+              { text: 'No', role: 'cancel' },
+              { text: 'Sí, grabar', role: 'confirm' }
+          ]
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') {
+          return false;
+      }
+      muestras.forEach(l => this._selectorPlantillaVenta?.aplicarCantidades(l.producto, Math.max(0, +l.cantidadDisponible || 0), +l.cantidadOferta || 0));
+      if (this._selectorPlantillaVenta) {
+          this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+      }
+      return true;
+  }
+
   public async crearPedido(): Promise<void> {
       let numeroPedido: string;
 
@@ -1849,6 +1885,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               buttons: ['Ok']
           });
           await alert.present();
+          return;
+      }
+
+      // NestoApp#233 (NestoAPI#649): por ruta desde Algete, las muestras solo con lo que hay allí.
+      if (!await this.ajustarMuestrasAAlgete()) {
           return;
       }
 

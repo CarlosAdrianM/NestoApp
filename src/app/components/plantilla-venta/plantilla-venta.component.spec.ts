@@ -2173,3 +2173,67 @@ describe('Muestras sin stock al salir de «Todo junto» (#232)', () => {
     expect(component.modoServicio).toBe(1);
   }));
 });
+
+describe('Muestras por ruta desde Algete antes de grabar (#233)', () => {
+  let component: PlantillaVentaComponent;
+  let respuesta: string;
+  let alertas: any[];
+  let selector: any;
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    respuesta = 'confirm';
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo({ cargarGruposBonificables: () => of(['COS']), calcularFechaEntrega: () => of(new Date().toISOString()) }) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertas.push(opts);
+              return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({ role: respuesta }) });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PlantillaVentaComponent).componentInstance;
+    component['_direccionSeleccionada'] = { ruta: '16', contacto: '0' };
+    component['_almacen'] = 'ALG';
+    component['productosResumen'] = [
+      { producto: '17404', texto: 'MUESTRA', subGrupo: 'Muestras y material promocional', cantidad: 3, cantidadOferta: 0, cantidadDisponible: 1, stockActualizado: true },
+      { producto: '20000', texto: 'CREMA', subGrupo: 'Cremas', cantidad: 9, cantidadOferta: 0, cantidadDisponible: 0, stockActualizado: true }
+    ];
+    selector = { aplicarCantidades: jasmine.createSpy('aplicarCantidades'), cargarResumen: () => [] };
+    component['_selectorPlantillaVenta'] = selector;
+  }));
+
+  it('con un sí deja la muestra en lo que hay en Algete y sigue', async () => {
+    expect(await component.ajustarMuestrasAAlgete()).toBeTrue();
+    expect(alertas[0].message).toContain('pide 3, solo hay 1 en Algete');
+    expect(selector.aplicarCantidades).toHaveBeenCalledOnceWith('17404', 1, 0);
+  });
+
+  it('con un no, no se graba ni se toca nada', async () => {
+    respuesta = 'cancel';
+    expect(await component.ajustarMuestrasAAlgete()).toBeFalse();
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+  });
+
+  it('fuera de las rutas de Algete o en un presupuesto no pregunta', async () => {
+    component['_direccionSeleccionada'] = { ruta: 'FW2', contacto: '0' };
+    expect(await component.ajustarMuestrasAAlgete()).toBeTrue();
+    component['_direccionSeleccionada'] = { ruta: '16', contacto: '0' };
+    component.esPresupuesto = true;
+    expect(await component.ajustarMuestrasAAlgete()).toBeTrue();
+    expect(alertas.length).toBe(0);
+  });
+});
