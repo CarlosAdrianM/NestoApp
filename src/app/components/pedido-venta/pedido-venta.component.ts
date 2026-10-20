@@ -6,13 +6,16 @@ import { Browser } from '@capacitor/browser';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaVenta } from '../linea-venta/linea-venta';
+import { firstValueFrom, Observable } from 'rxjs';
 import { PedidoVenta } from './pedido-venta';
 import { PedidoVentaService, AGENCIA_LA_ELIGE_EL_COMPARADOR } from './pedido-venta.service';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo } from 'src/app/models/modos-servicio.model';
+import { ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
+import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
 import {
     LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
@@ -278,8 +281,24 @@ export class PedidoVentaComponent  {
   }
 
   private validarSalidaDeTodoJunto(nuevoModo: number): void {
+      this.pedirValidacionServirJunto(nuevoModo).subscribe(
+          async (response) => {
+              if (!response.PuedeDesmarcar) {
+                  await this.ofrecerBorrarLineasQueImpiden(nuevoModo, response);
+                  return;
+              }
+              await this.confirmarSalidaDeTodoJunto(response);
+          },
+          (error) => {
+              console.error('Error validando ServirJunto:', error);
+          }
+      );
+  }
+
+  /** @param excluir líneas que no se mandan (las que el vendedor ha aceptado borrar, #232). */
+  private pedirValidacionServirJunto(nuevoModo: number, excluir: LineaVenta[] = []): Observable<ValidarServirJuntoResponse> {
       const lineasPedido = (this.pedido.Lineas || [])
-          .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0)
+          .filter(l => l.tipoLinea === 1 && l.Producto && l.Cantidad > 0 && !excluir.includes(l))
           .map(l => ({
               ProductoId: l.Producto,
               Cantidad: l.Cantidad,
@@ -293,40 +312,75 @@ export class PedidoVentaComponent  {
           periodoFacturacion: this.pedido.periodoFacturacion,
           notaEntrega: this.pedido.notaEntrega
       };
+      return this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido, undefined, nuevoModo);
+  }
 
-      this.plantillaVentaService.validarServirJunto(almacen, [], lineasPedido, datosPedido, undefined, nuevoModo).subscribe(
-          async (response) => {
-              if (!response.PuedeDesmarcar) {
-                  this.revertirATodoJunto();
-                  const alert = await this.alertCtrl.create({
-                      header: 'No se puede cambiar el modo',
-                      message: response.Mensaje || 'No se puede cambiar el modo de entrega porque hay productos que se quedarían pendientes.',
-                      buttons: ['Ok']
-                  });
-                  await alert.present();
-                  return;
-              }
-
-              if (response.Aviso) {
-                  const confirm = await this.alertCtrl.create({
-                      header: 'Comisión contra reembolso',
-                      message: response.Aviso,
-                      buttons: [
-                          { text: 'Cancelar', role: 'cancel' },
-                          { text: 'Continuar', role: 'confirm' }
-                      ]
-                  });
-                  await confirm.present();
-                  const { role } = await confirm.onDidDismiss();
-                  if (role === 'cancel') {
-                      this.revertirATodoJunto();
-                  }
-              }
-          },
-          (error) => {
-              console.error('Error validando ServirJunto:', error);
+  /**
+   * NestoApp#232 (Nesto#527): si lo que impide salir de «Todo junto» son líneas del pedido (muestras
+   * sin stock) que aún se pueden borrar, se ofrece borrarlas; si no, se dice que se queda en «Todo junto».
+   */
+  private async ofrecerBorrarLineasQueImpiden(nuevoModo: number, response: ValidarServirJuntoResponse): Promise<void> {
+      const nombre = nombreModo(nuevoModo);
+      const borrables = (this.pedido.Lineas || []).filter(l => l.tipoLinea === 1 && !l.picking);
+      const aBorrar = lineasQueImpidenSalirDeTodoJunto(response.ProductosProblematicos, borrables, l => l.Producto);
+      const quedarseEnTodoJunto = async (mensaje: string | null) => {
+          this.revertirATodoJunto();
+          if (mensaje) {
+              const alert = await this.alertCtrl.create({ header: 'No se puede cambiar el modo', message: mensaje, buttons: ['Ok'] });
+              await alert.present();
           }
-      );
+      };
+
+      if (!aBorrar) {
+          await quedarseEnTodoJunto(conAvisoTodoJunto(response.Mensaje));
+          return;
+      }
+
+      const pregunta = await this.alertCtrl.create({
+          header: 'Modo de servicio',
+          message: textoOfrecerQuitarLineas(nombre, aBorrar.map(l => `${(l.Producto ?? '').toString().trim()} ${l.texto || ''}`.trim()), 'borrarlas'),
+          buttons: [
+              { text: 'No', role: 'cancel' },
+              { text: 'Sí, borrarlas', role: 'confirm' }
+          ]
+      });
+      await pregunta.present();
+      const { role } = await pregunta.onDidDismiss();
+      if (role !== 'confirm') {
+          await quedarseEnTodoJunto(textoSeQuedaEnTodoJunto(nombre));
+          return;
+      }
+
+      const sinEllas = await firstValueFrom(this.pedirValidacionServirJunto(nuevoModo, aBorrar)).catch(() => null);
+      if (!sinEllas?.PuedeDesmarcar) {
+          await quedarseEnTodoJunto(textoNoSeHanQuitado(nombre, sinEllas?.Mensaje ?? response.Mensaje, true));
+          return;
+      }
+      if (await this.confirmarSalidaDeTodoJunto(sinEllas)) {
+          // Como «Borrar línea»: se quitan de la lista y se borran al modificar el pedido.
+          this.pedido.Lineas = this.pedido.Lineas.filter(l => !aBorrar.includes(l));
+      }
+  }
+
+  /** Devuelve false si el vendedor cancela el aviso (y entonces vuelve a «Todo junto»). */
+  private async confirmarSalidaDeTodoJunto(response: ValidarServirJuntoResponse): Promise<boolean> {
+      if (response.Aviso) {
+          const confirm = await this.alertCtrl.create({
+              header: 'Comisión contra reembolso',
+              message: response.Aviso,
+              buttons: [
+                  { text: 'Cancelar', role: 'cancel' },
+                  { text: 'Continuar', role: 'confirm' }
+              ]
+          });
+          await confirm.present();
+          const { role } = await confirm.onDidDismiss();
+          if (role === 'cancel') {
+              this.revertirATodoJunto();
+              return false;
+          }
+      }
+      return true;
   }
 
   // ========================================

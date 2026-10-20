@@ -232,6 +232,47 @@ describe('Modo de servicio en pedido-venta (#174)', () => {
     expect(component.pedido.servirJunto).toBeTrue();
   }));
 
+  it('#232: si la muestra sin stock es una línea sin picking, ofrece borrarla y la borra con un sí', fakeAsync(() => {
+    const muestra = { tipoLinea: 1, Producto: '17404', texto: 'MUESTRA', Cantidad: 1, picking: 0 };
+    const crema = { tipoLinea: 1, Producto: '20000', texto: 'CREMA', Cantidad: 2, picking: 0 };
+    component.pedido = { servirJunto: true, modoServicio: 1, formaPago: 'EFC', Lineas: [muestra, crema] } as any;
+    const validar = spyOn(component['plantillaVentaService'], 'validarServirJunto').and.returnValues(
+      of({ PuedeDesmarcar: false, ProductosProblematicos: [{ ProductoId: '17404', ProductoNombre: 'MUESTRA', AlmacenConStock: null }], Mensaje: 'Sin stock' }),
+      of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }));
+    const alertas: any[] = [];
+    spyOn(component['alertCtrl'], 'create').and.callFake((o: any) => {
+      alertas.push(o);
+      return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({ role: 'confirm' }) } as any);
+    });
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(alertas[0].message).toContain('¿Quiere borrarlas del pedido');
+    expect((validar.calls.mostRecent().args[2] as any[]).map(l => l.ProductoId)).toEqual(['20000']);
+    expect(component.pedido.Lineas).toEqual([crema] as any);
+    expect(component.pedido.modoServicio).toBe(2);
+  }));
+
+  it('#232: con la muestra ya en picking no se ofrece; se dice que se queda en «Todo junto»', fakeAsync(() => {
+    component.pedido = { servirJunto: true, modoServicio: 1, formaPago: 'EFC',
+      Lineas: [{ tipoLinea: 1, Producto: '17404', Cantidad: 1, picking: 55 }] } as any;
+    spyOn(component['plantillaVentaService'], 'validarServirJunto').and.returnValue(
+      of({ PuedeDesmarcar: false, ProductosProblematicos: [{ ProductoId: '17404', ProductoNombre: 'M', AlmacenConStock: null }], Mensaje: 'Sin stock' }));
+    const alertas: any[] = [];
+    spyOn(component['alertCtrl'], 'create').and.callFake((o: any) => {
+      alertas.push(o);
+      return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) } as any);
+    });
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(alertas.length).toBe(1);
+    expect(alertas[0].message).toBe('Sin stock. El pedido se queda en «Todo junto».');
+    expect(component.pedido.modoServicio).toBe(1);
+  }));
+
   it('salir de todo junto con permiso del servidor deja el modo elegido', fakeAsync(() => {
     component.pedido = { servirJunto: true, modoServicio: 1, formaPago: 'EFC', Lineas: [] } as any;
     spyOn(component['plantillaVentaService'], 'validarServirJunto')

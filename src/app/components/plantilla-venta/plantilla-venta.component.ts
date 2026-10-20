@@ -19,7 +19,8 @@ import { RegaloSeleccionado } from '../selector-regalos/selector-regalos.compone
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaRegalo } from 'src/app/models/borrador-plantilla-venta.model';
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
-import { GRUPOS_BONIFICABLES_POR_DEFECTO } from 'src/app/models/ganavisiones.model';
+import { GRUPOS_BONIFICABLES_POR_DEFECTO, ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
+import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
 import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
@@ -849,21 +850,48 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * de «Todo junto», se queda ahí y se explica en el texto bajo el selector.
    */
   private validarSalidaDeTodoJunto(nuevoModo: number, automatico: boolean = false): void {
+      this.pedirValidacionServirJunto(nuevoModo).subscribe(
+        async (response) => {
+          if (!response.PuedeDesmarcar) {
+            if (automatico) {
+              // No se puede: revertir a «Todo junto» y explicarlo bajo el selector (el servidor ya nombra el modo)
+              this.revertirATodoJunto();
+              this.motivoModoServicio = response.Mensaje || 'Se mantiene «Todo junto»: hay productos de regalo que requieren servir todo junto.';
+              this.recalcularPortesTrasServirJunto();
+              return;
+            }
+            await this.ofrecerQuitarLineasQueImpiden(nuevoModo, response);
+            return;
+          }
+          await this.confirmarSalidaDeTodoJunto(response, automatico);
+        },
+        async (error) => {
+          console.error('Error validando ServirJunto:', error);
+          // Si el servidor falla revertimos al estado seguro (todo junto)
+          // y recalculamos para que la UI quede coherente.
+          this.revertirATodoJunto();
+          this.recalcularPortesTrasServirJunto();
+        }
+      );
+  }
+
+  /** @param excluir productos que no se mandan (los que el vendedor ha aceptado quitar, #232). */
+  private pedirValidacionServirJunto(nuevoModo: number, excluir: string[] = []): Observable<ValidarServirJuntoResponse> {
+      const quitados = new Set(excluir.map(p => (p ?? '').toString().trim()));
+      const lineas = (this.productosResumen || [])
+        .filter(l => l.producto && l.cantidad > 0 && !quitados.has(l.producto.toString().trim()));
+
       const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
         ProductoId: r.producto.ProductoId,
         Cantidad: r.cantidad
       }));
 
-      const lineasPedido = (this.productosResumen || [])
-        .filter(l => l.producto && l.cantidad > 0)
-        .map(l => ({ ProductoId: l.producto, Cantidad: l.cantidad }));
+      const lineasPedido = lineas.map(l => ({ ProductoId: l.producto, Cantidad: l.cantidad }));
 
       // Issue #122 / NestoAPI#211: líneas de producto para que el backend calcule la base de
       // portes que quedaría al desmarcar servir junto (excluyendo las líneas sobre pedido).
       const almacenLineas = this.servirPorGlovo ? this.almacenEntregaUrgente : this.almacen;
-      const lineasParaPortes = (this.productosResumen || [])
-        .filter(l => l.producto && l.cantidad > 0)
-        .map(l => ({
+      const lineasParaPortes = lineas.map(l => ({
           ProductoId: l.producto,
           Almacen: almacenLineas,
           Estado: l.estado,
@@ -881,26 +909,61 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         notaEntrega: false
       };
 
-      this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido, lineasParaPortes, nuevoModo).subscribe(
-        async (response) => {
-          if (!response.PuedeDesmarcar) {
-            // No se puede: revertir a «Todo junto» y mostrar mensaje (el servidor ya nombra el modo)
-            this.revertirATodoJunto();
-            if (automatico) {
-              this.motivoModoServicio = response.Mensaje || 'Se mantiene «Todo junto»: hay productos de regalo que requieren servir todo junto.';
-              this.recalcularPortesTrasServirJunto();
-              return;
-            }
-            const alert = await this.alertCtrl.create({
-              header: 'No se puede cambiar el modo',
-              message: response.Mensaje || 'No se puede cambiar el modo de entrega porque hay productos de regalo que requieren servir todo junto.',
-              buttons: ['Ok']
-            });
-            await alert.present();
-            this.recalcularPortesTrasServirJunto();
-            return;
-          }
+      return this.servicio.validarServirJunto(this.almacen, productosBonificadosConCantidad, lineasPedido, datosPedido, lineasParaPortes, nuevoModo);
+  }
 
+  /**
+   * NestoApp#232 (Nesto#527): la API no deja salir de «Todo junto» por líneas que no pueden quedarse
+   * pendientes (muestras sin stock). Si están todas en el pedido, se ofrece quitarlas; si no, o si el
+   * vendedor no quiere, se dice que el pedido se queda en «Todo junto» (antes se revertía sin más).
+   */
+  private async ofrecerQuitarLineasQueImpiden(nuevoModo: number, response: ValidarServirJuntoResponse): Promise<void> {
+      const nombre = nombreModo(nuevoModo);
+      const aQuitar = lineasQueImpidenSalirDeTodoJunto(response.ProductosProblematicos, this.productosResumen, l => l.producto);
+      const quedarseEnTodoJunto = async (mensaje: string | null) => {
+        this.revertirATodoJunto();
+        this.motivoModoServicio = textoSeQuedaEnTodoJunto(nombre);
+        if (mensaje) {
+          const alert = await this.alertCtrl.create({ header: 'No se puede cambiar el modo', message: mensaje, buttons: ['Ok'] });
+          await alert.present();
+        }
+        this.recalcularPortesTrasServirJunto();
+      };
+
+      if (!aQuitar) {
+        await quedarseEnTodoJunto(conAvisoTodoJunto(response.Mensaje));
+        return;
+      }
+
+      const pregunta = await this.alertCtrl.create({
+        header: 'Modo de servicio',
+        message: textoOfrecerQuitarLineas(nombre, aQuitar.map(l => `${(l.producto ?? '').toString().trim()} ${l.texto || ''}`.trim())),
+        buttons: [
+          { text: 'No', role: 'cancel' },
+          { text: 'Sí, quitarlas', role: 'confirm' }
+        ]
+      });
+      await pregunta.present();
+      const { role } = await pregunta.onDidDismiss();
+      if (role !== 'confirm') {
+        await quedarseEnTodoJunto(null);
+        return;
+      }
+
+      const productos = aQuitar.map(l => l.producto);
+      const sinEllas = await firstValueFrom(this.pedirValidacionServirJunto(nuevoModo, productos)).catch(() => null);
+      if (!sinEllas?.PuedeDesmarcar) {
+        await quedarseEnTodoJunto(textoNoSeHanQuitado(nombre, sinEllas?.Mensaje ?? response.Mensaje));
+        return;
+      }
+      await this.confirmarSalidaDeTodoJunto(sinEllas, false, productos);
+  }
+
+  /**
+   * @param productosAQuitar #232: las líneas que el vendedor ha aceptado quitar. Solo se quitan si
+   * acepta también los avisos (si los cancela, vuelve a «Todo junto» con el pedido intacto).
+   */
+  private async confirmarSalidaDeTodoJunto(response: ValidarServirJuntoResponse, automatico: boolean, productosAQuitar: string[] = []): Promise<void> {
           // Avisos no-bloqueantes al salir de todo junto: comisión contra reembolso (NestoAPI#187)
           // y aparición de portes por líneas sobre pedido (NestoAPI#211). Se muestran juntos
           // en una sola confirmación; si el usuario cancela, se revierte el cambio de modo.
@@ -913,6 +976,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           if (response.Aviso) avisos.push(response.Aviso);
           if (avisoPortes) avisos.push(avisoPortes);
 
+          let cancelado = false;
           // NestoApp#185: en el recálculo automático los avisos no se preguntan (no lo ha pedido nadie).
           if (avisos.length > 0 && !automatico) {
             const confirm = await this.alertCtrl.create({
@@ -926,21 +990,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             await confirm.present();
             const { role } = await confirm.onDidDismiss();
             if (role === 'cancel') {
+              cancelado = true;
               this.revertirATodoJunto();
             }
+          }
+          if (!cancelado && productosAQuitar.length > 0 && this._selectorPlantillaVenta) {
+            productosAQuitar.forEach(p => this._selectorPlantillaVenta.aplicarCantidades(p, 0, 0));
+            this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
           }
           // Tras procesar el cambio (sea aceptado, revertido o sin avisos),
           // recalcular base de portes y el texto de portes a mostrar.
           this.recalcularPortesTrasServirJunto();
-        },
-        async (error) => {
-          console.error('Error validando ServirJunto:', error);
-          // Si el servidor falla revertimos al estado seguro (todo junto)
-          // y recalculamos para que la UI quede coherente.
-          this.revertirATodoJunto();
-          this.recalcularPortesTrasServirJunto();
-        }
-      );
   }
 
   /**

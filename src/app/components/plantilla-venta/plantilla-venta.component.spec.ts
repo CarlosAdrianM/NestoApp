@@ -2049,3 +2049,127 @@ describe('Fecha de entrega a la agencia en la plantilla (#215)', () => {
     expect(component.textoFechaEntregaAgencia).toBe('Se entrega a la agencia el martes 20/10');
   });
 });
+
+describe('Muestras sin stock al salir de «Todo junto» (#232)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertasCreadas: any[];
+  let respuestaAlerta: string;
+  let selector: any;
+
+  const denegado = {
+    PuedeDesmarcar: false,
+    ProductosProblematicos: [{ ProductoId: '17404', ProductoNombre: 'Muestra crema', AlmacenConStock: null }],
+    Mensaje: 'No hay stock en ALG de esta muestra'
+  };
+
+  beforeEach(waitForAsync(() => {
+    alertasCreadas = [];
+    respuestaAlerta = 'confirm';
+    servicio = {
+      modoFacturacionSugerido: () => of(null),
+      validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of(denegado)),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of(['COS', 'ACC']),
+      leerCliente: () => of({}),
+      calcularPortes: () => of({})
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertasCreadas.push(opts);
+              return Promise.resolve({
+                present: () => Promise.resolve(),
+                dismiss: () => Promise.resolve(),
+                onDidDismiss: () => Promise.resolve({ role: respuestaAlerta })
+              });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B12345678' };
+    component['_direccionSeleccionada'] = {
+      contacto: '0', servirJunto: true, mantenerJunto: false, iva: 'G21', formaPago: 'EFC', plazosPago: 'CONTADO',
+      periodoFacturacion: 'NRM', vendedor: 'NV', ruta: '00', ccc: null, noComisiona: 0, comentarioRuta: ''
+    };
+    component['modoServicioSeleccionado'] = 1;
+    component['productosResumen'] = [
+      { producto: '17404 ', texto: 'MUESTRA CREMA', cantidad: 2, precio: 0, descuento: 0, estado: 0 },
+      { producto: '20000', texto: 'CREMA', cantidad: 3, precio: 10, descuento: 0, estado: 0 }
+    ];
+    selector = {
+      aplicarCantidades: jasmine.createSpy('aplicarCantidades').and.returnValue(true),
+      cargarResumen: jasmine.createSpy('cargarResumen').and.returnValue([{ producto: '20000', cantidad: 3 }]),
+      baseImponibleParaPortes: 30
+    };
+    component['_selectorPlantillaVenta'] = selector;
+  }));
+
+  it('si las muestras están en el pedido, ofrece quitarlas; con un sí revalida sin ellas y las quita', fakeAsync(() => {
+    servicio.validarServirJunto.and.returnValues(of(denegado), of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }));
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(alertasCreadas[0].message).toContain('¿Quiere quitarlas del pedido y pasarlo a «Según vaya entrando»?');
+    expect(alertasCreadas[0].message).toContain('17404 MUESTRA CREMA');
+    const segunda = servicio.validarServirJunto.calls.mostRecent().args[1 + 1];
+    expect(segunda.map((l: any) => l.ProductoId)).toEqual(['20000']);
+    expect(selector.aplicarCantidades).toHaveBeenCalledWith('17404 ', 0, 0);
+    expect(component.modoServicio).toBe(2);
+  }));
+
+  it('con un no, el pedido se queda en «Todo junto» y se dice', fakeAsync(() => {
+    respuestaAlerta = 'cancel';
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(servicio.validarServirJunto).toHaveBeenCalledTimes(1);
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+    expect(component.modoServicio).toBe(1);
+    expect(component.motivoModoServicio).toContain('se queda en «Todo junto»');
+  }));
+
+  it('si ni quitándolas se puede, no se quita nada y se explica', fakeAsync(() => {
+    servicio.validarServirJunto.and.returnValues(of(denegado), of({ ...denegado, ProductosProblematicos: [], Mensaje: 'Hay regalos que lo requieren' }));
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+    expect(component.modoServicio).toBe(1);
+    expect(alertasCreadas[1].message).toContain('No se ha quitado ninguna línea');
+    expect(alertasCreadas[1].message).toContain('Hay regalos que lo requieren');
+  }));
+
+  it('si el problemático no está entre las líneas, solo se enseña el mensaje y que vuelve a «Todo junto»', fakeAsync(() => {
+    servicio.validarServirJunto.and.returnValue(of({ ...denegado, ProductosProblematicos: [{ ProductoId: '99999', ProductoNombre: 'Regalo', AlmacenConStock: null }] }));
+
+    component.cambiarModoServicio(2);
+    tick();
+
+    expect(alertasCreadas.length).toBe(1);
+    expect(alertasCreadas[0].message).toBe('No hay stock en ALG de esta muestra. El pedido se queda en «Todo junto».');
+    expect(component.modoServicio).toBe(1);
+  }));
+});
