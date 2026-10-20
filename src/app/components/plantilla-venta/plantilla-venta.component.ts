@@ -21,6 +21,7 @@ import { BorradorPlantillaVenta, BorradorMetadata, LineaPlantillaVenta, LineaReg
 import { ModalListaBorradoresComponent } from './modal-lista-borradores.component';
 import { GRUPOS_BONIFICABLES_POR_DEFECTO, ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
 import { SugerenciasProductosService } from 'src/app/services/sugerencias-productos.service';
+import { Keyboard } from 'src/app/services/keyboard.service';
 import { SugerenciaProducto } from 'src/app/models/sugerencias-productos.model';
 import { DatosSugerenciasProductos, EstadoSugerenciasProductos } from './sugerencias-productos/estado-sugerencias-productos';
 import { SugerenciasProductosComponent } from './sugerencias-productos/sugerencias-productos.component';
@@ -70,7 +71,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private route: ActivatedRoute,
     private parametros: Parametros,
     private solicitudCambioModo: SolicitudCambioModoService,
-    servicioSugerenciasProductos: SugerenciasProductosService
+    servicioSugerenciasProductos: SugerenciasProductosService,
+    private keyboard: Keyboard
     ) {
       this.sugerenciasProductos = new EstadoSugerenciasProductos(servicioSugerenciasProductos, () => this.datosSugerenciasProductos());
       this.almacen = this.usuario.almacen;
@@ -3401,18 +3403,31 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   /** NestoApp#235: la hoja inferior con las tarjetas; se queda abierta al añadir para seguir con las demás. */
   public async abrirSugerenciasProductos(): Promise<void> {
-    this.firebaseAnalytics.logEvent('plantilla_venta_abrir_sugerencias_productos', { cliente: this.clienteSeleccionado?.cliente });
-    const modal = await this.modalCtrl.create({
-      component: SugerenciasProductosComponent,
-      componentProps: {
-        estado: this.sugerenciasProductos,
-        anadir: (sugerencia: SugerenciaProducto) => this.anadirProductoSugerido(sugerencia)
-      },
-      breakpoints: [0, 0.6, 1],
-      initialBreakpoint: 0.6
-    });
-    await modal.present();
+    if (this.abriendoSugerenciasProductos) {
+      return;
+    }
+    this.abriendoSugerenciasProductos = true;
+    try {
+      this.firebaseAnalytics.logEvent('plantilla_venta_abrir_sugerencias_productos', { cliente: this.clienteSeleccionado?.cliente });
+      // 2.25.1: si el teclado del buscador sale mientras se anima la hoja, esta se queda a medias
+      // y la app no responde (ni «Cerrar»). Primero fuera el teclado, y que no vuelva a salir.
+      this._selectorPlantillaVenta?.cancelarFoco();
+      await this.keyboard.cerrar();
+      const modal = await this.modalCtrl.create({
+        component: SugerenciasProductosComponent,
+        componentProps: {
+          estado: this.sugerenciasProductos,
+          anadir: (sugerencia: SugerenciaProducto) => this.anadirProductoSugerido(sugerencia)
+        },
+        breakpoints: [0, 0.6, 1],
+        initialBreakpoint: 0.6
+      });
+      await modal.present();
+    } finally {
+      this.abriendoSugerenciasProductos = false;
+    }
   }
+  private abriendoSugerenciasProductos = false;
 
   /** Entra en la plantilla con 1 unidad más; luego se cambia la cantidad como en cualquier línea. */
   public async anadirProductoSugerido(sugerencia: SugerenciaProducto): Promise<boolean> {

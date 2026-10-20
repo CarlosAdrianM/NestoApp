@@ -2,11 +2,12 @@ import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-mo
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { ActionSheetController, AlertController, IonicModule, LoadingController, Platform } from '@ionic/angular';
+import { ActionSheetController, AlertController, IonicModule, LoadingController, ModalController, Platform } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { Storage } from '@ionic/storage-angular';
+import { Keyboard } from '../../services/keyboard.service';
 
 import { PlantillaVentaComponent } from './plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
@@ -2424,5 +2425,67 @@ describe('Cupones del cliente en la plantilla (#217)', () => {
     component.cargarCupones({ empresa: '1', cliente: '15191' });
     component['productosResumen'] = [{ producto: 'CUPONEVENTO', cantidad: -1 }];
     expect(component.cuponesParaAplicar).toEqual([]);
+  });
+});
+
+describe('Abrir «Puede ofrecer» mientras se abre el teclado (2.25.1)', () => {
+  let component: PlantillaVentaComponent;
+  let orden: string[];
+  let teclado: any;
+  let modales: any;
+  let selector: any;
+
+  beforeEach(waitForAsync(() => {
+    orden = [];
+    let cerrarTeclado: () => void;
+    teclado = {
+      show: () => { },
+      hide: () => { },
+      cerrar: jasmine.createSpy('cerrar').and.callFake(() => {
+        orden.push('cerrar teclado');
+        return new Promise<void>(resolve => cerrarTeclado = () => { orden.push('teclado cerrado'); resolve(); });
+      }),
+      terminarDeCerrar: () => cerrarTeclado()
+    };
+    modales = {
+      create: jasmine.createSpy('create').and.callFake(() => {
+        orden.push('crear modal');
+        return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) });
+      })
+    };
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: Keyboard, useValue: teclado },
+        { provide: ModalController, useValue: modales },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PlantillaVentaComponent).componentInstance;
+    selector = { cancelarFoco: jasmine.createSpy('cancelarFoco').and.callFake(() => orden.push('cancelar foco')) };
+    component['_selectorPlantillaVenta'] = selector;
+  }));
+
+  it('no abre las sugerencias hasta que el teclado se ha ido', async () => {
+    const abriendo = component.abrirSugerenciasProductos();
+    await Promise.resolve();
+    expect(modales.create).not.toHaveBeenCalled();
+    teclado.terminarDeCerrar();
+    await abriendo;
+    expect(orden).toEqual(['cancelar foco', 'cerrar teclado', 'teclado cerrado', 'crear modal']);
+  });
+
+  it('dos toques seguidos en la bombilla solo abren una hoja', async () => {
+    const primera = component.abrirSugerenciasProductos();
+    const segunda = component.abrirSugerenciasProductos();
+    teclado.terminarDeCerrar();
+    await Promise.all([primera, segunda]);
+    expect(modales.create).toHaveBeenCalledTimes(1);
   });
 });

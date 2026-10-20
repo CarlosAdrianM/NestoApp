@@ -38,14 +38,27 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
 
   @ViewChild('filtro') myProductoSearchBar;
 
+  private temporizadorFoco: any = null;
+
   public setFocus(): void {
-      setTimeout(() => {
+      this.cancelarFoco();
+      this.temporizadorFoco = setTimeout(() => {
+          this.temporizadorFoco = null;
           this.myProductoSearchBar.setFocus();
           this.keyboard.show();
       }, 500);
   }
 
+  /** El foco pendiente no llega: se va a abrir algo encima y el teclado no debe salir (2.25.1). */
+  public cancelarFoco(): void {
+      if (this.temporizadorFoco) {
+          clearTimeout(this.temporizadorFoco);
+          this.temporizadorFoco = null;
+      }
+  }
+
   ngOnDestroy() {
+    this.cancelarFoco();
     if (this.loadingActivo) {
       this.loadingActivo.dismiss().catch(() => {});
       this.loadingActivo = null;

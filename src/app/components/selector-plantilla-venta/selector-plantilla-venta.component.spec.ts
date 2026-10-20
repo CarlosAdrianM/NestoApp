@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
@@ -159,5 +159,27 @@ describe('SelectorPlantillaVentaComponent', () => {
 
       expect(component['toastCtrl'].create).toHaveBeenCalledWith(jasmine.objectContaining({ color: 'warning' }));
     });
+  });
+
+  describe('cancelarFoco (2.25.1, la bombilla antes de que salga el teclado)', () => {
+    it('el foco pendiente ya no pone el cursor en el buscador ni abre el teclado', fakeAsync(() => {
+      const buscador = { setFocus: jasmine.createSpy('setFocus') };
+      component.myProductoSearchBar = buscador;
+      const teclado = TestBed.inject(Keyboard);
+      spyOn(teclado, 'show');
+      component.setFocus();
+      component.cancelarFoco();
+      tick(1000);
+      expect(buscador.setFocus).not.toHaveBeenCalled();
+      expect(teclado.show).not.toHaveBeenCalled();
+    }));
+
+    it('sin cancelar, el foco llega como siempre', fakeAsync(() => {
+      const buscador = { setFocus: jasmine.createSpy('setFocus') };
+      component.myProductoSearchBar = buscador;
+      component.setFocus();
+      tick(1000);
+      expect(buscador.setFocus).toHaveBeenCalled();
+    }));
   });
 });
