@@ -32,7 +32,7 @@ import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitu
 import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque } from 'src/app/models/cheque-regalo.model';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
-import { SugerenciaOferta, esAccionable, esDescuentoEscalonado, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
+import { SugerenciaOferta, esAccionable, esAmpliarCantidadCombinada, esAnadirRegaloCombinada, esDescuentoEscalonado, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 import { AGENCIA_LA_ELIGE_EL_COMPARADOR } from '../pedido-venta/pedido-venta.service';
 
@@ -1431,18 +1431,27 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * dice el servidor, o el descuento si es de una oferta escalonada ya alcanzada (#211). Las de
    * importe de pedido solo informan (no hay línea que tocar).
    */
-  public aplicarSugerenciaOferta(sugerencia: SugerenciaOferta): void {
+  public async aplicarSugerenciaOferta(sugerencia: SugerenciaOferta): Promise<void> {
     if (!esAccionable(sugerencia) || !this._selectorPlantillaVenta) {
       return;
     }
-    // #211: en el descuento escalonado ya están las unidades; lo que falta es el descuento. El tramo
-    // se calcula con todas las unidades de la oferta, así que se pone en todas las líneas a las que
-    // el servidor se lo sugiere (las ha validado juntas), no solo en la que se ha pulsado.
-    const aplicadas = esDescuentoEscalonado(sugerencia)
-      ? this.sugerenciasOfertas.filter(s => esDescuentoEscalonado(s) && s.OfertaEscalonada === sugerencia.OfertaEscalonada)
-          .filter(s => this._selectorPlantillaVenta.aplicarDescuento(s.Producto, +s.Descuento))
-      : [sugerencia].filter(s => this._selectorPlantillaVenta.aplicarCantidades(
+    let aplicadas: SugerenciaOferta[];
+    if (esAnadirRegaloCombinada(sugerencia)) {
+      // #229: el regalo que falta de una oferta combinada es otra referencia.
+      aplicadas = await this.anadirRegaloCombinada(sugerencia) ? [sugerencia] : [];
+    } else if (esAmpliarCantidadCombinada(sugerencia)) {
+      // #229: el regalo de la combinada es otra referencia: aquí solo faltan unidades de la que se paga.
+      aplicadas = [sugerencia].filter(s => this._selectorPlantillaVenta.ponerCantidad(s.Producto, +s.CantidadSugerida));
+    } else if (esDescuentoEscalonado(sugerencia)) {
+      // #211: en el descuento escalonado ya están las unidades; lo que falta es el descuento. El tramo
+      // se calcula con todas las unidades de la oferta, así que se pone en todas las líneas a las que
+      // el servidor se lo sugiere (las ha validado juntas), no solo en la que se ha pulsado.
+      aplicadas = this.sugerenciasOfertas.filter(s => esDescuentoEscalonado(s) && s.OfertaEscalonada === sugerencia.OfertaEscalonada)
+          .filter(s => this._selectorPlantillaVenta.aplicarDescuento(s.Producto, +s.Descuento));
+    } else {
+      aplicadas = [sugerencia].filter(s => this._selectorPlantillaVenta.aplicarCantidades(
           s.Producto, +s.CantidadSugerida, +s.CantidadRegalo));
+    }
     if (aplicadas.length === 0) {
       return;
     }
@@ -1454,6 +1463,54 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     // Al cambiar las unidades cambian las demás sugerencias (puede aparecer otra o caerse una),
     // así que se vuelven a pedir. Es una acción explícita del vendedor, no un cambio de línea.
     this.cargarSugerenciasOfertas();
+  }
+
+  /**
+   * NestoApp#229 (NestoAPI#626, Nesto#524): añade las unidades de regalo de una oferta combinada. Si se
+   * puede elegir entre varias referencias, pregunta cuál. Si el producto ya está en el pedido, las
+   * unidades van como oferta de esa misma línea.
+   */
+  private async anadirRegaloCombinada(sugerencia: SugerenciaOferta): Promise<boolean> {
+    let producto = sugerencia.Producto;
+    const alternativas = (sugerencia.Alternativas || []).filter(a => !!a);
+    if (alternativas.length > 1) {
+      const elegida = await this.elegirReferenciaRegalo(alternativas, producto);
+      if (!elegida) {
+        return false;
+      }
+      producto = elegida;
+    }
+    let anadido = false;
+    try {
+      anadido = await this._selectorPlantillaVenta.anadirUnidadesOferta(producto, +sugerencia.CantidadRegalo);
+    } catch (error) {
+      await this.avisarRegalo(`No se ha podido añadir el regalo de la oferta: ${this.errorHandler.extractErrorMessage(error)}`);
+      return false;
+    }
+    if (!anadido) {
+      await this.avisarRegalo(`No se ha encontrado el producto ${producto.trim()}. Búsquelo a mano y póngale las unidades de regalo.`);
+    }
+    return anadido;
+  }
+
+  private async elegirReferenciaRegalo(alternativas: string[], porDefecto: string): Promise<string | null> {
+    const alerta = await this.alertCtrl.create({
+      header: 'Regalo de la oferta',
+      message: '¿Qué referencia quiere de regalo?',
+      inputs: alternativas.map(a => ({ type: 'radio' as const, label: a.trim(), value: a, checked: a === porDefecto })),
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Aceptar', role: 'confirm' }
+      ]
+    });
+    await alerta.present();
+    const { data, role } = await alerta.onDidDismiss();
+    return role === 'confirm' ? (data?.values ?? null) : null;
+  }
+
+  private async avisarRegalo(mensaje: string): Promise<void> {
+    const alerta = await this.alertCtrl.create({ header: 'Regalo de la oferta', message: mensaje, buttons: ['Ok'] });
+    await alerta.present();
   }
 
   private comprobarSiSePuedeServirPorGlovo(){

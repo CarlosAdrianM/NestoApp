@@ -2237,3 +2237,118 @@ describe('Muestras por ruta desde Algete antes de grabar (#233)', () => {
     expect(alertas.length).toBe(0);
   });
 });
+
+describe('Ofertas combinadas en «Aplicar oferta» (#229)', () => {
+  let component: PlantillaVentaComponent;
+  let servicio: any;
+  let selector: any;
+  let alertas: any[];
+  let cierre: any;
+
+  const regalo = (extra: any = {}) => ({
+    Tipo: 'RegaloCombinadaNoAplicado', Accion: 'AnadirLinea', Producto: '45665', CantidadActual: 0, CantidadSugerida: 0,
+    CantidadRegalo: 1, ImporteQueFalta: 0, ImportePedido: 0, Descuento: 1, OfertaCombinada: 267, Alternativas: null,
+    Texto: 'El pedido cumple la oferta «Oferta mascarillas PDRN»: le corresponde 1 unidad del producto 45665 de regalo y no se está aplicando.',
+    ...extra
+  });
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    cierre = { role: 'confirm', data: { values: '45666' } };
+    servicio = {
+      modoFacturacionSugerido: () => of(null),
+      ofertasSugeridas: jasmine.createSpy('ofertasSugeridas').and.returnValue(of([])),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      calcularPortes: () => of({})
+    };
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        {
+          provide: AlertController, useValue: {
+            create: (opts: any) => {
+              alertas.push(opts);
+              return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve(cierre) });
+            }
+          }
+        },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PlantillaVentaComponent).componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '12345', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21' };
+    component['productosResumen'] = [{ producto: '45664', cantidad: 6, cantidadOferta: 0 }];
+    selector = {
+      anadirUnidadesOferta: jasmine.createSpy('anadirUnidadesOferta').and.returnValue(Promise.resolve(true)),
+      ponerCantidad: jasmine.createSpy('ponerCantidad').and.returnValue(true),
+      aplicarCantidades: jasmine.createSpy('aplicarCantidades').and.returnValue(true),
+      cargarResumen: () => [], hayAlgunProducto: () => true
+    };
+    component['_selectorPlantillaVenta'] = selector;
+  }));
+
+  it('el regalo que falta se puede aplicar y entra como unidades de oferta de ese producto', fakeAsync(() => {
+    component.sugerenciasOfertas = [regalo()];
+    expect(component.sePuedeAplicarSugerencia(component.sugerenciasOfertas[0])).toBeTrue();
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(selector.anadirUnidadesOferta).toHaveBeenCalledWith('45665', 1);
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+    expect(component.sugerenciasOfertas.length).toBe(0);
+  }));
+
+  it('con varias referencias pregunta cuál y añade la elegida', fakeAsync(() => {
+    component.sugerenciasOfertas = [regalo({ Alternativas: ['45665', '45666'] })];
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(alertas[0].inputs.map((i: any) => i.value)).toEqual(['45665', '45666']);
+    expect(selector.anadirUnidadesOferta).toHaveBeenCalledWith('45666', 1);
+  }));
+
+  it('si cancela la elección no se añade nada', fakeAsync(() => {
+    cierre = { role: 'cancel' };
+    component.sugerenciasOfertas = [regalo({ Alternativas: ['45665', '45666'] })];
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(selector.anadirUnidadesOferta).not.toHaveBeenCalled();
+    expect(component.sugerenciasOfertas.length).toBe(1);
+  }));
+
+  it('si no encuentra el producto lo dice y la sugerencia sigue', fakeAsync(() => {
+    selector.anadirUnidadesOferta.and.returnValue(Promise.resolve(false));
+    component.sugerenciasOfertas = [regalo()];
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(alertas[0].message).toContain('No se ha encontrado el producto 45665');
+    expect(component.sugerenciasOfertas.length).toBe(1);
+  }));
+
+  it('ampliar la cantidad de la combinada sube solo las unidades cobradas', fakeAsync(() => {
+    component.sugerenciasOfertas = [{ ...regalo(), Tipo: 'AmpliarCantidadCombinada', Accion: 'ModificarLinea',
+      Producto: '45664', CantidadActual: 5, CantidadSugerida: 6, CantidadRegalo: 1, Descuento: 0 }];
+
+    component.aplicarSugerenciaOferta(component.sugerenciasOfertas[0]);
+    tick();
+
+    expect(selector.ponerCantidad).toHaveBeenCalledWith('45664', 6);
+    expect(selector.aplicarCantidades).not.toHaveBeenCalled();
+  }));
+});

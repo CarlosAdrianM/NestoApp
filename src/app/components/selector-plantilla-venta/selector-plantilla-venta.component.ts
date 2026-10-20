@@ -375,30 +375,65 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
    * no está en la plantilla del cliente, se busca como cuando el vendedor lo busca en todos los
    * productos, así que entra con su precio. Devuelve false si no se ha podido sustituir.
    */
+  /**
+   * La línea de la plantilla de un producto. Si el cliente no lo tiene en su plantilla, se busca como
+   * cuando el vendedor lo busca en todos los productos (entra con su precio, a cero unidades).
+   * Null si no existe.
+   */
+  public async lineaDeProducto(numero: string): Promise<any | null> {
+      const mismo = (a: any, b: any) => (a ?? '').toString().trim() === (b ?? '').toString().trim();
+      let linea = this.datosIniciales().find(d => mismo(d.producto, numero));
+      if (linea) {
+          return linea;
+      }
+      const encontrados: any[] = await firstValueFrom(this.servicio.buscarProductos(numero)).catch(() => []);
+      const producto = (encontrados || []).find(p => mismo(p.producto, numero));
+      if (!producto) {
+          return null;
+      }
+      linea = {
+          ...producto,
+          cantidad: 0,
+          cantidadOferta: 0,
+          aplicarDescuentoFicha: producto.aplicarDescuento,
+          esSobrePedido: producto.estado != 0,
+          personalizarOferta: false,
+          precioOferta: 0,
+          descuentoOferta: 0
+      };
+      this.agregarDato(linea);
+      return linea;
+  }
+
+  /** NestoApp#229: el regalo de una oferta combinada va como unidades de oferta (a precio 0), sumadas a las que hubiera. */
+  public async anadirUnidadesOferta(producto: string, unidades: number): Promise<boolean> {
+      const linea = await this.lineaDeProducto(producto);
+      if (!linea) {
+          return false;
+      }
+      linea.cantidadOferta = (+linea.cantidadOferta || 0) + unidades;
+      return true;
+  }
+
+  /** NestoApp#229: sube las unidades cobradas sin tocar las de oferta. */
+  public ponerCantidad(producto: string, cantidad: number): boolean {
+      const linea = (this.datosIniciales() || []).find(d => d.producto?.trim() === producto?.trim());
+      if (!linea) {
+          return false;
+      }
+      linea.cantidad = cantidad;
+      return true;
+  }
+
   public async sustituirProducto(original: string, sustituto: string): Promise<boolean> {
       const mismo = (a: any, b: any) => (a ?? '').toString().trim() === (b ?? '').toString().trim();
       const lineaOriginal = this.datosIniciales().find(d => mismo(d.producto, original));
       if (!lineaOriginal) {
           return false;
       }
-      let lineaSustituto = this.datosIniciales().find(d => mismo(d.producto, sustituto));
+      const lineaSustituto = await this.lineaDeProducto(sustituto);
       if (!lineaSustituto) {
-          const encontrados: any[] = await firstValueFrom(this.servicio.buscarProductos(sustituto)).catch(() => []);
-          const producto = (encontrados || []).find(p => mismo(p.producto, sustituto));
-          if (!producto) {
-              return false;
-          }
-          lineaSustituto = {
-              ...producto,
-              cantidad: 0,
-              cantidadOferta: 0,
-              aplicarDescuentoFicha: producto.aplicarDescuento,
-              esSobrePedido: producto.estado != 0,
-              personalizarOferta: false,
-              precioOferta: 0,
-              descuentoOferta: 0
-          };
-          this.agregarDato(lineaSustituto);
+          return false;
       }
       lineaSustituto.cantidad = (+lineaSustituto.cantidad || 0) + (+lineaOriginal.cantidad || 0);
       lineaSustituto.cantidadOferta = (+lineaSustituto.cantidadOferta || 0) + (+lineaOriginal.cantidadOferta || 0);
