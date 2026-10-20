@@ -1,10 +1,11 @@
 <div class="feedback" *ngIf="tieneFeedback">
   <div class="acciones">
-    <ion-button size="small" fill="clear" [color]="novedad.MiVoto === 1 ? 'primary' : 'medium'"
+    <!-- NestoApp#238: las sugerencias privadas no se votan -->
+    <ion-button *ngIf="puedeVotar" size="small" fill="clear" [color]="novedad.MiVoto === 1 ? 'primary' : 'medium'"
       [class.mi-voto]="novedad.MiVoto === 1" (click)="votar(1)" aria-label="Me gusta">
       👍 {{ novedad.VotosPositivos || 0 }}
     </ion-button>
-    <ion-button size="small" fill="clear" [color]="novedad.MiVoto === -1 ? 'primary' : 'medium'"
+    <ion-button *ngIf="puedeVotar" size="small" fill="clear" [color]="novedad.MiVoto === -1 ? 'primary' : 'medium'"
       [class.mi-voto]="novedad.MiVoto === -1" (click)="votar(-1)" aria-label="No me gusta">
       👎 {{ novedad.VotosNegativos || 0 }}
     </ion-button>

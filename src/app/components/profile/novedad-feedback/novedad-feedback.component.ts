@@ -71,8 +71,16 @@ export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
     return !!(this.nuevoTexto || '').trim() && !this.enviando;
   }
 
+  /** NestoApp#238: las privadas no admiten «Me gusta» (la API daría 400). */
+  get puedeVotar(): boolean {
+    return !this.novedad?.Privada;
+  }
+
   /** Optimista: se pinta al momento y se revierte si la API falla. */
   public votar(pulsado: 1 | -1): void {
+    if (!this.puedeVotar) {
+      return;
+    }
     const antes: Novedad = { ...this.novedad }; // copia: copiarVotos cambia el objeto compartido
     const { novedad, voto } = aplicarVoto(antes, pulsado);
     this.copiarVotos(novedad);

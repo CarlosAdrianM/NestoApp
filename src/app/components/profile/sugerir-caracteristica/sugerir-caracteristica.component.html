@@ -16,6 +16,15 @@
     [placeholder]="placeholder"
     (pegar)="captura.alPegar($event)"></textarea-menciones>
 
+  <!-- NestoApp#238 / NestoAPI#650 -->
+  <ion-item *ngIf="puedeSerPrivada" lines="none" class="privada">
+    <ion-label class="ion-text-wrap">
+      Privada
+      <p>Solo la verían usted, Dirección e Informática. Le recomendamos dejarla pública.</p>
+    </ion-label>
+    <ion-checkbox slot="end" aria-label="Privada" [(ngModel)]="privada"></ion-checkbox>
+  </ion-item>
+
   <captura-adjunta #captura [(imagen)]="imagenAdjunta">
     <ion-button size="small" fill="clear" color="medium" (click)="cancelar()">Cancelar</ion-button>
     <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviar()">{{ textoBotonEnviar }}</ion-button>

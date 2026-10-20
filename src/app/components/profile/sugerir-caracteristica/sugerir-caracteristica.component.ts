@@ -41,6 +41,12 @@ export class SugerirCaracteristicaComponent {
   public texto: string = '';
   public imagenAdjunta: ImagenAdjunta | null = null;
   public enviando: boolean = false;
+  /** NestoApp#238 / NestoAPI#650: desmarcada; se recomienda dejarla pública. */
+  public privada: boolean = false;
+
+  static readonly AVISO_PRIVADA = 'Le recomendamos que la sugerencia sea pública: así otros compañeros pueden aprender ' +
+    'de ella y de las respuestas, y pueden apoyarla con «Me gusta». Las privadas solo las vemos usted y nosotros, ' +
+    'no se pueden votar y tienen menos prioridad. ¿Quiere enviarla como privada?';
 
   constructor(
     private servicio: NovedadesService,
@@ -72,6 +78,11 @@ export class SugerirCaracteristicaComponent {
     return this.esIncidencia ? 'Enviar aviso' : 'Enviar';
   }
 
+  /** Los avisos de «Algo no funciona» no son privados ni públicos: no se votan. */
+  get puedeSerPrivada(): boolean {
+    return !this.esIncidencia;
+  }
+
   get puedeEnviar(): boolean {
     return !!(this.texto || '').trim() && !this.enviando;
   }
@@ -85,12 +96,29 @@ export class SugerirCaracteristicaComponent {
     this.tipo = null;
     this.texto = '';
     this.imagenAdjunta = null;
+    this.privada = false;
   }
 
-  public enviar(): void {
+  public async enviar(): Promise<void> {
     if (!this.puedeEnviar) {
       return;
     }
+    if (this.privada && this.puedeSerPrivada) {
+      const alert = await this.alertCtrl.create({
+        header: 'Sugerencia privada',
+        message: SugerirCaracteristicaComponent.AVISO_PRIVADA,
+        buttons: [
+          { text: 'No', role: 'cancel', handler: () => { this.privada = false; } },
+          { text: 'Sí, privada', handler: () => { this.mandar(); } }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+    this.mandar();
+  }
+
+  private mandar(): void {
     const sugerencia: NuevoComentarioNovedad = {
       Texto: this.texto.trim(),
       VersionCliente: Configuracion.VERSION
@@ -100,6 +128,10 @@ export class SugerirCaracteristicaComponent {
       sugerencia.ImagenTipo = this.imagenAdjunta.tipo;
     }
     const esIncidencia = this.esIncidencia;
+    const privada = this.privada && this.puedeSerPrivada;
+    if (privada) {
+      sugerencia.Privada = true;
+    }
     if (esIncidencia) {
       sugerencia.EsIncidencia = true;
       const pantalla = this.historialRutas.pantallaAnterior();
@@ -113,10 +145,22 @@ export class SugerirCaracteristicaComponent {
         this.enviando = false;
         this.cancelar();
         this.creada.emit(creada);
+        if (privada && !creada?.Privada) {
+          // Una API sin NestoAPI#650 ignora el campo y la crea pública.
+          const aviso = await this.alertCtrl.create({
+            header: 'Sugerencia enviada',
+            message: 'Su sugerencia se ha enviado, pero como pública: el servidor todavía no admite sugerencias privadas.',
+            buttons: ['Ok']
+          });
+          await aviso.present();
+          return;
+        }
         const toast = await this.toastCtrl.create({
           message: esIncidencia
             ? '¡Gracias por avisar! Lo revisaremos y te diremos en qué versión queda arreglado.'
-            : '¡Gracias! Tu sugerencia ya está en la lista para que la voten los demás.',
+            : privada
+              ? '¡Gracias! Su sugerencia privada ya está en la lista: solo la vemos usted y nosotros.'
+              : '¡Gracias! Tu sugerencia ya está en la lista para que la voten los demás.',
           duration: 3000,
           color: 'success'
         });

@@ -47,3 +47,20 @@ describe('rutaDeNotificacion: avisos de un pedido (#202 / NestoAPI#555)', () => 
     expect(rutaDeNotificacion({ pedido: '' })).toBeNull();
   });
 });
+
+/** NestoApp#236 / NestoAPI#666: incidencia de la agencia en un envío. */
+describe('rutaDeNotificacion: incidencia de agencia (#236)', () => {
+  it('con pedido, abre el pedido', () => {
+    expect(rutaDeNotificacion({ tipo: 'IncidenciaEnvioAgencia', empresa: '1', envio: '123', cliente: '15191', pedido: '928521' }))
+      .toBe('/pedido-venta?empresa=1&numero=928521');
+  });
+
+  it('sin pedido, abre la ficha del cliente', () => {
+    expect(rutaDeNotificacion({ tipo: 'IncidenciaEnvioAgencia', empresa: '1', envio: '123', cliente: '15191' }))
+      .toBe('/cliente?empresa=1&cliente=15191&contacto=0');
+  });
+
+  it('sin pedido ni cliente, a ningún sitio', () => {
+    expect(rutaDeNotificacion({ tipo: 'IncidenciaEnvioAgencia', empresa: '1', envio: '123' })).toBeNull();
+  });
+});

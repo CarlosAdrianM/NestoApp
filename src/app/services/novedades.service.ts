@@ -42,6 +42,11 @@ export interface Novedad {
   Adjuntos?: AdjuntoNovedad[];
   /** NestoApp#221 (sugerencia 551): a quién afecta. null = para todos. */
   Perfiles?: string[] | null;
+  /**
+   * NestoApp#238 / NestoAPI#650: solo la ven su autor, Dirección e Informática. No admite «Me gusta».
+   * Una API vieja no lo manda.
+   */
+  Privada?: boolean;
 }
 
 /** NestoApp#218 / NestoAPI#616: lo justo para pintar el chip; el fichero se baja con GET Novedades/Adjuntos/{Id}. */
@@ -127,6 +132,8 @@ export interface NuevoComentarioNovedad {
   EsIncidencia?: boolean;
   /** NestoApp#203: la pantalla en la que estaba el usuario (máx. 100). */
   Pantalla?: string;
+  /** NestoApp#238 / NestoAPI#650: solo al crear una sugerencia (no un aviso). */
+  Privada?: boolean;
 }
 
 /** La API trae los contadores de votos: se puede votar y comentar. */

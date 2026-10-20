@@ -163,4 +163,76 @@ describe('SugerirCaracteristicaComponent (#190)', () => {
 
     expect(alertas[0].header).toBe('No se ha podido enviar el aviso');
   }));
+
+  // NestoApp#238 / NestoAPI#650: sugerencias privadas.
+  describe('casilla «Privada» (#238)', () => {
+    const botonQue = (alerta: any, texto: string) => alerta.buttons.find((b: any) => b.text === texto);
+
+    it('empieza desmarcada y no se ofrece en «Algo no funciona»', () => {
+      component.abrir('sugerencia');
+      expect(component.privada).toBeFalse();
+      expect(component.puedeSerPrivada).toBeTrue();
+      component.abrir('incidencia');
+      expect(component.puedeSerPrivada).toBeFalse();
+    });
+
+    it('marcada, antes de enviar recomienda dejarla pública; con «No» no se envía y se desmarca', fakeAsync(() => {
+      component.abrir();
+      component.texto = 'Ver mis comisiones';
+      component.privada = true;
+
+      component.enviar();
+      tick();
+
+      expect(servicio.crearSugerencia).not.toHaveBeenCalled();
+      expect(alertas[0].message).toContain('Le recomendamos que la sugerencia sea pública');
+      botonQue(alertas[0], 'No').handler();
+      tick();
+
+      expect(servicio.crearSugerencia).not.toHaveBeenCalled();
+      expect(component.privada).toBeFalse();
+      expect(component.texto).toBe('Ver mis comisiones');
+    }));
+
+    it('con «Sí» se envía con Privada y da las gracias como privada', fakeAsync(() => {
+      servicio.crearSugerencia.and.returnValue(of({ Id: 361, Version: null, Titulo: 'Ver mis comisiones', Privada: true }));
+      component.abrir();
+      component.texto = 'Ver mis comisiones';
+      component.privada = true;
+
+      component.enviar();
+      tick();
+      botonQue(alertas[0], 'Sí, privada').handler();
+      tick();
+
+      expect(servicio.crearSugerencia.calls.mostRecent().args[0].Privada).toBeTrue();
+      expect(toasts[0].message).toContain('sugerencia privada');
+      expect(component.privada).toBeFalse();
+    }));
+
+    it('si la API vieja la crea como pública, lo dice', fakeAsync(() => {
+      servicio.crearSugerencia.and.returnValue(of({ Id: 362, Version: null, Titulo: 'Ver mis comisiones' }));
+      component.abrir();
+      component.texto = 'Ver mis comisiones';
+      component.privada = true;
+
+      component.enviar();
+      tick();
+      botonQue(alertas[0], 'Sí, privada').handler();
+      tick();
+
+      expect(alertas.some(a => (a.message || '').includes('como pública'))).toBeTrue();
+    }));
+
+    it('sin marcar no pregunta ni manda Privada', fakeAsync(() => {
+      component.abrir();
+      component.texto = 'Filtro por ruta';
+
+      component.enviar();
+      tick();
+
+      expect(alertas.length).toBe(0);
+      expect(servicio.crearSugerencia.calls.mostRecent().args[0].Privada).toBeUndefined();
+    }));
+  });
 });

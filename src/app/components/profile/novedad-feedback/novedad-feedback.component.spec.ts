@@ -75,6 +75,17 @@ describe('NovedadFeedbackComponent (#188)', () => {
     expect(fixture.nativeElement.textContent.trim()).toBe('');
   });
 
+  it('#238: una sugerencia privada no tiene botones de voto ni se puede votar, pero sí comentarios', fakeAsync(() => {
+    component.novedad = novedad({ Privada: true });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[aria-label="Me gusta"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Comentarios');
+    component.votar(1);
+    tick();
+    expect(servicio.votar).not.toHaveBeenCalled();
+  }));
+
   it('votar se pinta al momento y se manda a la API', fakeAsync(() => {
     component.votar(1);
     tick();

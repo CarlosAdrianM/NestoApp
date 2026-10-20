@@ -1,5 +1,7 @@
 /** NestoApp#193 / NestoAPI f0b42b1c: «Te han contestado en Novedades» y las @menciones (#194). */
 export const TIPO_NOTIFICACION_NOVEDAD_COMENTARIO = 'NovedadComentario';
+/** NestoApp#236 / NestoAPI#666: la agencia ha puesto una incidencia en un envío. */
+export const TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA = 'IncidenciaEnvioAgencia';
 
 /**
  * A dónde lleva tocar una push (o el «Ver» del aviso con la app abierta), o null si a ningún sitio.
@@ -22,6 +24,13 @@ export function rutaDeNotificacion(datos: { [clave: string]: any } | null | unde
   if (/^\d+$/.test(pedido)) {
     const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
     return `/pedido-venta?empresa=${encodeURIComponent(empresa)}&numero=${pedido}`;
+  }
+  // Un envío sin pedido: la ficha del cliente. La push no trae contacto; el 0 es el principal.
+  const cliente = (datos['cliente'] ?? '').toString().trim();
+  if (datos['tipo'] === TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA && cliente) {
+    const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
+    const contacto = (datos['contacto'] ?? '').toString().trim() || '0';
+    return `/cliente?empresa=${encodeURIComponent(empresa)}&cliente=${encodeURIComponent(cliente)}&contacto=${encodeURIComponent(contacto)}`;
   }
   return null;
 }

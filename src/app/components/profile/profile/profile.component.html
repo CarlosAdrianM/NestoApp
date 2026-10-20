@@ -165,6 +165,8 @@
                   <div class="cabecera-novedad">
                     <!-- NestoApp#203: los avisos de algo que no funciona se distinguen de las sugerencias -->
                     <ion-badge *ngIf="sugerencia.EsIncidencia" color="danger">Incidencia</ion-badge>
+                    <!-- NestoApp#238: solo la ven quien la envió, Dirección e Informática -->
+                    <ion-badge *ngIf="sugerencia.Privada" color="medium" title="Solo la ven quien la envió, Dirección e Informática">🔒 Privada</ion-badge>
                     <ion-badge [color]="colorEstadoSugerencia(sugerencia.Estado)">{{ sugerencia.Estado || 'Pendiente' }}</ion-badge>
                     <ion-card-title>{{ sugerencia.Titulo }}</ion-card-title>
                   </div>
