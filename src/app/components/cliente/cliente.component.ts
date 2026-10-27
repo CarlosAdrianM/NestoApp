@@ -5,7 +5,7 @@ import { Events } from 'src/app/services/events.service';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { ClienteService } from './cliente.service';
 import { ClientesMismoTelefonoComponent } from './clientes-mismo-telefono';
-import { NativeGeocoder, NativeGeocoderOptions, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
+import { DireccionesService, textoCalleNumero } from '../../services/direcciones.service';
 import { Geolocation } from '../../services/geolocation.service';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
@@ -34,7 +34,7 @@ export class ClienteComponent implements AfterViewInit {
       private servicio: ClienteService, 
       private alertCtrl: AlertController,
       private geolocation: Geolocation,
-      private nativeGeocoder: NativeGeocoder,
+      private direcciones: DireccionesService,
       private usuario: Usuario,
       private nav: NavController,
       public modalCtrl: ModalController,
@@ -98,11 +98,6 @@ export class ClienteComponent implements AfterViewInit {
   geoLatitude: number;
   geoLongitude: number;
   geoAccuracy:number;
-  //geoAddress: string;
-  geoencoderOptions: NativeGeocoderOptions = {
-    useLocale: true,
-    maxResults: 5
-  };
 
   ngAfterViewInit() {
       setTimeout(()=>{
@@ -687,18 +682,24 @@ export class ClienteComponent implements AfterViewInit {
       });
   }
 
-  //geocoder method to fetch address from coordinates passed as arguments
-  getGeoencoder(latitude,longitude){
-      this.nativeGeocoder.reverseGeocode(latitude, longitude, this.geoencoderOptions)
-      .then((result: NativeGeocoderResult[]) => {
-          this.cliente.codigoPostal = result[0].postalCode;
-          this.cliente.direccionCalleNumero = (result[0].thoroughfare || "") +
-               " " +(result[0].subThoroughfare || "")
-      })
-      .catch((error: any) => {
-          console.log('Error getting location'+ JSON.stringify(error));
+  /**
+   * NestoApp#159 / NestoAPI#578: la dirección de donde está el móvil, por la API (antes, el plugin
+   * nativegeocoder). Solo rellena lo que llega; si no hay dirección, los campos se quedan como estaban.
+   */
+  getGeoencoder(latitude, longitude) {
+      this.direcciones.desdeCoordenadas(latitude, longitude).subscribe(direccion => {
+          if (!direccion) {
+              return;
+          }
+          if (direccion.CodigoPostal) {
+              this.cliente.codigoPostal = direccion.CodigoPostal;
+          }
+          const calle = textoCalleNumero(direccion);
+          if (calle) {
+              this.cliente.direccionCalleNumero = calle;
+          }
       });
-  }        
+  }
 
   public seleccionarTexto(evento: any): void {
     const nativeInputEle = evento.target;

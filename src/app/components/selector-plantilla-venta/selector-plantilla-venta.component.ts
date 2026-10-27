@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
+import { esLineaCurso } from 'src/app/models/eventos.model';
 import { Keyboard } from '../../services/keyboard.service';
 import { AlertController, LoadingController, NavController, ToastController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -24,6 +25,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
 
   // Output para notificar cuando los productos terminan de cargar (Issue #77)
   @Output() productosCargados = new EventEmitter<void>();
+  /** NestoApp#244: al tocar un curso no se abre el detalle: la plantilla elige evento y modalidad. */
+  @Output() cursoElegido = new EventEmitter<any>();
 
   constructor(
       private servicio: SelectorPlantillaVentaService, 
@@ -135,7 +138,16 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
           console.log("Agregado dato");
           producto.aplicarDescuentoFicha = producto.aplicarDescuento;
       }
+      // NestoApp#244 / NestoAPI#691: un curso no tiene cantidad ni precio que tocar: evento y modalidad.
+      if (esLineaCurso(producto)) {
+          this.cursoElegido.emit(producto);
+          return;
+      }
       this.nav.navigateForward('selector-plantilla-venta-detalle', { queryParams: { producto: producto, cliente: this.cliente, almacen: almacen }});
+  }
+
+  public esCurso(producto: any): boolean {
+      return esLineaCurso(producto);
   }
 
   public cargarResumen(): any[] {
@@ -160,7 +172,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                   ? (+value.cantidadOferta) * (+value.precioOferta || 0) * (1 - (+value.descuentoOferta || 0))
                   : 0;
               this.baseImponiblePedido += importeLinea + importeOferta;
-              if (!this.esSobrePedidoParaPortes(value)) {
+              // NestoApp#244: los cursos van en un pedido aparte y no cuentan para los portes.
+              if (!this.esSobrePedidoParaPortes(value) && !esLineaCurso(value)) {
                   this.baseImponibleParaPortes += importeLinea + importeOferta;
               }
 

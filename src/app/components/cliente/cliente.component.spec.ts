@@ -5,7 +5,6 @@ import { AlertController, IonicModule } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { Geolocation } from '../../services/geolocation.service';
-import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { CacheService } from '../../services/cache.service';
 import { Storage } from '@ionic/storage-angular';
@@ -14,6 +13,7 @@ import { ClienteComponent } from './cliente.component';
 import { ClienteService } from './cliente.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { DireccionesService } from '../../services/direcciones.service';
 
 describe('ClienteComponent', () => {
   let component: ClienteComponent;
@@ -47,7 +47,7 @@ describe('ClienteComponent', () => {
         { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: Storage, useValue: {} },
         { provide: Geolocation, useValue: { getCurrentPosition: () => Promise.resolve({ coords: { latitude: 0, longitude: 0, accuracy: 0 } }) } },
-        { provide: NativeGeocoder, useValue: { reverseGeocode: () => Promise.resolve([]) } },
+        { provide: DireccionesService, useValue: { desdeCoordenadas: () => of(null) } },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
@@ -60,6 +60,32 @@ describe('ClienteComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // NestoApp#159 / NestoAPI#578: la dirección de la ubicación del móvil la da la API, no el plugin.
+  describe('dirección a partir de la ubicación (#159)', () => {
+    it('rellena calle, número y código postal con lo que devuelve la API', () => {
+      const direcciones = TestBed.inject(DireccionesService) as any;
+      direcciones.desdeCoordenadas = jasmine.createSpy('desdeCoordenadas').and.returnValue(of({ Calle: 'Calle Mayor', Numero: '3', CodigoPostal: '28840' }));
+      component.cliente = { personasContacto: [] };
+
+      component.getGeoencoder(40.56, -3.47);
+
+      expect(direcciones.desdeCoordenadas).toHaveBeenCalledWith(40.56, -3.47);
+      expect(component.cliente.codigoPostal).toBe('28840');
+      expect(component.cliente.direccionCalleNumero).toBe('Calle Mayor 3');
+    });
+
+    it('si la API no encuentra la dirección, los campos se quedan como estaban', () => {
+      const direcciones = TestBed.inject(DireccionesService) as any;
+      direcciones.desdeCoordenadas = () => of(null);
+      component.cliente = { personasContacto: [], codigoPostal: '28001', direccionCalleNumero: 'Lo que había' };
+
+      component.getGeoencoder(40.56, -3.47);
+
+      expect(component.cliente.codigoPostal).toBe('28001');
+      expect(component.cliente.direccionCalleNumero).toBe('Lo que había');
+    });
   });
 
   // Issue #168 (NestoAPI#438): al crear un contacto de un cliente que ya existe se ofrece

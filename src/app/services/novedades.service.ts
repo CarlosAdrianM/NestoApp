@@ -47,7 +47,21 @@ export interface Novedad {
    * Una API vieja no lo manda.
    */
   Privada?: boolean;
+  /**
+   * NestoApp#251 / NestoAPI#711: tiene un vídeo corto (como mucho uno por versión). Se pide con
+   * GET api/Novedades/{id}/Video solo cuando se pulsa «Ver vídeo». Una API vieja no lo manda.
+   */
+  TieneVideo?: boolean;
+  /** En bytes; null si no tiene. */
+  VideoTamano?: number | null;
 }
+
+/** NestoApp#251: el botón «▶ Ver vídeo» solo sale si la novedad lo tiene. */
+export function tieneVideo(novedad: Novedad | null | undefined): boolean {
+  return novedad?.TieneVideo === true;
+}
+
+export const MENSAJE_VIDEO_NO_DISPONIBLE = 'El vídeo no está disponible en este momento.';
 
 /** NestoApp#218 / NestoAPI#616: lo justo para pintar el chip; el fichero se baja con GET Novedades/Adjuntos/{Id}. */
 export interface AdjuntoNovedad {
@@ -299,6 +313,21 @@ export class NovedadesService {
   /** NestoApp#218 / NestoAPI#616: el fichero de un adjunto. */
   public descargarAdjunto(idAdjunto: number): Observable<Blob> {
     return this.http.get(`${Configuracion.API_URL}/Novedades/Adjuntos/${idAdjunto}`, { responseType: 'blob' });
+  }
+
+  /**
+   * NestoApp#251 / NestoAPI#711: el MP4 de la novedad. Va con el JWT, así que no vale un <video src> a la
+   * URL: se baja entero como blob y se reproduce desde un objectURL. 404 = no está disponible.
+   */
+  public descargarVideo(idNovedad: number): Observable<Blob> {
+    return this.http.get(`${Configuracion.API_URL}/Novedades/${idNovedad}/Video`, { responseType: 'blob' });
+  }
+
+  /** NestoApp#251: se apunta al empezar a reproducir (la API saca el cliente del token). Si falla, se ignora. */
+  public registrarReproduccionVideo(idNovedad: number): Observable<void> {
+    return this.http.post<void>(`${Configuracion.API_URL}/Novedades/${idNovedad}/Video/Reproduccion`, null).pipe(
+      catchError(() => of(undefined))
+    );
   }
 
   /**

@@ -21,7 +21,6 @@ import localeEs from '@angular/common/locales/es';
 import { registerLocaleData } from '@angular/common';
 import { ComisionesComponent } from './components/comisiones/comisiones.component';
 import { SelectorVendedoresComponent } from './components/selector-vendedores/selector-vendedores.component';
-import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { ClienteComponent } from './components/cliente/cliente.component';
 import { SelectorFormasPagoComponent } from './components/selector-formas-pago/selector-formas-pago.component';
 import { SelectorPlazosPagoComponent } from './components/selector-plazos-pago/selector-plazos-pago.component';
@@ -48,6 +47,9 @@ import { SelectorPlantillaVentaComponent } from './components/selector-plantilla
 import { SelectorPlantillaVentaDetalleComponent } from './components/selector-plantilla-venta-detalle/selector-plantilla-venta-detalle.component';
 import { PlantillaVentaComponent } from './components/plantilla-venta/plantilla-venta.component';
 import { ModalListaBorradoresComponent } from './components/plantilla-venta/modal-lista-borradores.component';
+import { ModalElegirCursoComponent } from './components/plantilla-venta/modal-elegir-curso.component';
+import { VideoNovedadComponent } from './components/profile/video-novedad/video-novedad.component';
+import { EventoComponent } from './components/evento/evento.component';
 import { VisorImagenComponent } from './components/visor-imagen/visor-imagen.component';
 import { NovedadFeedbackComponent } from './components/profile/novedad-feedback/novedad-feedback.component';
 import { CapturaAdjuntaComponent } from './components/profile/captura-adjunta/captura-adjunta.component';
@@ -130,6 +132,9 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         SelectorPlantillaVentaDetalleComponent,
         PlantillaVentaComponent,
         ModalListaBorradoresComponent,
+        ModalElegirCursoComponent,
+        VideoNovedadComponent,
+        EventoComponent,
         VisorImagenComponent,
         NovedadFeedbackComponent,
         CapturaAdjuntaComponent,
@@ -161,7 +166,6 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         { provide: LOCALE_ID, useValue: 'es' },
         Usuario,
         JwtHelperService,
-        NativeGeocoder,
         NavParams,
         File,
         CanDeactivateGuard,

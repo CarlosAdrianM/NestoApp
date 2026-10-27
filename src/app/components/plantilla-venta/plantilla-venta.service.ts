@@ -1,13 +1,14 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
+import { catchError, map, timeout } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 import { LineaPortesServirJunto, ProductoBonificadoConCantidad, ProductosBonificablesResponse, ValidarServirJuntoRequest, ValidarServirJuntoResponse } from '../../models/ganavisiones.model';
 import { SolicitudPagoTPV, RespuestaIniciarPago } from '../../models/pago-tpv.model';
 import { SugerenciaOferta } from '../../models/sugerencias-ofertas.model';
 import { ModoServicioSugerido } from '../../models/modos-servicio.model';
 import { ModoFacturacionSugerido } from '../../models/modos-facturacion.model';
+import { OpcionesModosPedido } from '../../models/opciones-modos.model';
 import { SaldoAFavor } from '../../models/saldo-a-favor.model';
 import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
 import { CuponCliente } from '../../models/cupon.model';
@@ -106,6 +107,19 @@ export class PlantillaVentaService {
     headers = headers.append('Content-Type', 'application/json');
 
     return this.http.post<ModoServicioSugerido>(this._baseUrl + '/ModoServicioSugerido', JSON.stringify(pedido), { headers: headers });
+  }
+
+  /**
+   * NestoApp#242 / NestoAPI#688: qué enseñar de los modos del pedido (servicio × facturación × casilla
+   * «Servir lo pendiente en cuanto haya stock»). null con una API anterior (404) o si falla: entonces se
+   * sigue con ModoFacturacionSugerido como hasta ahora.
+   */
+  public opcionesModos(pedido: any): Observable<OpcionesModosPedido | null> {
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    return this.http.post<OpcionesModosPedido>(this._baseUrl + '/OpcionesModos', JSON.stringify(pedido), { headers }).pipe(
+      map(opciones => opciones?.Facturacion ? opciones : null),
+      catchError(() => of(null))
+    );
   }
 
   /** NestoApp#197 / NestoAPI#542: qué modos de facturación se pueden elegir y cuál se propone. */

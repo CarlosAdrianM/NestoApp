@@ -1,0 +1,59 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/profile"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Evento</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando el evento…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none">
+    <ion-label class="ion-text-wrap">{{ mensaje }}</ion-label>
+  </ion-item>
+
+  <ion-card *ngIf="evento" class="ficha-evento">
+    <img *ngIf="evento.ImagenUrl" [src]="evento.ImagenUrl" [alt]="evento.Titulo" />
+    <ion-card-header>
+      <ion-card-subtitle>{{ evento.Fecha | date:'EEEE d MMMM yyyy' }}<span *ngIf="horario"> · {{ horario }}</span></ion-card-subtitle>
+      <ion-card-title>{{ evento.Titulo }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list lines="none">
+        <ion-item>
+          <ion-icon slot="start" [name]="evento.Formato === 'Online' ? 'videocam-outline' : 'storefront-outline'"></ion-icon>
+          <ion-label class="ion-text-wrap">{{ textoFormato }}<span *ngIf="evento.Lugar"> · {{ evento.Lugar }}</span></ion-label>
+        </ion-item>
+        <ion-item *ngIf="evento.Ponente">
+          <ion-icon slot="start" name="person-outline"></ion-icon>
+          <ion-label class="ion-text-wrap">{{ evento.Ponente }}</ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon slot="start" name="people-outline"></ion-icon>
+          <ion-label class="ion-text-wrap" [color]="sinPlazas ? 'danger' : ''">{{ textoPlazas(evento) || 'Sin límite de plazas' }}</ion-label>
+        </ion-item>
+        <ion-item *ngIf="!evento.Activo">
+          <ion-icon slot="start" name="close-circle-outline" color="danger"></ion-icon>
+          <ion-label color="danger">Este evento ya no está activo.</ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ng-container *ngIf="modalidades.length > 0">
+        <h3 class="titulo-seccion">Modalidades</h3>
+        <ion-list lines="none">
+          <ion-item *ngFor="let modalidad of modalidades">
+            <ion-icon slot="start" name="pricetag-outline"></ion-icon>
+            <ion-label class="ion-text-wrap">{{ textoModalidad(modalidad) }}</ion-label>
+          </ion-item>
+        </ion-list>
+      </ng-container>
+
+      <p *ngIf="evento.DescripcionLarga" class="descripcion">{{ evento.DescripcionLarga }}</p>
+      <p class="pista">Para inscribir a un cliente, abra su extracto y use «Eventos»; desde la plantilla, busque el curso y añádalo al pedido.</p>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

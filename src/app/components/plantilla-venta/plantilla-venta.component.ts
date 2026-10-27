@@ -36,9 +36,14 @@ import {
 } from 'src/app/models/modos-facturacion.model';
 import { FechaEntregaAgencia, textoFechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
 import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitucion-producto.model';
-import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque } from 'src/app/models/cheque-regalo.model';
+import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque, restaChequeRegaloBaseBonificable } from 'src/app/models/cheque-regalo.model';
+import { OpcionesModosPedido, TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK, casillaServirPendienteVisible, facturacionVisible, servirPendienteParaGuardar } from 'src/app/models/opciones-modos.model';
+import { conConfirmacionFechaLejana, leerFechaEntregaLejana } from 'src/app/models/fecha-entrega-lejana.model';
+import { AVISO_CURSO_PREPAGO, EventoCurso, ModalidadEventoCurso, esLineaCurso, sinLineasCurso, textoPedidosCreados } from 'src/app/models/eventos.model';
+import { EventosService } from '../inscribir-evento/eventos.service';
+import { ModalElegirCursoComponent } from './modal-elegir-curso.component';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo, esRetenido, origenModoServicio, textoMotivoModoServicio } from 'src/app/models/modos-servicio.model';
 import { SugerenciaOferta, esAccionable, esAmpliarCantidadCombinada, esAnadirRegaloCombinada, esDescuentoEscalonado, resumenSugerencias } from '../../models/sugerencias-ofertas.model';
 import { Parametros } from 'src/app/services/parametros.service';
 import { AGENCIA_LA_ELIGE_EL_COMPARADOR } from '../pedido-venta/pedido-venta.service';
@@ -72,7 +77,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private parametros: Parametros,
     private solicitudCambioModo: SolicitudCambioModoService,
     servicioSugerenciasProductos: SugerenciasProductosService,
-    private keyboard: Keyboard
+    private keyboard: Keyboard,
+    private eventosService: EventosService
     ) {
       this.sugerenciasProductos = new EstadoSugerenciasProductos(servicioSugerenciasProductos, () => this.datosSugerenciasProductos());
       this.almacen = this.usuario.almacen;
@@ -326,6 +332,26 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private modoServicioParametro: number = MODOS_SERVICIO.POR_DEFECTO;
   /** NestoApp#184: lo último que calculó NestoAPI para este pedido. */
   private modoServicioSugeridoServidor: number | null = null;
+  /** NestoApp#250: el modo lo puso una corrección (#187) o un rechazo al grabar (#518), no el vendedor ni la sugerencia. */
+  private modoServicioCorregido: boolean = false;
+  /** NestoApp#245: motivoModoServicio es la recomendación del servidor (y no un aviso de otra cosa). */
+  private motivoEsRecomendacion: boolean = false;
+
+  /**
+   * NestoApp#245 (novedad 731): la frase gris bajo «Entrega». Si lo elegido no es lo que recomienda el
+   * servidor, lo dice: «Recomendado: «modo». motivo»; si coincide, solo el motivo.
+   */
+  public get textoMotivoModoServicio(): string {
+      if (!this.motivoEsRecomendacion) {
+          return this.motivoModoServicio;
+      }
+      return textoMotivoModoServicio(this.modoServicio, this.modoServicioSugeridoServidor, this.motivoModoServicio);
+  }
+
+  /** NestoApp#254: el pedido en edición está retenido (modo 5): el selector se enseña deshabilitado. */
+  public get estaRetenido(): boolean {
+      return esRetenido(this.modoServicio);
+  }
   /** NestoApp#187 / NestoAPI#518: qué modos tienen sentido para el pedido. Null = sin respuesta: todos. */
   private modosServicio: ModoServicioPermitido[] | null = null;
 
@@ -390,6 +416,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.modoFacturacionSeleccionado = nuevo;
       this.sincronizarMantenerJunto(nuevo);
       this.cargarFechaEntregaAgencia(); // NestoApp#215
+      // NestoApp#242: la casilla «Servir lo pendiente…» depende del modo de facturación; solo con la API nueva.
+      if (this.opcionesModos) {
+          this.pedirModoFacturacionSugerido(true);
+      }
   }
 
   /** Modo y mantenerJunto siempre coherentes: un mantenerJunto discordante gana en la API y pone el 2. */
@@ -411,13 +441,51 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           contacto: this.direccionSeleccionada.contacto,
           contactoCobro: this.clienteSeleccionado.contacto?.trim() ?? null,
           formaPago: this.extraerCodigoFormaPago() || null,
+          // NestoApp#241: con recibo, el CCC también decide (como la forma de pago).
+          ccc: this.extraerCodigoFormaPago() === 'RCB' ? (this.direccionSeleccionada.ccc ?? null) : null,
           plazosPago: this.extraerCodigoPlazosPago().trim() || null,
           periodoFacturacion: this.direccionSeleccionada.periodoFacturacion,
           notaEntrega: false,
           mantenerJunto: !!this.direccionSeleccionada.mantenerJunto,
           modoFacturacion: this.modoFacturacionSeleccionado,
+          // NestoApp#242: con «Todo junto» la API oculta el selector de facturación.
+          modoServicio: this.modoServicio,
+          servirJunto: esTodoJunto(this.modoServicio),
           Lineas: []
       };
+  }
+
+  // ---- NestoApp#242 / NestoAPI#688: opciones de modos y «Servir lo pendiente en cuanto haya stock» ----
+
+  /** Lo último que contestó OpcionesModos; null con una API anterior (entonces todo como siempre). */
+  public opcionesModos: OpcionesModosPedido | null = null;
+  /** El valor de la casilla en pantalla (el de la API mientras no se toque). */
+  public servirPendienteAlHaberStock: boolean = false;
+  private servirPendienteTocado: boolean = false;
+  public readonly textoServirPendiente = TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK;
+
+  get facturacionVisible(): boolean {
+      return facturacionVisible(this.opcionesModos);
+  }
+
+  get motivoFacturacionOculta(): string {
+      return this.facturacionVisible ? '' : (this.opcionesModos?.Facturacion?.MotivoOculta || '');
+  }
+
+  get casillaServirPendienteVisible(): boolean {
+      return casillaServirPendienteVisible(this.opcionesModos);
+  }
+
+  public cambiarServirPendiente(valor: boolean): void {
+      this.servirPendienteAlHaberStock = !!valor;
+      this.servirPendienteTocado = true;
+  }
+
+  private aplicarOpcionesModos(opciones: OpcionesModosPedido): void {
+      this.opcionesModos = opciones;
+      if (!this.servirPendienteTocado && opciones.ServirPendienteAlHaberStock) {
+          this.servirPendienteAlHaberStock = opciones.ServirPendienteAlHaberStock.Valor;
+      }
   }
 
   /**
@@ -434,26 +502,36 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           return;
       }
       this.huellaFacturacion = huella;
-      this.servicio.modoFacturacionSugerido(consulta).subscribe(
-          (sugerencia: ModoFacturacionSugerido) => {
-              if (!sugerencia || !sugerencia.Modo) {
-                  return;
-              }
-              this.sugerenciaFacturacion = sugerencia;
-              if (this.modoFacturacionSeleccionado !== null && !this.esModoFacturacionPermitido(this.modoFacturacionSeleccionado)) {
-                  // Lo elegido ya no vale (han cambiado los plazos): manda la sugerencia.
-                  this.modoFacturacionSeleccionado = null;
-              }
-              if (this.modoFacturacionSeleccionado === null) {
-                  this.sincronizarMantenerJunto(sugerencia.Modo);
-              }
-          },
-          error => {
-              // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
-              this.huellaFacturacion = '';
-              console.log('No se ha podido calcular el modo de facturación sugerido', error);
+      const aplicarSugerencia = (sugerencia: ModoFacturacionSugerido) => {
+          if (!sugerencia || !sugerencia.Modo) {
+              return;
           }
-      );
+          this.sugerenciaFacturacion = sugerencia;
+          if (this.modoFacturacionSeleccionado !== null && !this.esModoFacturacionPermitido(this.modoFacturacionSeleccionado)) {
+              // Lo elegido ya no vale (han cambiado los plazos o la forma de pago, #241): manda la sugerencia.
+              this.modoFacturacionSeleccionado = null;
+          }
+          if (this.modoFacturacionSeleccionado === null) {
+              this.sincronizarMantenerJunto(sugerencia.Modo);
+          }
+      };
+      // NestoApp#242: OpcionesModos trae la misma sugerencia más si se enseña el selector y la casilla.
+      // Con una API anterior (null) se pregunta como siempre.
+      this.servicio.opcionesModos(consulta).subscribe((opciones: OpcionesModosPedido | null) => {
+          if (opciones) {
+              this.aplicarOpcionesModos(opciones);
+              aplicarSugerencia(opciones.Facturacion);
+              return;
+          }
+          this.servicio.modoFacturacionSugerido(consulta).subscribe(
+              aplicarSugerencia,
+              error => {
+                  // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
+                  this.huellaFacturacion = '';
+                  console.log('No se ha podido calcular el modo de facturación sugerido', error);
+              }
+          );
+      });
   }
 
   private _direccionSeleccionada: any;
@@ -640,7 +718,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   get baseImponibleBonificable(): number {
     if (!this.productosResumen) return 0;
-    return this.productosResumen
+    const suma = sinLineasCurso(this.productosResumen) // NestoApp#244: los cursos no generan Ganavisiones
       .filter(p => p.grupo && this.gruposBonificables.includes(p.grupo.trim().toUpperCase()))
       .reduce((sum, p) => {
         const base = p.cantidad * p.precio * (1 - p.descuento);
@@ -650,6 +728,23 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           : 0;
         return sum + base + baseOferta;
       }, 0);
+    // NestoApp#243 / NestoAPI#593 (pedido 929066): la línea del cheque (grupo COS, en negativo) también
+    // cuenta al grabar; aquí solo se añade al guardar, así que se resta ya para no enseñar 71 donde la API da 66.
+    return Math.max(0, suma - restaChequeRegaloBaseBonificable(this.chequeRegalo, this.usarChequeRegalo, this.puedeUsarChequeRegalo));
+  }
+
+  /**
+   * NestoApp#243: marcar o quitar el cheque cambia la base bonificable: se comprueba que los regalos
+   * elegidos sigan cabiendo (avisa y limpia si no) y qué productos bonificables quedan.
+   */
+  public async cambiarUsarChequeRegalo(valor: boolean): Promise<void> {
+    this.usarChequeRegalo = !!valor;
+    try {
+      await this.validarRegalosSeleccionados();
+      await this.verificarProductosBonificables();
+    } catch (error) {
+      console.error('Error comprobando los regalos al cambiar el cheque regalo:', error);
+    }
   }
 
   get ganavisionesDisponibles(): number {
@@ -774,11 +869,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    */
   public cambiarModoServicio(nuevo: number, elegidoPorUsuario: boolean = true): void {
     const anterior = this.modoServicio;
+    // NestoApp#254: retenido no se cambia desde la plantilla (la API lo rechaza): primero «Liberar» en el pedido.
+    if (this.estaRetenido || esRetenido(nuevo)) {
+      return;
+    }
     if (elegidoPorUsuario) {
       // NestoApp#184: a partir de aquí manda el vendedor, no la sugerencia del servidor.
       // NestoApp#230: también si elige el modo que ya se veía (antes no contaba y la siguiente
       // sugerencia se lo cambiaba sin avisar).
       this.modoServicioElegidoPorUsuario = true;
+      this.modoServicioCorregido = false; // NestoApp#250
     }
     if (anterior === nuevo) {
       return;
@@ -795,6 +895,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.validarSalidaDeTodoJunto(nuevo, !elegidoPorUsuario);
     }
     this.cargarFechaEntregaAgencia(); // NestoApp#215
+    this.pedirModoFacturacionSugerido(); // NestoApp#242: con «Todo junto» la facturación se oculta
   }
 
   /**
@@ -802,6 +903,16 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * elige el valor que ya tiene, y elegir el modo que se ve también es una elección del vendedor.
    */
   public async elegirModoServicio(): Promise<void> {
+    if (this.estaRetenido) {
+      // NestoApp#254: el 5 solo lo quita «Liberar» (en el pedido), nunca el selector.
+      const aviso = await this.alertCtrl.create({
+        header: 'Pedido retenido',
+        message: 'El pedido está retenido hasta nuevo aviso. Libérelo con «Liberar» desde el pedido antes de cambiar el modo de entrega.',
+        buttons: ['Ok']
+      });
+      await aviso.present();
+      return;
+    }
     const actual = this.modoServicio;
     const hoja = await this.actionSheetCtrl.create({
       header: 'Entrega',
@@ -873,6 +984,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               // No se puede: revertir a «Todo junto» y explicarlo bajo el selector (el servidor ya nombra el modo)
               this.revertirATodoJunto();
               this.motivoModoServicio = response.Mensaje || 'Se mantiene «Todo junto»: hay productos de regalo que requieren servir todo junto.';
+              this.motivoEsRecomendacion = false; // NestoApp#245: es un aviso, no la recomendación
               this.recalcularPortesTrasServirJunto();
               return;
             }
@@ -894,7 +1006,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   /** @param excluir productos que no se mandan (los que el vendedor ha aceptado quitar, #232). */
   private pedirValidacionServirJunto(nuevoModo: number, excluir: string[] = []): Observable<ValidarServirJuntoResponse> {
       const quitados = new Set(excluir.map(p => (p ?? '').toString().trim()));
-      const lineas = (this.productosResumen || [])
+      // NestoApp#244: los cursos van en un pedido aparte y no cuentan para el modo de servicio ni los portes.
+      const lineas = sinLineasCurso(this.productosResumen)
         .filter(l => l.producto && l.cantidad > 0 && !quitados.has(l.producto.toString().trim()));
 
       const productosBonificadosConCantidad = this.regalosSeleccionados.map(r => ({
@@ -939,6 +1052,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       const quedarseEnTodoJunto = async (mensaje: string | null) => {
         this.revertirATodoJunto();
         this.motivoModoServicio = textoSeQuedaEnTodoJunto(nombre);
+        this.motivoEsRecomendacion = false; // NestoApp#245
         if (mensaje) {
           const alert = await this.alertCtrl.create({ header: 'No se puede cambiar el modo', message: mensaje, buttons: ['Ok'] });
           await alert.present();
@@ -1320,14 +1434,18 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           // (que ya no es elección suya) y se le explica.
           const motivo = this.modosServicio?.find(m => m.Modo === elegido)?.Motivo;
           this.modoServicioElegidoPorUsuario = false;
+          this.modoServicioCorregido = true; // NestoApp#250
           this.motivoModoServicio = `«${nombreModo(elegido)}» ya no tiene sentido para este pedido` +
             (motivo ? `: ${motivo}` : '.') + ` Se pasa a «${nombreModo(sugerencia.Modo)}».`;
+          this.motivoEsRecomendacion = false; // NestoApp#245
           this.cambiarModoServicio(sugerencia.Modo, false);
           this.avisarCambioModoElegido(this.motivoModoServicio); // NestoApp#230
           return;
         }
 
         this.motivoModoServicio = sugerencia.Motivo || '';
+        this.motivoEsRecomendacion = true; // NestoApp#245: es la recomendación del servidor
+        this.modoServicioCorregido = false;
         // Se aplica por la misma puerta que el vendedor, así que salir de «todo junto» sigue
         // pasando por ValidarServirJunto; pero no cuenta como elección suya ni le saca diálogos (#185).
         this.cambiarModoServicio(sugerencia.Modo, false);
@@ -1354,7 +1472,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
     this.modoServicioSugeridoServidor = rechazo.modoSugerido;
     this.modoServicioElegidoPorUsuario = false;
+    this.modoServicioCorregido = true; // NestoApp#250
     this.motivoModoServicio = rechazo.mensaje;
+    this.motivoEsRecomendacion = false; // NestoApp#245
     this.cambiarModoServicio(rechazo.modoSugerido, false);
     const alert = await this.alertCtrl.create({
       header: 'Modo de entrega',
@@ -1384,6 +1504,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.recalcularPortesTrasServirJunto();
     }
     this.motivoModoServicio = 'El pedido ya está en preparación: el modo de entrega solo lo puede cambiar almacén.';
+    this.motivoEsRecomendacion = false; // NestoApp#245
     await this.solicitudCambioModo.ofrecer(motivo, this.clienteSeleccionado?.empresa, this.pedidoEnEdicionNumero, modoDeseado);
     return true;
   }
@@ -1745,11 +1866,17 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'noComisiona': this.direccionSeleccionada.noComisiona,
           'mantenerJunto': this.direccionSeleccionada.mantenerJunto,
           // NestoApp#197: null si el vendedor no lo ha elegido (la API deriva de mantenerJunto y nunca rechaza).
-          'modoFacturacion': this.modoFacturacionSeleccionado,
+          // NestoApp#242: y tampoco cuando la API oculta el selector (con «Todo junto»).
+          'modoFacturacion': this.facturacionVisible ? this.modoFacturacionSeleccionado : null,
+          // NestoApp#242: «Servir lo pendiente en cuanto haya stock», solo si se tocó o se eligió la facturación.
+          'servirPendienteAlHaberStock': servirPendienteParaGuardar(this.opcionesModos, this.servirPendienteAlHaberStock,
+              this.servirPendienteTocado, this.modoFacturacionSeleccionado !== null),
           // NestoApp#174: viaja el modo y el servirJunto derivado (solo el 1 es true), para
           // que un servidor sin migrar no cambie de comportamiento.
           'servirJunto': esTodoJunto(this.modoServicio),
           'modoServicio': this.modoServicio,
+          // NestoApp#252 / NestoAPI#712: false pregunta por fechas a más de 60 días; true solo en el reintento.
+          'ConfirmarFechaEntregaLejana': this.confirmarFechaLejana,
           'EsPresupuesto': this.esPresupuesto,
           // NestoApp#235 / NestoAPI#670: enlaza las sugerencias que se han enseñado con el pedido.
           'IdSesionSugerencias': this.sugerenciasProductos?.idSesion ?? null,
@@ -1762,6 +1889,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       // Issue #150: en modo edición, el número de pedido viaja en la cabecera para el PUT.
       if (this.pedidoEnEdicionNumero != null) {
           pedido.numero = this.pedidoEnEdicionNumero;
+      }
+
+      // NestoApp#250 / NestoAPI#704 (caso 929152): de dónde sale el modo que se graba (solo se registra). Al
+      // editar un pedido, el modo es el guardado: solo se dice si el vendedor lo ha cambiado o lo corrigió la API.
+      if (this.pedidoEnEdicionNumero == null || this.modoServicioElegidoPorUsuario || this.modoServicioCorregido) {
+          pedido.OrigenModoServicio = origenModoServicio(this.modoServicioElegidoPorUsuario, this.modoServicioCorregido, this.modoServicioSugeridoServidor);
+          pedido.ModoServicioSugerido = this.modoServicioSugeridoServidor;
       }
 
       let nuevaLinea: any = {};
@@ -1789,6 +1923,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               'formaVenta': this.usuario.formaVenta,
               'oferta': ofertaLinea === 0 ? null : ofertaLinea,
           };
+          // NestoApp#244 / NestoAPI#691: un curso lleva su evento y su modalidad; la API fija el precio y lo
+          // saca a un pedido aparte (serie CV, prepago).
+          if (linea.eventoId) {
+              nuevaLinea.EventoId = linea.eventoId;
+              nuevaLinea.ModalidadEvento = linea.modalidadEvento || null;
+          }
           // Issue #150: en modo edición, adjuntar el id de la línea original (0 = nueva) y
           // conservar el picking para que el servidor identifique/proteja la línea en el PUT.
           const metaLinea = this.pedidoEnEdicionNumero != null ? this.edicionMetaLineas.get(linea.producto) : undefined;
@@ -1991,6 +2131,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           return;
       }
 
+      // NestoApp#252: cada guardado nuevo vuelve a preguntar por la fecha lejana.
+      this.confirmarFechaLejana = false;
+
       // Issue #150: en modo edición se guarda con PUT (modificar), no con POST (crear/ampliar).
       if (this.pedidoEnEdicionNumero != null) {
           await this.guardarPedidoModificado(false);
@@ -1998,6 +2141,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
 
       if (!this.pedidoPendienteSeleccionado) {
+        await this.ejecutarCreacion();
+      } else {
+        await this.prepararYEjecutarAmpliacion();
+      }
+  }
+
+  /** El POST de «Crear pedido» (también el reintento tras confirmar la fecha lejana, #252). */
+  private async ejecutarCreacion(): Promise<void> {
+        let numeroPedido: string;
         const loading: any = await this.loadingCtrl.create({
             message: 'Creando Pedido...',
         });
@@ -2085,9 +2237,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                     err => console.error('Error creando etiqueta pendiente:', err)
                   );
                 }
+                // NestoApp#244 / NestoAPI#691: si la API ha separado el curso en otro pedido, se dice.
+                const pedidosCreados = textoPedidosCreados(numeroPedido, data.PedidosAdicionales);
                 const alert = await this.alertCtrl.create({
                     header: 'Creado',
-                    message: 'Pedido ' + numeroPedido + ' creado correctamente' + (avisoSaldo ? '. ' + avisoSaldo : ''),
+                    message: (pedidosCreados ? pedidosCreados : 'Pedido ' + numeroPedido + ' creado correctamente') + (avisoSaldo ? '. ' + avisoSaldo : ''),
                     buttons: ['Ok'],
                 });
                 await alert.present();
@@ -2096,7 +2250,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 const borradorOrigen = this.borradorOrigen;
                 this.borradorOrigen = null;
                 this.reinicializar();
-                alert.onDidDismiss().then(() => this.preguntarBorrarBorrador(numeroPedido, borradorOrigen));
+                alert.onDidDismiss().then(async () => {
+                    await this.avisarCursosNoCreados(data.AvisosCursos);
+                    this.preguntarBorrarBorrador(numeroPedido, borradorOrigen);
+                });
             },
             async error => {
                 await loading.dismiss();
@@ -2106,7 +2263,19 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 await loading.dismiss();
             }
         );
-      } else {
+  }
+
+  /** NestoApp#244: los cursos que la API no ha podido crear (y por qué), para inscribir desde el evento. */
+  private async avisarCursosNoCreados(avisos: string[] | null | undefined): Promise<void> {
+      if (!avisos?.length) {
+          return;
+      }
+      const alert = await this.alertCtrl.create({ header: 'Cursos', message: avisos.join('\n\n'), buttons: ['Entendido'] });
+      await alert.present();
+      await alert.onDidDismiss();
+  }
+
+  private async prepararYEjecutarAmpliacion(): Promise<void> {
         // Issue #121: avisar si la ampliación lleva fechas de entrega que no coinciden con
         // las del pedido existente, para que el usuario no mezcle fechas sin darse cuenta.
         const ampliacion = this.prepararPedido();
@@ -2134,7 +2303,35 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         }
 
         await this.ejecutarAmpliacion(ampliacion, false);
-      }
+  }
+
+  // ---- NestoApp#252 / NestoAPI#712: aviso al grabar con fecha de entrega a más de 60 días ----
+
+  /** true solo en el reintento después de que el vendedor conteste «Sí». */
+  private confirmarFechaLejana: boolean = false;
+
+  /**
+   * Si el error es la pregunta de fecha lejana, la enseña tal cual con «Sí» / «No». Devuelve true si hay
+   * que repetir la petición (ya con la confirmación), false si el vendedor dijo «No» (se vuelve a la
+   * edición sin más errores) y null si el error era otro.
+   */
+  private preguntarFechaLejana(error: any): Promise<boolean | null> {
+    const aviso = leerFechaEntregaLejana(error);
+    if (!aviso) {
+      return Promise.resolve(null);
+    }
+    return new Promise<boolean>(async resolve => {
+      const alert = await this.alertCtrl.create({
+        header: 'Fecha de entrega',
+        message: aviso.mensaje,
+        buttons: [
+          { text: 'No', role: 'cancel', handler: () => { this.confirmarFechaLejana = false; resolve(false); } },
+          { text: 'Sí', handler: () => { this.confirmarFechaLejana = true; resolve(true); } }
+        ]
+      });
+      alert.onDidDismiss().then(() => resolve(false));
+      await alert.present();
+    });
   }
 
   /**
@@ -2178,6 +2375,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Issue #156: gestiona el error al ampliar. Espejo de manejarErrorCreacionPedido.
    */
   private async manejarErrorAmpliacionPedido(error: ProcessedApiError, ampliacion: any, yaForzado: boolean): Promise<void> {
+    // NestoApp#252: la fecha de entrega va a más de 60 días: se pregunta y, con «Sí», se repite confirmada.
+    const fechaLejana = await this.preguntarFechaLejana(error);
+    if (fechaLejana === true) {
+      await this.ejecutarAmpliacion(conConfirmacionFechaLejana(ampliacion, true), yaForzado);
+      return;
+    }
+    if (fechaLejana === false) {
+      return;
+    }
     if (await this.tratarModoServicioNoPermitido(error)) {
       return;
     }
@@ -2328,6 +2534,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.modoFacturacionEdicion = null;
       this.sugerenciaFacturacion = null;
       this.huellaFacturacion = '';
+      // NestoApp#242
+      this.opcionesModos = null;
+      this.servirPendienteAlHaberStock = false;
+      this.servirPendienteTocado = false;
+      // NestoApp#245 / #250 / #252
+      this.motivoEsRecomendacion = false;
+      this.modoServicioCorregido = false;
+      this.confirmarFechaLejana = false;
   }
       
   get importePortesMostrar(): number {
@@ -2451,8 +2665,96 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         });
     }
 
-  public abrirDetalle(producto: string, almacen: string): void {
+  public abrirDetalle(producto: any, almacen: string): void {
+    // NestoApp#244: un curso no tiene detalle de cantidad y precio: se elige evento y modalidad.
+    if (esLineaCurso(producto)) {
+      this.elegirEventoCurso(producto);
+      return;
+    }
     this._selectorPlantillaVenta.abrirDetalle(producto, almacen);
+  }
+
+  // ---- NestoApp#244 / NestoAPI#691 (Nesto#543): vender cursos desde la plantilla ----
+
+  public readonly avisoCursoPrepago = AVISO_CURSO_PREPAGO;
+
+  /** Hay algún curso en el pedido: se avisa de que va aparte con prepago. */
+  get hayCursosEnPedido(): boolean {
+    return (this.productosResumen || []).some(l => esLineaCurso(l) && (+l.cantidad > 0));
+  }
+
+  /** «Masterclass PDRN · sáb 15/11/2026 10:00 · Presencial en REI · Con cupón de productos: 100 €». */
+  public textoCursoLinea(linea: any): string {
+    return (linea?.textoEvento || '').toString();
+  }
+
+  /**
+   * Al tocar un curso (en la búsqueda o en el resumen) se elige el evento (si hay varios) y siempre la
+   * modalidad; la línea queda con 1 unidad al importe de la modalidad, sin descuentos. Si se cancela y la
+   * línea no tenía evento, se quita del pedido.
+   */
+  public async elegirEventoCurso(linea: any): Promise<void> {
+    if (!linea || !this.clienteSeleccionado) {
+      return;
+    }
+    const empresa = (this.clienteSeleccionado.empresa || '1').toString().trim();
+    let eventos: EventoCurso[] = [];
+    try {
+      eventos = await firstValueFrom(this.eventosService.leerEventosPorProducto(empresa, linea.producto));
+    } catch (error) {
+      eventos = [];
+    }
+    if (!eventos.length) {
+      if (!linea.eventoId) {
+        linea.cantidad = 0;
+      }
+      const aviso = await this.alertCtrl.create({
+        header: 'Curso sin eventos',
+        message: `Ahora mismo no hay ningún evento próximo con plazas para «${(linea.texto || linea.producto || '').toString().trim()}».`,
+        buttons: ['Ok']
+      });
+      await aviso.present();
+      this.refrescarTrasCurso();
+      return;
+    }
+    const modal = await this.modalCtrl.create({
+      component: ModalElegirCursoComponent,
+      componentProps: { titulo: (linea.texto || linea.producto || '').toString().trim(), eventos, eventoId: linea.eventoId ?? null, modalidad: linea.modalidadEvento ?? null }
+    });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss();
+    if (role === 'elegido' && data?.evento && data?.modalidad) {
+      this.aplicarCursoALinea(linea, data.evento, data.modalidad, data.texto);
+    } else if (role === 'quitar' || !linea.eventoId) {
+      linea.cantidad = 0;
+      linea.cantidadOferta = 0;
+    }
+    this.refrescarTrasCurso();
+  }
+
+  /** La línea del curso: 1 unidad al importe de la modalidad, sin descuento ni oferta (la API lo comprueba). */
+  public aplicarCursoALinea(linea: any, evento: EventoCurso, modalidad: ModalidadEventoCurso, texto?: string): void {
+    linea.cantidad = 1;
+    linea.cantidadOferta = 0;
+    linea.precio = +modalidad.Importe || 0;
+    linea.precioEstaModificado = true;
+    linea.descuento = 0;
+    linea.aplicarDescuento = false;
+    linea.aplicarDescuentoFicha = false;
+    linea.personalizarOferta = false;
+    linea.eventoId = evento.Id;
+    linea.modalidadEvento = modalidad.Modalidad;
+    linea.textoEvento = texto || `${evento.Titulo} · ${modalidad.Nombre}: ${modalidad.Importe} €`;
+    linea.esCurso = true;
+    this.firebaseAnalytics.logEvent('plantilla_venta_elegir_curso', { producto: linea.producto, evento: evento.Id, modalidad: modalidad.Modalidad });
+  }
+
+  private refrescarTrasCurso(): void {
+    if (this.productosResumen && this._selectorPlantillaVenta) {
+      this.productosResumen = this._selectorPlantillaVenta.cargarResumen();
+      this.calcularPortes();
+    }
+    this.sugerenciasProductos.programar();
   }
 
   public esTarjetaPrepago(): boolean {
@@ -2558,6 +2860,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     }
     this.formaPago = nuevaFormaPago;
     this.calcularPortes();
+    this.pedirModoFacturacionSugerido(); // NestoApp#241: al contado «Al completar» deja de valer
   }
 
   public cambiarPlazosPago(nuevosPlazos: string) {
@@ -2714,6 +3017,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
    * Maneja errores de creación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorCreacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+    // NestoApp#252: la fecha de entrega va a más de 60 días: se pregunta y, con «Sí», se repite confirmada.
+    const fechaLejana = await this.preguntarFechaLejana(error);
+    if (fechaLejana === true) {
+      await (yaForzado ? this.crearPedidoForzado() : this.ejecutarCreacion());
+      return;
+    }
+    if (fechaLejana === false) {
+      return;
+    }
     // NestoApp#197: el 400 de modo de facturación no permitido es texto plano; se enseña como
     // cualquier error y se vuelve a pedir la sugerencia para que el selector diga qué vale.
     this.pedirModoFacturacionSugerido(true);
@@ -2834,6 +3146,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   private async manejarErrorModificacionEnEdicion(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      // NestoApp#252: la fecha de entrega va a más de 60 días: se pregunta y, con «Sí», se repite confirmada.
+      const fechaLejana = await this.preguntarFechaLejana(error);
+      if (fechaLejana === true) {
+          await this.guardarPedidoModificado(yaForzado);
+          return;
+      }
+      if (fechaLejana === false) {
+          return;
+      }
       this.pedirModoFacturacionSugerido(true); // NestoApp#197
       if (await this.tratarModoConPicking(error)) {
           return;
@@ -2999,7 +3320,12 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         // Issue #127: persistir la personalización de la oferta en el borrador.
         personalizarOferta: p.personalizarOferta || false,
         precioOferta: +p.precioOferta || 0,
-        descuentoOferta: +p.descuentoOferta || 0
+        descuentoOferta: +p.descuentoOferta || 0,
+        // NestoApp#244: el curso, con su evento y su modalidad.
+        esCurso: esLineaCurso(p) || undefined,
+        eventoId: p.eventoId || undefined,
+        modalidadEvento: p.modalidadEvento || undefined,
+        textoEvento: p.textoEvento || undefined
       }));
   }
 
@@ -3491,6 +3817,14 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         productoEncontrado.personalizarOferta = lineaBorrador.personalizarOferta || false;
         productoEncontrado.precioOferta = lineaBorrador.precioOferta || 0;
         productoEncontrado.descuentoOferta = lineaBorrador.descuentoOferta || 0;
+        // NestoApp#244: el curso con su evento y modalidad.
+        if (lineaBorrador.eventoId) {
+          productoEncontrado.eventoId = lineaBorrador.eventoId;
+          productoEncontrado.modalidadEvento = lineaBorrador.modalidadEvento;
+          productoEncontrado.textoEvento = lineaBorrador.textoEvento;
+          productoEncontrado.esCurso = true;
+          productoEncontrado.aplicarDescuento = false;
+        }
       } else {
         // Producto no está en la plantilla - agregarlo
         productosNoEncontrados.push(lineaBorrador.texto);

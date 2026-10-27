@@ -77,7 +77,10 @@ export function selectorFacturacionBloqueado(sugerencia: ModoFacturacionSugerido
 
 /**
  * La sugerencia solo depende de estos campos (no del stock ni de las líneas): si no cambian, no se
- * vuelve a pedir. El modo y mantenerJunto tampoco entran: los cambia el propio selector.
+ * vuelve a pedir. El modo de facturación y mantenerJunto no entran: los cambia el propio selector.
+ * NestoApp#241 (NestoAPI#686, pedido 928220): también la forma de pago y el CCC: al contado «Al
+ * completar» deja de valer y hay que volver a preguntar (como Nesto 62a23087).
+ * NestoApp#242 (NestoAPI#688): y el modo de servicio, porque con «Todo junto» el selector se oculta.
  */
 export function huellaModoFacturacion(pedido: any): string {
   if (!pedido) {
@@ -86,6 +89,7 @@ export function huellaModoFacturacion(pedido: any): string {
   const campo = (v: any) => (v ?? '').toString().trim();
   return [
     pedido.empresa, pedido.numero, pedido.cliente, pedido.contacto, pedido.contactoCobro,
-    pedido.plazosPago, pedido.periodoFacturacion, !!pedido.notaEntrega
+    pedido.plazosPago, pedido.periodoFacturacion, !!pedido.notaEntrega,
+    pedido.formaPago, pedido.ccc, pedido.modoServicio
   ].map(campo).join('|');
 }

@@ -30,6 +30,11 @@ export interface LineaPlantillaVenta {
   personalizarOferta?: boolean;
   precioOferta?: number;
   descuentoOferta?: number;
+  // NestoApp#244 / NestoAPI#691: un curso, con el evento y la modalidad elegidos.
+  esCurso?: boolean;
+  eventoId?: number;
+  modalidadEvento?: string;
+  textoEvento?: string;
 }
 
 /**

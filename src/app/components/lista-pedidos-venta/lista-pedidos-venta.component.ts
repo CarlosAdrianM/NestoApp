@@ -4,6 +4,9 @@ import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { NavController, AlertController, LoadingController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { ListaPedidosVentaService } from './lista-pedidos-venta.service';
+import { PedidoVentaService } from '../pedido-venta/pedido-venta.service';
+import { esFechaSinDeterminar, textoFechaEntrega } from 'src/app/utils/fechas';
+import { numerosRetenidos } from 'src/app/models/retencion-pedido.model';
 
 @Component({
     selector: 'app-lista-pedidos-venta',
@@ -76,7 +79,8 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         alertCtrl: AlertController, 
         loadingCtrl: LoadingController, 
         private fileOpener: FileOpener,
-        private firebaseAnalytics: FirebaseAnalytics
+        private firebaseAnalytics: FirebaseAnalytics,
+        private pedidoVentaService: PedidoVentaService
         ) {
         super();
         this.servicio = servicio;
@@ -87,6 +91,26 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
     }
 
     public mostrarImagenes: boolean = false;
+
+    /** NestoApp#254 / NestoAPI#698: los pedidos retenidos ahora mismo, para marcarlos en la lista. */
+    public retenidos: Set<number> = new Set<number>();
+
+    public cargarRetenidos(): void {
+        this.pedidoVentaService.cargarRetenidos('1').subscribe(lista => this.retenidos = numerosRetenidos(lista));
+    }
+
+    public estaRetenido(pedido: any): boolean {
+        return !!pedido && this.retenidos.has(+pedido.numero);
+    }
+
+    /** NestoApp#240: «21/10/2026» con cuatro cifras, o «Sin fecha» para las notas de entrega sin determinar (31/12/2099). */
+    public textoFecha(fecha: any): string {
+        return textoFechaEntrega(fecha);
+    }
+
+    public sinFecha(pedido: any): boolean {
+        return esFechaSinDeterminar(pedido?.fecha);
+    }
 
     @ViewChild('filtro') selectorPedidos: any;
 
@@ -129,6 +153,7 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
                     await alert.present();
                 } else {
                     this.inicializarDatos(data);
+                    this.cargarRetenidos(); // NestoApp#254
                 }
             },
             async error => {

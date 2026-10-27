@@ -8,6 +8,7 @@ import { Configuracion } from '../configuracion/configuracion/configuracion.comp
 import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { CambiarClientePedidoPeticion, CambiarClientePedidoRespuesta } from 'src/app/models/cambio-cliente-pedido.model';
+import { PedidoRetenidoListado, RetencionPedido, RetenerPedidoPeticion } from 'src/app/models/retencion-pedido.model';
 
 /**
  * Issue #200 (NestoAPI#494): con Agencia = 0, CrearEtiquetaPendiente deja que el comparador
@@ -20,7 +21,7 @@ export const AGENCIA_LA_ELIGE_EL_COMPARADOR = 0;
  * NestoApp#197 / NestoAPI#542: campos que la API devuelve pero que solo escribe ella (el picking,
  * la factura o la nota de entrega automática). No se mandan nunca al guardar.
  */
-const CAMPOS_SOLO_LECTURA = ['recoger', 'yaFacturado', 'pedidoOrigen', 'albaranOrigen'];
+const CAMPOS_SOLO_LECTURA = ['recoger', 'yaFacturado', 'pedidoOrigen', 'albaranOrigen', 'retencion', 'PedidosAdicionales', 'AvisosCursos'];
 
 export function sinCamposSoloLectura(clave: string, valor: any): any {
   return CAMPOS_SOLO_LECTURA.includes(clave) ? undefined : valor;
@@ -92,6 +93,29 @@ export class PedidoVentaService {
     console.log('Modificar pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
 
     return this.http.put(this._baseUrl, JSON.stringify(pedidoAEnviar, sinCamposSoloLectura), { headers: headers });
+  }
+
+  // ---- NestoApp#254 / NestoAPI#698: retener un pedido «hasta nuevo aviso» ----
+
+  /** 200 con la retención; 400 en texto plano (ya retenido, sin motivo, fecha no posterior a hoy, nada pendiente). */
+  public retener(empresa: string, numero: number, peticion: RetenerPedidoPeticion): Observable<RetencionPedido> {
+    const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${numero}/Retener`;
+    return this.http.post<RetencionPedido>(url, peticion);
+  }
+
+  /** 200 con la retención (ya liberada); 400 «El pedido no está retenido.». */
+  public liberar(empresa: string, numero: number): Observable<RetencionPedido> {
+    const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${numero}/Liberar`;
+    return this.http.post<RetencionPedido>(url, {});
+  }
+
+  /** Los pedidos retenidos ahora mismo (del más antiguo al más nuevo). [] si falla o la API es anterior. */
+  public cargarRetenidos(empresa: string = '1'): Observable<PedidoRetenidoListado[]> {
+    const params = new HttpParams().set('empresa', (empresa || '1').trim());
+    return this.http.get<PedidoRetenidoListado[]>(`${this._baseUrl}/Retenidos`, { params }).pipe(
+      map(lista => lista || []),
+      catchError(() => of([]))
+    );
   }
 
   /** NestoApp#198 / NestoAPI#519: pasa el pedido guardado a otro cliente y lo recalcula. */

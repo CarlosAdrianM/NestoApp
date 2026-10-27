@@ -14,6 +14,7 @@ import { PlantillaVentaService } from './plantilla-venta.service';
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 import { Subject, of, throwError } from 'rxjs';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { EventosService } from '../inscribir-evento/eventos.service';
 
 /**
  * NestoApp#222 / #220: la plantilla pregunta por el cheque regalo al elegir cliente y por las
@@ -24,6 +25,7 @@ const conChequeRegalo = (servicio: any): any => {
   servicio.leerCupones = servicio.leerCupones ?? (() => of([])); // NestoApp#217
   servicio.leerSustitucion = servicio.leerSustitucion ?? (() => of(null));
   servicio.fechaEntregaAgencia = servicio.fechaEntregaAgencia ?? (() => of(null)); // NestoApp#215
+  servicio.opcionesModos = servicio.opcionesModos ?? (() => of(null)); // NestoApp#242: API anterior = como siempre
   return servicio;
 };
 
@@ -2487,5 +2489,438 @@ describe('Abrir «Puede ofrecer» mientras se abre el teclado (2.25.1)', () => {
     teclado.terminarDeCerrar();
     await Promise.all([primera, segunda]);
     expect(modales.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Tanda 2.26.0 en la plantilla: #245 (texto «Recomendado»), #250 (origen del modo), #241 (forma de pago),
+ * #242 (opciones de modos y casilla), #243 (cheque en la base de Ganavisiones), #244 (cursos), #252 (fecha
+ * lejana) y #254 (pedido retenido en edición).
+ */
+describe('PlantillaVentaComponent: tanda 2.26.0 (#241 #242 #243 #244 #245 #250 #252 #254)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let eventos: any;
+  let modales: any;
+  let alertas: any[];
+  let resultadoModal: { data: any; role: string };
+
+  const sugerencia = (modo: number, motivo = 'Sale lo que hay y el resto en una sola entrega.') =>
+    of({ Modo: modo, Nombre: 'X', LineasVerdes: 1, LineasRosas: 0, LineasRojas: 1, Motivo: motivo });
+
+  const opciones = (facturacionVisible: boolean, casillaVisible: boolean, valor = true) => ({
+    Servicio: { Modo: 3, Nombre: '', LineasVerdes: 0, LineasRosas: 0, LineasRojas: 0, Motivo: '' },
+    Facturacion: { Modo: 1, Nombre: 'Por entregas', Motivo: '', ModosPermitidos: [1, 2, 3], Modos: [], Visible: facturacionVisible, MotivoOculta: facturacionVisible ? null : 'Con «Todo junto» el pedido sale de una vez.' },
+    ServirPendienteAlHaberStock: { Visible: casillaVisible, Valor: valor, Motivo: null }
+  });
+
+  const ultimaAlerta = () => alertas[alertas.length - 1];
+  const pulsar = async (alerta: any, texto: string) => {
+    const boton = alerta.buttons.find((b: any) => b.text === texto);
+    if (boton?.handler) { await boton.handler(); }
+  };
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    resultadoModal = { data: null, role: 'cancelar' };
+    servicio = {
+      opcionesModos: jasmine.createSpy('opcionesModos').and.returnValue(of(null)),
+      modoFacturacionSugerido: jasmine.createSpy('modoFacturacionSugerido').and.returnValue(of(null)),
+      modoServicioSugerido: jasmine.createSpy('modoServicioSugerido').and.returnValue(sugerencia(4)),
+      ofertasSugeridas: () => of([]),
+      validarServirJunto: jasmine.createSpy('validarServirJunto').and.returnValue(of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null })),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      cargarProductosBonificables: jasmine.createSpy('cargarProductosBonificables').and.returnValue(of({ Productos: [{ ProductoId: 'R1' }] })),
+      calcularPortes: () => of({}),
+      leerCliente: () => of({}),
+      sePuedeServirPorGlovo: () => of({ servirPorGlovo: false }),
+      crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: 929100 })),
+      modificarPedido: jasmine.createSpy('modificarPedido').and.returnValue(of({})),
+      unirPedidos: jasmine.createSpy('unirPedidos').and.returnValue(of({ numero: 929000 })),
+      leerChequeRegalo: () => of(null)
+    };
+    eventos = { leerEventosPorProducto: jasmine.createSpy('leerEventosPorProducto').and.returnValue(of([])) };
+    modales = {
+      create: jasmine.createSpy('create').and.callFake(() => Promise.resolve({
+        present: () => Promise.resolve(),
+        onDidDismiss: () => Promise.resolve(resultadoModal)
+      }))
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: EventosService, useValue: eventos },
+        { provide: ModalController, useValue: modales },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => new Promise(() => { }) }); } } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false, periodoFacturacion: 'NRM', plazosPago: 'CONTADO', mantenerJunto: false };
+    component['plazosPago'] = 'CONTADO';
+    component['formaPago'] = 'TRN';
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', texto: 'CREMA', grupo: 'COS', cantidad: 2, precio: 100, descuento: 0, iva: 'G21', cantidadOferta: 0 }];
+    component['gruposBonificables'] = ['COS', 'ACC'];
+  }));
+
+  describe('la frase bajo «Entrega» dice «Recomendado» si no coincide con lo elegido (#245)', () => {
+    it('si lo elegido es lo recomendado, solo el motivo', fakeAsync(() => {
+      component.cargarModoServicioSugerido();
+      tick();
+      expect(component.modoServicio).toBe(4);
+      expect(component.textoMotivoModoServicio).toBe('Sale lo que hay y el resto en una sola entrega.');
+    }));
+
+    it('si el vendedor elige otro modo, se dice cuál era la recomendación', fakeAsync(() => {
+      component.cargarModoServicioSugerido();
+      tick();
+      component.cambiarModoServicio(2);
+      tick();
+      expect(component.textoMotivoModoServicio).toBe('Recomendado: «Ahora lo que hay, el resto de una vez». Sale lo que hay y el resto en una sola entrega.');
+    }));
+
+    it('un aviso de rechazo no es una recomendación: se enseña tal cual', fakeAsync(() => {
+      component.cargarModoServicioSugerido();
+      tick();
+      component['tratarModoServicioNoPermitido']({ apiError: { error: { code: 'MODO_SERVICIO_NO_PERMITIDO', message: 'Ese modo ya no vale.', details: { modoSugerido: 3, modosPermitidos: [3] } } } });
+      tick();
+      expect(component.modoServicio).toBe(3);
+      expect(component.textoMotivoModoServicio).toBe('Ese modo ya no vale.');
+    }));
+  });
+
+  describe('origen del modo de servicio (#250)', () => {
+    it('la sugerencia aplicada sin tocar viaja como «Sugerido» con el modo que sugirió el servidor', fakeAsync(() => {
+      component.cargarModoServicioSugerido();
+      tick();
+      const pedido = component['prepararPedido']();
+      expect(pedido.OrigenModoServicio).toBe('Sugerido');
+      expect(pedido.ModoServicioSugerido).toBe(4);
+      expect(pedido.modoServicio).toBe(4);
+    }));
+
+    it('si el vendedor lo cambia a mano, «Usuario»', fakeAsync(() => {
+      component.cargarModoServicioSugerido();
+      tick();
+      component.cambiarModoServicio(2);
+      tick();
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Usuario');
+    }));
+
+    it('sin respuesta del servidor, «PorDefecto»', () => {
+      const pedido = component['prepararPedido']();
+      expect(pedido.OrigenModoServicio).toBe('PorDefecto');
+      expect(pedido.ModoServicioSugerido).toBeNull();
+    });
+
+    it('tras un rechazo al grabar, «Corregido»', fakeAsync(() => {
+      component['tratarModoServicioNoPermitido']({ apiError: { error: { code: 'MODO_SERVICIO_NO_PERMITIDO', message: 'x', details: { modoSugerido: 2, modosPermitidos: [2] } } } });
+      tick();
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Corregido');
+    }));
+
+    it('en edición, sin tocar el modo, no se manda origen', () => {
+      component.pedidoEnEdicionNumero = 901234;
+      expect(component['prepararPedido']().OrigenModoServicio).toBeUndefined();
+    });
+  });
+
+  describe('la forma de pago y el CCC vuelven a pedir el modo de facturación (#241)', () => {
+    it('pasar de transferencia a efectivo pregunta otra vez', () => {
+      component.pedirModoFacturacionSugerido();
+      expect(servicio.opcionesModos).toHaveBeenCalledTimes(1);
+
+      component.cambiarFormaPago('EFC');
+      expect(servicio.opcionesModos).toHaveBeenCalledTimes(2);
+      expect(servicio.opcionesModos.calls.mostRecent().args[0].formaPago).toBe('EFC');
+    });
+
+    it('con recibo, el CCC va en la consulta', () => {
+      component['_direccionSeleccionada'].ccc = '1';
+      component.cambiarFormaPago('RCB');
+      expect(servicio.opcionesModos.calls.mostRecent().args[0].ccc).toBe('1');
+    });
+  });
+
+  describe('opciones de modos y «Servir lo pendiente en cuanto haya stock» (#242)', () => {
+    it('con «Todo junto» la API oculta el selector de facturación y no se manda el modo', () => {
+      servicio.opcionesModos.and.returnValue(of(opciones(false, false)));
+      component.pedirModoFacturacionSugerido();
+
+      expect(component.facturacionVisible).toBeFalse();
+      expect(component.motivoFacturacionOculta).toContain('Todo junto');
+      component.cambiarModoFacturacion(3);
+      expect(component['prepararPedido']().modoFacturacion).toBeNull();
+    });
+
+    it('con «Todo ahora» sale la casilla marcada y solo viaja si se toca', () => {
+      servicio.opcionesModos.and.returnValue(of(opciones(true, true, true)));
+      component.pedirModoFacturacionSugerido();
+
+      expect(component.casillaServirPendienteVisible).toBeTrue();
+      expect(component.servirPendienteAlHaberStock).toBeTrue();
+      expect(component['prepararPedido']().servirPendienteAlHaberStock).toBeNull();
+
+      component.cambiarServirPendiente(false);
+      expect(component['prepararPedido']().servirPendienteAlHaberStock).toBeFalse();
+    });
+
+    it('con una API anterior (404) se pregunta el modo de facturación como siempre', () => {
+      component.pedirModoFacturacionSugerido();
+      expect(servicio.modoFacturacionSugerido).toHaveBeenCalled();
+      expect(component.facturacionVisible).toBeTrue();
+      expect(component.casillaServirPendienteVisible).toBeFalse();
+    });
+
+    it('cambiar el modo de servicio vuelve a pedir las opciones (con «Todo junto» se oculta la facturación)', fakeAsync(() => {
+      component.pedirModoFacturacionSugerido();
+      expect(servicio.opcionesModos).toHaveBeenCalledTimes(1);
+      component.cambiarModoServicio(4);
+      tick();
+      expect(servicio.opcionesModos).toHaveBeenCalledTimes(2);
+      expect(servicio.opcionesModos.calls.mostRecent().args[0].modoServicio).toBe(4);
+    }));
+  });
+
+  describe('el cheque regalo resta de la base de Ganavisiones (#243, pedido 929066)', () => {
+    const cheque = (resta?: number) => ({
+      Producto: 'CHEQUE50_OCT26', Importe: 50, MinimoCanje: 250, CanjeHasta: '2026-11-07T00:00:00', PrefijosNombreExcluidosMinimo: [],
+      GruposExcluidosMinimo: [], Estado: 'Disponible', SePuedeUsar: true, Mensaje: 'Tiene un cheque', PedidoCanje: null, TextoLinea: 'CHEQUE',
+      ...(resta === undefined ? {} : { RestaDeLaBaseGanavisiones: resta })
+    });
+
+    beforeEach(() => {
+      component['productosResumen'] = [
+        { producto: 'A', grupo: 'COS', cantidad: 1, precio: 699.35, descuento: 0, cantidadOferta: 0 },
+        { producto: 'B', grupo: 'ACC', cantidad: 1, precio: 19.5, descuento: 0, cantidadOferta: 0 }
+      ];
+      component.chequeRegalo = cheque(50) as any;
+    });
+
+    it('sin el cheque marcado, 718,85 € dan 71 Ganavisiones', () => {
+      expect(component.baseImponibleBonificable).toBeCloseTo(718.85, 2);
+      expect(component.ganavisionesDisponibles).toBe(71);
+    });
+
+    it('con el cheque marcado, la base baja a 668,85 € y los Ganavisiones a 66 (lo que da la API)', fakeAsync(() => {
+      component.cambiarUsarChequeRegalo(true);
+      tick();
+      expect(component.baseImponibleBonificable).toBeCloseTo(668.85, 2);
+      expect(component.ganavisionesDisponibles).toBe(66);
+      // La base que se manda a ProductosBonificables ya lleva restado el cheque
+      expect(servicio.cargarProductosBonificables.calls.mostRecent().args[1]).toBeCloseTo(668.85, 2);
+    }));
+
+    it('si el producto del cheque no genera Ganavisiones (resta 0), siguen siendo 71', fakeAsync(() => {
+      component.chequeRegalo = cheque(0) as any;
+      component.cambiarUsarChequeRegalo(true);
+      tick();
+      expect(component.ganavisionesDisponibles).toBe(71);
+    }));
+
+    it('con regalos por 20 + 49 elegidos, marcar el cheque avisa y los limpia', fakeAsync(() => {
+      component.regalosSeleccionados = [
+        { producto: { ProductoId: 'R1', Ganavisiones: 20 }, cantidad: 1 } as any,
+        { producto: { ProductoId: 'R2', Ganavisiones: 49 }, cantidad: 1 } as any
+      ];
+      component.cambiarUsarChequeRegalo(true);
+      tick();
+      expect(component.regalosSeleccionados.length).toBe(0);
+      expect(ultimaAlerta().header).toBe('Regalos actualizados');
+    }));
+
+    it('al editar un pedido que ya lleva el cheque, no se resta dos veces', () => {
+      component['productosResumen'].push({ producto: 'CHEQUE50_OCT26', grupo: 'COS', cantidad: -1, precio: 50, descuento: 0, cantidadOferta: 0 });
+      component.usarChequeRegalo = true;
+      expect(component.puedeUsarChequeRegalo).toBeFalse();
+      expect(component.baseImponibleBonificable).toBeCloseTo(668.85, 2);
+    });
+  });
+
+  describe('cursos en la plantilla (#244)', () => {
+    const eventoCurso = () => ({
+      Id: 12, Titulo: 'Masterclass PDRN', Fecha: '2026-11-15T00:00:00', HoraInicio: '10:00', Almacen: 'REI', Formato: 'Presencial', PlazasLibres: 5,
+      Modalidades: [{ Modalidad: 'Reembolsable', Nombre: 'Con cupón de productos', Importe: 100 }, { Modalidad: 'NoReembolsable', Nombre: 'Sin cupón', Importe: 60 }]
+    });
+
+    it('100 € de productos + 150 € de curso: Ganavisiones y portes sobre 100 €', () => {
+      component['productosResumen'] = [
+        { producto: 'A', grupo: 'COS', cantidad: 1, precio: 100, descuento: 0, cantidadOferta: 0 },
+        { producto: '90077', grupo: 'CUR', EsCurso: true, cantidad: 1, precio: 150, descuento: 0, cantidadOferta: 0, eventoId: 12, modalidadEvento: 'Reembolsable' }
+      ];
+      expect(component.baseImponibleBonificable).toBe(100);
+      expect(component.ganavisionesDisponibles).toBe(10);
+      expect(component.hayCursosEnPedido).toBeTrue();
+
+      component['pedirValidacionServirJunto'](2);
+      const peticion = servicio.validarServirJunto.calls.mostRecent().args;
+      expect(peticion[2].map((l: any) => l.ProductoId)).toEqual(['A']);
+      expect(peticion[4].map((l: any) => l.ProductoId)).toEqual(['A']);
+    });
+
+    it('la línea del curso viaja con su evento y su modalidad', () => {
+      component['productosResumen'] = [
+        { producto: '90077', texto: 'MASTERCLASS', grupo: 'CUR', EsCurso: true, cantidad: 1, precio: 100, descuento: 0, cantidadOferta: 0, eventoId: 12, modalidadEvento: 'Reembolsable' }
+      ];
+      const linea = component['prepararPedido']().Lineas.find((l: any) => l.producto === '90077');
+      expect(linea.EventoId).toBe(12);
+      expect(linea.ModalidadEvento).toBe('Reembolsable');
+      expect(linea.PrecioUnitario).toBe(100);
+      expect(linea.DescuentoLinea).toBe(0);
+    });
+
+    it('al tocar un curso se elige evento y modalidad y la línea queda con 1 unidad al importe de la modalidad', async () => {
+      eventos.leerEventosPorProducto.and.returnValue(of([eventoCurso()]));
+      const evento = eventoCurso();
+      resultadoModal = { data: { evento, modalidad: evento.Modalidades[1], texto: 'Masterclass PDRN · Sin cupón: 60 €' }, role: 'elegido' };
+      const linea: any = { producto: '90077', texto: 'MASTERCLASS', grupo: 'CUR', EsCurso: true, cantidad: 1, precio: 999, descuento: 0.1, aplicarDescuento: true };
+
+      await component.elegirEventoCurso(linea);
+
+      expect(eventos.leerEventosPorProducto).toHaveBeenCalledWith('1', '90077');
+      expect(modales.create).toHaveBeenCalled();
+      expect(linea.cantidad).toBe(1);
+      expect(linea.precio).toBe(60);
+      expect(linea.descuento).toBe(0);
+      expect(linea.aplicarDescuento).toBeFalse();
+      expect(linea.eventoId).toBe(12);
+      expect(linea.modalidadEvento).toBe('NoReembolsable');
+      expect(component.textoCursoLinea(linea)).toBe('Masterclass PDRN · Sin cupón: 60 €');
+    });
+
+    it('si se cancela y la línea no tenía evento, el curso se quita del pedido', async () => {
+      eventos.leerEventosPorProducto.and.returnValue(of([eventoCurso()]));
+      resultadoModal = { data: null, role: 'cancelar' };
+      const linea: any = { producto: '90077', EsCurso: true, cantidad: 1, precio: 100 };
+
+      await component.elegirEventoCurso(linea);
+
+      expect(linea.cantidad).toBe(0);
+    });
+
+    it('un curso sin eventos próximos avisa y no entra en el pedido', async () => {
+      eventos.leerEventosPorProducto.and.returnValue(of([]));
+      const linea: any = { producto: '90077', texto: 'MASTERCLASS', EsCurso: true, cantidad: 1, precio: 100 };
+
+      await component.elegirEventoCurso(linea);
+
+      expect(modales.create).not.toHaveBeenCalled();
+      expect(linea.cantidad).toBe(0);
+      expect(ultimaAlerta().header).toBe('Curso sin eventos');
+    });
+
+    it('al guardar, si la API separó el curso en otro pedido, se dice', fakeAsync(() => {
+      spyOn<any>(component, 'reinicializar');
+      spyOn<any>(component, 'preguntarBorrarBorrador');
+      servicio.crearPedido.and.returnValue(of({ numero: 929100, PedidosAdicionales: [{ Numero: 929101, Motivo: 'Cursos' }] }));
+
+      component['ejecutarCreacion']();
+      tick();
+
+      const creado = alertas.find(a => a.header === 'Creado');
+      expect(creado.message).toBe('Se han creado dos pedidos: 929100 (productos) y 929101 (curso). Los cursos se facturan aparte.');
+    }));
+  });
+
+  describe('aviso de fecha de entrega lejana al crear (#252)', () => {
+    const errorFechaLejana = {
+      statusCode: 400,
+      apiError: { error: { code: 'FECHA_ENTREGA_LEJANA', message: 'La fecha de entrega de las líneas es el miércoles 27/10/2027 (dentro de 365 días). ¿Es correcta?', timestamp: '' } }
+    };
+
+    beforeEach(() => {
+      spyOn<any>(component, 'reinicializar');
+      spyOn<any>(component, 'preguntarBorrarBorrador');
+    });
+
+    it('cada guardado manda ConfirmarFechaEntregaLejana false', () => {
+      expect(component['prepararPedido']().ConfirmarFechaEntregaLejana).toBeFalse();
+    });
+
+    it('con «Sí» se repite la petición confirmada', fakeAsync(async () => {
+      servicio.crearPedido.and.returnValues(throwError(() => errorFechaLejana), of({ numero: 929100 }));
+
+      component['ejecutarCreacion']();
+      tick();
+      await Promise.resolve();
+      const pregunta = ultimaAlerta();
+      expect(pregunta.header).toBe('Fecha de entrega');
+      expect(pregunta.message).toContain('¿Es correcta?');
+      await pulsar(pregunta, 'Sí');
+      tick();
+
+      expect(servicio.crearPedido).toHaveBeenCalledTimes(2);
+      expect(servicio.crearPedido.calls.argsFor(0)[0].ConfirmarFechaEntregaLejana).toBeFalse();
+      expect(servicio.crearPedido.calls.argsFor(1)[0].ConfirmarFechaEntregaLejana).toBeTrue();
+      expect(alertas.some(a => a.header === 'Creado')).toBeTrue();
+    }));
+
+    it('con «No» no se graba y no sale ningún error', fakeAsync(async () => {
+      servicio.crearPedido.and.returnValue(throwError(() => errorFechaLejana));
+
+      component['ejecutarCreacion']();
+      tick();
+      await Promise.resolve();
+      await pulsar(ultimaAlerta(), 'No');
+      tick();
+
+      expect(servicio.crearPedido).toHaveBeenCalledTimes(1);
+      expect(alertas.some(a => a.header === 'Error')).toBeFalse();
+      expect(component['prepararPedido']().ConfirmarFechaEntregaLejana).toBeFalse();
+    }));
+
+    it('también al ampliar un pedido', fakeAsync(async () => {
+      servicio.unirPedidos.and.returnValues(throwError(() => errorFechaLejana), of({ numero: 929000 }));
+      component.pedidoPendienteSeleccionado = 929000;
+
+      component['ejecutarAmpliacion'](component['prepararPedido'](), false);
+      tick();
+      await Promise.resolve();
+      await pulsar(ultimaAlerta(), 'Sí');
+      tick();
+
+      expect(servicio.unirPedidos).toHaveBeenCalledTimes(2);
+      expect(servicio.unirPedidos.calls.argsFor(1)[2].ConfirmarFechaEntregaLejana).toBeTrue();
+    }));
+  });
+
+  describe('pedido retenido en edición (#254)', () => {
+    beforeEach(() => {
+      component.pedidoEnEdicionNumero = 929057;
+      component['modoServicioGuardadoEdicion'] = 5;
+      component['modoServicioSeleccionado'] = 5;
+    });
+
+    it('enseña «Retenido», no deja cambiarlo y el PUT sigue mandando el 5', () => {
+      expect(component.modoServicio).toBe(5);
+      expect(component.estaRetenido).toBeTrue();
+      expect(component.nombreModoServicio).toBe('Retenido');
+
+      component.cambiarModoServicio(1);
+
+      expect(component.modoServicio).toBe(5);
+      expect(component['prepararPedido']().modoServicio).toBe(5);
+    });
+
+    it('tocar el selector explica que hay que liberarlo desde el pedido', async () => {
+      await component.elegirModoServicio();
+      expect(ultimaAlerta().header).toBe('Pedido retenido');
+    });
   });
 });

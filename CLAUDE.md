@@ -69,17 +69,18 @@ Siempre que se vaya a hacer push, hay que:
 ## Al promocionar a Production
 
 Después de que Carlos promocione la versión en AppFlow y ejecute `scripts/Novedades_<version>.sql`,
-avisar a los vendedores por push con `scripts/AvisarNuevaVersionNestoApp.ps1` (gemelo del
-`AvisarNuevaVersionNesto.ps1` de NestoAPI). Lo lanza Carlos desde Windows: pide el `windows-token`
-con su usuario del dominio, y desde WSL da 401.
+avisar a los vendedores por push con `scripts/AvisarNuevaVersionNestoApp.ps1` (gemelo del de NestoAPI).
+Desde 2.26.0 usa `POST api/Notificaciones/NuevaVersionNestoApp` (NestoAPI#579), que manda a **todos** los
+dispositivos activos de NestoApp de una vez: ya no hace falta sacar los usuarios de la base de datos. Lo lanza
+Carlos desde Windows: pide el `windows-token` con su usuario del dominio (fuera del dominio da 401: usar
+`-PedirCredenciales` con `NUEVAVISION\Carlos`); desde WSL da 401.
 
 ```powershell
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba            # primero, solo a Carlos
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios Marta,... # luego, al resto
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -SoloListar        # a quién se mandaría
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Prueba            # primero, solo a Carlos
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0                    # luego, a todos
+.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Usuarios Marta    # solo a alguien (si no la recibió)
 ```
-- Mientras no exista NestoAPI#579 (`POST api/Notificaciones/NuevaVersionNestoApp`, a todos de una vez),
-  hay que pasarle los usuarios. Sacarlos (BD de solo lectura) con
-  `SELECT DISTINCT Usuario FROM dbo.DispositivosNotificaciones WHERE Aplicacion = 'NestoApp' AND Activo = 1`.
 - El texto dice que cierren la app **dos veces**: Live Updates (`autoUpdateMethod: 'background'`)
   descarga la versión al arrancar en frío y la estrena en el **siguiente** arranque en frío. Volver
   desde segundo plano no cuenta. Al tocar la push se abre el perfil (`ruta: /profile`).

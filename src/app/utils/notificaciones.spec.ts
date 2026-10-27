@@ -64,3 +64,26 @@ describe('rutaDeNotificacion: incidencia de agencia (#236)', () => {
     expect(rutaDeNotificacion({ tipo: 'IncidenciaEnvioAgencia', empresa: '1', envio: '123' })).toBeNull();
   });
 });
+
+/** NestoApp#247 / NestoAPI#692: anuncio de un evento nuevo. */
+describe('rutaDeNotificacion: anuncio de evento (#247)', () => {
+  it('abre la ficha del evento', () => {
+    expect(rutaDeNotificacion({ tipo: 'AnuncioEvento', eventoId: '12', fecha: '2026-11-15', formato: 'Presencial' }, 7))
+      .toBe('/evento?id=12&aviso=7');
+  });
+
+  it('sin eventoId válido, a ningún sitio', () => {
+    expect(rutaDeNotificacion({ tipo: 'AnuncioEvento' })).toBeNull();
+    expect(rutaDeNotificacion({ tipo: 'AnuncioEvento', eventoId: 'x' })).toBeNull();
+  });
+});
+
+/** NestoApp#254 / NestoAPI#698: la campana de los pedidos retenidos abre el pedido. */
+describe('rutaDeNotificacion: pedido retenido (#254)', () => {
+  it('liberado o recordatorio, abre el pedido', () => {
+    expect(rutaDeNotificacion({ tipo: 'PedidoRetenido', accion: 'liberado', empresa: '1', pedido: '929057', cliente: '15191' }))
+      .toBe('/pedido-venta?empresa=1&numero=929057');
+    expect(rutaDeNotificacion({ tipo: 'PedidoRetenido', accion: 'recordatorio', empresa: '1', pedido: '929057' }))
+      .toBe('/pedido-venta?empresa=1&numero=929057');
+  });
+});

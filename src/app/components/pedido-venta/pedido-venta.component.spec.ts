@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { ActionSheetController, AlertController, IonicModule, LoadingController, ModalController } from '@ionic/angular';
+import { ActionSheetController, AlertController, IonicModule, LoadingController, ModalController, ToastController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 
 import { PedidoVentaComponent } from './pedido-venta.component';
-import { sinCamposSoloLectura } from './pedido-venta.service';
+import { PedidoVentaService, sinCamposSoloLectura } from './pedido-venta.service';
+import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
@@ -365,6 +366,8 @@ describe('Modo de facturación en el pedido (#197)', () => {
       mantenerJunto: false, modoFacturacion: 3, Lineas: []
     } as any;
     sugerido = spyOn(component['plantillaVentaService'], 'modoFacturacionSugerido').and.returnValue(sugerencia(3));
+    // NestoApp#242: con una API sin OpcionesModos (null) se sigue preguntando como siempre.
+    spyOn(component['plantillaVentaService'], 'opcionesModos').and.returnValue(of(null));
   }));
 
   it('pide la sugerencia con el número del pedido y sin líneas', () => {
@@ -700,5 +703,290 @@ describe('PedidoVentaComponent: fotos de los bultos (#223)', () => {
     expect(hojas.length).toBe(1);
     expect(hojas[0].buttons.map((b: any) => b.text)).toEqual(['Mandar por WhatsApp', 'Copiar el enlace', 'Cancelar']);
     expect(component.enlacePublicoFoto(bulto(1) as any)).toContain('/api/Almacen/Fotos/1-abc');
+  });
+});
+
+/**
+ * NestoApp#254 (retener), #242 (opciones de modos), #241 (forma de pago y CCC), #250 (origen del modo),
+ * #252 (fecha lejana) y #240 (fecha sin determinar) en el detalle del pedido.
+ */
+describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 / #242 / #241 / #250 / #252 / #240)', () => {
+  let component: PedidoVentaComponent;
+  let fixture: ComponentFixture<PedidoVentaComponent>;
+  let servicio: any;
+  let plantilla: any;
+  let alertas: any[];
+
+  const pedidoBase = (extra: any = {}) => ({
+    empresa: '1', numero: 929057, cliente: '15191', contacto: '0', contactoCobro: '0', formaPago: 'TRN', ccc: null,
+    plazosPago: 'CONTADO', periodoFacturacion: 'NRM', notaEntrega: false, iva: 'G21', vendedor: 'NV',
+    mantenerJunto: false, modoFacturacion: 1, modoServicio: 3, servirJunto: false, retencion: null,
+    Lineas: [{ id: 1, estado: -1, picking: 0, tipoLinea: 1, Producto: 'A', Cantidad: 1, fechaEntrega: '2026-10-28T00:00:00' }],
+    ...extra
+  });
+
+  const opciones = (facturacionVisible: boolean, casillaVisible: boolean, valor = true) => ({
+    Servicio: { Modo: 3, Nombre: '', LineasVerdes: 0, LineasRosas: 0, LineasRojas: 0, Motivo: '' },
+    Facturacion: { Modo: 1, Nombre: 'Por entregas', Motivo: '', ModosPermitidos: [1, 2, 3], Modos: [], Visible: facturacionVisible, MotivoOculta: facturacionVisible ? null : 'Con «Todo junto» el pedido sale de una vez.' },
+    ServirPendienteAlHaberStock: { Visible: casillaVisible, Valor: valor, Motivo: null }
+  });
+
+  const ultimaAlerta = () => alertas[alertas.length - 1];
+  const pulsar = async (alerta: any, texto: string, datos?: any) => {
+    const boton = alerta.buttons.find((b: any) => b.text === texto);
+    if (boton?.handler) { await boton.handler(datos); }
+  };
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    servicio = {
+      cargarPedido: jasmine.createSpy('cargarPedido').and.returnValue(of(pedidoBase())),
+      cargarFechaEntregaAgencia: () => of(null),
+      cargarBultos: () => of([]),
+      cargarEnlacesSeguimiento: () => of([]),
+      cargarParametrosIva: () => of([]),
+      modificarPedido: jasmine.createSpy('modificarPedido').and.returnValue(of({})),
+      retener: jasmine.createSpy('retener').and.returnValue(of({ Id: 1, Pedido: 929057, Motivo: 'Noviembre', HastaFecha: '2026-11-15T00:00:00', Usuario: 'NUEVAVISION\\Alfredo', Fecha: '2026-10-27T10:00:00' })),
+      liberar: jasmine.createSpy('liberar').and.returnValue(of({ Id: 1, Pedido: 929057, Liberado: '2026-10-27T11:00:00' }))
+    };
+    plantilla = {
+      opcionesModos: jasmine.createSpy('opcionesModos').and.returnValue(of(opciones(true, false))),
+      modoFacturacionSugerido: jasmine.createSpy('modoFacturacionSugerido').and.returnValue(of(null))
+    };
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: PedidoVentaService, useValue: servicio },
+        { provide: PlantillaVentaService, useValue: plantilla },
+        { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }); } } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        { provide: ToastController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    fixture = TestBed.createComponent(PedidoVentaComponent);
+    component = fixture.componentInstance;
+  }));
+
+  describe('retenido hasta nuevo aviso (#254)', () => {
+    it('un pedido con modo 5 enseña «Retenido», deshabilita el selector y dice quién y hasta cuándo', fakeAsync(() => {
+      servicio.cargarPedido.and.returnValue(of(pedidoBase({ modoServicio: 5, servirJunto: false,
+        retencion: { Id: 1, Pedido: 929057, Motivo: 'El cliente lo quiere para noviembre', HastaFecha: '2026-11-15T00:00:00', Usuario: 'NUEVAVISION\\Alfredo', Fecha: '2026-10-22T10:00:00', Liberado: null } })));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(component.modoServicioPedido).toBe(5);
+      expect(component.estaRetenido).toBeTrue();
+      expect(component.listaModosServicioSelector.some(m => m.codigo === 5 && m.nombre === 'Retenido')).toBeTrue();
+      expect(component.textoRetencion).toBe('Retenido por Alfredo desde el 22/10/2026 hasta el 15/11/2026: El cliente lo quiere para noviembre');
+      expect(component.puedeRetener).toBeFalse();
+    }));
+
+    it('retenido, el selector no cambia el modo (hay que liberar antes) y el PUT sigue mandando el 5', fakeAsync(() => {
+      servicio.cargarPedido.and.returnValue(of(pedidoBase({ modoServicio: 5, servirJunto: true })));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      component.cambiarModoServicio(1);
+
+      expect(component.pedido.modoServicio).toBe(5);
+      expect(component.pedidoParaGuardar().modoServicio).toBe(5);
+      expect(component.pedidoParaGuardar().OrigenModoServicio).toBeUndefined();
+    }));
+
+    it('el 5 nunca se elige desde el selector', fakeAsync(() => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.listaModosServicioSelector.some(m => m.codigo === 5)).toBeFalse();
+
+      component.cambiarModoServicio(5);
+      expect(component.pedido.modoServicio).toBe(3);
+    }));
+
+    it('«Retener…» pide el motivo (obligatorio) y la fecha opcional, y recarga el pedido', fakeAsync(async () => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.puedeRetener).toBeTrue();
+
+      await component.retenerPedido();
+      const dialogo = ultimaAlerta();
+      expect(dialogo.header).toBe('Retener el pedido');
+      expect(dialogo.inputs.map((i: any) => i.name)).toEqual(['motivo', 'hasta']);
+
+      await pulsar(dialogo, 'Retener', { motivo: ' Noviembre ', hasta: '2026-11-15T00:00:00' });
+      tick();
+
+      expect(servicio.retener).toHaveBeenCalledWith('1', 929057, { Motivo: 'Noviembre', HastaFecha: '2026-11-15' });
+      expect(servicio.cargarPedido).toHaveBeenCalledTimes(2);
+    }));
+
+    it('sin motivo no se retiene', fakeAsync(async () => {
+      component.cargarPedido('1', 929057);
+      tick();
+
+      await component.enviarRetencion('  ', null);
+      tick();
+
+      expect(servicio.retener).not.toHaveBeenCalled();
+      expect(ultimaAlerta().message).toContain('motivo');
+    }));
+
+    it('«Liberar» pide confirmación y libera', fakeAsync(async () => {
+      servicio.cargarPedido.and.returnValue(of(pedidoBase({ modoServicio: 5 })));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      const liberando = component.liberarPedido();
+      await Promise.resolve();
+      await pulsar(ultimaAlerta(), 'Liberar');
+      await liberando;
+      tick();
+
+      expect(servicio.liberar).toHaveBeenCalledWith('1', 929057);
+      expect(servicio.cargarPedido).toHaveBeenCalledTimes(2);
+    }));
+  });
+
+  describe('opciones de modos y «Servir lo pendiente en cuanto haya stock» (#242)', () => {
+    it('con «Todo junto» la API oculta el selector de facturación y no se manda el modo', fakeAsync(() => {
+      plantilla.opcionesModos.and.returnValue(of(opciones(false, false)));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(component.facturacionVisible).toBeFalse();
+      expect(component.motivoFacturacionOculta).toContain('Todo junto');
+      component.cambiarModoFacturacion(3);
+      expect(component.pedidoParaGuardar().modoFacturacion).toBeNull();
+    }));
+
+    it('con «Todo ahora» sale la casilla marcada por defecto y solo viaja si se toca', fakeAsync(() => {
+      plantilla.opcionesModos.and.returnValue(of(opciones(true, true, true)));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(component.casillaServirPendienteVisible).toBeTrue();
+      expect(component.pedido.servirPendienteAlHaberStock).toBeTrue();
+      expect(component.pedidoParaGuardar().servirPendienteAlHaberStock).toBeNull();
+
+      component.cambiarServirPendiente(false);
+      expect(component.pedidoParaGuardar().servirPendienteAlHaberStock).toBeFalse();
+    }));
+
+    it('con una API anterior (404) se pregunta el modo de facturación como siempre y no hay casilla', fakeAsync(() => {
+      plantilla.opcionesModos.and.returnValue(of(null));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(plantilla.modoFacturacionSugerido).toHaveBeenCalled();
+      expect(component.facturacionVisible).toBeTrue();
+      expect(component.casillaServirPendienteVisible).toBeFalse();
+      expect(component.pedidoParaGuardar().servirPendienteAlHaberStock).toBeNull();
+    }));
+
+    it('cambiar el modo de servicio vuelve a pedir las opciones', fakeAsync(() => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(plantilla.opcionesModos).toHaveBeenCalledTimes(1);
+
+      component.cambiarModoServicio(1);
+      tick();
+
+      expect(plantilla.opcionesModos).toHaveBeenCalledTimes(2);
+      expect(plantilla.opcionesModos.calls.mostRecent().args[0].modoServicio).toBe(1);
+    }));
+  });
+
+  describe('la forma de pago y el CCC vuelven a pedir el modo de facturación (#241)', () => {
+    it('pasar de transferencia a efectivo pregunta otra vez', fakeAsync(() => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(plantilla.opcionesModos).toHaveBeenCalledTimes(1);
+
+      component.seleccionarFormaPago('EFC');
+      tick();
+      expect(plantilla.opcionesModos).toHaveBeenCalledTimes(2);
+
+      component.cambiarCcc('ES00');
+      tick();
+      expect(plantilla.opcionesModos).toHaveBeenCalledTimes(3);
+    }));
+  });
+
+  describe('origen del modo de servicio (#250)', () => {
+    it('sin tocar el modo no se manda origen; si el vendedor lo cambia, «Usuario»', fakeAsync(() => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.pedidoParaGuardar().OrigenModoServicio).toBeUndefined();
+
+      component.cambiarModoServicio(2);
+      expect(component.pedidoParaGuardar().OrigenModoServicio).toBe('Usuario');
+    }));
+  });
+
+  describe('aviso de fecha de entrega lejana al modificar (#252)', () => {
+    const errorFechaLejana = {
+      statusCode: 400,
+      apiError: { error: { code: 'FECHA_ENTREGA_LEJANA', message: 'La fecha de entrega de las líneas es el miércoles 27/10/2027 (dentro de 365 días). ¿Es correcta?', timestamp: '' } }
+    };
+
+    it('cada guardado manda ConfirmarFechaEntregaLejana false', fakeAsync(() => {
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.pedidoParaGuardar().ConfirmarFechaEntregaLejana).toBeFalse();
+    }));
+
+    it('con «Sí» repite la misma petición confirmada', fakeAsync(async () => {
+      component.cargarPedido('1', 929057);
+      tick();
+      servicio.modificarPedido.and.returnValues(throwError(() => errorFechaLejana), of({}));
+
+      const enviando = component.enviarModificacion(false);
+      tick();
+      await enviando;
+      const pregunta = ultimaAlerta();
+      expect(pregunta.message).toContain('¿Es correcta?');
+      await pulsar(pregunta, 'Sí');
+      tick();
+
+      expect(servicio.modificarPedido).toHaveBeenCalledTimes(2);
+      expect(servicio.modificarPedido.calls.argsFor(1)[0].ConfirmarFechaEntregaLejana).toBeTrue();
+    }));
+
+    it('con «No» no se graba ni sale ningún otro error', fakeAsync(async () => {
+      component.cargarPedido('1', 929057);
+      tick();
+      servicio.modificarPedido.and.returnValue(throwError(() => errorFechaLejana));
+
+      const enviando = component.enviarModificacion(false);
+      tick();
+      await enviando;
+      const pregunta = ultimaAlerta();
+      await pulsar(pregunta, 'Cancelar');
+      tick();
+
+      expect(servicio.modificarPedido).toHaveBeenCalledTimes(1);
+      expect(alertas.filter(a => a.header === 'Error').length).toBe(0);
+      // El siguiente guardado vuelve a preguntar
+      component.modificarPedido();
+      tick();
+      expect(component.pedidoParaGuardar().ConfirmarFechaEntregaLejana).toBeFalse();
+    }));
+  });
+
+  describe('fecha de entrega sin determinar (#240)', () => {
+    it('una línea pendiente con 31/12/2099 avisa y se pinta como «Sin fecha»', fakeAsync(() => {
+      servicio.cargarPedido.and.returnValue(of(pedidoBase({ Lineas: [{ id: 1, estado: -1, picking: 0, tipoLinea: 1, fechaEntrega: '2099-12-31T00:00:00' }] })));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(component.sinFechaEntrega).toBeTrue();
+      expect(component.textoFecha('2099-12-31T00:00:00')).toBe('Sin fecha');
+      expect(component.textoFecha('2026-10-28T00:00:00')).toBe('28/10/2026');
+    }));
   });
 });

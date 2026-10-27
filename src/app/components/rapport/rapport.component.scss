@@ -1,0 +1,20 @@
+
+/* NestoApp#253: chips de resultado, en dos filas si hace falta */
+.chips-resultado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  ion-chip { margin: 0; }
+}
+
+/* NestoApp#246: la cinta de sugerencias, como en la plantilla */
+.cinta-sugerencias {
+  .sugerencia { margin: 8px; }
+  .cabecera-sugerencia { display: flex; gap: 12px; align-items: flex-start; }
+  .foto { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: var(--ion-color-step-50, #f4f4f4); }
+  h2 { font-size: 1em; font-weight: 600; margin: 0 0 2px 0; }
+  .producto { font-size: 0.85em; color: var(--ion-color-medium); margin: 0 0 4px 0; }
+  .frase { margin: 8px 0 4px 0; font-style: italic; }
+  .botones-sugerencia { display: flex; gap: 6px; flex-wrap: wrap; }
+}

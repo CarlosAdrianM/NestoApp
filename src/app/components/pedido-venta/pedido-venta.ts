@@ -1,5 +1,6 @@
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
+import { RetencionPedido } from 'src/app/models/retencion-pedido.model';
 
 export class PedidoVenta {
     public empresa: string;
@@ -45,6 +46,17 @@ export class PedidoVenta {
     /** NestoApp#197: en una nota de entrega creada por la API, el pedido y el albarán de los que sale. */
     public pedidoOrigen?: number | null;
     public albaranOrigen?: number | null;
+    /** NestoApp#254 / NestoAPI#698: la retención viva cuando modoServicio es 5; null si no está retenido. Solo lectura. */
+    public retencion?: RetencionPedido | null;
+    /**
+     * NestoApp#242 / NestoAPI#688: «Servir lo pendiente en cuanto haya stock» (solo con facturación «Todo ahora»).
+     * Al leer, siempre con valor cuando aplica; al guardar, null = no cambia.
+     */
+    public servirPendienteAlHaberStock?: boolean | null;
+    /** NestoApp#250 / NestoAPI#704: de dónde sale el modo que se manda (solo se registra). */
+    public OrigenModoServicio?: string;
+    /** NestoApp#252 / NestoAPI#712: false pregunta por fechas a más de 60 días; true ya está confirmado. */
+    public ConfirmarFechaEntregaLejana?: boolean;
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;

@@ -20,6 +20,7 @@ import { SelectorPlantillaVentaDetalleComponent } from './components/selector-pl
 import { UltimasVentasProductoClienteComponent } from './components/ultimas-ventas-producto-cliente/ultimas-ventas-producto-cliente.component';
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { BuzonNotificacionesComponent } from './components/buzon-notificaciones/buzon-notificaciones.component';
+import { EventoComponent } from './components/evento/evento.component';
 
 const routes: Routes = [
   {
@@ -97,6 +98,11 @@ const routes: Routes = [
   {
     path: 'ultimas-ventas-producto-cliente',
     component: UltimasVentasProductoClienteComponent
+  },
+  {
+    // NestoApp#247 / NestoAPI#692: la ficha del evento que abre la push de anuncio
+    path: 'evento',
+    component: EventoComponent
   },
   {
     path: '',

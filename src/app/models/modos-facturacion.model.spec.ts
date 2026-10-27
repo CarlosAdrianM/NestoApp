@@ -54,3 +54,28 @@ describe('Modos de facturación (#197 / NestoAPI#542)', () => {
     expect(selectorFacturacionBloqueado(null)).toBeFalse();
   });
 });
+
+/** NestoApp#241 (NestoAPI#686, pedido 928220) y #242 (NestoAPI#688). */
+describe('La huella del modo de facturación mira la forma de pago, el CCC y el modo de servicio (#241 / #242)', () => {
+  const pedido: any = {
+    empresa: '1', numero: 0, cliente: '15191', contacto: '0', contactoCobro: '0',
+    plazosPago: 'CONTADO', periodoFacturacion: 'NRM', notaEntrega: false,
+    formaPago: 'TRN', ccc: null, modoServicio: 3, mantenerJunto: false, modoFacturacion: null, Lineas: []
+  };
+
+  it('cambiar de transferencia a efectivo vuelve a preguntar (al contado «Al completar» no vale)', () => {
+    expect(huellaModoFacturacion({ ...pedido, formaPago: 'EFC' })).not.toBe(huellaModoFacturacion(pedido));
+  });
+
+  it('cambiar el CCC del recibo vuelve a preguntar', () => {
+    expect(huellaModoFacturacion({ ...pedido, formaPago: 'RCB', ccc: '1' })).not.toBe(huellaModoFacturacion({ ...pedido, formaPago: 'RCB', ccc: '2' }));
+  });
+
+  it('cambiar el modo de servicio vuelve a preguntar (con «Todo junto» el selector se oculta)', () => {
+    expect(huellaModoFacturacion({ ...pedido, modoServicio: 1 })).not.toBe(huellaModoFacturacion(pedido));
+  });
+
+  it('el modo de facturación elegido sigue sin contar', () => {
+    expect(huellaModoFacturacion({ ...pedido, modoFacturacion: 2, mantenerJunto: true })).toBe(huellaModoFacturacion(pedido));
+  });
+});

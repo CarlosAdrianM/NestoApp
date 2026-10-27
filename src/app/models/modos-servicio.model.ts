@@ -17,6 +17,12 @@ export const MODOS_SERVICIO = {
   TRAS_REPONER_DE_TIENDAS: 3,
   /** Sale ya lo que hay; lo que falta se entrega en UNA sola entrega más, cuando esté todo. */
   AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ: 4,
+  /**
+   * NestoApp#254 / NestoAPI#698: retenido «hasta nuevo aviso». Nunca sale en el picking. No se
+   * elige en el selector: lo ponen y lo quitan «Retener…» y «Liberar» (la API lo rechaza si se manda
+   * desde el selector). Solo se enseña.
+   */
+  RETENIDO: 5,
 
   /**
    * Modo con el que nace un pedido si nadie dice otra cosa (Carlos, 16/09/26): «tras reponer
@@ -57,8 +63,14 @@ export const LISTA_MODOS_SERVICIO: ModoServicioItem[] = [
   }
 ];
 
+/** Los modos que se pueden ELEGIR (1..4). El 5 (retenido) no: lo ponen Retener/Liberar (#254). */
 export function esModoValido(modo: number): boolean {
   return modo >= MODOS_SERVICIO.TODO_JUNTO && modo <= MODOS_SERVICIO.AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ;
+}
+
+/** NestoApp#254: el pedido está retenido hasta nuevo aviso (modo 5). */
+export function esRetenido(modo: number | null | undefined): boolean {
+  return modo === MODOS_SERVICIO.RETENIDO;
 }
 
 /** Solo el modo 1 es «servir junto» en el sentido de la columna y de las validaciones
@@ -80,6 +92,10 @@ export function esEntregaUnica(modo: number): boolean {
  * sin conocer el modo; el modo solo refina el «no todo junto».
  */
 export function modoEfectivo(modoServicio: number | null | undefined, servirJunto: boolean): number {
+  // NestoApp#254: retenido manda sobre todo (la API guarda el modo anterior en la retención).
+  if (esRetenido(modoServicio)) {
+    return MODOS_SERVICIO.RETENIDO;
+  }
   if (servirJunto) {
     return MODOS_SERVICIO.TODO_JUNTO;
   }
@@ -90,9 +106,59 @@ export function modoEfectivo(modoServicio: number | null | undefined, servirJunt
   return MODOS_SERVICIO.SEGUN_VAYA_ENTRANDO;
 }
 
+/** NestoApp#254: el nombre del 5, que no está en el selector (contrato con ModosServicio.Nombre de la API). */
+export const NOMBRE_MODO_RETENIDO = 'Retenido';
+
 export function nombreModo(modo: number): string {
+  if (esRetenido(modo)) {
+    return NOMBRE_MODO_RETENIDO;
+  }
   const item = LISTA_MODOS_SERVICIO.find(m => m.codigo === modo);
   return item ? item.nombre : `Modo ${modo}`;
+}
+
+/**
+ * NestoApp#245 (Nesto 0865f1dd, novedad 731): la frase gris bajo «Entrega» es la RECOMENDACIÓN del
+ * servidor, no lo elegido. Si lo elegido no coincide, se dice «Recomendado: «modo». motivo»; si
+ * coincide, solo el motivo (sin repetir el nombre). Sin motivo no hay frase.
+ */
+export function textoMotivoModoServicio(modoActual: number, modoSugerido: number | null | undefined, motivo: string | null | undefined): string {
+  const texto = (motivo || '').trim();
+  if (!texto) {
+    return '';
+  }
+  if (modoSugerido && modoSugerido !== modoActual) {
+    return `Recomendado: «${nombreModo(modoSugerido)}». ${texto}`;
+  }
+  return texto;
+}
+
+/**
+ * NestoApp#250 / NestoAPI#704 (caso 929152): de dónde sale el modo que se manda al grabar, para poder
+ * demostrar después si lo eligió el vendedor o venía puesto. Solo se registra: no cambia el pedido.
+ */
+export const ORIGEN_MODO_SERVICIO = {
+  /** Lo cambió el vendedor a mano en el selector. */
+  USUARIO: 'Usuario',
+  /** El que devolvió ModoServicioSugerido y el vendedor no tocó. */
+  SUGERIDO: 'Sugerido',
+  /** El del parámetro o el defecto de la app (el servidor no ha contestado). */
+  POR_DEFECTO: 'PorDefecto',
+  /** Tras una corrección (#187) o un rechazo al grabar (#518). */
+  CORREGIDO: 'Corregido'
+};
+
+export function origenModoServicio(elegidoPorUsuario: boolean, corregido: boolean, modoSugeridoServidor: number | null | undefined): string {
+  if (elegidoPorUsuario) {
+    return ORIGEN_MODO_SERVICIO.USUARIO;
+  }
+  if (corregido) {
+    return ORIGEN_MODO_SERVICIO.CORREGIDO;
+  }
+  if (modoSugeridoServidor) {
+    return ORIGEN_MODO_SERVICIO.SUGERIDO;
+  }
+  return ORIGEN_MODO_SERVICIO.POR_DEFECTO;
 }
 
 /** El valor del parámetro de usuario ModoServicioPorDefecto, o POR_DEFECTO si falta o no vale. */

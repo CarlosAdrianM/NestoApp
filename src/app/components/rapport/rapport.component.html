@@ -82,9 +82,44 @@
                     [(ngModel)]="rapport.Comentarios" name="Comentarios"></ion-textarea>
     </ion-item>
 
+    <!-- NestoApp#253 / NestoAPI#716: resultado del rapport (un chip, opcional) y próximo contacto -->
+    <ion-item lines="none">
+      <ion-label class="ion-text-wrap">
+        <p>Resultado</p>
+        <div class="chips-resultado">
+          <ion-chip *ngFor="let resultado of resultadosRapport" [outline]="!esResultadoElegido(resultado.codigo)"
+                    [color]="esResultadoElegido(resultado.codigo) ? 'primary' : 'medium'" (click)="elegirResultado(resultado.codigo)">
+            <ion-icon *ngIf="esResultadoElegido(resultado.codigo)" name="checkmark-outline"></ion-icon>
+            <ion-label>{{ resultado.nombre }}</ion-label>
+          </ion-chip>
+        </div>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>Próximo contacto</ion-label>
+      <ion-datetime-button datetime="proximoContacto"></ion-datetime-button>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime id="proximoContacto" presentation="date" [(ngModel)]="rapport.ProximoContacto" name="ProximoContacto"
+                        [locale]="'es-ES'" [showClearButton]="true" [clearText]="'Quitar'" [doneText]="'Seleccionar'" [cancelText]="'Cancelar'"></ion-datetime>
+        </ng-template>
+      </ion-modal>
+    </ion-item>
+
     <ion-item>
       <ion-label>Quitar de mi listado</ion-label>
       <ion-toggle slot="end" aria-label="Quitar de mi listado" [(ngModel)]="dejarDeVisitar" color="danger" name="dejarDeVisitar"></ion-toggle>
+    </ion-item>
+    <!-- NestoApp#253: por qué deja de visitarlo (opcional) -->
+    <ion-item *ngIf="dejarDeVisitar">
+      <ion-label>Motivo</ion-label>
+      <ion-select slot="end" aria-label="Motivo" interface="action-sheet" [cancelText]="'Cancelar'" [(ngModel)]="motivoCambioEstado" name="motivoCambioEstado" placeholder="Opcional">
+        <ion-select-option *ngFor="let motivo of motivosCambioEstado" [value]="motivo.codigo">{{ motivo.nombre }}</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-item *ngIf="dejarDeVisitar">
+      <ion-textarea label="Comentario del cambio de estado (opcional)" label-placement="floating" rows="2" [maxlength]="longitudComentarioCambioEstado"
+                    [(ngModel)]="comentarioCambioEstado" name="comentarioCambioEstado"></ion-textarea>
     </ion-item>
 
     <ion-item *ngIf="mostrarTipoCentro()">
@@ -138,5 +173,27 @@
     </ion-item>
 
   </form>
+
+  <!-- NestoApp#246: cinta de productos sugeridos al crear el rapport (la misma de la plantilla, sin «Añadir») -->
+  <ion-list *ngIf="hayCintaSugerencias" class="cinta-sugerencias">
+    <ion-list-header><ion-label>Puede ofrecer</ion-label></ion-list-header>
+    <ion-card class="sugerencia" *ngFor="let sugerencia of sugerencias; trackBy: identificadorSugerencia">
+      <ion-card-content>
+        <div class="cabecera-sugerencia">
+          <img *ngIf="sugerencia.UrlFoto" class="foto" [src]="sugerencia.UrlFoto" [alt]="nombreSugerencia(sugerencia)" loading="lazy" />
+          <div>
+            <h2>{{ nombreSugerencia(sugerencia) }}</h2>
+            <p class="producto">{{ productoYFamilia(sugerencia) }}</p>
+            <ion-badge color="medium">{{ etiquetaMotivo(sugerencia.Motivo) }}</ion-badge>
+          </div>
+        </div>
+        <p class="frase" *ngIf="sugerencia.Texto">{{ sugerencia.Texto }}</p>
+        <div class="botones-sugerencia">
+          <ion-button color="medium" fill="outline" size="small" (click)="rechazarSugerencia(sugerencia, 'NoLeInteresa')">✗ No le interesa</ion-button>
+          <ion-button fill="clear" color="medium" size="small" (click)="rechazarSugerencia(sugerencia, 'DescartadoVendedor')">🚫 Quitar</ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
   {{errorMessage}}
 </ion-content>

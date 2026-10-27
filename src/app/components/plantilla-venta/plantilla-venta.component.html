@@ -44,7 +44,7 @@
       </swiper-slide>
       <swiper-slide *ngIf="clienteSeleccionado">
         <div class="slide-content">
-          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" [servirJunto]="servirJuntoParaRegalos" (productosCargados)="onProductosCargados()"></selector-plantilla-venta>
+          <selector-plantilla-venta cliente="{{clienteSeleccionado.cliente}}" estadoCliente="{{clienteSeleccionado.estado}}" almacen="{{almacen}}" [servirJunto]="servirJuntoParaRegalos" (productosCargados)="onProductosCargados()" (cursoElegido)="elegirEventoCurso($event)"></selector-plantilla-venta>
         </div>
       </swiper-slide>
       <swiper-slide>
@@ -58,6 +58,8 @@
                         <h2>{{producto.texto}}</h2>
                         <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
                         <p>{{+producto.precio | currency:'EUR'}} (Dto: {{producto.descuento | percent}})</p>
+                        <!-- NestoApp#244 / NestoAPI#691: el curso, con su evento y modalidad; va en un pedido aparte -->
+                        <p *ngIf="producto.eventoId"><ion-badge color="tertiary">Curso</ion-badge> {{ textoCursoLinea(producto) }}</p>
                     </ion-label>
                     <ion-badge [color]="producto.colorStock" slot="end">{{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</ion-badge>
                 </ion-item>
@@ -135,10 +137,15 @@
                 <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
                 <!-- NestoApp#230: hoja de acciones propia (ion-select no avisa si se elige el modo que ya tiene).
                      NestoApp#187 / NestoAPI#518: los modos sin sentido para el pedido salen deshabilitados. -->
-                <ion-item button detail="false" (click)="elegirModoServicio()" aria-label="Entrega">
+                <ion-item button detail="false" (click)="elegirModoServicio()" aria-label="Entrega" [disabled]="estaRetenido">
                     <ion-label>Entrega</ion-label>
                     <ion-note slot="end" color="dark" class="ion-text-wrap ion-text-end">{{ nombreModoServicio }}</ion-note>
                     <ion-icon slot="end" name="caret-down-outline" color="medium" size="small"></ion-icon>
+                </ion-item>
+                <!-- NestoApp#254 / NestoAPI#698: retenido hasta nuevo aviso; se libera desde el pedido -->
+                <ion-item lines="none" *ngIf="estaRetenido" color="danger">
+                    <ion-icon slot="start" name="hand-left-outline"></ion-icon>
+                    <ion-label class="ion-text-wrap">Pedido retenido hasta nuevo aviso: no sale en el picking. Para cambiar el modo de entrega, libérelo con «Liberar» desde el pedido.</ion-label>
                 </ion-item>
                 <!-- NestoApp#215 (NestoAPI#606): qué día lo entregamos a la agencia -->
                 <ion-item lines="none" *ngIf="textoFechaEntregaAgencia">
@@ -149,9 +156,10 @@
                         <p *ngIf="fechaEntregaAgencia?.Aviso" class="aviso-fecha-agencia">{{ fechaEntregaAgencia.Aviso }}</p>
                     </ion-label>
                 </ion-item>
-                <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo -->
-                <ion-item lines="none" *ngIf="motivoModoServicio">
-                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{motivoModoServicio}}</ion-label>
+                <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo.
+                     NestoApp#245 (novedad 731): si lo elegido no es lo recomendado, se dice «Recomendado: …». -->
+                <ion-item lines="none" *ngIf="textoMotivoModoServicio">
+                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ textoMotivoModoServicio }}</ion-label>
                 </ion-item>
                 <!-- NestoApp#187: y por qué no se pueden elegir los demás -->
                 <ion-item lines="none" *ngIf="modosServicioNoPermitidos.length > 0">
@@ -159,16 +167,25 @@
                         <p *ngFor="let modo of modosServicioNoPermitidos">No disponible «{{ modo.Nombre }}»<span *ngIf="modo.Motivo">: {{ modo.Motivo }}</span></p>
                     </ion-label>
                 </ion-item>
-                <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación -->
-                <ion-item>
+                <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación.
+                     NestoApp#242 / NestoAPI#688: con «Todo junto» la API lo oculta. -->
+                <ion-item *ngIf="facturacionVisible">
                     <ion-label>Facturación</ion-label>
                     <ion-select aria-label="Facturación" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
                         [value]="modoFacturacion" [disabled]="selectorFacturacionBloqueado" (ionChange)="cambiarModoFacturacion($event.detail.value)">
                         <ion-select-option *ngFor="let modo of listaModosFacturacion" [value]="modo.codigo" [disabled]="!esModoFacturacionPermitido(modo.codigo)">{{ modo.nombre }}</ion-select-option>
                     </ion-select>
                 </ion-item>
-                <ion-item lines="none" *ngIf="modoFacturacion === 3">
+                <ion-item lines="none" *ngIf="motivoFacturacionOculta">
+                    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ motivoFacturacionOculta }}</ion-label>
+                </ion-item>
+                <ion-item lines="none" *ngIf="facturacionVisible && modoFacturacion === 3">
                     <ion-label class="ion-text-wrap" color="warning" style="font-size: 0.85em;">{{avisoTodoAhora}}</ion-label>
+                </ion-item>
+                <!-- NestoApp#242: «Servir lo pendiente en cuanto haya stock», solo con facturación «Todo ahora» -->
+                <ion-item *ngIf="casillaServirPendienteVisible">
+                    <ion-label class="ion-text-wrap">{{ textoServirPendiente }}</ion-label>
+                    <ion-toggle slot="end" [attr.aria-label]="textoServirPendiente" [checked]="servirPendienteAlHaberStock" (ionChange)="cambiarServirPendiente($event.detail.checked)"></ion-toggle>
                 </ion-item>
                 <ion-item lines="none" *ngIf="modosFacturacionNoPermitidos.length > 0">
                     <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
@@ -222,7 +239,8 @@
             </ion-card-content>
             <ion-item lines="none" *ngIf="puedeUsarChequeRegalo" [color]="'success'">
                 <ion-label class="ion-text-wrap">Usar el cheque regalo de {{ formatearEuros(chequeRegalo.Importe) }}</ion-label>
-                <ion-checkbox slot="end" aria-label="Usar el cheque regalo" [(ngModel)]="usarChequeRegalo"></ion-checkbox>
+                <!-- NestoApp#243: marcarlo baja la base de Ganavisiones (se recomprueban los regalos) -->
+                <ion-checkbox slot="end" aria-label="Usar el cheque regalo" [checked]="usarChequeRegalo" (ionChange)="cambiarUsarChequeRegalo($event.detail.checked)"></ion-checkbox>
             </ion-item>
             <ion-item lines="none" *ngIf="puedeUsarChequeRegalo && faltaParaMinimoChequeRegalo > 0" [color]="'success'">
                 <ion-label class="ion-text-wrap" style="font-size: 0.85em;">
@@ -264,6 +282,11 @@
         </ion-item>
         <ion-item (click)="cambiarIVA()">
              <ion-label class="ion-text-center"> {{direccionSeleccionada?.iva}} </ion-label>
+        </ion-item>
+        <!-- NestoApp#244 / NestoAPI#691: el curso va en un pedido aparte con prepago -->
+        <ion-item *ngIf="hayCursosEnPedido" color="warning" lines="none">
+            <ion-icon slot="start" name="school-outline"></ion-icon>
+            <ion-label class="ion-text-wrap">{{ avisoCursoPrepago }}</ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada?.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada?.iva" [seleccionado]="formaPago"></selector-formas-pago>
         <!-- NestoApp#189: con recibo bancario, qué cuenta se carga (o aviso si no hay ninguna válida) -->

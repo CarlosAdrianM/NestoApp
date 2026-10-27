@@ -46,7 +46,7 @@
               <selector-formas-pago seleccionado="{{pedido.formaPago}}" (seleccionar)="seleccionarFormaPago($event)"></selector-formas-pago>
               <!-- NestoApp#189: con recibo bancario, qué cuenta se carga (o aviso si no hay ninguna válida) -->
               <selector-ccc *ngIf="pedido.formaPago?.trim() === 'RCB'" [empresa]="pedido.empresa" [cliente]="pedido.cliente"
-                  [contacto]="pedido.contacto" [seleccionado]="pedido.ccc" (seleccionar)="pedido.ccc = $event"></selector-ccc>
+                  [contacto]="pedido.contacto" [seleccionado]="pedido.ccc" (seleccionar)="cambiarCcc($event)"></selector-ccc>
               <selector-plazos-pago seleccionado="{{pedido.plazosPago}}" (seleccionar)="seleccionarPlazosPago($event)"></selector-plazos-pago>
               <ion-item>
                   <ion-label>Fecha Vencimiento</ion-label>
@@ -75,6 +75,11 @@
                       <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
                   </ion-label>
               </ion-item>
+              <!-- NestoApp#240: líneas pendientes con la fecha «sin determinar» (31/12/2099) -->
+              <ion-item lines="none" *ngIf="sinFechaEntrega" color="warning">
+                  <ion-icon slot="start" name="alert-circle-outline"></ion-icon>
+                  <ion-label class="ion-text-wrap">{{ avisoSinFechaEntrega }}</ion-label>
+              </ion-item>
               <ion-item *ngIf="pedido.notaEntrega">
                   <ion-label class="ion-text-wrap">
                       <strong>Nota de entrega</strong>
@@ -86,24 +91,48 @@
                 <ion-col class="ion-text-center">{{pedido.periodoFacturacion}}</ion-col>
                 <ion-col (click)="cambiarIVA()" class="ion-text-center">{{pedido.iva}}</ion-col>
               </ion-row>
+              <!-- NestoApp#254 / NestoAPI#698: retenido hasta nuevo aviso -->
+              <ion-item lines="none" *ngIf="estaRetenido" color="danger">
+                  <ion-icon slot="start" name="hand-left-outline"></ion-icon>
+                  <ion-label class="ion-text-wrap">{{ textoRetencion || 'Retenido hasta nuevo aviso' }}</ion-label>
+              </ion-item>
               <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
               <ion-item>
                   <ion-label>Entrega</ion-label>
                   <ion-select aria-label="Entrega" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
-                      [value]="modoServicioPedido" (ionChange)="cambiarModoServicio($event.detail.value)">
-                      <ion-select-option *ngFor="let modo of listaModosServicio" [value]="modo.codigo">{{ modo.nombre }}</ion-select-option>
+                      [value]="modoServicioPedido" [disabled]="estaRetenido" (ionChange)="cambiarModoServicio($event.detail.value)">
+                      <ion-select-option *ngFor="let modo of listaModosServicioSelector" [value]="modo.codigo" [disabled]="modo.codigo === 5">{{ modo.nombre }}</ion-select-option>
                   </ion-select>
               </ion-item>
-              <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación -->
-              <ion-item>
+              <ion-item lines="none" *ngIf="puedeRetener || estaRetenido">
+                  <ion-button *ngIf="puedeRetener" expand="block" fill="outline" color="danger" (click)="retenerPedido()">
+                      <ion-icon slot="start" name="hand-left-outline"></ion-icon>
+                      Retener…
+                  </ion-button>
+                  <ion-button *ngIf="estaRetenido" expand="block" fill="outline" color="success" (click)="liberarPedido()">
+                      <ion-icon slot="start" name="play-outline"></ion-icon>
+                      Liberar
+                  </ion-button>
+              </ion-item>
+              <!-- NestoApp#197 / NestoAPI#542: el toggle «Mantener junto» pasa a ser el modo de facturación.
+                   NestoApp#242 / NestoAPI#688: con «Todo junto» la API lo oculta. -->
+              <ion-item *ngIf="facturacionVisible">
                   <ion-label>Facturación</ion-label>
                   <ion-select aria-label="Facturación" interface="action-sheet" [cancelText]="'Cancelar'" slot="end"
                       [value]="modoFacturacionPedido" [disabled]="selectorFacturacionBloqueado" (ionChange)="cambiarModoFacturacion($event.detail.value)">
                       <ion-select-option *ngFor="let modo of listaModosFacturacion" [value]="modo.codigo" [disabled]="!esModoFacturacionPermitido(modo.codigo)">{{ modo.nombre }}</ion-select-option>
                   </ion-select>
               </ion-item>
-              <ion-item lines="none" *ngIf="modoFacturacionPedido === 3">
+              <ion-item lines="none" *ngIf="motivoFacturacionOculta">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ motivoFacturacionOculta }}</ion-label>
+              </ion-item>
+              <ion-item lines="none" *ngIf="facturacionVisible && modoFacturacionPedido === 3">
                   <ion-label class="ion-text-wrap" color="warning" style="font-size: 0.85em;">{{avisoTodoAhora}}</ion-label>
+              </ion-item>
+              <!-- NestoApp#242: «Servir lo pendiente en cuanto haya stock», solo con facturación «Todo ahora» -->
+              <ion-item *ngIf="casillaServirPendienteVisible">
+                  <ion-label class="ion-text-wrap">{{ textoServirPendiente }}</ion-label>
+                  <ion-toggle slot="end" [attr.aria-label]="textoServirPendiente" [checked]="!!pedido.servirPendienteAlHaberStock" (ionChange)="cambiarServirPendiente($event.detail.checked)"></ion-toggle>
               </ion-item>
               <ion-item lines="none" *ngIf="modosFacturacionNoPermitidos.length > 0">
                   <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
@@ -173,7 +202,8 @@
                         <!-- NestoApp#197 / NestoAPI#542 -->
                         <ion-badge color="tertiary" *ngIf="linea.yaFacturado">Ya facturada</ion-badge>
                         <ion-badge color="warning" *ngIf="linea.recoger > 0">A recoger: {{linea.recoger}}</ion-badge>
-                        <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy">{{linea.fechaEntrega | date:'dd/MM/yy' }}</ion-badge>                        
+                        <!-- NestoApp#240: año con cuatro cifras y «Sin fecha» para el 31/12/2099 -->
+                        <ion-badge *ngIf="cadenaFecha(linea.fechaEntrega) > hoy" [color]="textoFecha(linea.fechaEntrega) === 'Sin fecha' ? 'warning' : ''">{{ textoFecha(linea.fechaEntrega) }}</ion-badge>                        
                       </span>
                     </ion-label>
                   </ion-item>

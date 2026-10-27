@@ -8,7 +8,11 @@ import {
   nombreModo,
   esModoPermitido,
   leerModoServicioNoPermitido,
-  leerModoConPicking
+  leerModoConPicking,
+  esRetenido,
+  textoMotivoModoServicio,
+  origenModoServicio,
+  ORIGEN_MODO_SERVICIO
 } from './modos-servicio.model';
 
 /**
@@ -136,5 +140,69 @@ describe('Modos permitidos por el servidor (#187)', () => {
     expect(leerModoConPicking({ apiError: { error: { code: 'MODO_SERVICIO_NO_PERMITIDO', message: 'x' } } } as any)).toBeNull();
     expect(leerModoConPicking({ message: 'sin conexión' } as any)).toBeNull();
     expect(leerModoConPicking(null)).toBeNull();
+  });
+});
+
+/** NestoApp#254 / NestoAPI#698: el modo 5 «Retenido» solo se enseña; lo ponen Retener/Liberar. */
+describe('Modo «Retenido» (#254)', () => {
+  it('el 5 se llama «Retenido» y no está en el selector', () => {
+    expect(MODOS_SERVICIO.RETENIDO).toBe(5);
+    expect(nombreModo(5)).toBe('Retenido');
+    expect(LISTA_MODOS_SERVICIO.some(m => m.codigo === 5)).toBeFalse();
+    expect(esModoValido(5)).toBeFalse();
+    expect(esRetenido(5)).toBeTrue();
+    expect(esRetenido(3)).toBeFalse();
+  });
+
+  it('el efectivo de un pedido retenido es 5, diga lo que diga servirJunto', () => {
+    expect(modoEfectivo(5, false)).toBe(5);
+    expect(modoEfectivo(5, true)).toBe(5);
+    expect(modoEfectivo(3, true)).toBe(1);
+  });
+
+  it('retenido no es «todo junto» ni entrega única', () => {
+    expect(esTodoJunto(5)).toBeFalse();
+    expect(esEntregaUnica(5)).toBeFalse();
+  });
+});
+
+/** NestoApp#245 (novedad 731): la frase gris es la recomendación, no lo elegido. */
+describe('Texto de la recomendación bajo «Entrega» (#245)', () => {
+  it('si lo elegido no es lo recomendado, lo dice con el nombre del modo', () => {
+    expect(textoMotivoModoServicio(1, 4, 'Sale lo que hay y el resto en una sola entrega.'))
+      .toBe('Recomendado: «Ahora lo que hay, el resto de una vez». Sale lo que hay y el resto en una sola entrega.');
+  });
+
+  it('si coincide, solo el motivo', () => {
+    expect(textoMotivoModoServicio(4, 4, 'Sale lo que hay.')).toBe('Sale lo que hay.');
+  });
+
+  it('sin sugerencia del servidor (p. ej. un rechazo o un aviso), el motivo tal cual', () => {
+    expect(textoMotivoModoServicio(1, null, 'Se mantiene «Todo junto».')).toBe('Se mantiene «Todo junto».');
+  });
+
+  it('sin motivo no hay frase', () => {
+    expect(textoMotivoModoServicio(1, 4, '')).toBe('');
+    expect(textoMotivoModoServicio(1, 4, null)).toBe('');
+  });
+});
+
+/** NestoApp#250 / NestoAPI#704 (caso 929152): de dónde sale el modo que se graba. */
+describe('Origen del modo de servicio (#250)', () => {
+  it('si lo eligió el vendedor, «Usuario» aunque hubiera sugerencia', () => {
+    expect(origenModoServicio(true, false, 4)).toBe(ORIGEN_MODO_SERVICIO.USUARIO);
+    expect(origenModoServicio(true, true, null)).toBe('Usuario');
+  });
+
+  it('tras una corrección o un rechazo, «Corregido»', () => {
+    expect(origenModoServicio(false, true, 4)).toBe('Corregido');
+  });
+
+  it('la sugerencia aplicada sin tocar, «Sugerido»', () => {
+    expect(origenModoServicio(false, false, 4)).toBe('Sugerido');
+  });
+
+  it('sin respuesta del servidor, «PorDefecto»', () => {
+    expect(origenModoServicio(false, false, null)).toBe('PorDefecto');
   });
 });

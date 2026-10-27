@@ -13,7 +13,11 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo, esRetenido, NOMBRE_MODO_RETENIDO, ModoServicioItem, ORIGEN_MODO_SERVICIO } from 'src/app/models/modos-servicio.model';
+import { RetencionPedido, hastaFechaParaApi, textoRetencion } from 'src/app/models/retencion-pedido.model';
+import { OpcionesModosPedido, TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK, casillaServirPendienteVisible, facturacionVisible, servirPendienteParaGuardar } from 'src/app/models/opciones-modos.model';
+import { leerFechaEntregaLejana } from 'src/app/models/fecha-entrega-lejana.model';
+import { AVISO_SIN_FECHA_ENTREGA, esFechaSinDeterminar, textoFechaEntrega } from 'src/app/utils/fechas';
 import { ValidarServirJuntoResponse } from 'src/app/models/ganavisiones.model';
 import { conAvisoTodoJunto, lineasQueImpidenSalirDeTodoJunto, textoNoSeHanQuitado, textoOfrecerQuitarLineas, textoSeQuedaEnTodoJunto } from 'src/app/models/servir-junto.model';
 import { SolicitudCambioModoService } from 'src/app/services/solicitud-cambio-modo.service';
@@ -107,6 +111,9 @@ export class PedidoVentaComponent  {
               this.modoFacturacionTocado = false;
               this.huellaFacturacion = '';
               this.sugerenciaFacturacion = null;
+              this.opcionesModos = null; // NestoApp#242
+              this.servirPendienteTocado = false;
+              this.confirmarFechaLejana = false; // NestoApp#252
               for (let i = 0; i < this.pedido.Lineas.length; i++) {
                   this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
               }
@@ -250,6 +257,114 @@ export class PedidoVentaComponent  {
   // NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo.
   public readonly listaModosServicio = LISTA_MODOS_SERVICIO;
 
+  // ---- NestoApp#254 / NestoAPI#698: retener el pedido «hasta nuevo aviso» ----
+
+  /** Retenido (modo 5): el selector enseña «Retenido» y queda deshabilitado; se sale con «Liberar». */
+  get estaRetenido(): boolean {
+      return esRetenido(this.modoServicioPedido);
+  }
+
+  /** El 5 no se elige nunca: solo entra en la lista para que el selector enseñe su nombre mientras está retenido. */
+  get listaModosServicioSelector(): ModoServicioItem[] {
+      return this.estaRetenido
+          ? [...LISTA_MODOS_SERVICIO, { codigo: MODOS_SERVICIO.RETENIDO, nombre: NOMBRE_MODO_RETENIDO, descripcion: 'Retenido hasta nuevo aviso: no sale en el picking.' }]
+          : LISTA_MODOS_SERVICIO;
+  }
+
+  get textoRetencion(): string {
+      return textoRetencion(this.pedido?.retencion);
+  }
+
+  /** Algo pendiente o en curso que retener (la API lo comprueba también). */
+  get puedeRetener(): boolean {
+      return !!this.pedido && !this.estaRetenido && !this.pedido.notaEntrega
+          && (this.pedido.Lineas || []).some(l => l.estado === -1 || l.estado === 1);
+  }
+
+  public async retenerPedido(): Promise<void> {
+      if (!this.puedeRetener) {
+          return;
+      }
+      const alert = await this.alertCtrl.create({
+          header: 'Retener el pedido',
+          message: 'El pedido no saldrá en el picking hasta que lo libere (o hasta la fecha que indique). La fecha de entrega no cambia.',
+          inputs: [
+              { name: 'motivo', type: 'textarea', placeholder: 'Motivo (obligatorio)', attributes: { maxlength: 250 } },
+              { name: 'hasta', type: 'date', placeholder: 'Hasta el (opcional)' }
+          ],
+          buttons: [
+              { text: 'Cancelar', role: 'cancel' },
+              { text: 'Retener', handler: (datos: any) => { this.enviarRetencion(datos?.motivo, datos?.hasta); } }
+          ]
+      });
+      await alert.present();
+  }
+
+  public async enviarRetencion(motivo: string, hasta: string | null): Promise<void> {
+      const texto = (motivo || '').trim();
+      if (!texto) {
+          await this.avisar('Retener el pedido', 'Indique el motivo, por favor.');
+          return;
+      }
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      const loading: any = await this.loadingCtrl.create({ message: 'Reteniendo el pedido...' });
+      await loading.present();
+      this.servicio.retener(empresa, numero, { Motivo: texto, HastaFecha: hastaFechaParaApi(hasta) }).subscribe({
+          next: async (retencion: RetencionPedido) => {
+              await loading.dismiss();
+              this.firebaseAnalytics.logEvent('pedido_venta_retener', { pedido: numero });
+              this.cargarPedido(empresa, numero);
+              const toast = await this.toastCtrl.create({ message: textoRetencion(retencion), duration: 4000, color: 'success' });
+              await toast.present();
+          },
+          error: async error => {
+              await loading.dismiss();
+              await this.avisar('No se ha podido retener el pedido', this.errorHandler.extractErrorMessage(error));
+          }
+      });
+  }
+
+  public async liberarPedido(): Promise<void> {
+      if (!this.estaRetenido) {
+          return;
+      }
+      const confirmado = await this.confirmar('Liberar el pedido',
+          `¿Liberar el pedido ${this.pedido.numero}? Vuelve a su modo de entrega anterior y entra en el picking.`, 'Liberar');
+      if (!confirmado) {
+          return;
+      }
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      const loading: any = await this.loadingCtrl.create({ message: 'Liberando el pedido...' });
+      await loading.present();
+      this.servicio.liberar(empresa, numero).subscribe({
+          next: async () => {
+              await loading.dismiss();
+              this.firebaseAnalytics.logEvent('pedido_venta_liberar', { pedido: numero });
+              this.cargarPedido(empresa, numero);
+              const toast = await this.toastCtrl.create({ message: `Pedido ${numero} liberado: entra en el picking.`, duration: 3000, color: 'success' });
+              await toast.present();
+          },
+          error: async error => {
+              await loading.dismiss();
+              await this.avisar('No se ha podido liberar el pedido', this.errorHandler.extractErrorMessage(error));
+          }
+      });
+  }
+
+  // ---- NestoApp#240: fecha de entrega sin determinar (31/12/2099) ----
+
+  public textoFecha(fecha: any): string {
+      return textoFechaEntrega(fecha);
+  }
+
+  /** Alguna línea pendiente con la fecha «sin determinar»: hay que ponerla cuando se sepa. */
+  get sinFechaEntrega(): boolean {
+      return (this.pedido?.Lineas || []).some(l => (l.estado === -1 || l.estado === 1) && esFechaSinDeterminar(l.fechaEntrega));
+  }
+  public readonly avisoSinFechaEntrega = AVISO_SIN_FECHA_ENTREGA;
+
   /** El modo que rige: servirJunto marcado siempre es «todo junto»; un pedido viejo sin
    * modo enseña el derivado del bool. */
   get modoServicioPedido(): number {
@@ -259,13 +374,20 @@ export class PedidoVentaComponent  {
   /** NestoApp#191: el modo que tiene el pedido en la BD, para volver a él si la API no deja cambiarlo. */
   private modoServicioGuardado: number | null = null;
 
+  /** NestoApp#250: el vendedor ha cambiado el modo a mano en esta pantalla (se manda «Usuario» al guardar). */
+  private modoServicioTocado = false;
+
   public cambiarModoServicio(nuevo: number): void {
       if (!this.pedido) return;
       const anterior = this.modoServicioPedido;
       if (anterior === nuevo) return;
+      // NestoApp#254: retenido no se cambia desde aquí (la API lo rechaza): primero «Liberar».
+      if (this.estaRetenido || esRetenido(nuevo)) return;
 
       this.pedido.modoServicio = nuevo;
       this.pedido.servirJunto = esTodoJunto(nuevo);
+      this.modoServicioTocado = true;
+      this.pedirModoFacturacionSugerido(); // NestoApp#242: con «Todo junto» la facturación se oculta
 
       // Salir de «todo junto» pasa por las mismas reglas que el desmarcado de antes;
       // entre modos parciales y hacia el 1, libre. El PUT posterior guarda el cambio.
@@ -422,6 +544,45 @@ export class PedidoVentaComponent  {
       // Siempre coherentes: un mantenerJunto discordante gana en la API y pone el 2.
       this.pedido.mantenerJunto = nuevo === MODOS_FACTURACION.AL_COMPLETAR;
       this.modoFacturacionTocado = true;
+      // NestoApp#242: la casilla «Servir lo pendiente…» depende del modo de facturación; solo con la API nueva.
+      if (this.opcionesModos) {
+          this.pedirModoFacturacionSugerido(true);
+      }
+  }
+
+  // ---- NestoApp#242 / NestoAPI#688: opciones de modos y «Servir lo pendiente en cuanto haya stock» ----
+
+  /** Lo último que contestó OpcionesModos; null con una API anterior (entonces todo como siempre). */
+  public opcionesModos: OpcionesModosPedido | null = null;
+  private servirPendienteTocado = false;
+  public readonly textoServirPendiente = TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK;
+
+  /** Con «Todo junto» la API oculta el selector de facturación (se queda lo que pongan las condiciones del cliente). */
+  get facturacionVisible(): boolean {
+      return facturacionVisible(this.opcionesModos);
+  }
+
+  get motivoFacturacionOculta(): string {
+      return this.facturacionVisible ? '' : (this.opcionesModos?.Facturacion?.MotivoOculta || '');
+  }
+
+  get casillaServirPendienteVisible(): boolean {
+      return casillaServirPendienteVisible(this.opcionesModos);
+  }
+
+  public cambiarServirPendiente(valor: boolean): void {
+      if (!this.pedido) {
+          return;
+      }
+      this.pedido.servirPendienteAlHaberStock = !!valor;
+      this.servirPendienteTocado = true;
+  }
+
+  private aplicarOpcionesModos(opciones: OpcionesModosPedido): void {
+      this.opcionesModos = opciones;
+      if (!this.servirPendienteTocado && opciones.ServirPendienteAlHaberStock) {
+          this.pedido.servirPendienteAlHaberStock = opciones.ServirPendienteAlHaberStock.Valor;
+      }
   }
 
   /**
@@ -438,25 +599,35 @@ export class PedidoVentaComponent  {
           return;
       }
       this.huellaFacturacion = huella;
-      this.plantillaVentaService.modoFacturacionSugerido(consulta).subscribe(
-          (sugerencia: ModoFacturacionSugerido) => {
-              if (!sugerencia || !sugerencia.Modo) {
-                  return;
-              }
-              this.sugerenciaFacturacion = sugerencia;
-              // Si lo elegido ya no vale (han cambiado los plazos), se vuelve a lo que propone la API.
-              if (this.modoFacturacionTocado && !this.esModoFacturacionPermitido(this.modoFacturacionPedido)) {
-                  this.pedido.modoFacturacion = sugerencia.Modo;
-                  this.pedido.mantenerJunto = sugerencia.Modo === MODOS_FACTURACION.AL_COMPLETAR;
-                  this.modoFacturacionTocado = false;
-              }
-          },
-          error => {
-              // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
-              this.huellaFacturacion = '';
-              console.log('No se ha podido calcular el modo de facturación sugerido', error);
+      const aplicarSugerencia = (sugerencia: ModoFacturacionSugerido) => {
+          if (!sugerencia || !sugerencia.Modo) {
+              return;
           }
-      );
+          this.sugerenciaFacturacion = sugerencia;
+          // Si lo elegido ya no vale (han cambiado los plazos o la forma de pago, #241), se vuelve a lo que propone la API.
+          if (this.modoFacturacionTocado && !this.esModoFacturacionPermitido(this.modoFacturacionPedido)) {
+              this.pedido.modoFacturacion = sugerencia.Modo;
+              this.pedido.mantenerJunto = sugerencia.Modo === MODOS_FACTURACION.AL_COMPLETAR;
+              this.modoFacturacionTocado = false;
+          }
+      };
+      // NestoApp#242: OpcionesModos trae la misma sugerencia de facturación más si se enseña y la casilla.
+      // Con una API anterior (null) se pregunta como siempre.
+      this.plantillaVentaService.opcionesModos(consulta).subscribe((opciones: OpcionesModosPedido | null) => {
+          if (opciones) {
+              this.aplicarOpcionesModos(opciones);
+              aplicarSugerencia(opciones.Facturacion);
+              return;
+          }
+          this.plantillaVentaService.modoFacturacionSugerido(consulta).subscribe(
+              aplicarSugerencia,
+              error => {
+                  // Es una ayuda: sin ella se deja elegir y la API tiene la última palabra al guardar.
+                  this.huellaFacturacion = '';
+                  console.log('No se ha podido calcular el modo de facturación sugerido', error);
+              }
+          );
+      });
   }
 
   public cambiarContacto(contacto: string): void {
@@ -467,9 +638,45 @@ export class PedidoVentaComponent  {
       this.pedirModoFacturacionSugerido();
   }
 
-  /** El pedido tal como se manda al PUT: sin modo de facturación si el vendedor no lo ha tocado. */
+  /**
+   * El pedido tal como se manda al PUT: sin modo de facturación si el vendedor no lo ha tocado (#197) y, con
+   * «Todo junto», nunca (#242: el selector está oculto). La casilla solo si se tocó o cambió la facturación
+   * (#242). El origen del modo (#250) solo cuando lo ha cambiado el vendedor aquí. La confirmación de fecha
+   * lejana (#252) va a false en cada guardado nuevo y a true solo en el reintento tras decir «Sí».
+   */
   public pedidoParaGuardar(): any {
-      return this.modoFacturacionTocado ? this.pedido : { ...this.pedido, modoFacturacion: null };
+      const mandaModoFacturacion = this.modoFacturacionTocado && this.facturacionVisible;
+      const pedido: any = {
+          ...this.pedido,
+          modoFacturacion: mandaModoFacturacion ? this.pedido.modoFacturacion : null,
+          servirPendienteAlHaberStock: servirPendienteParaGuardar(this.opcionesModos, !!this.pedido.servirPendienteAlHaberStock,
+              this.servirPendienteTocado, this.modoFacturacionTocado),
+          ConfirmarFechaEntregaLejana: this.confirmarFechaLejana
+      };
+      if (this.modoServicioTocado) {
+          pedido.OrigenModoServicio = ORIGEN_MODO_SERVICIO.USUARIO;
+      }
+      return pedido;
+  }
+
+  // ---- NestoApp#252 / NestoAPI#712: aviso al grabar con fecha de entrega a más de 60 días ----
+
+  /** true solo en el reintento después de que el vendedor conteste «Sí». */
+  private confirmarFechaLejana = false;
+
+  /**
+   * Si el error es la pregunta de fecha lejana, la enseña tal cual con «Sí» / «No». Devuelve true si hay que
+   * repetir la petición (ya con la confirmación), false si el vendedor dijo «No» (no se graba, sin más
+   * errores) y null si el error era otro.
+   */
+  private async preguntarFechaLejana(error: any): Promise<boolean | null> {
+      const aviso = leerFechaEntregaLejana(error);
+      if (!aviso) {
+          return null;
+      }
+      const seguir = await this.confirmar('Fecha de entrega', aviso.mensaje, 'Sí');
+      this.confirmarFechaLejana = seguir;
+      return seguir;
   }
 
   /** En una nota de entrega automática, abre el pedido del que sale. */
@@ -603,6 +810,16 @@ export class PedidoVentaComponent  {
   public seleccionarFormaPago(evento: any): void {
       this.firebaseAnalytics.logEvent("pedido_seleccionar_forma_pago", {pedido:this.pedido.numero, formaPago: evento});
       this.pedido.formaPago = evento;
+      this.pedirModoFacturacionSugerido(); // NestoApp#241: al contado «Al completar» deja de valer
+  }
+
+  /** NestoApp#241: con recibo bancario, cambiar la cuenta también vuelve a pedir el modo de facturación. */
+  public cambiarCcc(ccc: string): void {
+      if (!this.pedido) {
+          return;
+      }
+      this.pedido.ccc = ccc;
+      this.pedirModoFacturacionSugerido();
   }
 
   public seleccionarPlazosPago(evento: any): void {
@@ -656,45 +873,14 @@ export class PedidoVentaComponent  {
   }
 
   public async modificarPedido(): Promise<void> {
-
+      this.confirmarFechaLejana = false; // NestoApp#252: cada guardado nuevo vuelve a preguntar
       const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere modificar el pedido?',
           buttons: [
               {
                   text: 'Sí',
-                  handler: async () => {
-                      // Hay que guardar el pedido original en alguna parte
-                      const loading: any = await this.loadingCtrl.create({
-                          message: 'Modificando Pedido...',
-                      });
-
-                      await loading.present();
-
-                      this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
-                          async data => {
-                              this.firebaseAnalytics.logEvent("modificar_pedido_venta", {pedido: this.pedido.numero});
-                              // Sincronizar la etiqueta de recogida según el checkbox, igual que
-                              // plantilla-venta crea la etiqueta tras crear el pedido.
-                              await this.sincronizarRecogerProducto();
-                              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
-                              const alert = await this.alertCtrl.create({
-                                  header: 'Modificado',
-                                  message: 'Pedido modificado correctamente',
-                                  buttons: ['Ok'],
-                              });
-                              await alert.present();
-                              await loading.dismiss();
-                          },
-                          async error => {
-                              await loading.dismiss();
-                              await this.manejarErrorModificacionPedido(error, false);
-                          },
-                          () => {
-                              //loading.dismiss();
-                          }
-                      );
-                  }
+                  handler: () => { this.enviarModificacion(false); }
               },
               {
                   text: 'No',
@@ -709,7 +895,39 @@ export class PedidoVentaComponent  {
       await confirm.present();
   }
 
-  
+
+  /** El PUT de «Modificar» (y su reintento tras confirmar la fecha lejana, #252). */
+  public async enviarModificacion(forzado: boolean): Promise<void> {
+      const loading: any = await this.loadingCtrl.create({
+          message: forzado ? 'Modificando Pedido (sin validar)...' : 'Modificando Pedido...',
+      });
+      await loading.present();
+
+      this.servicio.modificarPedido(this.pedidoParaGuardar(), forzado).subscribe(
+          async data => {
+              this.firebaseAnalytics.logEvent(forzado ? "modificar_pedido_venta_forzado" : "modificar_pedido_venta", {pedido: this.pedido.numero});
+              // Sincronizar la etiqueta de recogida según el checkbox, igual que
+              // plantilla-venta crea la etiqueta tras crear el pedido.
+              await this.sincronizarRecogerProducto();
+              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
+              const alert = await this.alertCtrl.create({
+                  header: 'Modificado',
+                  message: 'Pedido modificado correctamente',
+                  buttons: ['Ok'],
+              });
+              await alert.present();
+              await loading.dismiss();
+          },
+          async error => {
+              await loading.dismiss();
+              await this.manejarErrorModificacionPedido(error, forzado);
+          },
+          () => {
+              //loading.dismiss();
+          }
+      );
+  }
+
   public async aceptarPresupuesto(): Promise<void> {
 
       const confirm = await this.alertCtrl.create({
@@ -1032,6 +1250,15 @@ export class PedidoVentaComponent  {
    * Maneja errores de modificación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      // NestoApp#252 / NestoAPI#712: la fecha de entrega va a más de 60 días: se pregunta y, con «Sí», se repite.
+      const fechaLejana = await this.preguntarFechaLejana(error);
+      if (fechaLejana === true) {
+          await this.enviarModificacion(yaForzado);
+          return;
+      }
+      if (fechaLejana === false) {
+          return;
+      }
       // NestoApp#197: el 400 de modo de facturación no permitido es texto plano (sin código); se enseña
       // como cualquier error y se vuelve a pedir la sugerencia para que el selector diga qué vale.
       this.pedirModoFacturacionSugerido(true);
@@ -1082,7 +1309,7 @@ export class PedidoVentaComponent  {
                   {
                       text: 'Modificar sin validar',
                       handler: () => {
-                          this.modificarPedidoForzado();
+                          this.enviarModificacion(true);
                       }
                   }
               ]
@@ -1098,39 +1325,6 @@ export class PedidoVentaComponent  {
           });
           await alert.present();
       }
-  }
-
-  /**
-   * Modifica el pedido forzando la validación
-   */
-  private async modificarPedidoForzado(): Promise<void> {
-      const loading = await this.loadingCtrl.create({
-          message: 'Modificando Pedido (sin validar)...',
-      });
-      await loading.present();
-
-      this.servicio.modificarPedido(this.pedidoParaGuardar(), true).subscribe(
-          async data => {
-              this.firebaseAnalytics.logEvent("modificar_pedido_venta_forzado", { pedido: this.pedido.numero });
-              await this.sincronizarRecogerProducto();
-              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
-              const alert = await this.alertCtrl.create({
-                  header: 'Modificado',
-                  message: 'Pedido modificado correctamente',
-                  buttons: ['Ok']
-              });
-              await alert.present();
-              await loading.dismiss();
-          },
-          async error => {
-              await loading.dismiss();
-              // Ya no intentar forzar de nuevo
-              await this.manejarErrorModificacionPedido(error, true);
-          },
-          async () => {
-              await loading.dismiss();
-          }
-      );
   }
 
   /**

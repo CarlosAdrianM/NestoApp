@@ -1,0 +1,7 @@
+/* NestoApp#247: ficha de solo lectura de un evento */
+.ficha-evento {
+  img { width: 100%; max-height: 240px; object-fit: cover; }
+  .titulo-seccion { font-size: 1em; font-weight: 600; margin: 12px 0 4px 16px; }
+  .descripcion { white-space: pre-line; margin: 12px 16px 0 16px; }
+  .pista { margin: 16px 16px 0 16px; font-size: 0.85em; color: var(--ion-color-medium); }
+}

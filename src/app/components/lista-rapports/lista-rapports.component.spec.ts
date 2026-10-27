@@ -5,7 +5,6 @@ import { IonicModule, LoadingController } from '@ionic/angular';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Usuario } from 'src/app/models/Usuario';
 import { Geolocation } from '../../services/geolocation.service';
-import { NativeGeocoder } from '@awesome-cordova-plugins/native-geocoder/ngx';
 import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { CacheService } from '../../services/cache.service';
 
@@ -15,6 +14,7 @@ import { of, throwError } from 'rxjs';
 import { ListaRapportsService } from './lista-rapports.service';
 import { Events } from 'src/app/services/events.service';
 import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
+import { DireccionesService } from 'src/app/services/direcciones.service';
 
 describe('ListaRapportsComponent', () => {
   let component: ListaRapportsComponent;
@@ -29,7 +29,6 @@ describe('ListaRapportsComponent', () => {
         Usuario,
         { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: Geolocation, useValue: {} },
-        { provide: NativeGeocoder, useValue: {} },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
@@ -42,6 +41,40 @@ describe('ListaRapportsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // NestoApp#159 / NestoAPI#578: el código postal de la ubicación lo da la API, no el plugin.
+  describe('código postal de la ubicación actual (#159)', () => {
+    // El setter del código postal enfoca la barra de filtro con un setTimeout: sin la vista, reventaría en otro test.
+    beforeEach(() => { component['myBarraFiltrar'] = { setFocus: () => { } }; });
+
+    it('añade «Ubicación Actual» a la lista si ese código postal no está y lo selecciona', () => {
+      const direcciones = TestBed.inject(DireccionesService) as any;
+      direcciones.desdeCoordenadas = jasmine.createSpy('desdeCoordenadas').and.returnValue(of({ CodigoPostal: '28840' }));
+      component.codigosPostalesSinVisitar = [{ codigoPostal: '28001', poblacion: 'MADRID' }];
+
+      component.getGeoencoder(40.56, -3.47);
+
+      expect(direcciones.desdeCoordenadas).toHaveBeenCalledWith(40.56, -3.47);
+      expect(component.codigosPostalesSinVisitar.some(c => c.codigoPostal === '28840' && c.poblacion === '<< Ubicación Actual >>')).toBeTrue();
+      expect(component.codigoPostalSeleccionado).toBe('28840');
+    });
+
+    it('si ya está en la lista no lo repite', () => {
+      component.codigosPostalesSinVisitar = [{ codigoPostal: '28840', poblacion: 'MEJORADA' }];
+      component.seleccionarCodigoPostalActual('28840');
+      expect(component.codigosPostalesSinVisitar.length).toBe(1);
+      expect(component.codigoPostalSeleccionado).toBe('28840');
+    });
+
+    it('sin dirección no toca nada', () => {
+      const direcciones = TestBed.inject(DireccionesService) as any;
+      direcciones.desdeCoordenadas = () => of(null);
+      component.codigosPostalesSinVisitar = [];
+      component.getGeoencoder(0, 0);
+      expect(component.codigosPostalesSinVisitar.length).toBe(0);
+      expect(component.codigoPostalSeleccionado).toBeUndefined();
+    });
   });
 
   describe('clientes para contactar (#212)', () => {
@@ -160,7 +193,6 @@ describe('ListaRapportsComponent: vendedores visibles y cheques regalo (#219 / #
         Usuario,
         { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
         { provide: Geolocation, useValue: {} },
-        { provide: NativeGeocoder, useValue: {} },
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: VisorFicheros, useValue: visor },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },

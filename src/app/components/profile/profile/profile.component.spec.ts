@@ -5,7 +5,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ToastController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Storage } from '@ionic/storage-angular';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
@@ -71,6 +71,29 @@ describe('ProfileComponent', () => {
     fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;
   }));
+
+  // NestoApp#251 / NestoAPI#711: «▶ Ver vídeo» solo si la novedad lo tiene; no se baja nada hasta pulsar.
+  describe('vídeo de una novedad (#251)', () => {
+    it('el botón solo sale con TieneVideo', () => {
+      expect(component.tieneVideo({ Id: 1, TieneVideo: true } as any)).toBeTrue();
+      expect(component.tieneVideo({ Id: 1, TieneVideo: false } as any)).toBeFalse();
+      expect(component.tieneVideo({ Id: 1 } as any)).toBeFalse();
+    });
+
+    it('al pulsar abre el reproductor (y hasta entonces no se descarga nada)', async () => {
+      novedadesService.descargarVideo = jasmine.createSpy('descargarVideo').and.returnValue(of(new Blob()));
+      const modalCtrl = TestBed.inject(ModalController);
+      const create = spyOn(modalCtrl, 'create').and.returnValue(Promise.resolve({ present: () => Promise.resolve() } as any));
+      const novedad: any = { Id: 715, TieneVideo: true, Titulo: 'Retener pedidos' };
+
+      expect(novedadesService.descargarVideo).not.toHaveBeenCalled();
+      await component.verVideo(novedad);
+
+      expect(create).toHaveBeenCalledWith(jasmine.objectContaining({ componentProps: { novedad } }));
+      await component.verVideo({ Id: 1, TieneVideo: false } as any);
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+  });
 
   it('should create', () => {
     expect(component).toBeTruthy();

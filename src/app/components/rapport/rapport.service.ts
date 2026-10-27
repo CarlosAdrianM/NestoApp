@@ -41,7 +41,12 @@ export class RapportService {
       return this.http.get(this._clientesUrl, { params: params });
   }
 
-  public dejarDeVisitar(rapport: any, vendedorEstetica: string, vendedorPeluqueria: string): Observable<any> {
+  /**
+   * @param motivo NestoApp#253 / NestoAPI#716: por qué deja de visitarlo (catálogo MOTIVOS_CAMBIO_ESTADO) y un
+   * comentario opcional. Si no se mandan, la API anota «DejarDeVisitar».
+   */
+  public dejarDeVisitar(rapport: any, vendedorEstetica: string, vendedorPeluqueria: string,
+      motivo?: { motivo: string | null; comentario: string | null }): Observable<any> {
       let headers: any = new HttpHeaders();
       headers = headers.append('Content-Type', 'application/json');
       const clienteCrear: any = {
@@ -49,6 +54,12 @@ export class RapportService {
           cliente: rapport.Cliente,
           contacto: rapport.Contacto,
           usuario: rapport.Usuario
+      }
+      if (motivo?.motivo) {
+          clienteCrear.MotivoCambioEstado = motivo.motivo;
+          if (motivo.comentario) {
+              clienteCrear.ComentarioCambioEstado = motivo.comentario;
+          }
       }
 
       if (vendedorEstetica == this.usuario.vendedor) {

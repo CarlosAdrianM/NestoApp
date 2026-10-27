@@ -61,6 +61,8 @@
       <ion-item *ngFor="let producto of datosFiltrados" (click)="abrirDetalle(producto,almacen)" [color]="colorFondo(producto)">
         <ion-label class="ion-text-wrap">
           <ion-badge *ngIf="producto.estado === 4" color="warning">A extinguir</ion-badge>
+          <!-- NestoApp#244 / NestoAPI#691: curso con eventos futuros, se vende eligiendo evento y modalidad -->
+          <ion-badge *ngIf="esCurso(producto)" color="tertiary">Curso</ion-badge>
           <h2>{{producto.texto}}</h2>
           <p>{{producto.tamanno}} {{producto.unidadMedida}} ({{producto.producto}} - {{producto.familia}})</p>
           <p>Precio Tarifa {{producto.precio | currency:'EUR'}}<span *ngIf="producto.cantidad || producto.cantidadOferta"> - Cantidad {{producto.cantidadOferta == 0 ? producto.cantidad : producto.cantidad + "+" + producto.cantidadOferta}}</span></p>

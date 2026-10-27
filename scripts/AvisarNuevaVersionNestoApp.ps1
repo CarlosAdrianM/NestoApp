@@ -1,43 +1,40 @@
-﻿<#
+<#
     Ritual al promocionar NestoApp a Production (Carlos, 30/09/26): después de promocionar en AppFlow y
-    ejecutar scripts/Novedades_<version>.sql, manda una push a los móviles con NestoApp diciendo cómo
+    ejecutar scripts/Novedades_<version>.sql, manda una push a todos los móviles con NestoApp diciendo cómo
     estrenar la versión nueva. Queda también en su buzón de avisos. Al tocarla se abre el perfil (novedades).
 
     Por qué dos cierres: Live Updates está en modo «background» (capacitor.config.ts). Descarga la versión al
     arrancar la app EN FRÍO y la estrena en el SIGUIENTE arranque en frío; volver desde segundo plano no cuenta.
 
-    PROVISIONAL hasta NestoAPI#579 (POST api/Notificaciones/NuevaVersionNestoApp, que mandará a todos los
-    dispositivos de una vez). Mientras tanto se llama a POST api/Notificaciones/Enviar una vez por usuario, así
-    que hay que pasarle los usuarios: los que tienen dispositivo activo de NestoApp en la base de datos:
-      SELECT DISTINCT Usuario FROM dbo.DispositivosNotificaciones WHERE Aplicacion = 'NestoApp' AND Activo = 1
+    Desde NestoAPI#579 (2.26.0, 27/10/26) usa POST api/Notificaciones/NuevaVersionNestoApp, que manda a TODOS los
+    dispositivos activos de NestoApp de una vez (ya no hay que sacar los usuarios de dbo.DispositivosNotificaciones).
+    Gemelo de Scripts/AvisarNuevaVersionNestoApp.ps1 de NestoAPI, con -PedirCredenciales para fuera del dominio.
 
     Uso (desde Windows, con el usuario de alguien de Dirección o Informática). Desde un equipo que no está en el
     dominio (sesión local, como el portátil de Carlos) la API da 401: añadir -PedirCredenciales y escribir
     NUEVAVISION\usuario y su contraseña.
-      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba                       # solo a Carlos
-      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Prueba -PedirCredenciales    # fuera del dominio
-      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios Marta,Israel,Jesus  # a esos
-      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.22.0 -Usuarios ... -Texto "Otro texto"
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -SoloListar                  # a quién se mandaría, sin mandar nada
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Prueba                      # solo a Carlos, para verla antes
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Prueba -PedirCredenciales   # fuera del dominio
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0                              # a todos los dispositivos activos de NestoApp
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Usuarios Marta,Israel       # solo a esos (p. ej. a quien no la recibió)
+      .\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Texto "Texto distinto del de siempre"
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Version,
     [string[]]$Usuarios = @(),
     [string]$Texto,
+    [switch]$SoloListar,
     [switch]$Prueba,
+    [string]$UsuarioPrueba = "Carlos",
     [switch]$PedirCredenciales,
     [string]$Api = "http://api.nuevavision.es"
 )
 
 $ErrorActionPreference = "Stop"
-if ($Prueba) { $Usuarios = @("Carlos") }
 # Con «powershell -File …» la lista llega como un único texto «Marta,Israel,…»: se parte aquí.
-$Usuarios = @($Usuarios | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-if ($Usuarios.Count -eq 0) { throw "Falta -Usuarios (o -Prueba). Ver la consulta de la cabecera." }
-
-if (-not $Texto) {
-    $Texto = "Para estrenarla: cierra la app del todo (quítala de las apps recientes), ábrela con conexión y espera unos segundos. " +
-             "Luego ciérrala del todo otra vez y vuelve a abrirla. En tu perfil verás «Versión actualización $Version»."
-}
+$Usuarios = @($Usuarios | ForEach-Object { $_ -split ',' } | ForEach-Object { ($_ -split '\\')[-1].Trim() } | Where-Object { $_ })
+if ($Prueba) { $Usuarios = @($UsuarioPrueba) }
 
 # PowerShell 7 no manda las credenciales de Windows por http sin este permiso explícito (la API va por http).
 $sinCifrar = @{}
@@ -49,23 +46,16 @@ if ($PedirCredenciales) {
 $token = (Invoke-RestMethod -Method Post -Uri "$Api/api/auth/windows-token" @autenticacion @sinCifrar).token
 if (-not $token) { throw "No se ha obtenido el token de Windows." }
 
-$avisados = 0
-foreach ($usuario in $Usuarios) {
-    $usuario = ($usuario -split '\\')[-1].Trim()   # NestoApp registra los usuarios sin dominio
-    $cuerpo = @{
-        Destinatario = $usuario
-        Aplicacion   = "NestoApp"
-        Notificacion = @{
-            Titulo = "NestoApp $Version ya está disponible"
-            Cuerpo = $Texto
-            Tipo   = "NuevaVersionNestoApp"
-            Datos  = @{ tipo = "NuevaVersionNestoApp"; version = $Version; ruta = "/profile" }
-        }
-    } | ConvertTo-Json -Depth 5
-    $bytes = [System.Text.Encoding]::UTF8.GetBytes($cuerpo)
-    $enviados = Invoke-RestMethod -Method Post -Uri "$Api/api/Notificaciones/Enviar" `
-        -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json; charset=utf-8" -Body $bytes
-    Write-Host ("  {0}: {1} dispositivo(s)" -f $usuario, $enviados)
-    if ($enviados -gt 0) { $avisados++ }
+# Sin Texto, la API pone el de siempre (los dos cierres en frío). Sin Usuarios, a todos los dispositivos activos.
+$datos = @{ Version = $Version; Texto = $Texto; SoloListar = [bool]$SoloListar }
+if ($Usuarios.Count -gt 0) { $datos.Usuarios = $Usuarios }
+$bytes = [System.Text.Encoding]::UTF8.GetBytes(($datos | ConvertTo-Json))
+$resultado = Invoke-RestMethod -Method Post -Uri "$Api/api/Notificaciones/NuevaVersionNestoApp" `
+    -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json; charset=utf-8" -Body $bytes
+
+if ($SoloListar) {
+    Write-Host "Se mandaría la push de la $($resultado.Version) a $(@($resultado.Usuarios).Count) usuarios con NestoApp:" -ForegroundColor Cyan
+} else {
+    Write-Host "Push de la $($resultado.Version) mandada a $($resultado.Avisados) usuarios:" -ForegroundColor Green
 }
-Write-Host "Avisados $avisados de $($Usuarios.Count) usuarios de la versión $Version." -ForegroundColor Green
+$resultado.Usuarios | ForEach-Object { Write-Host "  $_" }

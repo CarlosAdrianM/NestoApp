@@ -23,6 +23,12 @@ export interface ChequeRegaloCliente {
   Mensaje: string;
   PedidoCanje: number | null;
   TextoLinea: string;
+  /**
+   * NestoApp#243 / NestoAPI#593: lo que baja la base bonificable de Ganavisiones si el cheque va en el
+   * pedido (el importe si el producto del cheque es de un grupo que genera Ganavisiones; si no, 0).
+   * Una API anterior no lo manda: entonces se resta el importe.
+   */
+  RestaDeLaBaseGanavisiones?: number;
 }
 
 const redondear = (valor: number) => Math.round(valor * 100) / 100;
@@ -42,10 +48,24 @@ export function baseComputableCheque(lineas: any[], cheque: ChequeRegaloCliente)
   const base = (lineas || [])
     .filter(l => l && l.producto && +l.cantidad > 0)
     .filter(l => !esLineaChequeRegalo(l, cheque))
+    // NestoApp#244: los cursos van en un pedido aparte y no cuentan para el mínimo.
+    .filter(l => normalizar(l.grupo) !== 'CUR' && l.EsCurso !== true && l.esCurso !== true && !l.eventoId)
     .filter(l => !grupos.includes(normalizar(l.grupo)))
     .filter(l => !prefijos.some(p => normalizar(l.texto).startsWith(p)))
     .reduce((suma, l) => suma + (+l.cantidad) * (+l.precio || 0) * (1 - (+l.descuento || 0)), 0);
   return redondear(base);
+}
+
+/**
+ * NestoApp#243 (pedido 929066): lo que hay que restar de la base bonificable de Ganavisiones por el
+ * cheque. Solo cuando se va a canjear en este pedido (marcado y canjeable): al editar un pedido que ya lo
+ * lleva, la línea del cheque ya está en las líneas y no se resta dos veces.
+ */
+export function restaChequeRegaloBaseBonificable(cheque: ChequeRegaloCliente | null, usar: boolean, puedeUsar: boolean): number {
+  if (!cheque || !usar || !puedeUsar) {
+    return 0;
+  }
+  return +(cheque.RestaDeLaBaseGanavisiones ?? cheque.Importe) || 0;
 }
 
 /** Lo que falta para pasar del mínimo («más de 250 €»): 0 si ya lo supera. */

@@ -198,6 +198,11 @@
                   <p *ngIf="novedad.Descripcion" class="descripcion-novedad">{{ novedad.Descripcion }}</p>
                   <!-- NestoApp#221: a quién afecta (útil con «Ver todas») -->
                   <p *ngIf="textoParaPerfiles(novedad) as para" class="para-perfiles">{{ para }}</p>
+                  <!-- NestoApp#251 / NestoAPI#711: el vídeo corto de la novedad, solo si lo tiene -->
+                  <ion-button *ngIf="tieneVideo(novedad)" size="small" fill="outline" (click)="verVideo(novedad)" class="boton-video">
+                    <ion-icon slot="start" name="play-outline"></ion-icon>
+                    Ver vídeo
+                  </ion-button>
                   <!-- NestoApp#218 / NestoAPI#616: adjuntos, abiertos con el visor del móvil -->
                   <div class="adjuntos-novedad" *ngIf="novedad.Adjuntos?.length">
                     <ion-chip *ngFor="let adjunto of novedad.Adjuntos" (click)="abrirAdjunto(adjunto)" [attr.aria-label]="'Abrir ' + adjunto.Nombre">

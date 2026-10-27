@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { NativeGeocoderOptions, NativeGeocoder, NativeGeocoderResult } from '@awesome-cordova-plugins/native-geocoder/ngx';
+import { DireccionesService } from '../../services/direcciones.service';
+import { nombreResultadoRapport } from 'src/app/models/resultado-rapport.model';
 import { NavController, AlertController, LoadingController, ToastController, ModalController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { Events } from 'src/app/services/events.service';
@@ -57,6 +58,8 @@ export class ListaRapportsComponent extends SelectorBase {
   public mostrarDirecciones: boolean;
 
   public codigosPostalesSinVisitar: any[] = [];
+  /** NestoApp#253: el nombre del resultado del rapport para el chip. */
+  public readonly nombreResultado = nombreResultadoRapport;
   public vendedorSeleccionado: string;
   public listadoClientesSinVisitar: any[] = [];
   public listadoClientesSinVisitarFiltrado: any[] = [];
@@ -97,16 +100,12 @@ export class ListaRapportsComponent extends SelectorBase {
   geoLongitude: number;
   geoAccuracy:number;
   //geoAddress: string;
-  geoencoderOptions: NativeGeocoderOptions = {
-    useLocale: true,
-    maxResults: 5
-  };
 
   generandoResumen = false;
 
   constructor(servicio: ListaRapportsService, nav: NavController, alertCtrl: AlertController,
           loadingCtrl: LoadingController, public usuario: Usuario,
-          private geolocation: Geolocation, private nativeGeocoder: NativeGeocoder,
+          private geolocation: Geolocation, private direcciones: DireccionesService,
           public events: Events,
           private firebaseAnalytics: FirebaseAnalytics, private toastController: ToastController,
           private modalCtrl: ModalController, private visorFicheros: VisorFicheros) {
@@ -717,23 +716,33 @@ export class ListaRapportsComponent extends SelectorBase {
       });
   }
 
-  //geocoder method to fetch address from coordinates passed as arguments
-  getGeoencoder(latitude,longitude){
-      this.nativeGeocoder.reverseGeocode(latitude, longitude, this.geoencoderOptions)
-      .then((result: NativeGeocoderResult[]) => {
-          const codEncontrado = this.codigosPostalesSinVisitar.find(p => p.codigoPostal == result[0].postalCode);
-          if (codEncontrado == undefined) {
-              this.codigosPostalesSinVisitar.push({
-                  codigoPostal : result[0].postalCode,
-                  poblacion : '<< Ubicación Actual >>'
-              });
-          }
-          this.codigoPostalSeleccionado = result[0].postalCode;
-      })
-      .catch((error: any) => {
-          console.log('Error getting location'+ JSON.stringify(error));
+  /**
+   * NestoApp#159 / NestoAPI#578: el código postal de donde está el móvil, por la API (antes, el plugin
+   * nativegeocoder). Si no llega, se queda el que hubiera.
+   */
+  getGeoencoder(latitude, longitude) {
+      this.direcciones.desdeCoordenadas(latitude, longitude).subscribe(direccion => {
+          this.seleccionarCodigoPostalActual(direccion?.CodigoPostal);
       });
-  }    
+  }
+
+  /** Pone «<< Ubicación Actual >>» en la lista si ese código postal no está, y lo selecciona. */
+  public seleccionarCodigoPostalActual(codigoPostal: string | null | undefined): void {
+      const codigo = (codigoPostal || '').toString().trim();
+      if (!codigo) {
+          return;
+      }
+      const codEncontrado = this.codigosPostalesSinVisitar.find(p => p.codigoPostal == codigo || p.CodigoPostal == codigo);
+      if (codEncontrado == undefined) {
+          this.codigosPostalesSinVisitar.push({
+              codigoPostal: codigo,
+              CodigoPostal: codigo,
+              poblacion: '<< Ubicación Actual >>',
+              Poblacion: '<< Ubicación Actual >>'
+          });
+      }
+      this.codigoPostalSeleccionado = codigo;
+  }
 
   resumirRapports() {
     if (this.generandoResumen) return; // Evita llamadas duplicadas

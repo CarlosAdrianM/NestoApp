@@ -165,6 +165,9 @@
         <ion-badge color="danger" *ngIf="rapport.GestionAparatos">Gestión Aparatos</ion-badge>
         <ion-badge color="secondary" *ngIf="rapport.PrimeraVisita">Primera Visita</ion-badge>
         <ion-icon *ngIf="rapport.Tipo==='W'" name="logo-whatsapp"></ion-icon>
+        <!-- NestoApp#253 / NestoAPI#716: resultado y próximo contacto -->
+        <ion-badge color="primary" *ngIf="rapport.Resultado">{{ nombreResultado(rapport.Resultado) }}</ion-badge>
+        <ion-badge color="warning" *ngIf="rapport.ProximoContacto">Volver a contactar el {{ rapport.ProximoContacto | date:'dd/MM/yyyy' }}</ion-badge>
       </p>
       <div [ngSwitch]="segmentoRapports">
         <div *ngSwitchCase="'fecha'">

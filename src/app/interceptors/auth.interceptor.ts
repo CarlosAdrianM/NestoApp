@@ -53,14 +53,15 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private clonarConHeaders(request: HttpRequest<unknown>, token: string | null): HttpRequest<unknown> {
-    const headers: { [key: string]: string } = {};
+    // NestoApp#250 / NestoAPI#704: la API apunta desde qué aplicación llega cada pedido (y sus señales).
+    const headers: { [key: string]: string } = { 'X-Aplicacion': 'NestoApp' };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
     if (this.usuario?.nombre) {
       headers['X-Usuario'] = this.usuario.nombre;
     }
-    return Object.keys(headers).length > 0 ? request.clone({ setHeaders: headers }) : request;
+    return request.clone({ setHeaders: headers });
   }
 
   private processError(error: HttpErrorResponse): ProcessedApiError {

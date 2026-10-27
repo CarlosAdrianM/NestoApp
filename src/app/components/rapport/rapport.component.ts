@@ -12,6 +12,13 @@ import { VersionNativoService } from 'src/app/services/version-nativo.service';
 import { objetoDeQueryParam } from '../../utils/query-param';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
+import {
+  LONGITUD_COMENTARIO_CAMBIO_ESTADO, MOTIVOS_CAMBIO_ESTADO, RESULTADOS_RAPPORT, RESULTADO_RAPPORT_PEDIDO,
+  alternarResultadoRapport, comentarioCambioEstadoParaApi, nombreResultadoRapport, proximoContactoParaApi
+} from 'src/app/models/resultado-rapport.model';
+import { SugerenciasProductosService } from 'src/app/services/sugerencias-productos.service';
+import { RespuestaSugerencia, SugerenciaProducto, etiquetaMotivo, nombreSugerencia, productoYFamilia } from 'src/app/models/sugerencias-productos.model';
+import { EstadoSugerenciasProductos } from '../plantilla-venta/sugerencias-productos/estado-sugerencias-productos';
 
 @Component({
     selector: 'app-rapport',
@@ -35,6 +42,94 @@ export class RapportComponent implements AfterViewInit {
    */
   public preguntarEmpleados: boolean = false;
 
+  // ---- NestoApp#253 / NestoAPI#716: resultado del rapport, próximo contacto y motivo al dejar de visitar ----
+  public readonly resultadosRapport = RESULTADOS_RAPPORT;
+  public readonly motivosCambioEstado = MOTIVOS_CAMBIO_ESTADO;
+  public readonly longitudComentarioCambioEstado = LONGITUD_COMENTARIO_CAMBIO_ESTADO;
+  public readonly nombreResultado = nombreResultadoRapport;
+  /** Por qué deja de visitarlo (opcional) y un comentario (200). Solo se mandan con «Quitar de mi listado». */
+  public motivoCambioEstado: string | null = null;
+  public comentarioCambioEstado: string = '';
+
+  /** Un chip solo; tocar el marcado lo desmarca. Con «Pedido» se marca también el check «Pedido». */
+  public elegirResultado(codigo: string): void {
+      this.rapport.Resultado = alternarResultadoRapport(this.rapport.Resultado, codigo);
+      if (this.rapport.Resultado === RESULTADO_RAPPORT_PEDIDO) {
+          this.rapport.Pedido = true;
+      }
+  }
+
+  public esResultadoElegido(codigo: string): boolean {
+      return (this.rapport?.Resultado || '') === codigo;
+  }
+
+  /** El rapport tal como se manda: la fecha del próximo contacto solo con el día. */
+  public rapportParaGuardar(): any {
+      return { ...this.rapport, ProximoContacto: proximoContactoParaApi(this.rapport.ProximoContacto) };
+  }
+
+  // ---- NestoApp#249 (sugerencia 736): preguntar antes de registrar en un contacto en estado 7 ----
+  /** El contacto con el que llegó el rapport (desde «Llamar» o la lista ya viene el bueno). */
+  private contactoInicial: string | null = null;
+  public static readonly ESTADO_CONTACTO_7 = 7;
+
+  /** El contacto lo ha elegido el vendedor a mano (no venía puesto al abrir el rapport). */
+  get contactoElegidoAMano(): boolean {
+      const actual = (this.rapport?.Contacto ?? '').toString().trim();
+      const inicial = (this.contactoInicial ?? '').toString().trim();
+      return !inicial || actual !== inicial;
+  }
+
+  get hayQuePreguntarPorEstado7(): boolean {
+      return +this.rapport?.EstadoCliente === RapportComponent.ESTADO_CONTACTO_7 && this.contactoElegidoAMano;
+  }
+
+  private confirmarContactoEstado7(): Promise<boolean> {
+      return new Promise<boolean>(resolve => {
+          this.alertCtrl.create({
+              header: 'Contacto en estado 7',
+              message: 'Este contacto está en estado 7. ¿Seguro que quiere registrar aquí el seguimiento?',
+              buttons: [
+                  { text: 'No, volver', role: 'cancel', handler: () => resolve(false) },
+                  { text: 'Sí, registrar', handler: () => resolve(true) }
+              ]
+          }).then(async alert => {
+              alert.onDidDismiss().then(() => resolve(false));
+              await alert.present();
+          });
+      });
+  }
+
+  // ---- NestoApp#246: cinta de 3 productos sugeridos al crear el rapport (la misma de la plantilla) ----
+  public sugerenciasProductos: EstadoSugerenciasProductos;
+  public readonly etiquetaMotivo = etiquetaMotivo;
+  public readonly nombreSugerencia = nombreSugerencia;
+  public readonly productoYFamilia = productoYFamilia;
+
+  get sugerencias(): SugerenciaProducto[] {
+      return this.sugerenciasProductos?.sugerencias || [];
+  }
+
+  /** Solo al crear un rapport, con el cliente cargado. El botón que sí supone venta queda para cuando se diseñe en Nesto. */
+  get hayCintaSugerencias(): boolean {
+      return (!this.rapport?.Id || this.rapport.Id === 0) && this.sugerencias.length > 0;
+  }
+
+  public rechazarSugerencia(sugerencia: SugerenciaProducto, respuesta: RespuestaSugerencia): void {
+      this.firebaseAnalytics.logEvent('rapport_responder_sugerencia', { producto: sugerencia.Producto, respuesta });
+      this.sugerenciasProductos.responder(sugerencia, respuesta);
+  }
+
+  public identificadorSugerencia(_: number, sugerencia: SugerenciaProducto): number {
+      return sugerencia.IdSugerencia;
+  }
+
+  private cargarSugerencias(): void {
+      if (!this.rapport?.Id || this.rapport.Id === 0) {
+          this.sugerenciasProductos.calcularYa();
+      }
+  }
+
   /*
   private readonly _destroying$ = new Subject<void>();
 
@@ -51,13 +146,23 @@ export class RapportComponent implements AfterViewInit {
     private firebaseAnalytics: FirebaseAnalytics,
     private authService: AuthService,
     private versionNativo: VersionNativoService,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    servicioSugerenciasProductos: SugerenciasProductosService
     ) {
+      // NestoApp#246: sin carrito; cambia con el cliente y el contacto.
+      this.sugerenciasProductos = new EstadoSugerenciasProductos(servicioSugerenciasProductos, () => this.rapport?.Cliente ? {
+          empresa: this.rapport.Empresa || Configuracion.EMPRESA_POR_DEFECTO,
+          cliente: this.rapport.Cliente,
+          contacto: this.rapport.Contacto,
+          vendedor: this.usuario.vendedor,
+          lineas: []
+      } : null);
       // Issue #135 / #155: en build Web los queryParams se serializan a string. Si llega
       // "[object Object]" el código de abajo casca al crear propiedades sobre un string.
       // Caemos a un rapport vacío para no reventar la pantalla (helper compartido).
       this.rapport = objetoDeQueryParam(this.route.snapshot.queryParams.rapport) || {};
       this.numeroCliente = this.rapport.Cliente;
+      this.contactoInicial = this.rapport.Contacto ?? null; // NestoApp#249
       if (!this.rapport.Id) {
           this.rapport.Tipo = usuario.ultimoTipoRapport;
       }
@@ -122,6 +227,7 @@ export class RapportComponent implements AfterViewInit {
                   if (this.rapport.Empleados === undefined || this.rapport.Empleados === null) {
                       this.rapport.Empleados = data.empleados !== undefined ? data.empleados : null;
                   }
+                  this.cargarSugerencias(); // NestoApp#246
               }
           },
           error => {
@@ -148,6 +254,11 @@ export class RapportComponent implements AfterViewInit {
           }
       }
 
+      // NestoApp#249 (sugerencia 736): muchos rapports acaban en un contacto equivocado (estado 7).
+      if (this.hayQuePreguntarPorEstado7 && !await this.confirmarContactoEstado7()) {
+          return;
+      }
+
       const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere guardar el rapport?',
@@ -165,7 +276,7 @@ export class RapportComponent implements AfterViewInit {
 
                       await loading.present();
 
-                      this.servicio.crearRapport(this.rapport).subscribe(
+                      this.servicio.crearRapport(this.rapportParaGuardar()).subscribe(
                           async data => {
                               if (data) {
                                 this.rapport.Id = data.NºOrden;
@@ -178,7 +289,8 @@ export class RapportComponent implements AfterViewInit {
                               });
                               await alert.present();
                               if (this.dejarDeVisitar) {
-                                  this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria).subscribe(
+                                  this.servicio.dejarDeVisitar(this.rapport, this.vendedorEstetica, this.vendedorPeluqueria,
+                                      { motivo: this.motivoCambioEstado, comentario: comentarioCambioEstadoParaApi(this.comentarioCambioEstado) }).subscribe(
                                       async data => {
                                         this.firebaseAnalytics.logEvent("rapport_dejar_de_visitar", {cliente: this.rapport.Cliente, contacto: this.rapport.Contacto});
                                           const alertOK = await this.alertCtrl.create({

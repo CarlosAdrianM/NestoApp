@@ -25,7 +25,11 @@
           <ion-label class="ion-text-wrap">
             <h2>{{pedido.nombre}}</h2>
             <h3>{{pedido.direccion}}</h3>
-            <p>{{pedido.cliente}} - {{pedido.fecha | date:'dd/MM/yy'}} ({{pedido.baseImponible | currency:'EUR' }})</p>
+            <!-- NestoApp#240: año con cuatro cifras y «Sin fecha» para las notas de entrega sin determinar -->
+            <p>{{pedido.cliente}} - {{textoFecha(pedido.fecha)}} ({{pedido.baseImponible | currency:'EUR' }})</p>
+            <ion-badge color="warning" *ngIf="sinFecha(pedido)">Sin fecha de entrega</ion-badge>
+            <!-- NestoApp#254 / NestoAPI#698: retenido hasta nuevo aviso -->
+            <ion-badge color="danger" *ngIf="estaRetenido(pedido)">Retenido</ion-badge>
             <ion-badge color="danger" *ngIf="pedido.tienePendientes">Pendientes</ion-badge>
             <ion-badge color="success" *ngIf="pedido.tienePicking">Picking</ion-badge>
             <ion-badge *ngIf="pedido.tieneFechasFuturas">En Espera</ion-badge>

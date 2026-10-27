@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { AlertController, LoadingController, NavController } from '@ionic/angular';
+import { AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { Parametros } from 'src/app/services/parametros.service';
@@ -12,7 +12,8 @@ import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
-import { AdjuntoNovedad, MisPerfilesNovedades, filtraPorPerfiles, iconoAdjunto, textoFiltroPerfiles, textoParaPerfiles, GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia } from 'src/app/services/novedades.service';
+import { AdjuntoNovedad, MisPerfilesNovedades, filtraPorPerfiles, iconoAdjunto, textoFiltroPerfiles, textoParaPerfiles, GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia, tieneVideo } from 'src/app/services/novedades.service';
+import { VideoNovedadComponent } from '../video-novedad/video-novedad.component';
 import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { TipoAportacion } from '../sugerir-caracteristica/sugerir-caracteristica.component';
 
@@ -61,6 +62,7 @@ export class ProfileComponent {
       private route: ActivatedRoute,
       private visorFicheros: VisorFicheros,
       public buzon: BuzonNotificacionesService,
+      private modalCtrl: ModalController,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
@@ -166,6 +168,19 @@ export class ProfileComponent {
       }
       await this.cambiarVerTodasNovedades(true);
       return true;
+  }
+
+  // ---- NestoApp#251 / NestoAPI#711: «▶ Ver vídeo» (no se baja nada hasta que se pulsa) ----
+
+  public readonly tieneVideo = tieneVideo;
+
+  public async verVideo(novedad: Novedad): Promise<void> {
+      if (!tieneVideo(novedad)) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('profile_ver_video_novedad', { novedad: novedad.Id });
+      const modal = await this.modalCtrl.create({ component: VideoNovedadComponent, componentProps: { novedad } });
+      await modal.present();
   }
 
   // ---- NestoApp#218 / NestoAPI#616: adjuntos (PDF e imágenes) abiertos con el visor del móvil ----
