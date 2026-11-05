@@ -71,8 +71,7 @@ describe('NovedadesService (#177)', () => {
 
   // NestoApp#258 / NestoAPI#754
   it('#258: cada captura se pide por su Id', () => {
-    let urls: string[] = [];
-    service.leerCapturasComoDataUrl([{ Id: 11 }, { Id: 12 }], true, () => { throw new Error('no debe usarse el respaldo'); }).subscribe(u => urls = u);
+    service.leerCapturasComoDataUrl([{ Id: 11 }, { Id: 12 }], true, () => { throw new Error('no debe usarse el respaldo'); }).subscribe();
     httpMock.expectOne(r => r.url.endsWith('/Novedades/Capturas/11')).flush(new Blob(['a'], { type: 'image/png' }));
     httpMock.expectOne(r => r.url.endsWith('/Novedades/Capturas/12')).flush(new Blob(['b'], { type: 'image/png' }));
   });
