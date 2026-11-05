@@ -1,0 +1,43 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Envíos devueltos</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cargar()" aria-label="Actualizar"><ion-icon slot="icon-only" name="refresh"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item *ngIf="tieneVendedor" lines="full">
+    <ion-label>Solo los míos</ion-label>
+    <ion-toggle slot="end" aria-label="Solo los míos" [(ngModel)]="soloMios"></ion-toggle>
+  </ion-item>
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none"><ion-label class="ion-text-wrap">{{ mensaje }}</ion-label></ion-item>
+  <ion-item *ngIf="!cargando && !mensaje && visibles.length === 0" lines="none">
+    <ion-label class="ion-text-wrap">No hay envíos devueltos ni con incidencia en los últimos 60 días.</ion-label>
+  </ion-item>
+
+  <ion-list *ngIf="visibles.length > 0">
+    <ion-item *ngFor="let envio of visibles" button detail="true" (click)="abrir(envio)" [class.decidido]="decidido(envio)">
+      <ion-label class="ion-text-wrap">
+        <p>
+          <ion-badge [color]="envio.Estado === 3 ? 'warning' : 'danger'">{{ textoEstado(envio.Estado) }}</ion-badge>
+          <ion-badge *ngIf="!decidido(envio)" color="primary">Sin decidir</ion-badge>
+          <ion-badge *ngIf="envio.Decision === 'Reenviar'" color="success">Se reenvía</ion-badge>
+          <ion-badge *ngIf="envio.Decision === 'Abonar'" color="medium">Se abona</ion-badge>
+          Envío {{ envio.Numero }}<span *ngIf="envio.Pedido"> · pedido {{ envio.Pedido }}</span> · {{ envio.Fecha | date:'dd/MM/yy' }}
+        </p>
+        <h2>{{ envio.Nombre }}</h2>
+        <h3>{{ envio.Cliente }}/{{ envio.Contacto }}<span *ngIf="envio.Poblacion"> · {{ envio.Poblacion }}</span></h3>
+        <p *ngIf="envio.DetalleEstado" class="motivo">{{ envio.DetalleEstado }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

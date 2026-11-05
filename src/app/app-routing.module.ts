@@ -21,6 +21,9 @@ import { UltimasVentasProductoClienteComponent } from './components/ultimas-vent
 import { CanDeactivateGuard } from './utils/can-deactivate-guard';
 import { BuzonNotificacionesComponent } from './components/buzon-notificaciones/buzon-notificaciones.component';
 import { EventoComponent } from './components/evento/evento.component';
+import { EventosComponent } from './components/eventos/eventos.component';
+import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
+import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
 
 const routes: Routes = [
   {
@@ -103,6 +106,20 @@ const routes: Routes = [
     // NestoApp#247 / NestoAPI#692: la ficha del evento que abre la push de anuncio
     path: 'evento',
     component: EventoComponent
+  },
+  {
+    // NestoApp#268 (Nesto#619): los próximos eventos, con aforo e inscritos
+    path: 'eventos',
+    component: EventosComponent
+  },
+  {
+    // NestoApp#267 (NestoAPI#699): envíos devueltos o con incidencia, y la decisión de reenviar o abonar
+    path: 'envios-devueltos',
+    component: EnviosDevueltosComponent
+  },
+  {
+    path: 'envio-devuelto',
+    component: EnvioDevueltoComponent
   },
   {
     path: '',

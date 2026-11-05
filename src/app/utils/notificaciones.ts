@@ -6,6 +6,8 @@ export const TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA = 'IncidenciaEnvioAgenci
 export const TIPO_NOTIFICACION_ANUNCIO_EVENTO = 'AnuncioEvento';
 /** NestoApp#254 / NestoAPI#698: un pedido retenido se ha liberado solo o sigue retenido (trae pedido). */
 export const TIPO_NOTIFICACION_PEDIDO_RETENIDO = 'PedidoRetenido';
+/** NestoApp#267 / NestoAPI#699: la agencia ha devuelto un envío: ¿el cliente lo sigue queriendo? (trae envio, pedido, cliente). */
+export const TIPO_NOTIFICACION_DEVOLUCION_ENVIO_AGENCIA = 'DevolucionEnvioAgencia';
 
 /**
  * A dónde lleva tocar una push (o el «Ver» del aviso con la app abierta), o null si a ningún sitio.
@@ -26,6 +28,12 @@ export function rutaDeNotificacion(datos: { [clave: string]: any } | null | unde
   const eventoId = (datos['eventoId'] ?? '').toString().trim();
   if (datos['tipo'] === TIPO_NOTIFICACION_ANUNCIO_EVENTO && /^\d+$/.test(eventoId)) {
     return `/evento?id=${eventoId}&aviso=${aviso}`;
+  }
+  // NestoApp#267: el envío devuelto abre su pantalla de decisión (trae pedido, pero manda el envío). Antes de la regla del pedido.
+  const envio = (datos['envio'] ?? '').toString().trim();
+  if (datos['tipo'] === TIPO_NOTIFICACION_DEVOLUCION_ENVIO_AGENCIA && /^\d+$/.test(envio)) {
+    const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
+    return `/envio-devuelto?empresa=${encodeURIComponent(empresa)}&envio=${envio}&aviso=${aviso}`;
   }
   // NestoApp#202 / NestoAPI#555: regla genérica, como en Nesto: cualquier aviso que lleve el dato
   // «pedido» abre ese pedido (el de coger picking con importe, el retenido que se libera (#254) y los que vengan).

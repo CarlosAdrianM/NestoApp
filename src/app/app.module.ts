@@ -50,6 +50,9 @@ import { ModalListaBorradoresComponent } from './components/plantilla-venta/moda
 import { ModalElegirCursoComponent } from './components/plantilla-venta/modal-elegir-curso.component';
 import { VideoNovedadComponent } from './components/profile/video-novedad/video-novedad.component';
 import { EventoComponent } from './components/evento/evento.component';
+import { EventosComponent } from './components/eventos/eventos.component';
+import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
+import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
 import { VisorImagenComponent } from './components/visor-imagen/visor-imagen.component';
 import { NovedadFeedbackComponent } from './components/profile/novedad-feedback/novedad-feedback.component';
 import { CapturaAdjuntaComponent } from './components/profile/captura-adjunta/captura-adjunta.component';
@@ -135,6 +138,9 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         ModalElegirCursoComponent,
         VideoNovedadComponent,
         EventoComponent,
+        EventosComponent,
+        EnviosDevueltosComponent,
+        EnvioDevueltoComponent,
         VisorImagenComponent,
         NovedadFeedbackComponent,
         CapturaAdjuntaComponent,

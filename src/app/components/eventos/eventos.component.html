@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Eventos</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cargar()" aria-label="Actualizar"><ion-icon slot="icon-only" name="refresh"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando los eventos…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none"><ion-label class="ion-text-wrap">{{ mensaje }}</ion-label></ion-item>
+
+  <ion-list *ngIf="eventos.length > 0">
+    <ion-item *ngFor="let evento of eventos" button detail="true" (click)="abrir(evento)">
+      <ion-thumbnail slot="start" *ngIf="evento.ImagenUrl"><img [src]="evento.ImagenUrl" [alt]="evento.Titulo" /></ion-thumbnail>
+      <ion-label class="ion-text-wrap">
+        <p>{{ evento.Fecha | date:'EEEE d MMMM' }}<span *ngIf="evento.HoraInicio"> · {{ evento.HoraInicio }}</span> · {{ textoFormato(evento) }}</p>
+        <h2>{{ evento.Titulo }}</h2>
+        <p [class.completo]="completo(evento)">{{ textoAforo(evento) }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -87,3 +87,16 @@ describe('rutaDeNotificacion: pedido retenido (#254)', () => {
       .toBe('/pedido-venta?empresa=1&numero=929057');
   });
 });
+
+/** NestoApp#267 / NestoAPI#699: la push «Envío devuelto del pedido N: ¿lo sigue queriendo el cliente?». */
+describe('rutaDeNotificacion: envío devuelto (#267)', () => {
+  it('abre la pantalla de decisión del envío (manda el envío, aunque traiga pedido)', () => {
+    expect(rutaDeNotificacion({ tipo: 'DevolucionEnvioAgencia', empresa: '1', envio: '123', pedido: '929498', cliente: '15191' }, 5))
+      .toBe('/envio-devuelto?empresa=1&envio=123&aviso=5');
+  });
+
+  it('sin empresa, la 1; sin envío válido, cae a la regla del pedido', () => {
+    expect(rutaDeNotificacion({ tipo: 'DevolucionEnvioAgencia', envio: '123' }, 5)).toBe('/envio-devuelto?empresa=1&envio=123&aviso=5');
+    expect(rutaDeNotificacion({ tipo: 'DevolucionEnvioAgencia', pedido: '929498' })).toBe('/pedido-venta?empresa=1&numero=929498');
+  });
+});
