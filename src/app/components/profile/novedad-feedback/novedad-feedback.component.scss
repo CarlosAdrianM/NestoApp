@@ -68,3 +68,6 @@
   border-radius: 4px;
   object-fit: contain;
 }
+
+/* NestoApp#258: varias capturas por comentario */
+.miniaturas { display: flex; flex-wrap: wrap; gap: 6px; }

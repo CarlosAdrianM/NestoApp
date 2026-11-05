@@ -25,14 +25,17 @@
       </div>
       <!-- #194: las @menciones, resaltadas -->
       <div class="texto"><span *ngFor="let trozo of comentario.Texto | trozosMencion" [class.mencion]="trozo.mencion">{{ trozo.texto }}</span></div>
-      <img *ngIf="imagenes[comentario.Id]" class="miniatura" [src]="imagenes[comentario.Id]" (click)="ampliarImagen(comentario.Id)" alt="Captura adjunta" />
+      <!-- NestoApp#258: todas las capturas del comentario -->
+      <div class="miniaturas" *ngIf="imagenes[comentario.Id]?.length">
+        <img *ngFor="let src of imagenes[comentario.Id]; let i = index" class="miniatura" [src]="src" (click)="ampliarImagen(comentario.Id, i)" [alt]="'Captura adjunta ' + (i + 1)" />
+      </div>
     </div>
 
     <!-- #194: al escribir @ se despliega a quién se puede mencionar -->
     <textarea-menciones [(texto)]="nuevoTexto" etiqueta="Tu comentario"
       placeholder="Escribe tu comentario… (con @ avisas a alguien)" (pegar)="captura.alPegar($event)"></textarea-menciones>
 
-    <captura-adjunta #captura [(imagen)]="imagenAdjunta">
+    <captura-adjunta #captura [(imagenes)]="imagenesAdjuntas">
       <ion-button size="small" [disabled]="!puedeEnviar" (click)="enviarComentario()">Enviar</ion-button>
     </captura-adjunta>
   </div>

@@ -3,11 +3,10 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import {
   ComentarioNovedad, Novedad, NovedadesService, NuevoComentarioNovedad, aplicarVoto, tieneFeedback
 } from 'src/app/services/novedades.service';
-import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
 import { VisorImagenComponent } from '../../visor-imagen/visor-imagen.component';
-import { ImagenAdjunta } from '../captura-adjunta/captura-adjunta.component';
+import { ImagenAdjunta, camposCapturas } from '../captura-adjunta/captura-adjunta.component';
 
 /**
  * NestoApp#188 / NestoAPI#520: bajo cada novedad del perfil, 👍/👎 con su recuento y los
@@ -35,12 +34,15 @@ export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
   public comentariosAbiertos: boolean = false;
   public cargandoComentarios: boolean = false;
   public comentarios: ComentarioNovedad[] = [];
-  /** Miniaturas ya bajadas, por Id de comentario (data URL). */
-  public imagenes: { [idComentario: number]: string } = {};
+  /** Miniaturas ya bajadas, por Id de comentario (data URLs, en orden). NestoApp#258: varias por comentario. */
+  public imagenes: { [idComentario: number]: string[] } = {};
 
   public nuevoTexto: string = '';
-  /** La pone y la quita <captura-adjunta> (galería, pegar), con [(imagen)]. */
-  public imagenAdjunta: ImagenAdjunta | null = null;
+  /** Las pone y las quita <captura-adjunta> (galería, pegar), con [(imagenes)]. */
+  public imagenesAdjuntas: ImagenAdjunta[] = [];
+  /** Compatibilidad: la primera. */
+  get imagenAdjunta(): ImagenAdjunta | null { return this.imagenesAdjuntas[0] ?? null; }
+  set imagenAdjunta(valor: ImagenAdjunta | null) { this.imagenesAdjuntas = valor ? [valor] : []; }
   public enviando: boolean = false;
 
   constructor(
@@ -114,7 +116,7 @@ export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
       next: comentarios => {
         this.comentarios = comentarios;
         this.cargandoComentarios = false;
-        comentarios.filter(c => c.TieneImagen).forEach(c => this.cargarImagen(c.Id));
+        comentarios.filter(c => c.TieneImagen || c.Capturas?.length).forEach(c => this.cargarImagen(c));
         if (resaltar) {
           this.resaltarComentario(resaltar);
         }
@@ -134,15 +136,16 @@ export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
     this.temporizadorResaltado = setTimeout(() => this.comentarioResaltadoVisible = null, 4000);
   }
 
-  private cargarImagen(idComentario: number): void {
-    this.servicio.leerImagenComentario(idComentario).subscribe({
-      next: async blob => { this.imagenes[idComentario] = await leerComoDataUrl(blob); },
+  /** NestoApp#258: todas las capturas del comentario; una imagen de antes sale por el endpoint de siempre. */
+  private cargarImagen(comentario: ComentarioNovedad): void {
+    this.servicio.leerCapturasComoDataUrl(comentario.Capturas, comentario.TieneImagen, () => this.servicio.leerImagenComentario(comentario.Id)).subscribe({
+      next: urls => { if (urls.length) { this.imagenes[comentario.Id] = urls; } },
       error: error => console.error('No se ha podido cargar la captura', error)
     });
   }
 
-  public async ampliarImagen(idComentario: number): Promise<void> {
-    const imgSrc = this.imagenes[idComentario];
+  public async ampliarImagen(idComentario: number, indice: number = 0): Promise<void> {
+    const imgSrc = this.imagenes[idComentario]?.[indice];
     if (!imgSrc) {
       return;
     }
@@ -160,23 +163,20 @@ export class NovedadFeedbackComponent implements OnChanges, OnDestroy {
     }
     const comentario: NuevoComentarioNovedad = {
       Texto: this.nuevoTexto.trim(),
-      VersionCliente: Configuracion.VERSION
+      VersionCliente: Configuracion.VERSION,
+      ...camposCapturas(this.imagenesAdjuntas) // NestoApp#258
     };
-    if (this.imagenAdjunta) {
-      comentario.ImagenBase64 = this.imagenAdjunta.dataUrl;
-      comentario.ImagenTipo = this.imagenAdjunta.tipo;
-    }
     this.enviando = true;
     this.servicio.crearComentario(this.novedad.Id, comentario).subscribe({
       next: creado => {
         this.enviando = false;
-        if (this.imagenAdjunta && creado.TieneImagen) {
-          this.imagenes[creado.Id] = this.imagenAdjunta.dataUrl;
+        if (this.imagenesAdjuntas.length && (creado.TieneImagen || creado.Capturas?.length)) {
+          this.imagenes[creado.Id] = this.imagenesAdjuntas.map(i => i.dataUrl);
         }
         this.comentarios = [...this.comentarios, creado];
         this.novedad.NumeroComentarios = (this.novedad.NumeroComentarios || 0) + 1;
         this.nuevoTexto = '';
-        this.imagenAdjunta = null;
+        this.imagenesAdjuntas = [];
       },
       error: async error => {
         // Lo escrito no se pierde: el vendedor corrige (p. ej. la imagen) y vuelve a enviar.

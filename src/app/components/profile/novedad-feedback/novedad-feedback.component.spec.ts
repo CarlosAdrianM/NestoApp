@@ -36,7 +36,10 @@ describe('NovedadFeedbackComponent (#188)', () => {
       leerComentarios: jasmine.createSpy('leerComentarios').and.returnValue(of([comentario(1, false), comentario(2, true)])),
       crearComentario: jasmine.createSpy('crearComentario').and.callFake((id: number, c: any) => of({ ...comentario(3, true, !!c.ImagenBase64), Texto: c.Texto })),
       borrarComentario: jasmine.createSpy('borrarComentario').and.returnValue(of(null)),
-      leerImagenComentario: jasmine.createSpy('leerImagenComentario').and.returnValue(of(new Blob(['x'], { type: 'image/png' })))
+      leerImagenComentario: jasmine.createSpy('leerImagenComentario').and.returnValue(of(new Blob(['x'], { type: 'image/png' }))),
+      // NestoApp#258: como el real, sin HttpClient
+      leerCapturasComoDataUrl: jasmine.createSpy('leerCapturasComoDataUrl').and.callFake((capturas: any[], tieneImagen: boolean, respaldo: () => any) =>
+        capturas?.length ? of(capturas.map((c: any) => 'data:captura-' + c.Id)) : tieneImagen ? of(['data:vieja']) : of([]))
     };
 
     TestBed.configureTestingModule({
@@ -147,6 +150,36 @@ describe('NovedadFeedbackComponent (#188)', () => {
       Texto: 'Mira esto', ImagenBase64: 'data:image/png;base64,AAAA', ImagenTipo: 'image/png'
     }));
     expect(component.imagenAdjunta).toBeNull();
+  }));
+
+  // NestoApp#258 / NestoAPI#754: varias capturas por comentario.
+  it('con varias capturas, la primera va en ImagenBase64 (servidores viejos) y todas en ImagenesBase64', fakeAsync(() => {
+    component.imagenesAdjuntas = [{ dataUrl: 'data:image/png;base64,AAAA', tipo: 'image/png' }, { dataUrl: 'data:image/jpeg;base64,BBBB', tipo: 'image/jpeg' }];
+    component.nuevoTexto = 'Al guardar sale esto y luego esto otro';
+
+    component.enviarComentario();
+    tick();
+
+    expect(servicio.crearComentario).toHaveBeenCalledWith(7, jasmine.objectContaining({
+      ImagenBase64: 'data:image/png;base64,AAAA', ImagenTipo: 'image/png',
+      ImagenesBase64: ['data:image/png;base64,AAAA', 'data:image/jpeg;base64,BBBB']
+    }));
+    expect(component.imagenesAdjuntas).toEqual([]);
+    expect(component.imagenes[3]).toEqual(['data:image/png;base64,AAAA', 'data:image/jpeg;base64,BBBB']);
+  }));
+
+  it('al leer los comentarios se bajan todas las capturas de cada uno (y la imagen de antes por el endpoint de siempre)', fakeAsync(() => {
+    servicio.leerComentarios.and.returnValue(of([
+      { ...comentario(1, false, true), Capturas: [{ Id: 11 }, { Id: 12 }] },
+      comentario(2, false, true),
+      comentario(4, false, false)
+    ]));
+    component.abrirOCerrarComentarios();
+    tick();
+
+    expect(component.imagenes[1]).toEqual(['data:captura-11', 'data:captura-12']);
+    expect(component.imagenes[2]).toEqual(['data:vieja']);
+    expect(component.imagenes[4]).toBeUndefined();
   }));
 
   // Los de reducir y leer la captura están en captura-adjunta.component.spec.ts.

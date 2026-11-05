@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 
-import { CapturaAdjuntaComponent, sePuedeLeerPortapapeles } from './captura-adjunta.component';
+import { CapturaAdjuntaComponent, camposCapturas, sePuedeLeerPortapapeles } from './captura-adjunta.component';
 import { ErroresService } from 'src/app/services/errores.service';
 
 /** NestoApp#188 / #190: la captura de los comentarios y de las sugerencias de las novedades. */
@@ -179,5 +179,66 @@ describe('CapturaAdjuntaComponent', () => {
 
       expect(input.value).toBe('');
     });
+  });
+});
+
+/** NestoApp#258 (NestoAPI#754, sugerencia 900): varias capturas en una sugerencia o un comentario. */
+describe('CapturaAdjuntaComponent: varias capturas (#258)', () => {
+  let component: CapturaAdjuntaComponent;
+  let listas: any[][];
+  const png = () => new File([new Uint8Array([137, 80, 78, 71])], 'captura.png', { type: 'image/png' });
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      declarations: [CapturaAdjuntaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot()],
+      providers: [{ provide: ErroresService, useValue: { reportar: () => { } } }]
+    }).compileComponents();
+    component = TestBed.createComponent(CapturaAdjuntaComponent).componentInstance;
+    listas = [];
+    component.imagenesChange.subscribe(l => listas.push(l));
+  }));
+
+  it('cada captura se añade al final y el padre recibe la lista', async () => {
+    await component.adjuntarImagen(png());
+    await component.adjuntarImagen(png());
+
+    expect(component.imagenes.length).toBe(2);
+    expect(component.imagen).toBe(component.imagenes[0]); // compatibilidad: la primera
+    expect(listas[listas.length - 1].length).toBe(2);
+  });
+
+  it('se puede quitar una cualquiera', async () => {
+    await component.adjuntarImagen(png());
+    await component.adjuntarImagen(new File([new Uint8Array([255, 216, 255])], 'b.jpg', { type: 'image/jpeg' }));
+    const segunda = component.imagenes[1];
+
+    component.quitarImagen(0);
+
+    expect(component.imagenes).toEqual([segunda]);
+  });
+
+  it('de la galería pueden venir varias de una vez', async () => {
+    const input = { files: [png(), png(), png()], value: 'x' };
+    await component.alElegirFichero({ target: input } as any);
+    expect(component.imagenes.length).toBe(3);
+    expect(input.value).toBe('');
+  });
+
+  it('como máximo 10', async () => {
+    component.imagenes = Array.from({ length: 10 }, (_, i) => ({ dataUrl: 'data:image/png;base64,' + i, tipo: 'image/png' }));
+    await component.adjuntarImagen(png());
+    expect(component.imagenes.length).toBe(10);
+    expect(component.errorImagen).toContain('10 capturas');
+  });
+
+  it('lo que viaja: la primera en ImagenBase64 (servidores viejos) y, con más de una, todas en ImagenesBase64', () => {
+    const a = { dataUrl: 'data:image/png;base64,AAAA', tipo: 'image/png' };
+    const b = { dataUrl: 'data:image/jpeg;base64,BBBB', tipo: 'image/jpeg' };
+    expect(camposCapturas([])).toEqual({});
+    expect(camposCapturas(null)).toEqual({});
+    expect(camposCapturas([a])).toEqual({ ImagenBase64: a.dataUrl, ImagenTipo: 'image/png' });
+    expect(camposCapturas([a, b])).toEqual({ ImagenBase64: a.dataUrl, ImagenTipo: 'image/png', ImagenesBase64: [a.dataUrl, b.dataUrl] });
   });
 });

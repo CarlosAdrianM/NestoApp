@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TAMANO_MAXIMO_IMAGEN } from 'src/app/services/novedades.service';
+import { MAXIMO_CAPTURAS, TAMANO_MAXIMO_IMAGEN } from 'src/app/services/novedades.service';
 import { ajustarImagen, leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { ErroresService } from 'src/app/services/errores.service';
 import { Capacitor } from '@capacitor/core';
@@ -7,6 +7,22 @@ import { Capacitor } from '@capacitor/core';
 export interface ImagenAdjunta {
   dataUrl: string;
   tipo: string;
+}
+
+/**
+ * NestoApp#258: lo que viaja en la sugerencia o el comentario. La primera va también en ImagenBase64/ImagenTipo
+ * (servidores viejos la siguen entendiendo); con más de una, todas en ImagenesBase64.
+ */
+export function camposCapturas(imagenes: ImagenAdjunta[] | null | undefined): { ImagenBase64?: string; ImagenTipo?: string; ImagenesBase64?: string[] } {
+  const lista = (imagenes || []).filter(i => !!i?.dataUrl);
+  if (lista.length === 0) {
+    return {};
+  }
+  const campos: { ImagenBase64?: string; ImagenTipo?: string; ImagenesBase64?: string[] } = { ImagenBase64: lista[0].dataUrl, ImagenTipo: lista[0].tipo };
+  if (lista.length > 1) {
+    campos.ImagenesBase64 = lista.map(i => i.dataUrl);
+  }
+  return campos;
 }
 
 class TiempoAgotado extends Error {
@@ -56,8 +72,18 @@ export function sePuedeLeerPortapapeles(esNativo: boolean, portapapeles: any): b
 })
 export class CapturaAdjuntaComponent {
 
-  @Input() public imagen: ImagenAdjunta | null = null;
+  /** NestoApp#258 / NestoAPI#754: varias capturas, en orden (máximo 10). */
+  @Input() public imagenes: ImagenAdjunta[] = [];
+  @Output() public imagenesChange = new EventEmitter<ImagenAdjunta[]>();
+  /** La primera (compatibilidad con [(imagen)]). */
+  @Input() public set imagen(valor: ImagenAdjunta | null) {
+    this.imagenes = valor ? [valor] : [];
+  }
+  public get imagen(): ImagenAdjunta | null {
+    return this.imagenes[0] ?? null;
+  }
   @Output() public imagenChange = new EventEmitter<ImagenAdjunta | null>();
+  public readonly maximoCapturas = MAXIMO_CAPTURAS;
 
   public errorImagen: string = '';
   /** #195: mientras se lee y se ajusta la captura, para que se vea que algo está pasando. */
@@ -81,9 +107,12 @@ export class CapturaAdjuntaComponent {
    */
   public async alElegirFichero(evento: Event): Promise<void> {
     const input = evento.target as HTMLInputElement;
-    const fichero = input?.files?.[0];
-    if (fichero) {
-      await this.adjuntarImagen(fichero);
+    const ficheros = Array.from(input?.files || []);
+    if (ficheros.length > 0) {
+      // NestoApp#258: se pueden elegir varias de una vez; se adjuntan en orden.
+      for (const fichero of ficheros) {
+        await this.adjuntarImagen(fichero);
+      }
     } else {
       this.errorImagen = 'No ha llegado ninguna imagen de la galería. Vuelve a elegirla.';
     }
@@ -138,15 +167,18 @@ export class CapturaAdjuntaComponent {
   public async adjuntarImagen(imagen: Blob): Promise<void> {
     const descripcion = describirFichero(imagen);
     this.errorImagen = '';
+    if (this.imagenes.length >= this.maximoCapturas) {
+      this.errorImagen = `Como máximo se pueden adjuntar ${this.maximoCapturas} capturas.`;
+      return;
+    }
     this.preparandoImagen = true;
     try {
       const preparada = await conTiempoMaximo(this.prepararImagen(imagen), this.tiempoMaximoPreparacionMs);
-      this.cambiarImagen(preparada);
+      this.cambiarImagenes([...this.imagenes, preparada]);
     } catch (error) {
       console.error('No se ha podido preparar la imagen', descripcion, error);
       // Controlado aquí, el GlobalErrorHandler no lo ve: a ELMAH a mano.
       this.errores.reportar(error, `captura-adjunta: ${descripcion}; paso: ${this.pasoPreparacion}`);
-      this.cambiarImagen(null);
       this.errorImagen = error instanceof TiempoAgotado
         ? `La imagen tarda demasiado en prepararse (${descripcion}). Prueba con otra captura.`
         : `No se ha podido leer la imagen (${descripcion}). Prueba con otra captura (PNG o JPEG).`;
@@ -165,13 +197,15 @@ export class CapturaAdjuntaComponent {
     return { dataUrl: await leerComoDataUrl(ajustada), tipo: ajustada.type.toLowerCase() };
   }
 
-  public quitarImagen(): void {
-    this.cambiarImagen(null);
+  /** Quita una captura (la primera si no se dice cuál). */
+  public quitarImagen(indice: number = 0): void {
+    this.cambiarImagenes(this.imagenes.filter((_, i) => i !== indice));
     this.errorImagen = '';
   }
 
-  private cambiarImagen(imagen: ImagenAdjunta | null): void {
-    this.imagen = imagen;
-    this.imagenChange.emit(imagen);
+  private cambiarImagenes(imagenes: ImagenAdjunta[]): void {
+    this.imagenes = imagenes;
+    this.imagenesChange.emit(imagenes);
+    this.imagenChange.emit(imagenes[0] ?? null);
   }
 }

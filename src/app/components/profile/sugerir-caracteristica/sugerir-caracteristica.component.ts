@@ -3,7 +3,7 @@ import { AlertController, ToastController } from '@ionic/angular';
 import { Novedad, NovedadesService, NuevoComentarioNovedad } from 'src/app/services/novedades.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { Configuracion } from '../../configuracion/configuracion/configuracion.component';
-import { ImagenAdjunta } from '../captura-adjunta/captura-adjunta.component';
+import { ImagenAdjunta, camposCapturas } from '../captura-adjunta/captura-adjunta.component';
 import { HistorialRutasService } from 'src/app/services/historial-rutas.service';
 
 /** NestoApp#203 / NestoAPI#558: el mismo formulario sirve para sugerir y para avisar de un fallo. */
@@ -39,7 +39,11 @@ export class SugerirCaracteristicaComponent {
   /** Null = cerrado (se ven los dos botones). */
   public tipo: TipoAportacion | null = null;
   public texto: string = '';
-  public imagenAdjunta: ImagenAdjunta | null = null;
+  /** NestoApp#258: varias capturas. */
+  public imagenesAdjuntas: ImagenAdjunta[] = [];
+  /** Compatibilidad: la primera. */
+  get imagenAdjunta(): ImagenAdjunta | null { return this.imagenesAdjuntas[0] ?? null; }
+  set imagenAdjunta(valor: ImagenAdjunta | null) { this.imagenesAdjuntas = valor ? [valor] : []; }
   public enviando: boolean = false;
   /** NestoApp#238 / NestoAPI#650: desmarcada; se recomienda dejarla pública. */
   public privada: boolean = false;
@@ -95,7 +99,7 @@ export class SugerirCaracteristicaComponent {
   public cancelar(): void {
     this.tipo = null;
     this.texto = '';
-    this.imagenAdjunta = null;
+    this.imagenesAdjuntas = [];
     this.privada = false;
   }
 
@@ -121,12 +125,9 @@ export class SugerirCaracteristicaComponent {
   private mandar(): void {
     const sugerencia: NuevoComentarioNovedad = {
       Texto: this.texto.trim(),
-      VersionCliente: Configuracion.VERSION
+      VersionCliente: Configuracion.VERSION,
+      ...camposCapturas(this.imagenesAdjuntas) // NestoApp#258
     };
-    if (this.imagenAdjunta) {
-      sugerencia.ImagenBase64 = this.imagenAdjunta.dataUrl;
-      sugerencia.ImagenTipo = this.imagenAdjunta.tipo;
-    }
     const esIncidencia = this.esIncidencia;
     const privada = this.privada && this.puedeSerPrivada;
     if (privada) {

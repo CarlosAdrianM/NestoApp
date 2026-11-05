@@ -14,7 +14,6 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
 import { AdjuntoNovedad, MisPerfilesNovedades, filtraPorPerfiles, iconoAdjunto, textoFiltroPerfiles, textoParaPerfiles, GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia, tieneVideo } from 'src/app/services/novedades.service';
 import { VideoNovedadComponent } from '../video-novedad/video-novedad.component';
-import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { TipoAportacion } from '../sugerir-caracteristica/sugerir-caracteristica.component';
 
 import { firstValueFrom } from 'rxjs';
@@ -212,7 +211,8 @@ export class ProfileComponent {
   /** Sin el endpoint (API vieja o caída) no hay página de sugerencias. */
   public sugerenciasDisponibles: boolean = false;
   /** Capturas ya bajadas, por Id de sugerencia (data URL). */
-  public imagenesSugerencias: { [idNovedad: number]: string } = {};
+  /** NestoApp#258: todas las capturas de cada sugerencia (data URLs, en orden). */
+  public imagenesSugerencias: { [idNovedad: number]: string[] } = {};
 
   private cargarSugerencias(): Promise<void> {
       return new Promise<void>(resolve => {
@@ -220,7 +220,7 @@ export class ProfileComponent {
               next: sugerencias => {
                   this.sugerencias = sugerencias;
                   this.sugerenciasDisponibles = true;
-                  sugerencias.filter(s => s.TieneImagen && !this.imagenesSugerencias[s.Id]).forEach(s => this.cargarImagenSugerencia(s.Id));
+                  sugerencias.filter(s => (s.TieneImagen || s.Capturas?.length) && !this.imagenesSugerencias[s.Id]).forEach(s => this.cargarImagenSugerencia(s));
                   resolve();
               },
               error: error => {
@@ -231,9 +231,9 @@ export class ProfileComponent {
       });
   }
 
-  private cargarImagenSugerencia(idNovedad: number): void {
-      this.novedadesService.leerImagenNovedad(idNovedad).subscribe({
-          next: async blob => { this.imagenesSugerencias[idNovedad] = await leerComoDataUrl(blob); },
+  private cargarImagenSugerencia(sugerencia: Novedad): void {
+      this.novedadesService.leerCapturasComoDataUrl(sugerencia.Capturas, !!sugerencia.TieneImagen, () => this.novedadesService.leerImagenNovedad(sugerencia.Id)).subscribe({
+          next: urls => { if (urls.length) { this.imagenesSugerencias[sugerencia.Id] = urls; } },
           error: error => console.error('No se ha podido cargar la captura de la sugerencia', error)
       });
   }

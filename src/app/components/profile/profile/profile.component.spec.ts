@@ -17,7 +17,9 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { NovedadesService } from 'src/app/services/novedades.service';
 import { ProfileService } from './profile.service';
 import { TrozosMencionPipe } from 'src/app/pipes/trozos-mencion.pipe';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, from, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { leerComoDataUrl } from 'src/app/utils/ajustar-imagen';
 import { convertToParamMap } from '@angular/router';
 import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
 
@@ -40,6 +42,9 @@ describe('ProfileComponent', () => {
       ])),
       buscar: jasmine.createSpy('buscar').and.returnValue(of([])),
       leerImagenNovedad: jasmine.createSpy('leerImagenNovedad').and.returnValue(of(new Blob(['x'], { type: 'image/png' }))),
+      // NestoApp#258: como el real, pero sin HttpClient (una imagen de antes sale por el respaldo)
+      leerCapturasComoDataUrl: (capturas: any[], tieneImagen: boolean, respaldo: () => any) =>
+        tieneImagen && !(capturas?.length) ? respaldo().pipe(switchMap((b: Blob) => from(leerComoDataUrl(b))), map((u: string) => [u])) : of([]),
       // NestoApp#221 / #218
       leerMisPerfiles: jasmine.createSpy('leerMisPerfiles').and.returnValue(of(null)),
       descargarAdjunto: jasmine.createSpy('descargarAdjunto').and.returnValue(of(new Blob(['%PDF'], { type: 'application/pdf' })))
@@ -326,7 +331,7 @@ describe('ProfileComponent', () => {
       await new Promise(r => setTimeout(r, 50)); // FileReader
 
       expect(novedadesService.leerImagenNovedad).toHaveBeenCalledWith(9);
-      expect(otro.imagenesSugerencias[9]).toContain('data:');
+      expect(otro.imagenesSugerencias[9][0]).toContain('data:');
     });
 
     it('al crear una sugerencia se recarga la lista y se salta a ella', fakeAsync(() => {

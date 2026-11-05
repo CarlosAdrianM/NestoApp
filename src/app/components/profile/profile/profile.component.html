@@ -176,7 +176,8 @@
                   <p *ngIf="textoOriginalAparte(sugerencia)" class="texto-original">«<span *ngFor="let trozo of sugerencia.TextoOriginal | trozosMencion" [class.mencion]="trozo.mencion">{{ trozo.texto }}</span>»</p>
                   <!-- NestoApp#203: el contexto que añade la API (solo le llega a Dirección / Informática) -->
                   <pre *ngIf="sugerencia.Contexto" class="contexto-incidencia">{{ sugerencia.Contexto }}</pre>
-                  <img *ngIf="imagenesSugerencias[sugerencia.Id]" class="captura-sugerencia" [src]="imagenesSugerencias[sugerencia.Id]" alt="Captura de la sugerencia" />
+                  <!-- NestoApp#258: todas las capturas de la sugerencia -->
+                  <img *ngFor="let src of imagenesSugerencias[sugerencia.Id] || []; let i = index" class="captura-sugerencia" [src]="src" [alt]="'Captura ' + (i + 1) + ' de la sugerencia'" />
                   <p class="autor-sugerencia" *ngIf="sugerencia.SugeridaNombre || sugerencia.SugeridaFecha">
                     {{ sugerencia.EsIncidencia ? 'Avisado' : 'Sugerida' }}<span *ngIf="sugerencia.SugeridaNombre"> por {{ sugerencia.SugeridaNombre }}</span><span *ngIf="sugerencia.SugeridaFecha"> el {{ sugerencia.SugeridaFecha | date:'dd/MM/yyyy' }}</span>
                   </p>

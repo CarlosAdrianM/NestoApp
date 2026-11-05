@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { leerComoDataUrl } from '../utils/ajustar-imagen';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { Observable, of, forkJoin, from } from 'rxjs';
+import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
 import { Mencionable } from '../utils/menciones';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 
@@ -34,6 +35,8 @@ export interface Novedad {
   /** Pendiente, Aceptada, Implementada o Descartada. */
   Estado?: string | null;
   TieneImagen?: boolean;
+  /** NestoApp#258 / NestoAPI#754: todas las capturas (sin bytes aquí). Vacía o ausente con una API vieja o una imagen de antes. */
+  Capturas?: CapturaNovedad[] | null;
   /** NestoApp#203 / NestoAPI#558: aviso de algo que no funciona (Categoria = «Incidencia»). */
   EsIncidencia?: boolean;
   /** NestoApp#203: versión, pantalla y errores recientes. Solo llega a Dirección / Informática. */
@@ -132,15 +135,29 @@ export interface ComentarioNovedad {
   Texto: string;
   Fecha: string;
   TieneImagen: boolean;
+  /** NestoApp#258 / NestoAPI#754 */
+  Capturas?: CapturaNovedad[] | null;
   /** Es de quien pregunta: puede borrarlo. */
   EsMio: boolean;
 }
 
+/** NestoApp#258 / NestoAPI#754: una captura de una sugerencia o un comentario; los bytes se piden por su Id. */
+export interface CapturaNovedad {
+  Id: number;
+  Tipo?: string;
+  Bytes?: number;
+  Orden?: number;
+}
+
+export const MAXIMO_CAPTURAS = 10;
+
 export interface NuevoComentarioNovedad {
   Texto: string;
-  /** Admite el prefijo «data:image/...;base64,». */
+  /** Admite el prefijo «data:image/...;base64,». La primera, para servidores viejos. */
   ImagenBase64?: string;
   ImagenTipo?: string;
+  /** NestoApp#258 / NestoAPI#754: todas, en orden (máximo 10, 2 MB cada una). La repetida con ImagenBase64 cuenta una vez. */
+  ImagenesBase64?: string[];
   VersionCliente?: string;
   /** NestoApp#203 / NestoAPI#558: true = «Algo no funciona»; sin él, una sugerencia de siempre. */
   EsIncidencia?: boolean;
@@ -349,6 +366,27 @@ export class NovedadesService {
   /** La captura de una sugerencia, como blob por el JWT (igual que las de los comentarios). */
   public leerImagenNovedad(idNovedad: number): Observable<Blob> {
     return this.http.get(`${Configuracion.API_URL}/Novedades/${idNovedad}/Imagen`, { responseType: 'blob' });
+  }
+
+  /** NestoApp#258 / NestoAPI#754: una captura por su Id (mismos permisos que la novedad). */
+  public leerCaptura(idCaptura: number): Observable<Blob> {
+    return this.http.get(`${Configuracion.API_URL}/Novedades/Capturas/${idCaptura}`, { responseType: 'blob' });
+  }
+
+  /**
+   * NestoApp#258: las capturas de una sugerencia o un comentario como data URLs, en orden. Con `Capturas` se piden
+   * una a una; si viene vacía y TieneImagen es true es una imagen de antes y se usa el endpoint de siempre (respaldo).
+   */
+  public leerCapturasComoDataUrl(capturas: CapturaNovedad[] | null | undefined, tieneImagen: boolean, respaldo: () => Observable<Blob>): Observable<string[]> {
+    const ids = (capturas || []).map(c => c?.Id).filter(id => !!id);
+    const peticiones = ids.length > 0 ? ids.map(id => this.leerCaptura(id)) : (tieneImagen ? [respaldo()] : []);
+    if (peticiones.length === 0) {
+      return of([]);
+    }
+    return forkJoin(peticiones.map(p => p.pipe(
+      switchMap(blob => from(leerComoDataUrl(blob))),
+      catchError(() => of(''))
+    ))).pipe(map(urls => urls.filter(u => !!u)));
   }
 
   /** NestoAPI#527: todas las palabras, sin distinguir tildes. Version null = sugerencia. */

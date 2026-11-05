@@ -1,13 +1,16 @@
-<div class="adjunta" *ngIf="imagen">
-  <img class="miniatura" [src]="imagen.dataUrl" alt="Imagen que se va a enviar" />
-  <ion-button size="small" fill="clear" color="medium" (click)="quitarImagen()">Quitar imagen</ion-button>
+<!-- NestoApp#258 / NestoAPI#754: varias capturas, con miniatura y «Quitar» cada una -->
+<div class="adjuntas" *ngIf="imagenes.length > 0">
+  <div class="adjunta" *ngFor="let img of imagenes; let i = index">
+    <img class="miniatura" [src]="img.dataUrl" [alt]="'Captura ' + (i + 1) + ' que se va a enviar'" />
+    <ion-button size="small" fill="clear" color="medium" (click)="quitarImagen(i)" [attr.aria-label]="'Quitar la captura ' + (i + 1)">Quitar</ion-button>
+  </div>
 </div>
 <ion-note *ngIf="preparandoImagen" color="medium" class="error-imagen">Preparando la imagen…</ion-note>
 <ion-note *ngIf="errorImagen" color="danger" class="error-imagen">{{ errorImagen }}</ion-note>
 
 <div class="botones">
-  <input #fichero type="file" accept="image/*" hidden (change)="alElegirFichero($event)" />
-  <ion-button size="small" fill="outline" (click)="fichero.click()">Adjuntar captura de la galería</ion-button>
-  <ion-button *ngIf="puedeLeerPortapapeles" size="small" fill="outline" (click)="pegarImagen()">Pegar imagen</ion-button>
+  <input #fichero type="file" accept="image/*" multiple hidden (change)="alElegirFichero($event)" />
+  <ion-button size="small" fill="outline" (click)="fichero.click()" [disabled]="imagenes.length >= maximoCapturas">{{ imagenes.length > 0 ? 'Añadir otra captura' : 'Adjuntar captura de la galería' }}</ion-button>
+  <ion-button *ngIf="puedeLeerPortapapeles" size="small" fill="outline" (click)="pegarImagen()" [disabled]="imagenes.length >= maximoCapturas">Pegar imagen</ion-button>
   <ng-content></ng-content>
 </div>
