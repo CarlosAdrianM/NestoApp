@@ -41,6 +41,19 @@
     <ion-icon slot="end" name="create-outline" color="medium"></ion-icon>
   </ion-item>
 
+  <!-- NestoApp#217 (NestoAPI#613): los cupones del cliente -->
+  <ion-card *ngIf="!mostrarClientes && clienteSeleccionado && cupones.length > 0" class="cupones-cliente">
+    <ion-card-header>
+      <ion-card-subtitle>Cupones</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <p *ngFor="let cupon of cupones" class="cupon">
+        <ion-badge [color]="colorEstadoCupon(cupon.Estado)">{{ cupon.Estado }}</ion-badge> {{ cupon.Mensaje }}
+      </p>
+      <p class="pista-cupon">El cupón se aplica en la plantilla, al hacer el pedido.</p>
+    </ion-card-content>
+  </ion-card>
+
   <selector-clientes #selector *ngIf="mostrarClientes" (seleccionar)="clienteSeleccionado=$event;onSegmentChange();"></selector-clientes>
   <div scrollY="true">
   <div [ngSwitch]="tipoMovimientos">
@@ -106,7 +119,19 @@
               </ion-row>
             </ion-card-content>
           </ion-card>
+          <!-- NestoApp#69: facturas seleccionadas por correo (Nesto#259) o por WhatsApp (NestoAPI#737) -->
+          <ion-item *ngIf="facturasSeleccionadas.length > 0" lines="none" class="acciones-facturas">
+            <ion-button size="small" (click)="enviarFacturasPorCorreo()">
+              <ion-icon slot="start" name="mail-outline"></ion-icon>
+              Correo ({{ facturasSeleccionadas.length }})
+            </ion-button>
+            <ion-button size="small" color="success" (click)="enviarFacturasPorWhatsApp()">
+              <ion-icon slot="start" name="logo-whatsapp"></ion-icon>
+              WhatsApp ({{ facturasSeleccionadas.length }})
+            </ion-button>
+          </ion-item>
           <ion-item *ngFor="let mov of movimientosDeuda">
+            <ion-checkbox slot="start" [(ngModel)]="mov.seleccionado" (ionChange)="toggleSeleccion(mov)" [attr.aria-label]="'Seleccionar la factura ' + mov.documento"></ion-checkbox>
             <ion-label class="ion-text-wrap">
               <h3>{{mov.fecha | date: 'dd/MM/yy'}}</h3>
               <p>{{mov.concepto}}</p>

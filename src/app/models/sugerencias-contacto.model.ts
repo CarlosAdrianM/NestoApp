@@ -48,6 +48,8 @@ export interface SugerenciaContacto {
   TieneChequeRegalo?: boolean;
   /** NestoApp#263 (Nesto#587): desde el día 1 del mes nadie ha hablado con el cliente (solo marca, no cambia la lista). */
   SinContactoEsteMes?: boolean;
+  /** NestoAPI#677/#623: por qué entró en la lista: Probabilidad, Cobertura, ChequeRegalo o LeadCampana (NestoApp#227). */
+  Origen?: string | null;
 }
 
 /** NestoApp#219 (Nesto#521): GET api/Vendedores/VisiblesEnSugerencias. Primero el del usuario. */

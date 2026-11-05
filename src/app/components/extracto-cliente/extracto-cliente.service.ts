@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { HorarioPreferible } from 'src/app/models/horario-preferible.model';
+import { ResultadoEnvioFacturasCorreo } from 'src/app/models/envio-facturas.model';
 import { Observable, of } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
+import { catchError, timeout, map } from 'rxjs/operators';
 import { RespuestaRevisarConcepto } from 'src/app/models/revision-concepto.model';
 import { Usuario } from 'src/app/models/Usuario';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
@@ -23,6 +24,24 @@ export class ExtractoClienteService {
   ) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/ExtractosCliente';
+
+  /** NestoApp#69 (Nesto#259): el correo de facturas del cliente (persona de Factura Electrónica) para proponerlo; '' si no hay. */
+  public leerCorreoFacturas(empresa: string, numeroFactura: string): Observable<string> {
+    let params = new HttpParams();
+    params = params.append('empresa', (empresa || '1').toString().trim());
+    params = params.append('numeroFactura', (numeroFactura || '').toString().trim());
+    return this.http.get<{ Correo?: string }>(`${Configuracion.API_URL}/Facturas/CorreoFacturas`, { params }).pipe(
+      map(r => (r?.Correo || '').trim()),
+      catchError(() => of(''))
+    );
+  }
+
+  /** NestoApp#69 (Nesto#259): las facturas (del mismo cliente) a esos correos. */
+  public enviarFacturasPorCorreo(empresa: string, facturas: string[], correos: string[]): Observable<ResultadoEnvioFacturasCorreo> {
+    return this.http.post<ResultadoEnvioFacturasCorreo>(`${Configuracion.API_URL}/Facturas/EnviarPorCorreo`, {
+      Empresa: (empresa || '1').toString().trim(), Facturas: facturas, Correos: correos
+    });
+  }
 
   /** NestoApp#260 / NestoAPI#763: el horario preferible del contacto. null si la API no lo tiene (anterior) o falla. */
   public leerHorarioPreferible(empresa: string, cliente: string, contacto: string): Observable<HorarioPreferible | null> {

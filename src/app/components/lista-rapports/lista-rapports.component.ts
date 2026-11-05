@@ -1,3 +1,4 @@
+import { esLeadDeCampana } from 'src/app/models/origen-cliente.model';
 import { Component, ViewChild } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DireccionesService } from '../../services/direcciones.service';
@@ -23,6 +24,8 @@ import { VisorFicheros } from 'src/app/services/visor-ficheros.service';
     standalone: false
 })
 export class ListaRapportsComponent extends SelectorBase {
+  /** NestoApp#227: lead de campaña en la lista de «Llamar». */
+  public readonly esLeadDeCampana = esLeadDeCampana;
   @ViewChild('clienteInput') myClienteInput;
   @ViewChild('buscarInput') myFiltroInput;
   @ViewChild('barraFiltrar') myBarraFiltrar;

@@ -11,7 +11,8 @@
 -- #266/#207 detalle por producto de la fecha de entrega (Nesto#599, NestoAPI#577), #257 correo de los cursos
 -- (NestoAPI#753; sugerencia 899), #255 P.O. obligatorio (NestoAPI#723), #264 avisos al grabar (NestoAPI#764),
 -- #258 varias capturas (NestoAPI#754; sugerencia 900), #269 borrador y modo de entrega (Manuel, 1050),
--- #270/#271 alta de cliente (NestoAPI#821/#826), #256 pedido mínimo del cupón (NestoAPI#613).
+-- #270/#271 alta de cliente (NestoAPI#821/#826), #256 pedido mínimo del cupón (NestoAPI#613), #69 facturas por correo y
+-- WhatsApp (Nesto#259, NestoAPI#737), #217 cupones en la ficha (NestoAPI#613), #227 origen del cliente (NestoAPI#623).
 -- Las sugerencias 866, 867, 899, 900, 908, 911 y 1021 son filas de Ambito 'Nesto' ya implementadas en Nesto:
 -- aquí van filas propias de NestoApp (la app solo lee las suyas). La 1050 (Manuel, Ambito 'Nesto', Pendiente)
 -- la decide Carlos en Novedades: aquí solo la fila de NestoApp.
@@ -51,14 +52,20 @@ FROM (VALUES
     (N'Mejorado', N'Alta de cliente: códigos postales nuevos y direcciones del extranjero',
      N'Al dar de alta un cliente eligiendo la dirección en el buscador de Google, un código postal que aún no teníamos se da de alta solo con la población y la provincia de Google (antes el alta fallaba). Y las direcciones de otros países quedan con el formato de su país (por ejemplo «12 Rue de la Paix»).'),
     (N'Mejorado', N'Cupones: el pedido mínimo es el de cada evento',
-     N'La condición del cupón en la plantilla ya dice el pedido mínimo que fija cada evento (puede no haber mínimo), en vez de calcularlo la app.')
+     N'La condición del cupón en la plantilla ya dice el pedido mínimo que fija cada evento (puede no haber mínimo), en vez de calcularlo la app.'),
+    (N'Nuevo', N'Enviar varias facturas por correo o por WhatsApp',
+     N'En las facturas del extracto del cliente puedes marcar varias y mandarlas de una vez: por correo (te proponemos el correo de facturación del cliente y puedes cambiarlo o poner varios) o por WhatsApp, con un solo mensaje ya escrito que lleva el enlace de descarga de cada factura. Solo tienes que pulsar enviar.'),
+    (N'Nuevo', N'Los cupones del cliente, en su extracto',
+     N'Al abrir el extracto de un cliente ves sus cupones (activos, emitidos o ya usados) con su importe, el código y hasta cuándo valen. El cupón se aplica en la plantilla al hacer el pedido, como hasta ahora.'),
+    (N'Nuevo', N'Origen del cliente y leads de campaña',
+     N'En el alta de cliente hay un desplegable «Origen» para decir de qué campaña viene (por ejemplo la de Meta de Harmonia). Los leads de campaña que aún no has llamado salen los primeros en «Llamar», con la etiqueta «Lead de campaña» y la hora antes de la que hay que llamar; si se pasa el plazo, te llega un aviso.')
 ) AS n (Categoria, Titulo, Descripcion)
 WHERE NOT EXISTS (
     SELECT 1 FROM dbo.Novedades x
     WHERE x.Ambito = 'NestoApp' AND x.[Version] = '2.27.0' AND x.Titulo = n.Titulo
 );
 
--- Comprobación: 15 filas nuevas.
+-- Comprobación: 18 filas nuevas.
 SELECT Id, [Version], Categoria, Titulo, Ambito, Estado
 FROM dbo.Novedades
 WHERE Ambito = 'NestoApp' AND [Version] = '2.27.0'

@@ -82,6 +82,23 @@ describe('ClienteService', () => {
     });
   });
 
+  // NestoApp#227 / NestoAPI#623
+  describe('leerOrigenes (#227)', () => {
+    it('pide los orígenes activos', () => {
+      let resultado: any;
+      service.leerOrigenes().subscribe(r => resultado = r);
+      httpMock.expectOne(Configuracion.API_URL + '/Clientes/Origenes').flush([{ Codigo: 'META-HARMONIA-0926', Descripcion: 'Lead de Meta' }]);
+      expect(resultado[0].Codigo).toBe('META-HARMONIA-0926');
+    });
+
+    it('con una API anterior (404), ninguno', () => {
+      let resultado: any;
+      service.leerOrigenes().subscribe(r => resultado = r);
+      httpMock.expectOne(Configuracion.API_URL + '/Clientes/Origenes').flush({}, { status: 404, statusText: 'Not Found' });
+      expect(resultado).toEqual([]);
+    });
+  });
+
   describe('corregirNif (issue #157)', () => {
     it('hace POST con Cliente y Nif en el body', () => {
       service.corregirNif('15528', '12345678Z').subscribe();

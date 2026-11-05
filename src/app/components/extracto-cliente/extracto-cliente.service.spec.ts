@@ -71,3 +71,40 @@ describe('ExtractoClienteService: horario preferible (#260)', () => {
     req.flush({ Texto: 'L-V 10:00-14:00' });
   });
 });
+
+/** NestoApp#69 (Nesto#259): facturas por correo. */
+describe('ExtractoClienteService: facturas por correo (#69)', () => {
+  let service: ExtractoClienteService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [Usuario, File, AuthService, { provide: Storage, useValue: {} }, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+    });
+    service = TestBed.inject(ExtractoClienteService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('propone el correo de facturas del cliente (y nada si no hay o falla)', () => {
+    let correo: string;
+    service.leerCorreoFacturas('1', 'NV2616199').subscribe(c => correo = c);
+    const req = httpMock.expectOne(r => r.url === Configuracion.API_URL + '/Facturas/CorreoFacturas');
+    expect(req.request.params.get('numeroFactura')).toBe('NV2616199');
+    req.flush({ Correo: ' facturas@cliente.com ' });
+    expect(correo).toBe('facturas@cliente.com');
+
+    service.leerCorreoFacturas('1', 'NV1').subscribe(c => correo = c);
+    httpMock.expectOne(() => true).flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(correo).toBe('');
+  });
+
+  it('manda las facturas y los correos', () => {
+    service.enviarFacturasPorCorreo('1', ['NV1', 'NV2'], ['a@b.com']).subscribe();
+    const req = httpMock.expectOne(Configuracion.API_URL + '/Facturas/EnviarPorCorreo');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ Empresa: '1', Facturas: ['NV1', 'NV2'], Correos: ['a@b.com'] });
+    req.flush({ Enviado: true, Facturas: ['NV1', 'NV2'], Omitidas: [], Correos: ['a@b.com'] });
+  });
+});

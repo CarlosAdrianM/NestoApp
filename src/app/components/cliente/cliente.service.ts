@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { OrigenCliente } from 'src/app/models/origen-cliente.model';
 import { CacheService } from '../../services/cache.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
@@ -24,6 +25,14 @@ export class ClienteService {
       .pipe(
         map(response => this.toCamelCase(response))
       );
+  }
+
+  /** NestoApp#227 / NestoAPI#623: los orígenes de cliente activos (campañas). Con una API anterior o un error, ninguno. */
+  leerOrigenes(): Observable<OrigenCliente[]> {
+    return this.http.get<OrigenCliente[]>(Configuracion.API_URL + '/Clientes/Origenes').pipe(
+      map(origenes => origenes || []),
+      catchError(() => of([]))
+    );
   }
 
   validarDatosGenerales(cliente: any): Observable<any> {

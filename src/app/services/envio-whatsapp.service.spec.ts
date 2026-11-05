@@ -82,6 +82,46 @@ describe('EnvioWhatsAppService (#261)', () => {
     expect(abiertas[0]).toContain('wa.me/?text=');
   }));
 
+  // NestoApp#69: varias facturas en un mensaje
+  it('con varios documentos pide un enlace por cada uno y abre un solo mensaje con todos', fakeAsync(() => {
+    service.enviarVariosDocumentos('Factura', '1', ['NV1', 'NV2']);
+    tick();
+    httpMock.expectOne(r => r.body.Numero === 'NV1').flush({ ...enlace(['34600111222']), Numero: 'NV1', Tipo: 'Factura', Url: 'https://x/d/1' });
+    tick();
+    httpMock.expectOne(r => r.body.Numero === 'NV2').flush({ ...enlace(['34600111222']), Numero: 'NV2', Tipo: 'Factura', Url: 'https://x/d/2' });
+    tick();
+
+    expect(abiertas.length).toBe(1);
+    const texto = decodeURIComponent(abiertas[0].split('?text=')[1]);
+    expect(abiertas[0]).toContain('wa.me/34600111222?');
+    expect(texto).toContain('https://x/d/1');
+    expect(texto).toContain('https://x/d/2');
+    expect(texto).toContain('Factura NV2');
+  }));
+
+  it('si un enlace falla, se avisa y se mandan los demás', fakeAsync(() => {
+    service.enviarVariosDocumentos('Factura', '1', ['NV1', 'NV2']);
+    tick();
+    httpMock.expectOne(r => r.body.Numero === 'NV1').flush({ Message: 'no existe' }, { status: 404, statusText: 'Not Found' });
+    tick();
+    httpMock.expectOne(r => r.body.Numero === 'NV2').flush({ ...enlace(['34600111222']), Numero: 'NV2', Tipo: 'Factura', Url: 'https://x/d/2' });
+    tick();
+
+    expect(alertas[0].header).toBe('Algunas no se pueden mandar');
+    expect(alertas[0].message).toContain('NV1');
+    expect(abiertas.length).toBe(1);
+    // Con una sola factura que sí se pudo preparar, va el texto de la API de esa factura.
+    expect(decodeURIComponent(abiertas[0])).toContain(enlace([]).Texto);
+  }));
+
+  it('con uno solo, el camino de siempre (texto de la API)', fakeAsync(() => {
+    service.enviarVariosDocumentos('Factura', '1', ['NV1']);
+    tick();
+    httpMock.expectOne(() => true).flush(enlace(['34600111222']));
+    tick();
+    expect(abiertas[0]).toBe('https://wa.me/34600111222?text=' + encodeURIComponent(enlace([]).Texto));
+  }));
+
   it('si la API falla, se enseña el motivo y no se abre nada', fakeAsync(() => {
     service.enviarDocumento('Pedido', '1', 929498);
     tick();

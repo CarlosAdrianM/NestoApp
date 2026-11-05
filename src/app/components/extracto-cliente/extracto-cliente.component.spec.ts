@@ -12,7 +12,8 @@ import { ExtractoClienteComponent, ModalEnviarEnlaceCobroComponent } from './ext
 import { of, throwError } from 'rxjs';
 import { ExtractoClienteService } from './extracto-cliente.service';
 import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
-import { AlertController } from '@ionic/angular';
+import { AlertController, LoadingController } from '@ionic/angular';
+import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
@@ -94,16 +95,23 @@ describe('ExtractoClienteComponent: horario preferible (#260) y factura por What
   let fixture: ComponentFixture<ExtractoClienteComponent>;
   let servicio: any;
   let whatsapp: any;
+  let cupones: any;
   let alertas: any[];
 
   beforeEach(waitForAsync(() => {
     alertas = [];
     servicio = {
       cargarDeuda: () => of([]),
+      leerCorreoFacturas: jasmine.createSpy('leerCorreoFacturas').and.returnValue(of('facturas@cliente.com')),
+      enviarFacturasPorCorreo: jasmine.createSpy('enviarFacturasPorCorreo').and.returnValue(of({ Enviado: true, Facturas: ['NV1', 'NV2'], Omitidas: [], Correos: ['facturas@cliente.com'] })),
       leerHorarioPreferible: jasmine.createSpy('leerHorarioPreferible').and.returnValue(of({ Texto: 'L-V 10:00-14:00', Aviso: 'Lo intentaremos, sin compromiso.' })),
       guardarHorarioPreferible: jasmine.createSpy('guardarHorarioPreferible').and.returnValue(of({ Texto: 'S 10:00-13:00' }))
     };
-    whatsapp = { enviarDocumento: jasmine.createSpy('enviarDocumento').and.returnValue(Promise.resolve(true)) };
+    whatsapp = {
+      enviarDocumento: jasmine.createSpy('enviarDocumento').and.returnValue(Promise.resolve(true)),
+      enviarVariosDocumentos: jasmine.createSpy('enviarVariosDocumentos').and.returnValue(Promise.resolve(true))
+    };
+    cupones = { leerCupones: jasmine.createSpy('leerCupones').and.returnValue(of([{ Codigo: 'EV-2611-P3DN', Estado: 'Activo', Importe: 50, Mensaje: 'Tiene un cupón de 50 € (EV-2611-P3DN) para cualquier pedido, hasta el 05/05/2027.' }])) };
     TestBed.configureTestingModule({
       declarations: [ExtractoClienteComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -112,6 +120,8 @@ describe('ExtractoClienteComponent: horario preferible (#260) y factura por What
         Usuario,
         { provide: ExtractoClienteService, useValue: servicio },
         { provide: EnvioWhatsAppService, useValue: whatsapp },
+        { provide: PlantillaVentaService, useValue: cupones },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve() }); } } },
         { provide: File, useValue: { dataDirectory: '' } },
         { provide: Storage, useValue: {} },
@@ -163,5 +173,92 @@ describe('ExtractoClienteComponent: horario preferible (#260) y factura por What
   it('la factura por WhatsApp pasa por el servicio con su empresa y número', () => {
     component.enviarFacturaPorWhatsApp({ empresa: '1', documento: 'NV2616199' });
     expect(whatsapp.enviarDocumento).toHaveBeenCalledWith('Factura', '1', 'NV2616199');
+  });
+});
+
+/** NestoApp#217 (cupones en la ficha) y #69 (facturas seleccionadas por correo y WhatsApp). */
+describe('ExtractoClienteComponent: cupones (#217) y facturas por correo / WhatsApp (#69)', () => {
+  let component: ExtractoClienteComponent;
+  let servicio: any;
+  let whatsapp: any;
+  let cupones: any;
+  let alertas: any[];
+  const esperar = () => new Promise(r => setTimeout(r, 0));
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    servicio = {
+      cargarDeuda: () => of([]),
+      leerHorarioPreferible: () => of(null),
+      leerCorreoFacturas: jasmine.createSpy('leerCorreoFacturas').and.returnValue(of('facturas@cliente.com')),
+      enviarFacturasPorCorreo: jasmine.createSpy('enviarFacturasPorCorreo').and.returnValue(of({ Enviado: true, Facturas: ['NV1', 'NV2'], Omitidas: [], Correos: ['facturas@cliente.com'] }))
+    };
+    whatsapp = { enviarDocumento: jasmine.createSpy('enviarDocumento'), enviarVariosDocumentos: jasmine.createSpy('enviarVariosDocumentos').and.returnValue(Promise.resolve(true)) };
+    cupones = { leerCupones: jasmine.createSpy('leerCupones').and.returnValue(of([{ Codigo: 'EV-2611-P3DN', Estado: 'Activo', Importe: 50, Mensaje: 'Tiene un cupón de 50 € (EV-2611-P3DN) para cualquier pedido, hasta el 05/05/2027.' }])) };
+    TestBed.configureTestingModule({
+      declarations: [ExtractoClienteComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: ExtractoClienteService, useValue: servicio },
+        { provide: EnvioWhatsAppService, useValue: whatsapp },
+        { provide: PlantillaVentaService, useValue: cupones },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve() }); } } },
+        { provide: File, useValue: { dataDirectory: '' } },
+        { provide: Storage, useValue: {} },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(ExtractoClienteComponent).componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0' };
+  }));
+
+  it('al elegir el cliente se cargan sus cupones (con el mensaje de la API) una sola vez', fakeAsync(() => {
+    component.onSegmentChange();
+    component.onSegmentChange();
+    tick();
+    expect(cupones.leerCupones).toHaveBeenCalledTimes(1);
+    expect(cupones.leerCupones).toHaveBeenCalledWith('1', '15191');
+    expect(component.cupones[0].Mensaje).toContain('cupón de 50 €');
+    expect(component.colorEstadoCupon('Activo')).toBe('success');
+    expect(component.colorEstadoCupon('Caducado')).toBe('danger');
+  }));
+
+  it('las facturas seleccionadas por correo: se propone el correo de Factura Electrónica, se puede cambiar y se mandan', async () => {
+    const f1 = { empresa: '1', documento: 'NV1', importe: 10 };
+    const f2 = { empresa: '1', documento: 'NV2', importe: 20 };
+    component.toggleSeleccion(f1);
+    component.toggleSeleccion(f2);
+    expect(component.facturasSeleccionadas.map(f => f.numero)).toEqual(['NV1', 'NV2']);
+
+    await component.enviarFacturasPorCorreo();
+    expect(servicio.leerCorreoFacturas).toHaveBeenCalledWith('1', 'NV1');
+    expect(alertas[0].inputs[0].value).toBe('facturas@cliente.com');
+    alertas[0].buttons.find((b: any) => b.text === 'Enviar').handler({ correos: 'facturas@cliente.com; otro@cliente.com' });
+    await esperar();
+
+    expect(servicio.enviarFacturasPorCorreo).toHaveBeenCalledWith('1', ['NV1', 'NV2'], ['facturas@cliente.com', 'otro@cliente.com']);
+    expect(alertas[1].header).toBe('Facturas enviadas');
+    expect(component.movimientosSeleccionados.length).toBe(0);
+  });
+
+  it('sin correo no se manda nada', async () => {
+    await component.mandarFacturasPorCorreo([{ empresa: '1', numero: 'NV1', importe: 1 }], ' ; ');
+    expect(servicio.enviarFacturasPorCorreo).not.toHaveBeenCalled();
+    expect(alertas[0].header).toBe('Falta el correo');
+  });
+
+  it('las seleccionadas por WhatsApp van en un solo mensaje y se limpia la selección', async () => {
+    component.toggleSeleccion({ empresa: '1', documento: 'NV1', importe: 10 });
+    component.toggleSeleccion({ empresa: '1', documento: 'NV2', importe: 20 });
+
+    await component.enviarFacturasPorWhatsApp();
+
+    expect(whatsapp.enviarVariosDocumentos).toHaveBeenCalledWith('Factura', '1', ['NV1', 'NV2']);
+    expect(component.movimientosSeleccionados.length).toBe(0);
   });
 });

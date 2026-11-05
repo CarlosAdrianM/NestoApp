@@ -1,3 +1,4 @@
+import { OrigenCliente, textoOrigenCliente } from 'src/app/models/origen-cliente.model';
 import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { AlertController, NavController, ModalController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
@@ -43,6 +44,7 @@ export class ClienteComponent implements AfterViewInit {
       private firebaseAnalytics: FirebaseAnalytics,
       private errorHandler: ErrorHandlerService,
   ){
+      this.servicio.leerOrigenes().subscribe(origenes => this.origenes = origenes || []); // NestoApp#227
       if (this.route.snapshot.queryParams && this.route.snapshot.queryParams.empresa &&
         this.route.snapshot.queryParams.cliente && this.route.snapshot.queryParams.contacto) {
           this.cargarCliente(
@@ -229,6 +231,13 @@ export class ClienteComponent implements AfterViewInit {
    * undefined y el vendedor veía "No se ha podido cargar el cliente: undefined". Además
    * encadena las InnerException del formato antiguo, que es donde va el motivo de verdad.
    */
+  /** NestoApp#227 / NestoAPI#623: orígenes de cliente (campañas) para el desplegable del alta. */
+  public origenes: OrigenCliente[] = [];
+
+  get textoOrigen(): string {
+    return textoOrigenCliente(this.cliente?.origen, this.origenes);
+  }
+
   private motivoDelError(error: any): string {
       return this.errorHandler.extractErrorDetail(error);
   }

@@ -80,6 +80,14 @@
               <ion-item>
                   <ion-input label="Teléfono" label-placement="floating" type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
+              <!-- NestoApp#227 / NestoAPI#623: origen del cliente (campañas). Opcional salvo que venga de una campaña -->
+              <ion-item *ngIf="origenes.length > 0">
+                  <ion-label>Origen</ion-label>
+                  <ion-select slot="end" aria-label="Origen del cliente" interface="action-sheet" [cancelText]="'Cancelar'" placeholder="Ninguno" [(ngModel)]="cliente.origen" name="origen">
+                      <ion-select-option [value]="null">Ninguno</ion-select-option>
+                      <ion-select-option *ngFor="let origen of origenes" [value]="origen.Codigo">{{ origen.Descripcion }}</ion-select-option>
+                  </ion-select>
+              </ion-item>
               <!-- Issue #162: días que el centro abre (el picking no sirve los días cerrados) -->
               <ion-list-header>
                   <ion-label>Días que abre el centro</ion-label>
@@ -117,6 +125,7 @@
                   <p></p>
                   <p *ngIf="cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!==''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
                   <p *ngIf="!(cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!=='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
+                  <p *ngIf="textoOrigen" (click)="slideActual = DATOS_GENERALES"><ion-icon name="megaphone-outline"></ion-icon> Origen: {{ textoOrigen }}</p>
                   <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
               </ion-card-content>
           </ion-card>

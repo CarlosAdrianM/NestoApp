@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActionSheetController, AlertController, LoadingController } from '@ionic/angular';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
-import { EnlaceDescarga, TipoDocumentoEnlace, textoMovil, urlWhatsApp } from '../models/enlace-descarga.model';
+import { EnlaceDescarga, TipoDocumentoEnlace, textoMovil, textoWhatsAppVarios, urlWhatsApp } from '../models/enlace-descarga.model';
 import { ErrorHandlerService } from './error-handler.service';
 
 /**
@@ -58,6 +58,48 @@ export class EnvioWhatsAppService {
       return false; // canceló
     }
     this.abrir(urlWhatsApp(movil, enlace.Texto));
+    return true;
+  }
+
+  /**
+   * NestoApp#69: varios documentos (las facturas seleccionadas) en un solo mensaje, con el enlace de cada uno. Se pide un
+   * enlace por documento; si alguno falla, se avisa y se mandan los demás.
+   */
+  public async enviarVariosDocumentos(tipo: TipoDocumentoEnlace, empresa: string, numeros: (string | number)[]): Promise<boolean> {
+    const lista = (numeros || []).map(n => (n ?? '').toString().trim()).filter(n => !!n);
+    if (lista.length === 0) {
+      return false;
+    }
+    if (lista.length === 1) {
+      return this.enviarDocumento(tipo, empresa, lista[0]);
+    }
+    const loading = await this.loadingCtrl.create({ message: 'Preparando los enlaces...' });
+    await loading.present();
+    const enlaces: EnlaceDescarga[] = [];
+    const fallidos: string[] = [];
+    for (const numero of lista) {
+      try {
+        enlaces.push(await firstValueFrom(this.crearEnlaceDescarga(tipo, empresa, numero)));
+      } catch {
+        fallidos.push(numero);
+      }
+    }
+    await loading.dismiss();
+    if (enlaces.length === 0) {
+      const alert = await this.alertCtrl.create({ header: 'No se han podido preparar los enlaces', message: `No se ha podido preparar ningún enlace (${fallidos.join(', ')}).`, buttons: ['Ok'] });
+      await alert.present();
+      return false;
+    }
+    if (fallidos.length > 0) {
+      const aviso = await this.alertCtrl.create({ header: 'Algunas no se pueden mandar', message: `No se ha podido preparar el enlace de: ${fallidos.join(', ')}. Se mandan las demás.`, buttons: ['Ok'] });
+      await aviso.present();
+      await aviso.onDidDismiss();
+    }
+    const movil = await this.elegirMovil(enlaces[0].Moviles || []);
+    if (movil === undefined) {
+      return false;
+    }
+    this.abrir(urlWhatsApp(movil, textoWhatsAppVarios(enlaces)));
     return true;
   }
 

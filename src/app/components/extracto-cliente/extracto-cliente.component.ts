@@ -12,6 +12,9 @@ import { ModalInscribirEventoComponent } from '../inscribir-evento/modal-inscrib
 import { EJEMPLO_HORARIO_PREFERIBLE, HorarioPreferible, avisoHorarioPreferible, textoHorarioPreferible } from 'src/app/models/horario-preferible.model';
 import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
+import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
+import { CuponCliente } from 'src/app/models/cupon.model';
+import { FacturaSeleccionada, textoResultadoEnvioFacturas } from 'src/app/models/envio-facturas.model';
 
 @Component({
     selector: 'app-extracto-cliente',
@@ -30,10 +33,109 @@ export class ExtractoClienteComponent implements AfterViewInit {
       private firebaseAnalytics: FirebaseAnalytics,
       private modalCtrl: ModalController,
       private envioWhatsApp: EnvioWhatsAppService,
-      private errorHandler: ErrorHandlerService
+      private errorHandler: ErrorHandlerService,
+      private plantillaVentaService: PlantillaVentaService
       ) {
       this.servicio = servicio;
   };
+
+  // ---- NestoApp#217 (NestoAPI#613): los cupones del cliente en su ficha ----
+  public cupones: CuponCliente[] = [];
+  private claveCupones: string | null = null;
+
+  public cargarCupones(cliente: any): void {
+      const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}` : null;
+      if (clave === this.claveCupones) {
+          return;
+      }
+      this.claveCupones = clave;
+      this.cupones = [];
+      if (!clave) {
+          return;
+      }
+      this.plantillaVentaService.leerCupones(cliente.empresa.toString().trim(), cliente.cliente.toString().trim()).subscribe({
+          next: cupones => { if (clave === this.claveCupones) { this.cupones = cupones || []; } },
+          error: () => { /* API anterior o sin cupones: nada */ }
+      });
+  }
+
+  public colorEstadoCupon(estado: string): string {
+      switch ((estado || '').trim()) {
+          case 'Activo': return 'success';
+          case 'Emitido': return 'primary';
+          case 'Usado': return 'medium';
+          default: return 'danger';
+      }
+  }
+
+  // ---- NestoApp#69 (Nesto#259 / NestoAPI#737): facturas seleccionadas por correo o por WhatsApp ----
+  get facturasSeleccionadas(): FacturaSeleccionada[] {
+      return (this.movimientosSeleccionados || [])
+          .filter(m => !!m?.documento)
+          .map(m => ({ empresa: (m.empresa || this.clienteSeleccionado?.empresa || '1').toString().trim(), numero: m.documento.toString().trim(), importe: +m.importe || 0 }));
+  }
+
+  private limpiarSeleccionFacturas(): void {
+      this.movimientosSeleccionados.forEach(mov => mov.seleccionado = false);
+      this.movimientosSeleccionados = [];
+  }
+
+  /** Correo propuesto (la persona de contacto de Factura Electrónica) y editable; varios separados por «;» o «,». */
+  public async enviarFacturasPorCorreo(): Promise<void> {
+      const facturas = this.facturasSeleccionadas;
+      if (facturas.length === 0) {
+          return;
+      }
+      const propuesto = await firstValueFrom(this.servicio.leerCorreoFacturas(facturas[0].empresa, facturas[0].numero)).catch(() => '');
+      const alert = await this.alertCtrl.create({
+          header: facturas.length === 1 ? 'Enviar la factura por correo' : `Enviar ${facturas.length} facturas por correo`,
+          message: 'Puede poner varios correos separados por «;».',
+          inputs: [{ name: 'correos', type: 'email', value: propuesto || '', placeholder: 'correo@cliente.com' }],
+          buttons: [
+              { text: 'Cancelar', role: 'cancel' },
+              { text: 'Enviar', handler: (datos: any) => { this.mandarFacturasPorCorreo(facturas, (datos?.correos ?? '').toString()); } }
+          ]
+      });
+      await alert.present();
+  }
+
+  public async mandarFacturasPorCorreo(facturas: FacturaSeleccionada[], correos: string): Promise<void> {
+      const lista = correos.split(/[;,]/).map(c => c.trim()).filter(c => !!c);
+      if (lista.length === 0) {
+          const aviso = await this.alertCtrl.create({ header: 'Falta el correo', message: 'Escriba al menos un correo.', buttons: ['Ok'] });
+          await aviso.present();
+          return;
+      }
+      const loading = await this.loadingCtrl.create({ message: 'Enviando las facturas...' });
+      await loading.present();
+      try {
+          const resultado = await firstValueFrom(this.servicio.enviarFacturasPorCorreo(facturas[0].empresa, facturas.map(f => f.numero), lista));
+          await loading.dismiss();
+          this.firebaseAnalytics.logEvent('extracto_cliente_facturas_correo', { facturas: facturas.length });
+          const alert = await this.alertCtrl.create({ header: resultado?.Enviado === false ? 'No se ha podido enviar' : 'Facturas enviadas', message: textoResultadoEnvioFacturas(resultado), buttons: ['Ok'] });
+          await alert.present();
+          if (resultado?.Enviado !== false) {
+              this.limpiarSeleccionFacturas();
+          }
+      } catch (error) {
+          await loading.dismiss();
+          const alert = await this.alertCtrl.create({ header: 'No se han podido enviar las facturas', message: this.errorHandler.extractErrorMessage(error), buttons: ['Ok'] });
+          await alert.present();
+      }
+  }
+
+  /** Las seleccionadas por WhatsApp: un mensaje con el enlace de descarga de cada una (como en Nesto, solo falta pulsar enviar). */
+  public async enviarFacturasPorWhatsApp(): Promise<void> {
+      const facturas = this.facturasSeleccionadas;
+      if (facturas.length === 0) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('extracto_cliente_facturas_whatsapp', { facturas: facturas.length });
+      const enviado = await this.envioWhatsApp.enviarVariosDocumentos('Factura', facturas[0].empresa, facturas.map(f => f.numero));
+      if (enviado) {
+          this.limpiarSeleccionFacturas();
+      }
+  }
 
   // ---- NestoApp#260 / NestoAPI#763: horario preferible de entrega del contacto ----
   public horarioPreferible: HorarioPreferible | null = null;
@@ -130,6 +232,7 @@ export class ExtractoClienteComponent implements AfterViewInit {
           return;
       }
       this.cargarHorarioPreferible(this.clienteSeleccionado); // NestoApp#260
+      this.cargarCupones(this.clienteSeleccionado); // NestoApp#217
       if (this.tipoMovimientos == "deuda") {
           this.cargarDeuda(this.clienteSeleccionado);
       } else if (this.tipoMovimientos == "facturas") {

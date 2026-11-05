@@ -33,7 +33,8 @@ describe('ClienteComponent', () => {
       validarDatosGenerales: () => of({}),
       validarDatosPago: () => of({}),
       modificarCliente: () => of({}),
-      leerClienteCrear: () => of({})
+      leerClienteCrear: () => of({}),
+      leerOrigenes: () => of([{ Codigo: 'META-HARMONIA-0926', Descripcion: 'Lead de Meta · campaña Harmonia', Activo: true }]) // NestoApp#227
     };
 
     TestBed.configureTestingModule({
@@ -265,6 +266,19 @@ describe('ClienteComponent', () => {
       tick();
 
       expect(alertCreado.message).toContain('No existe el código postal 28099');
+    }));
+
+    // NestoApp#227 / NestoAPI#623: origen del cliente (campañas)
+    it('los orígenes se cargan al abrir y el elegido viaja en el alta', fakeAsync(() => {
+      const crear = spyOn(servicio, 'crearCliente').and.returnValue(of({ Empresa: '1', 'Nº_Cliente': '20000', Contacto: '0' }));
+      component.cliente = { nombre: 'X', direccionCalleNumero: 'CALLE MAYOR, 5', direccionVerificada: true, origen: 'META-HARMONIA-0926', personasContacto: [] };
+      expect(component.origenes.length).toBe(1);
+      expect(component.textoOrigen).toBe('Lead de Meta · campaña Harmonia');
+
+      component.crearCliente();
+      tick();
+
+      expect((crear.calls.mostRecent().args[0] as any).origen).toBe('META-HARMONIA-0926');
     }));
 
     it('el botón de limpiar vacía la dirección y la reabre para buscar otra', () => {
