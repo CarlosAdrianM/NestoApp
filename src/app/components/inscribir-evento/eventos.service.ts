@@ -38,6 +38,11 @@ export class EventosService {
     ).pipe(map(inscripciones => inscripciones || []));
   }
 
+  /** NestoApp#268 (Nesto#619): los inscritos de un evento, con sus vendedores y si son de mis clientes. */
+  public leerInscripcionesEvento(eventoId: number): Observable<InscripcionEvento[]> {
+    return this.http.get<InscripcionEvento[]>(`${Configuracion.API_URL}/Eventos/${eventoId}/Inscripciones`).pipe(map(i => i || []));
+  }
+
   public inscribir(eventoId: number, peticion: InscribirEvento): Observable<InscripcionEvento> {
     return this.http.post<InscripcionEvento>(`${Configuracion.API_URL}/Eventos/${eventoId}/Inscripciones`, peticion);
   }

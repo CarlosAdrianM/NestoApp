@@ -3,7 +3,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { firstValueFrom } from 'rxjs';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
-import { Evento, FormaPagoInscripcion, InscripcionEvento, eventosInscribibles, seGeneraEnlace, textoPlazas } from 'src/app/models/eventos.model';
+import { Evento, FormaPagoInscripcion, InscripcionEvento, ModalidadEventoCurso, eventosInscribibles, modalidadesInscripcion, seGeneraEnlace, textoModalidadCurso, textoPlazas } from 'src/app/models/eventos.model';
 import { EventosService } from './eventos.service';
 
 const esNoEncontrado = (error: any) => error?.status === 404 || error?.statusCode === 404;
@@ -47,7 +47,22 @@ const esNoEncontrado = (error: any) => error?.status === 404 || error?.statusCod
         </ion-list>
 
         <ion-list *ngIf="eventoElegido">
+          <!-- NestoApp#217 (NestoAPI#690/#732): modalidad, también la plaza sin coste de los eventos gratuitos -->
+          <ion-item *ngIf="modalidades.length > 1">
+            <ion-label>Modalidad</ion-label>
+            <ion-select slot="end" aria-label="Modalidad" interface="action-sheet" [cancelText]="'Cancelar'" [(ngModel)]="modalidad">
+              <ion-select-option *ngFor="let m of modalidades" [value]="m.Modalidad">{{ textoModalidad(m) }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item *ngIf="modalidades.length === 1" lines="none">
+            <ion-label class="ion-text-wrap">{{ textoModalidad(modalidades[0]) }}</ion-label>
+          </ion-item>
+          <!-- NestoApp#268 (NestoAPI#811): cuántas personas vienen -->
           <ion-item>
+            <ion-label>Asistentes</ion-label>
+            <ion-input slot="end" aria-label="Asistentes" type="number" inputmode="numeric" min="1" max="20" [(ngModel)]="asistentes" class="asistentes"></ion-input>
+          </ion-item>
+          <ion-item *ngIf="!esGratuita">
             <ion-label>Forma de pago</ion-label>
             <ion-select slot="end" aria-label="Forma de pago" interface="action-sheet" [cancelText]="'Cancelar'" [(ngModel)]="formaPago">
               <ion-select-option value="Tarjeta">Tarjeta</ion-select-option>
@@ -55,16 +70,21 @@ const esNoEncontrado = (error: any) => error?.status === 404 || error?.statusCod
               <ion-select-option value="Efectivo">Efectivo</ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-item *ngIf="formaPago === 'Tarjeta'">
+          <ion-item *ngIf="!esGratuita && formaPago === 'Tarjeta'">
             <ion-label>Mandar enlace de pago</ion-label>
             <ion-toggle slot="end" aria-label="Mandar enlace de pago" [(ngModel)]="generarEnlace"></ion-toggle>
           </ion-item>
           <ion-item *ngIf="seGeneraEnlace">
             <ion-input label="Correo del cliente (opcional)" label-placement="stacked" type="email" [(ngModel)]="correo"></ion-input>
           </ion-item>
-          <ion-item lines="none">
+          <ion-item lines="none" *ngIf="!esGratuita">
             <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
               La plaza queda reservada 7 días (o hasta el día del evento) mientras no se pague.
+            </ion-label>
+          </ion-item>
+          <ion-item lines="none" *ngIf="esGratuita">
+            <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+              Plaza sin coste: no se genera enlace de pago. Si el evento es «gratuito por compra», la API comprueba que el cliente haya comprado o pedido el producto.
             </ion-label>
           </ion-item>
           <ion-button expand="block" [disabled]="inscribiendo" (click)="inscribir()">Inscribir en «{{ eventoElegido.Titulo }}»</ion-button>
@@ -98,13 +118,20 @@ const esNoEncontrado = (error: any) => error?.status === 404 || error?.statusCod
       </ion-list>
     </ion-content>
   `,
-  styles: [`.enlace { word-break: break-all; font-size: 0.85em; }`],
+  styles: [`.enlace { word-break: break-all; font-size: 0.85em; } .asistentes { max-width: 80px; text-align: right; }`],
   standalone: false
 })
 export class ModalInscribirEventoComponent implements OnInit {
   /** { empresa, cliente, contacto, nombre? } */
   cliente: any;
   correo: string = '';
+  /** NestoApp#268: si se abre desde la ficha de un evento, ese ya elegido. */
+  eventoId: number | null = null;
+  /** NestoApp#268 (NestoAPI#811): cuántas personas vienen con la inscripción. */
+  public asistentes: number = 1;
+  /** NestoApp#217 (NestoAPI#690): Reembolsable, NoReembolsable o Gratuita; null = la API elige. */
+  public modalidad: string | null = null;
+  public readonly textoModalidad = textoModalidadCurso;
 
   public eventos: Evento[] = [];
   public inscripciones: InscripcionEvento[] = [];
@@ -131,7 +158,16 @@ export class ModalInscribirEventoComponent implements OnInit {
   }
 
   get seGeneraEnlace(): boolean {
-    return seGeneraEnlace(this.formaPago, this.generarEnlace);
+    return !this.esGratuita && seGeneraEnlace(this.formaPago, this.generarEnlace);
+  }
+
+  get modalidades(): ModalidadEventoCurso[] {
+    return modalidadesInscripcion(this.eventoElegido);
+  }
+
+  /** Plaza sin coste: ni forma de pago ni enlace. */
+  get esGratuita(): boolean {
+    return this.modalidad === 'Gratuita' || (!this.modalidad && this.modalidades.length === 1 && this.modalidades[0].Modalidad === 'Gratuita');
   }
 
   public async cargarEventos(): Promise<void> {
@@ -141,6 +177,17 @@ export class ModalInscribirEventoComponent implements OnInit {
       this.eventos = eventosInscribibles(await firstValueFrom(this.servicio.leerEventos(this.cliente.empresa.trim())));
       if (this.eventos.length === 0) {
         this.mensaje = 'No hay eventos próximos con plazas libres.';
+      }
+      // NestoApp#268: desde la ficha del evento, ese ya elegido (y solo ese en la lista).
+      if (this.eventoId) {
+        const elegido = this.eventos.find(e => +e.Id === +this.eventoId);
+        if (elegido) {
+          this.eventos = [elegido];
+          this.elegir(elegido);
+        } else {
+          this.mensaje = 'Este evento ya no admite inscripciones (sin plazas, pasado o inactivo).';
+          this.eventos = [];
+        }
       }
     } catch (error) {
       this.eventos = [];
@@ -156,6 +203,9 @@ export class ModalInscribirEventoComponent implements OnInit {
 
   public elegir(evento: Evento): void {
     this.eventoElegido = evento;
+    // La modalidad por defecto: la única, o la primera de pago (como hace la API).
+    const modalidades = modalidadesInscripcion(evento);
+    this.modalidad = modalidades.length === 1 ? modalidades[0].Modalidad : (modalidades[0]?.Modalidad ?? null);
   }
 
   public async inscribir(): Promise<void> {
@@ -170,11 +220,19 @@ export class ModalInscribirEventoComponent implements OnInit {
         Cliente: this.cliente.cliente?.trim(),
         Contacto: this.cliente.contacto?.toString().trim(),
         Origen: 'NestoApp',
-        FormaPago: this.formaPago,
+        FormaPago: this.esGratuita ? undefined : this.formaPago,
         GenerarEnlacePago: this.seGeneraEnlace,
-        Correo: this.seGeneraEnlace && this.correo ? this.correo.trim() : undefined
+        Correo: this.seGeneraEnlace && this.correo ? this.correo.trim() : undefined,
+        Modalidad: this.modalidad || undefined, // NestoApp#217
+        Asistentes: Math.max(1, Math.floor(+this.asistentes || 1)) // NestoApp#268
       }));
       this.cargarInscripciones();
+      // Sugerencia 776: avisos (no errores) al inscribir, p. ej. que a la ficha le falta el teléfono.
+      const avisos = (this.resultado?.Avisos || []).filter(a => !!(a || '').trim());
+      if (avisos.length) {
+        const aviso = await this.alertCtrl.create({ header: 'Inscrito, pero ojo', message: avisos.join('\n\n'), buttons: ['Entendido'] });
+        await aviso.present();
+      }
     } catch (error) {
       const alerta = await this.alertCtrl.create({
         header: 'No se ha podido inscribir',

@@ -1,6 +1,7 @@
 import {
   Evento, eventosInscribibles, seGeneraEnlace, textoPlazas, esLineaCurso, sinLineasCurso, textoPedidosCreados,
-  textoModalidadCurso, textoFormatoEvento, textoPlazasLibres, modalidadesConImporte, nombreModalidadEvento, textoPreguntaCorreoCursos
+  textoModalidadCurso, textoFormatoEvento, textoPlazasLibres, modalidadesConImporte, nombreModalidadEvento, textoPreguntaCorreoCursos,
+  eventosProximos, textoAforo, inscripcionesVisibles, textoAsistentesExtra, modalidadesInscripcion
 } from './eventos.model';
 
 /** NestoApp#217 (NestoAPI#611): eventos a los que se puede inscribir a un cliente. */
@@ -104,5 +105,44 @@ describe('Pregunta del correo de los cursos (#257)', () => {
     expect(textoPreguntaCorreoCursos('TAR')).toBe('¿Le mandamos al cliente un correo con sus cursos y el enlace para pagarlos con tarjeta?');
     expect(textoPreguntaCorreoCursos('')).toContain('tarjeta');
     expect(textoPreguntaCorreoCursos(null)).toContain('tarjeta');
+  });
+});
+
+/** NestoApp#268 (Nesto#619) y #217 (NestoAPI#741/#732): eventos en la app. */
+describe('Eventos en la app (#268, #217)', () => {
+  const futuro = (dias: number) => { const d = new Date(); d.setDate(d.getDate() + dias); return d.toISOString().substring(0, 10) + 'T10:00:00'; };
+  const evento = (cambios: Partial<Evento> = {}): Evento => ({ Id: 1, Empresa: '1', Titulo: 'Curso', Fecha: futuro(5), ImporteSenal: 100, Activo: true, Plazas: 10, PlazasOcupadas: 7, ...cambios });
+
+  it('los próximos: activos y de hoy en adelante, también los llenos, por fecha', () => {
+    const lista = eventosProximos([evento({ Id: 1, Fecha: futuro(9) }), evento({ Id: 2, Fecha: futuro(-1) }), evento({ Id: 3, Fecha: futuro(2), PlazasOcupadas: 10 }), evento({ Id: 4, Activo: false })]);
+    expect(lista.map(e => e.Id)).toEqual([3, 1]);
+  });
+
+  it('aforo y apuntados', () => {
+    expect(textoAforo(evento())).toBe('7 apuntados de 10 plazas (quedan 3)');
+    expect(textoAforo(evento({ PlazasOcupadas: 9 }))).toBe('9 apuntados de 10 plazas (queda 1)');
+    expect(textoAforo(evento({ PlazasOcupadas: 10 }))).toBe('Completo: 10 de 10 plazas');
+    expect(textoAforo(evento({ Plazas: null, PlazasOcupadas: 1 }))).toBe('1 apuntado · sin límite de plazas');
+  });
+
+  it('«Solo mis clientes» filtra por EsDeMisClientes; si la API no lo manda, se ven todos', () => {
+    const inscripciones: any[] = [{ Id: 1, EsDeMisClientes: true }, { Id: 2, EsDeMisClientes: false }, { Id: 3, EsDeMisClientes: null }];
+    expect(inscripcionesVisibles(inscripciones, true).map(i => i.Id)).toEqual([1]);
+    expect(inscripcionesVisibles(inscripciones, false).map(i => i.Id)).toEqual([1, 2, 3]);
+    expect(inscripcionesVisibles([{ Id: 1 }, { Id: 2 }] as any, true).length).toBe(2);
+    expect(inscripcionesVisibles(null, true)).toEqual([]);
+  });
+
+  it('«+N» cuando vienen varias personas', () => {
+    expect(textoAsistentesExtra({ Asistentes: 3 } as any)).toBe('+2');
+    expect(textoAsistentesExtra({ Asistentes: 1 } as any)).toBe('');
+    expect(textoAsistentesExtra({} as any)).toBe('');
+  });
+
+  it('modalidades al inscribir: las de pago con importe y la plaza sin coste en los gratuitos', () => {
+    expect(modalidadesInscripcion(evento({ Modalidades: ['Reembolsable', 'NoReembolsable'], ImporteSenalNoReembolsable: 60 })).map(m => m.Modalidad)).toEqual(['Reembolsable', 'NoReembolsable']);
+    expect(modalidadesInscripcion(evento({ Gratuito: true, Modalidades: ['Gratuita'] })).map(m => `${m.Modalidad}:${m.Importe}`)).toEqual(['Gratuita:0']);
+    expect(modalidadesInscripcion(evento({ Modalidades: [] }))).toEqual([]);
+    expect(modalidadesInscripcion(null)).toEqual([]);
   });
 });

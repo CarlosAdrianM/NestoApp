@@ -174,6 +174,10 @@ export interface InscribirEvento {
   /** Solo con Tarjeta (o sin forma de pago). Por defecto, sí. */
   GenerarEnlacePago?: boolean;
   Correo?: string;
+  /** NestoAPI#690: Reembolsable, NoReembolsable o Gratuita. Sin ella, la API elige (Gratuita en un evento gratuito). */
+  Modalidad?: string;
+  /** NestoAPI#811: cuántas personas vienen (ocupa esas plazas). Sin él, 1. */
+  Asistentes?: number;
 }
 
 export interface InscripcionEvento {
@@ -195,6 +199,67 @@ export interface InscripcionEvento {
   ImportePagado: number | null;
   /** La página del enlace de pago, solo mientras se puede pagar. */
   UrlPago: string | null;
+  /** NestoAPI#690: Reembolsable, NoReembolsable o Gratuita. */
+  Modalidad?: string | null;
+  ImporteSenal?: number;
+  /** NestoAPI#811: cuántas personas vienen con la inscripción. */
+  Asistentes?: number;
+  /** Sugerencia 776: avisos (no errores) al inscribir, p. ej. que a la ficha le falta el teléfono. */
+  Avisos?: string[] | null;
+  /** Nesto#619: los vendedores del cliente. Solo en la lista de inscritos del evento. */
+  Vendedores?: string[] | null;
+  /** Nesto#619: es de los clientes de quien pide la lista (o de su equipo). Solo en la lista de inscritos; null si no se sabe. */
+  EsDeMisClientes?: boolean | null;
+  /** «Pendiente», «Confirmada», «No podrá ir», «Asistió», «No asistió». */
+  EstadoAsistenciaTexto?: string | null;
+}
+
+/** NestoApp#268: los próximos (activos y de hoy en adelante), también los llenos, por fecha. */
+export function eventosProximos(eventos: Evento[], hoy: Date = new Date()): Evento[] {
+  const hoyIso = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+  return (eventos || [])
+    .filter(e => e && e.Activo !== false && dia(e.Fecha) >= hoyIso)
+    .sort((a, b) => dia(a.Fecha).localeCompare(dia(b.Fecha)));
+}
+
+/** NestoApp#268: «7 apuntados de 10 plazas (quedan 3)», «Completo: 10 de 10 plazas» o «7 apuntados · sin límite de plazas». */
+export function textoAforo(evento: Evento): string {
+  const apuntados = +(evento?.PlazasOcupadas || 0);
+  const libres = plazasLibres(evento);
+  if (libres === null) {
+    return `${apuntados} ${apuntados === 1 ? 'apuntado' : 'apuntados'} · sin límite de plazas`;
+  }
+  if (libres === 0) {
+    return `Completo: ${apuntados} de ${evento.Plazas} plazas`;
+  }
+  return `${apuntados} ${apuntados === 1 ? 'apuntado' : 'apuntados'} de ${evento.Plazas} plazas (${libres === 1 ? 'queda 1' : `quedan ${libres}`})`;
+}
+
+/** NestoApp#268: la lista de inscritos con «Solo mis clientes». Si la API no dice de quién es nadie, se enseñan todos. */
+export function inscripcionesVisibles(inscripciones: InscripcionEvento[] | null | undefined, soloMisClientes: boolean): InscripcionEvento[] {
+  const lista = (inscripciones || []).filter(i => !!i);
+  if (!soloMisClientes || !lista.some(i => i.EsDeMisClientes !== null && i.EsDeMisClientes !== undefined)) {
+    return lista;
+  }
+  return lista.filter(i => i.EsDeMisClientes === true);
+}
+
+/** «+2» cuando vienen varias personas con la misma inscripción. */
+export function textoAsistentesExtra(inscripcion: InscripcionEvento | null | undefined): string {
+  const asistentes = +(inscripcion?.Asistentes || 1);
+  return asistentes > 1 ? `+${asistentes - 1}` : '';
+}
+
+/** NestoApp#217: las modalidades que se pueden elegir al inscribir: las de pago con su importe y, si es gratuito, «Plaza sin coste». */
+export function modalidadesInscripcion(evento: Evento | null | undefined): ModalidadEventoCurso[] {
+  if (!evento) {
+    return [];
+  }
+  const modalidades = modalidadesConImporte(evento).filter(m => m.Modalidad !== 'Gratuita');
+  if (evento.Gratuito || (evento.Modalidades || []).some(m => (m || '').trim() === 'Gratuita')) {
+    modalidades.push({ Modalidad: 'Gratuita', Nombre: nombreModalidadEvento('Gratuita'), Importe: 0 });
+  }
+  return modalidades;
 }
 
 function dia(fecha: string): string {

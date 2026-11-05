@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 
 /**
@@ -10,7 +10,7 @@ import { ModalController } from '@ionic/angular';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Pasar el pedido a...</ion-title>
+        <ion-title>{{ titulo }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cancelar()">Cancelar</ion-button>
         </ion-buttons>
@@ -23,6 +23,8 @@ import { ModalController } from '@ionic/angular';
   standalone: false
 })
 export class ModalElegirClienteComponent {
+  /** NestoApp#268: el mismo modal sirve para elegir a quién se inscribe en un evento. */
+  @Input() public titulo: string = 'Pasar el pedido a...';
 
   constructor(private modalCtrl: ModalController) { }
 

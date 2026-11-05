@@ -32,9 +32,10 @@
           <ion-icon slot="start" name="person-outline"></ion-icon>
           <ion-label class="ion-text-wrap">{{ evento.Ponente }}</ion-label>
         </ion-item>
+        <!-- NestoApp#268: aforo y apuntados -->
         <ion-item>
           <ion-icon slot="start" name="people-outline"></ion-icon>
-          <ion-label class="ion-text-wrap" [color]="sinPlazas ? 'danger' : ''">{{ textoPlazas(evento) || 'Sin límite de plazas' }}</ion-label>
+          <ion-label class="ion-text-wrap" [color]="sinPlazas ? 'danger' : ''">{{ textoAforo(evento) }}</ion-label>
         </ion-item>
         <ion-item *ngIf="!evento.Activo">
           <ion-icon slot="start" name="close-circle-outline" color="danger"></ion-icon>
@@ -53,7 +54,40 @@
       </ng-container>
 
       <p *ngIf="evento.DescripcionLarga" class="descripcion">{{ evento.DescripcionLarga }}</p>
-      <p class="pista">Para inscribir a un cliente, abra su extracto y use «Eventos»; desde la plantilla, busque el curso y añádalo al pedido.</p>
+
+      <!-- NestoApp#268 / #217 (NestoAPI#741): inscribir a un cliente de los suyos -->
+      <ion-button expand="block" *ngIf="evento.Activo" [disabled]="sinPlazas" (click)="inscribirCliente()">
+        <ion-icon slot="start" name="person-add-outline"></ion-icon>
+        {{ sinPlazas ? 'Sin plazas libres' : 'Inscribir a un cliente' }}
+      </ion-button>
+      <p class="pista">También desde la plantilla: busque el curso y añádalo al pedido.</p>
     </ion-card-content>
   </ion-card>
+
+  <!-- NestoApp#268 (Nesto#619): los inscritos, con «Solo mis clientes» -->
+  <ion-list *ngIf="evento">
+    <ion-list-header><ion-label>Inscritos<p class="resumen-inscritos">{{ resumenInscritos }}</p></ion-label></ion-list-header>
+    <ion-item *ngIf="puedeFiltrarMisClientes" lines="full">
+      <ion-label>Solo mis clientes</ion-label>
+      <ion-toggle slot="end" aria-label="Solo mis clientes" [(ngModel)]="soloMisClientes"></ion-toggle>
+    </ion-item>
+    <ion-item *ngIf="cargandoInscripciones" lines="none">
+      <ion-spinner slot="start" name="crescent"></ion-spinner>
+      <ion-label>Cargando los inscritos…</ion-label>
+    </ion-item>
+    <ion-item *ngIf="!cargandoInscripciones && inscripcionesVisibles.length === 0" lines="none">
+      <ion-label class="ion-text-wrap" color="medium">{{ soloMisClientes && puedeFiltrarMisClientes ? 'Ninguno de sus clientes está inscrito todavía.' : 'Todavía no hay nadie inscrito.' }}</ion-label>
+    </ion-item>
+    <ion-item *ngFor="let inscripcion of inscripcionesVisibles" lines="full">
+      <ion-label class="ion-text-wrap">
+        <h2>{{ inscripcion.Nombre }} <ion-badge *ngIf="asistentesExtra(inscripcion)" color="medium">{{ asistentesExtra(inscripcion) }}</ion-badge></h2>
+        <p>{{ inscripcion.Cliente }}/{{ inscripcion.Contacto }}<span *ngIf="inscripcion.Vendedores?.length"> · vendedor {{ inscripcion.Vendedores.join(', ') }}</span></p>
+        <p>
+          <ion-badge [color]="inscripcion.Estado === 'Pagada' || inscripcion.ImportePagado ? 'success' : 'warning'">{{ inscripcion.EstadoTexto }}</ion-badge>
+          <ion-badge *ngIf="inscripcion.EstadoAsistenciaTexto && inscripcion.EstadoAsistenciaTexto !== 'Pendiente'" color="medium">{{ inscripcion.EstadoAsistenciaTexto }}</ion-badge>
+          <ion-badge *ngIf="inscripcion.EsDeMisClientes" color="primary">Mi cliente</ion-badge>
+        </p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
 </ion-content>
