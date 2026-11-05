@@ -1143,6 +1143,83 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
 
     expect(servicio.modoServicioSugerido).not.toHaveBeenCalled();
   }));
+
+  // NestoApp#269 (pedido 929879 de Manuel): el borrador ya se había aplicado y limpiado cuando se
+  // llegó al resumen, y la sugerencia pisaba en silencio el modo que el vendedor había elegido.
+  describe('el modo elegido sobrevive a restaurar el borrador (#269)', () => {
+    const restaurar = (borrador: any) => {
+      component['borradorEnRestauracion'] = borrador;
+      component['aplicarConfiguracionBorrador']();
+      component['borradorEnRestauracion'] = null; // como hace onProductosCargados
+      tick();
+    };
+
+    it('el borrador guarda si el modo lo eligió el vendedor', () => {
+      component.cambiarModoServicio(4);
+      expect(component['crearBorradorDesdeEstadoActual']().modoServicioElegidoPorUsuario).toBeTrue();
+    });
+
+    it('un borrador con modo elegido a mano: la sugerencia no lo pisa y se graba como «Usuario»', fakeAsync(() => {
+      restaurar({ modoServicio: 4, servirJunto: false, modoServicioElegidoPorUsuario: true });
+      servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+
+      component.cargarModoServicioSugerido();
+      tick();
+
+      expect(component.modoServicio).toBe(4);
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Usuario');
+    }));
+
+    it('un borrador cuyo modo venía sugerido se recalcula como siempre', fakeAsync(() => {
+      restaurar({ modoServicio: 4, servirJunto: false, modoServicioElegidoPorUsuario: false });
+      servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+
+      component.cargarModoServicioSugerido();
+      tick();
+
+      expect(component.modoServicio).toBe(3);
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Sugerido');
+    }));
+
+    it('un borrador antiguo sin el dato: su modo distinto del sugerido cuenta como elección', fakeAsync(() => {
+      restaurar({ modoServicio: 4, servirJunto: false });
+      servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+
+      component.cargarModoServicioSugerido();
+      tick();
+
+      expect(component.modoServicio).toBe(4);
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Usuario');
+    }));
+
+    it('un borrador antiguo cuyo modo coincide con el sugerido sigue siendo «Sugerido»', fakeAsync(() => {
+      restaurar({ modoServicio: 3, servirJunto: false });
+      servicio.modoServicioSugerido.and.returnValue(sugerencia(3, 'Hay líneas que reponer de tiendas'));
+
+      component.cargarModoServicioSugerido();
+      tick();
+
+      expect(component.modoServicio).toBe(3);
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Sugerido');
+    }));
+
+    it('si el modo del borrador ya no se permite, salta la alerta de #187 y se pasa al sugerido', fakeAsync(() => {
+      const alertCtrl = TestBed.inject(AlertController);
+      spyOn(alertCtrl, 'create').and.callThrough();
+      restaurar({ modoServicio: 4, servirJunto: false, modoServicioElegidoPorUsuario: true });
+      servicio.modoServicioSugerido.and.returnValue(of({
+        Modo: 1, Nombre: 'Todo junto', Motivo: 'Todo en stock',
+        Modos: [{ Modo: 1, Nombre: 'Todo junto', Permitido: true }, { Modo: 4, Nombre: 'Resto de una vez', Permitido: false, Motivo: 'No falta nada' }]
+      }));
+
+      component.cargarModoServicioSugerido();
+      tick();
+
+      expect(component.modoServicio).toBe(1);
+      expect(alertCtrl.create).toHaveBeenCalled();
+      expect(component['prepararPedido']().OrigenModoServicio).toBe('Corregido');
+    }));
+  });
 });
 
 /**

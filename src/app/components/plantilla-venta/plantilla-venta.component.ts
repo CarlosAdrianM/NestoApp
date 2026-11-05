@@ -326,6 +326,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   private modoServicioSeleccionado: number | null = null;
   /** NestoApp#184: si el vendedor ha elegido modo a mano, la sugerencia del servidor no le pisa. */
   private modoServicioElegidoPorUsuario: boolean = false;
+  /** NestoApp#269: modo que traía un borrador antiguo (sin modoServicioElegidoPorUsuario). Si la
+   * sugerencia del servidor difiere, se trata como elección del vendedor en vez de pisarlo en silencio. */
+  private modoServicioDeBorradorSinOrigen: number | null = null;
   /** Por qué el servidor sugiere ese modo (se enseña junto al selector). */
   public motivoModoServicio: string = '';
   /** Respaldo mientras el servidor no ha contestado (parámetro de usuario, si lo hay). */
@@ -1424,6 +1427,15 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
         // Se guarda para que un cambio de dirección de entrega no vuelva a caer en el
         // respaldo local: a partir de aquí, el «por defecto» de este pedido es este.
         this.modoServicioSugeridoServidor = sugerencia.Modo;
+
+        // NestoApp#269: un borrador antiguo no dice si el modo lo eligió el vendedor; si difiere
+        // de la sugerencia, es que lo cambió a mano (es lo que tenía en pantalla al guardar).
+        if (this.modoServicioDeBorradorSinOrigen != null) {
+          if (this.modoServicioDeBorradorSinOrigen !== sugerencia.Modo) {
+            this.modoServicioElegidoPorUsuario = true;
+          }
+          this.modoServicioDeBorradorSinOrigen = null;
+        }
 
         if (this.modoServicioElegidoPorUsuario) {
           const elegido = this.modoServicio;
@@ -2526,6 +2538,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.verSugerenciasOfertas = false;
       // NestoApp#184: el próximo pedido vuelve a aceptar la sugerencia del servidor.
       this.modoServicioElegidoPorUsuario = false;
+      this.modoServicioDeBorradorSinOrigen = null; // NestoApp#269
       this.modoServicioSugeridoServidor = null;
       this.modosServicio = null;
       this.motivoModoServicio = '';
@@ -3252,6 +3265,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       modoFacturacion: this.modoFacturacionSeleccionado ?? undefined, // NestoApp#197: solo si es una elección
       servirJunto: esTodoJunto(this.modoServicio),
       modoServicio: this.modoServicio, // NestoApp#174
+      modoServicioElegidoPorUsuario: this.modoServicioElegidoPorUsuario, // NestoApp#269
       comentarioPicking: this.clienteSeleccionado?.comentarioPicking || '',
       avisarConImporteAlCogerPicking: this.clienteSeleccionado?.avisarConImporteAlCogerPicking || false,
       recogerProducto: this.recogerProducto || false,
@@ -3864,6 +3878,23 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   }
 
   /**
+   * NestoApp#269: al restaurar un borrador, el modo de servicio que el vendedor había elegido a
+   * mano sigue siendo suyo (la sugerencia del servidor no lo pisa en silencio; si deja de tener
+   * sentido salta la alerta de #187). Un borrador anterior no trae el dato: se apunta su modo para
+   * compararlo con la sugerencia cuando llegue.
+   */
+  private restaurarOrigenModoServicio(borrador: BorradorPlantillaVenta): void {
+    if (borrador.modoServicioElegidoPorUsuario !== undefined) {
+      this.modoServicioElegidoPorUsuario = !!borrador.modoServicioElegidoPorUsuario;
+      this.modoServicioDeBorradorSinOrigen = null;
+    } else {
+      this.modoServicioElegidoPorUsuario = false;
+      this.modoServicioDeBorradorSinOrigen = borrador.modoServicio ?? null;
+    }
+    this.modoServicioCorregido = false;
+  }
+
+  /**
    * Aplica la configuración del borrador (formaPago, plazosPago, servirJunto, etc.)
    * Se debe llamar DESPUÉS de cargar el cliente/dirección para sobrescribir valores
    */
@@ -3884,6 +3915,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       if (borrador.modoServicio !== undefined || borrador.servirJunto !== undefined) {
         this.modoServicioSeleccionado = borrador.modoServicio ?? modoEfectivo(null, !!borrador.servirJunto);
         this.direccionSeleccionada.servirJunto = esTodoJunto(this.modoServicioSeleccionado);
+        this.restaurarOrigenModoServicio(borrador);
       }
       if (borrador.mantenerJunto !== undefined) {
         this.direccionSeleccionada.mantenerJunto = borrador.mantenerJunto;

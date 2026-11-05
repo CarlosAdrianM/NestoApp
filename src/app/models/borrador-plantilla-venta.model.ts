@@ -90,6 +90,10 @@ export interface BorradorPlantillaVenta {
   /** NestoApp#174 / NestoAPI#482: modo de servicio (1..4). Un borrador viejo no lo trae
    * y se deriva de servirJunto al restaurar. */
   modoServicio?: number;
+  /** NestoApp#269: si el modo lo eligió el vendedor a mano (la sugerencia del servidor no lo
+   * pisa al restaurar). Un borrador anterior no lo trae: entonces un modo distinto del sugerido
+   * se trata como elección suya, que es lo que tenía en pantalla al guardar. */
+  modoServicioElegidoPorUsuario?: boolean;
   comentarioPicking?: string;
   avisarConImporteAlCogerPicking?: boolean; // Issue #140: persistir la casilla de aviso con importe
   recogerProducto?: boolean;     // Issue #133: persistir la casilla "Recoger Producto"
