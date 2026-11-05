@@ -1,3 +1,4 @@
+import { CodigosBarrasService } from '../../services/codigos-barras.service';
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
 import { esLineaCurso } from 'src/app/models/eventos.model';
 import { Keyboard } from '../../services/keyboard.service';
@@ -36,8 +37,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       private keyboard: Keyboard,
       private firebaseAnalytics: FirebaseAnalytics,
       private usuario: Usuario,
-      private toastCtrl: ToastController
-      ) { super(); }
+      private toastCtrl: ToastController,
+      private codigosBarras: CodigosBarrasService) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
 
@@ -312,7 +313,16 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
 }
 
   public buscarEnTodosLosProductos(filtro: any): void {
-      filtro = filtro.toUpperCase();
+      filtro = (filtro ?? '').toString().toUpperCase();
+      // NestoApp#262: un código de barras se cambia por la referencia del producto (uno; si hay varios se elige).
+      if (this.codigosBarras.esCodigoBarras(filtro)) {
+          this.codigosBarras.resolverProducto(filtro).then(producto => {
+              if (producto) {
+                  this.buscarEnTodosLosProductos(producto);
+              }
+          });
+          return;
+      }
       this.quitarTodosLosFiltros();
       this.annadirFiltro(filtro);
       this.firebaseAnalytics.logEvent("plantilla_buscar_en_todos_los_productos", {cliente: this.cliente, filtro: filtro});

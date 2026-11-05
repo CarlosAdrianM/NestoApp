@@ -41,3 +41,6 @@ ion-input.has-focus {
 .alerta-texto-con-saltos .alert-message {
   white-space: pre-line;
 }
+
+/* NestoApp#265: alertas con texto preformateado (saltos de línea de la API) */
+.alerta-preformateada .alert-message { white-space: pre-wrap; text-align: left; }

@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
 import { Configuracion } from '../components/configuracion/configuracion/configuracion.component';
 import {
-  CalcularSugerenciasProductos, ProductoCarritoSugerencia, RespuestaSugerencia, ResultadoRespuestaSugerencia, SugerenciasProductos
+  CalcularSugerenciasProductos, MiResumenSugerencias, ProductoCarritoSugerencia, RespuestaSugerencia, ResultadoRespuestaSugerencia, SugerenciasProductos
 } from '../models/sugerencias-productos.model';
 
 /** NestoApp#235 / NestoAPI#670. Es una ayuda: si la API falla o tarda, no hay sugerencias y ya está. */
@@ -21,6 +21,15 @@ export class SugerenciasProductosService {
     return this.http.post<SugerenciasProductos>(`${Configuracion.API_URL}/SugerenciasProductos/Calcular`, peticion).pipe(
       timeout(SugerenciasProductosService.TIEMPO_MAXIMO_MS),
       map(r => r || null),
+      catchError(() => of(null))
+    );
+  }
+
+  /** NestoApp#265 / NestoAPI#751: lo que gana el vendedor marcando ✓/✗. null si falla o la API es anterior: no sale nada. */
+  public miResumen(): Observable<MiResumenSugerencias | null> {
+    return this.http.get<MiResumenSugerencias>(`${Configuracion.API_URL}/SugerenciasProductos/MiResumen`).pipe(
+      timeout(SugerenciasProductosService.TIEMPO_MAXIMO_MS),
+      map(r => (r && r.Frase) ? r : null),
       catchError(() => of(null))
     );
   }

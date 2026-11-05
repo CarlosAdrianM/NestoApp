@@ -3,6 +3,7 @@ import { Keyboard } from '../../services/keyboard.service';
 import { LoadingController, AlertController, NavController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
 import { SelectorProductosService } from './selector-productos.service';
+import { CodigosBarrasService } from '../../services/codigos-barras.service';
 
 @Component({
     selector: 'selector-productos',
@@ -24,8 +25,29 @@ export class SelectorProductosComponent extends SelectorBase implements OnDestro
     private alertCtrl: AlertController, 
     private keyboard: Keyboard, 
     private nav: NavController,
+    private codigosBarras: CodigosBarrasService,
     ) {
     super();
+  }
+
+  /**
+   * NestoApp#262: un código de barras tecleado (o pegado del lector) se cambia por la referencia del producto
+   * antes de buscar; el resto, como siempre.
+   */
+  public override fijarFiltro(searchbar: any): void {
+    const texto = (searchbar?.target?.value ?? '').toString();
+    if (!this.codigosBarras.esCodigoBarras(texto)) {
+      super.fijarFiltro(searchbar);
+      return;
+    }
+    this.codigosBarras.resolverProducto(texto).then(producto => {
+      if (!producto) {
+        return;
+      }
+      searchbar.target.value = producto;
+      this.quitarTodosLosFiltros();
+      super.fijarFiltro(searchbar);
+    });
   }
 
   @ViewChild('barra') myIonSearchBar;

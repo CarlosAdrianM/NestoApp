@@ -31,6 +31,7 @@ import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
 import { BultoPedido, enlacePublicoFotoBulto, textoBulto } from 'src/app/models/bultos-pedido.model';
 import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
+import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
 @Component({
     selector: 'app-pedido-venta',
     templateUrl: './pedido-venta.component.html',
@@ -80,8 +81,8 @@ export class PedidoVentaComponent  {
     private solicitudCambioModo: SolicitudCambioModoService,
     private modalCtrl: ModalController,
     private actionSheetCtrl: ActionSheetController,
-    private toastCtrl: ToastController
-    ) {
+    private toastCtrl: ToastController,
+      private envioWhatsApp: EnvioWhatsAppService) {
       this.nav = nav;
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
@@ -149,6 +150,15 @@ export class PedidoVentaComponent  {
   }
   
   // NestoApp#215 (NestoAPI#606): qué día se entrega a la agencia (ahora) y qué se prometió al crearlo.
+  /** NestoApp#261 / NestoAPI#737: el pedido por WhatsApp con su enlace de descarga. */
+  public enviarPorWhatsApp(): void {
+      if (!this.pedido?.numero) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('pedido_venta_whatsapp', { pedido: this.pedido.numero });
+      this.envioWhatsApp.enviarDocumento('Pedido', this.pedido.empresa, this.pedido.numero);
+  }
+
   public fechaEntregaAgencia: FechaEntregaAgencia | null = null;
   /** NestoApp#266 / #207: detalle por producto, plegado hasta que se pide. */
   public verDetalleFechaEntrega: boolean = false;

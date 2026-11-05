@@ -12,6 +12,7 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { LineaVenta } from '../linea-venta/linea-venta';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
 
 describe('PedidoVentaComponent', () => {
   let component: PedidoVentaComponent;
@@ -988,5 +989,40 @@ describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 /
       expect(component.textoFecha('2099-12-31T00:00:00')).toBe('Sin fecha');
       expect(component.textoFecha('2026-10-28T00:00:00')).toBe('28/10/2026');
     }));
+  });
+});
+
+/** NestoApp#261 (NestoAPI#737): el pedido por WhatsApp con enlace de descarga. */
+describe('PedidoVentaComponent: enviar por WhatsApp (#261)', () => {
+  let component: PedidoVentaComponent;
+  let whatsapp: any;
+
+  beforeEach(waitForAsync(() => {
+    whatsapp = { enviarDocumento: jasmine.createSpy('enviarDocumento').and.returnValue(Promise.resolve(true)) };
+    TestBed.configureTestingModule({
+      declarations: [PedidoVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: EnvioWhatsAppService, useValue: whatsapp },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(PedidoVentaComponent).componentInstance;
+  }));
+
+  it('pasa por el servicio con la empresa y el número del pedido', () => {
+    component.pedido = { empresa: '1', numero: 929498 } as any;
+    component.enviarPorWhatsApp();
+    expect(whatsapp.enviarDocumento).toHaveBeenCalledWith('Pedido', '1', 929498);
+  });
+
+  it('sin pedido cargado no hace nada', () => {
+    component.pedido = null as any;
+    component.enviarPorWhatsApp();
+    expect(whatsapp.enviarDocumento).not.toHaveBeenCalled();
   });
 });

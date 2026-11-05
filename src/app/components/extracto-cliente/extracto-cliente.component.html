@@ -30,6 +30,17 @@
   </div>
   
   
+  <!-- NestoApp#260 / NestoAPI#763: horario preferible de entrega (se intenta respetar, sin compromiso) -->
+  <ion-item *ngIf="!mostrarClientes && clienteSeleccionado" lines="full" button detail="false" (click)="editarHorarioPreferible()" aria-label="Editar el horario preferible">
+    <ion-icon slot="start" name="time-outline" color="primary"></ion-icon>
+    <ion-label class="ion-text-wrap">
+      <p class="titulo-horario">Horario preferible de entrega</p>
+      <h2>{{ textoHorarioPreferible }}</h2>
+      <p class="aviso-horario">{{ avisoHorarioPreferible }}</p>
+    </ion-label>
+    <ion-icon slot="end" name="create-outline" color="medium"></ion-icon>
+  </ion-item>
+
   <selector-clientes #selector *ngIf="mostrarClientes" (seleccionar)="clienteSeleccionado=$event;onSegmentChange();"></selector-clientes>
   <div scrollY="true">
   <div [ngSwitch]="tipoMovimientos">
@@ -101,6 +112,8 @@
               <p>{{mov.concepto}}</p>
               <p>{{mov.importe | currency:'EUR' }}</p>
             </ion-label>  
+            <!-- NestoApp#261 / NestoAPI#737: la factura por WhatsApp con enlace de descarga -->
+            <ion-icon name="logo-whatsapp" color="success" (click)="enviarFacturaPorWhatsApp(mov)" slot="end" aria-label="Enviar por WhatsApp"></ion-icon>
             <ion-icon name="download" (click)="descargarFactura(mov)" slot="end"></ion-icon>
           </ion-item>
       </ion-list>    

@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
-import { RespuestaSugerencia, SugerenciaProducto, etiquetaMotivo, nombreSugerencia, productoYFamilia } from 'src/app/models/sugerencias-productos.model';
+import { AlertController, ModalController } from '@ionic/angular';
+import { MiResumenSugerencias, RespuestaSugerencia, SugerenciaProducto, etiquetaMotivo, nombreSugerencia, productoYFamilia } from 'src/app/models/sugerencias-productos.model';
+import { SugerenciasProductosService } from 'src/app/services/sugerencias-productos.service';
 import { EstadoSugerenciasProductos } from './estado-sugerencias-productos';
 import { AyudaSugerenciasProductosComponent } from './ayuda-sugerencias-productos.component';
 
@@ -24,13 +25,30 @@ export class SugerenciasProductosComponent implements OnInit {
   public readonly nombre = nombreSugerencia;
   public readonly productoYFamilia = productoYFamilia;
 
-  constructor(private modalCtrl: ModalController) { }
+  /** NestoApp#265: lo que gana el vendedor marcando ✓/✗ (solo lo suyo). null = no se enseña nada. */
+  public resumen: MiResumenSugerencias | null = null;
+
+  constructor(private modalCtrl: ModalController, private alertCtrl: AlertController, private servicio: SugerenciasProductosService) { }
 
   ngOnInit(): void {
     if (!AyudaSugerenciasProductosComponent.yaVista()) {
       AyudaSugerenciasProductosComponent.marcarVista();
       this.verAyuda();
     }
+    this.cargarResumen();
+  }
+
+  /** Al abrir y después de cada ✓/✗/🚫, para que vea que cuenta. Nada de sondeo. */
+  public cargarResumen(): void {
+    this.servicio.miResumen().subscribe(resumen => { this.resumen = resumen; });
+  }
+
+  public async verDetalleResumen(): Promise<void> {
+    if (!this.resumen?.Ayuda) {
+      return;
+    }
+    const alert = await this.alertCtrl.create({ header: 'Sus respuestas', message: this.resumen.Ayuda, cssClass: 'alerta-preformateada', buttons: ['Cerrar'] });
+    await alert.present();
   }
 
   get sugerencias(): SugerenciaProducto[] {
@@ -45,14 +63,16 @@ export class SugerenciasProductosComponent implements OnInit {
     try {
       if (await this.anadir(sugerencia)) {
         await this.estado.responder(sugerencia, 'Anadido');
+        this.cargarResumen(); // NestoApp#265
       }
     } finally {
       this.ocupado = false;
     }
   }
 
-  public rechazar(sugerencia: SugerenciaProducto, respuesta: RespuestaSugerencia): void {
-    this.estado.responder(sugerencia, respuesta);
+  public async rechazar(sugerencia: SugerenciaProducto, respuesta: RespuestaSugerencia): Promise<void> {
+    await this.estado.responder(sugerencia, respuesta);
+    this.cargarResumen(); // NestoApp#265
   }
 
   public async verAyuda(): Promise<void> {

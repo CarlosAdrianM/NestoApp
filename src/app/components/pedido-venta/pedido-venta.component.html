@@ -149,6 +149,13 @@
               <ion-item>
                   <ion-button expand="block" *ngIf="pedido.EsPresupuesto" (click)="aceptarPresupuesto()">Aceptar el Presupuesto</ion-button>
               </ion-item>
+              <!-- NestoApp#261 / NestoAPI#737: el pedido por WhatsApp con enlace de descarga (30 días) -->
+              <ion-item *ngIf="pedido?.numero" lines="none">
+                  <ion-button expand="block" fill="outline" color="success" (click)="enviarPorWhatsApp()">
+                      <ion-icon slot="start" name="logo-whatsapp"></ion-icon>
+                      Enviar por WhatsApp
+                  </ion-button>
+              </ion-item>
               <!-- NestoApp#198 / NestoAPI#519: pasar a otro cliente un pedido que aún no ha salido -->
               <ion-item *ngIf="puedeCambiarCliente" lines="none">
                   <ion-button expand="block" fill="outline" (click)="cambiarCliente()">

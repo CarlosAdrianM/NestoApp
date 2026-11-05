@@ -9,6 +9,9 @@ import { Usuario } from 'src/app/models/Usuario';
 import { firstValueFrom } from 'rxjs';
 import { hayQuePreguntarConcepto, textoPreguntaConcepto } from 'src/app/models/revision-concepto.model';
 import { ModalInscribirEventoComponent } from '../inscribir-evento/modal-inscribir-evento.component';
+import { EJEMPLO_HORARIO_PREFERIBLE, HorarioPreferible, avisoHorarioPreferible, textoHorarioPreferible } from 'src/app/models/horario-preferible.model';
+import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
+import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 
 @Component({
     selector: 'app-extracto-cliente',
@@ -25,10 +28,82 @@ export class ExtractoClienteComponent implements AfterViewInit {
       private fileOpener: FileOpener,
       private nav: NavController,
       private firebaseAnalytics: FirebaseAnalytics,
-      private modalCtrl: ModalController
+      private modalCtrl: ModalController,
+      private envioWhatsApp: EnvioWhatsAppService,
+      private errorHandler: ErrorHandlerService
       ) {
       this.servicio = servicio;
   };
+
+  // ---- NestoApp#260 / NestoAPI#763: horario preferible de entrega del contacto ----
+  public horarioPreferible: HorarioPreferible | null = null;
+  private claveHorarioPreferible: string | null = null;
+
+  get textoHorarioPreferible(): string {
+      return textoHorarioPreferible(this.horarioPreferible);
+  }
+
+  get avisoHorarioPreferible(): string {
+      return avisoHorarioPreferible(this.horarioPreferible);
+  }
+
+  public cargarHorarioPreferible(cliente: any): void {
+      const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}/${(cliente.contacto ?? '0').toString().trim()}` : null;
+      if (clave === this.claveHorarioPreferible) {
+          return;
+      }
+      this.claveHorarioPreferible = clave;
+      this.horarioPreferible = null;
+      if (!clave) {
+          return;
+      }
+      this.servicio.leerHorarioPreferible(cliente.empresa, cliente.cliente, cliente.contacto ?? '0').subscribe(horario => {
+          if (clave === this.claveHorarioPreferible) {
+              this.horarioPreferible = horario;
+          }
+      });
+  }
+
+  /** Editor sencillo: el horario en texto, con el ejemplo de formato. Vacío lo borra. */
+  public async editarHorarioPreferible(): Promise<void> {
+      if (!this.clienteSeleccionado) {
+          return;
+      }
+      const alert = await this.alertCtrl.create({
+          header: 'Horario preferible',
+          message: this.avisoHorarioPreferible + ' Formato: ' + EJEMPLO_HORARIO_PREFERIBLE,
+          inputs: [{ name: 'texto', type: 'textarea', value: this.horarioPreferible?.Texto || '', placeholder: EJEMPLO_HORARIO_PREFERIBLE }],
+          buttons: [
+              { text: 'Cancelar', role: 'cancel' },
+              { text: 'Guardar', handler: (datos: any) => { this.guardarHorarioPreferible((datos?.texto ?? '').toString()); } }
+          ]
+      });
+      await alert.present();
+  }
+
+  public guardarHorarioPreferible(texto: string): void {
+      const cliente = this.clienteSeleccionado;
+      this.servicio.guardarHorarioPreferible(cliente.empresa, cliente.cliente, cliente.contacto ?? '0', texto).subscribe(
+          horario => {
+              this.horarioPreferible = horario;
+              this.firebaseAnalytics.logEvent('extracto_cliente_horario_preferible_guardado', {});
+          },
+          async error => {
+              const alert = await this.alertCtrl.create({
+                  header: 'No se ha podido guardar el horario',
+                  message: this.errorHandler.extractErrorMessage(error),
+                  buttons: ['Ok']
+              });
+              await alert.present();
+          }
+      );
+  }
+
+  /** NestoApp#261 / NestoAPI#737: la factura por WhatsApp con su enlace de descarga. */
+  public enviarFacturaPorWhatsApp(movimiento: any): void {
+      this.firebaseAnalytics.logEvent('extracto_cliente_factura_whatsapp', { factura: movimiento?.documento });
+      this.envioWhatsApp.enviarDocumento('Factura', movimiento?.empresa, movimiento?.documento);
+  }
 
   public mostrarClientes: boolean = true;
   public movimientosDeuda: any[];
@@ -54,6 +129,7 @@ export class ExtractoClienteComponent implements AfterViewInit {
       if (!this.clienteSeleccionado || this.clienteSeleccionado.cliente == "") {
           return;
       }
+      this.cargarHorarioPreferible(this.clienteSeleccionado); // NestoApp#260
       if (this.tipoMovimientos == "deuda") {
           this.cargarDeuda(this.clienteSeleccionado);
       } else if (this.tipoMovimientos == "facturas") {

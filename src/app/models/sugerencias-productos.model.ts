@@ -54,6 +54,31 @@ export interface ResultadoRespuestaSugerencia {
 /** Como en la plantilla de Nesto: se enseñan hasta 3. */
 export const MAXIMO_SUGERENCIAS_PRODUCTOS = 3;
 
+/**
+ * NestoApp#265 (gemela de NestoAPI#751): lo que gana el vendedor marcando ✓/✗. GET api/SugerenciasProductos/MiResumen,
+ * solo lo suyo (Nesto y NestoApp juntos); Frase y Ayuda vienen montadas, de usted: se pintan tal cual.
+ */
+export interface SemanaResumenSugerencias {
+  Desde: string;
+  Hasta: string;
+  Mostradas: number;
+  Respuestas: number;
+  Anadidas: number;
+  NoLeInteresa: number;
+  Quitadas: number;
+  AnadidasEnPedido: number;
+  ImporteVentas: number;
+}
+
+export interface MiResumenSugerencias {
+  Semanas: SemanaResumenSugerencias[];
+  EstaSemana?: SemanaResumenSugerencias | null;
+  /** null con menos de 5 ofrecidas. */
+  AceptadasDeCadaDiez?: number | null;
+  Frase: string;
+  Ayuda: string;
+}
+
 const MOTIVOS: { [motivo: string]: { icono: string; etiqueta: string } } = {
   CompradoJunto: { icono: '🔗', etiqueta: 'Va con lo que lleva' },
   LeToca: { icono: '🔁', etiqueta: 'Ya le toca' },

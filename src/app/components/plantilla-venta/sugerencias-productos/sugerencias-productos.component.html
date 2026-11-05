@@ -8,6 +8,12 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+  <!-- NestoApp#265 (NestoAPI#751): lo que gana el vendedor marcando ✓/✗; al tocar, el detalle por semanas -->
+  <ion-item *ngIf="resumen?.Frase" lines="none" button detail="false" class="resumen-vendedor" (click)="verDetalleResumen()" aria-label="Ver el detalle de sus respuestas">
+    <ion-icon slot="start" name="trending-up-outline" color="success"></ion-icon>
+    <ion-label class="ion-text-wrap"><p class="frase-resumen">{{ resumen.Frase }}</p></ion-label>
+    <ion-icon slot="end" name="information-circle-outline" color="medium"></ion-icon>
+  </ion-item>
   <p class="sin-sugerencias" *ngIf="sugerencias.length === 0">Ahora mismo no hay más sugerencias para este cliente.</p>
 
   <ion-card class="sugerencia" *ngFor="let sugerencia of sugerencias; trackBy: identificador">

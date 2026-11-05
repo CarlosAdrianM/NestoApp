@@ -219,6 +219,8 @@
         <p>
           <ion-badge [color]="sugerencia.Atendida ? 'success' : colorPrioridad(sugerencia.Prioridad)">{{sugerencia.Atendida ? 'Atendida' : sugerencia.Prioridad}}</ion-badge>
           <ion-badge *ngIf="sugerencia.TieneChequeRegalo" color="success" class="distintivo-cheque">Cheque</ion-badge>
+          <!-- NestoApp#263 (Nesto#587): nadie ha hablado con el cliente en el mes en curso -->
+          <ion-badge *ngIf="sugerencia.SinContactoEsteMes" color="warning" class="distintivo-sin-contacto" title="Nadie ha hablado con este cliente desde el día 1 del mes">Sin contacto este mes</ion-badge>
           {{sugerencia.Cliente}}/{{sugerencia.Contacto}}
         </p>
         <h2>{{sugerencia.Nombre}}</h2>

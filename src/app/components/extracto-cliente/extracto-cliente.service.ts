@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { HorarioPreferible } from 'src/app/models/horario-preferible.model';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { RespuestaRevisarConcepto } from 'src/app/models/revision-concepto.model';
@@ -22,6 +23,18 @@ export class ExtractoClienteService {
   ) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/ExtractosCliente';
+
+  /** NestoApp#260 / NestoAPI#763: el horario preferible del contacto. null si la API no lo tiene (anterior) o falla. */
+  public leerHorarioPreferible(empresa: string, cliente: string, contacto: string): Observable<HorarioPreferible | null> {
+    const url = `${Configuracion.API_URL}/Clientes/${encodeURIComponent((empresa || '').trim())}/${encodeURIComponent((cliente || '').trim())}/${encodeURIComponent((contacto ?? '0').toString().trim())}/HorarioPreferible`;
+    return this.http.get<HorarioPreferible>(url).pipe(catchError(() => of(null)));
+  }
+
+  /** NestoApp#260: guarda el horario en texto («L-V 10:00-14:00; S 10:00-13:00»); vacío lo borra. Los 400 de formato llegan al llamante. */
+  public guardarHorarioPreferible(empresa: string, cliente: string, contacto: string, texto: string): Observable<HorarioPreferible> {
+    const url = `${Configuracion.API_URL}/Clientes/${encodeURIComponent((empresa || '').trim())}/${encodeURIComponent((cliente || '').trim())}/${encodeURIComponent((contacto ?? '0').toString().trim())}/HorarioPreferible`;
+    return this.http.put<HorarioPreferible>(url, { Empresa: (empresa || '').trim(), Cliente: (cliente || '').trim(), Contacto: (contacto ?? '0').toString().trim(), Texto: (texto || '').trim() });
+  }
 
   public cargarDeuda(cliente: any): Observable<any> {
     let params: HttpParams = new HttpParams();

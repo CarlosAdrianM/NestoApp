@@ -11,6 +11,7 @@ import { FirebaseAnalytics } from '../../services/firebase-analytics.service';
 import { SelectorPlantillaVentaComponent } from './selector-plantilla-venta.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of } from 'rxjs';
+import { CodigosBarrasService } from '../../services/codigos-barras.service';
 
 describe('SelectorPlantillaVentaComponent', () => {
   let component: SelectorPlantillaVentaComponent;
@@ -182,4 +183,48 @@ describe('SelectorPlantillaVentaComponent', () => {
       expect(buscador.setFocus).toHaveBeenCalled();
     }));
   });
+});
+
+/** NestoApp#262 (Nesto#582): «buscar en todos los productos» acepta un código de barras. */
+describe('SelectorPlantillaVentaComponent: código de barras (#262)', () => {
+  let component: SelectorPlantillaVentaComponent;
+  let codigosBarras: any;
+
+  beforeEach(waitForAsync(() => {
+    codigosBarras = {
+      esCodigoBarras: (t: string) => /^\d{13}$/.test(t),
+      resolverProducto: jasmine.createSpy('resolverProducto').and.returnValue(Promise.resolve('38093'))
+    };
+    TestBed.configureTestingModule({
+      declarations: [SelectorPlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: CacheService, useValue: { setDefaultTTL: () => { }, loadFromObservable: (k, obs) => obs } },
+        { provide: Keyboard, useValue: { show: () => { } } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: CodigosBarrasService, useValue: codigosBarras },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+    component = TestBed.createComponent(SelectorPlantillaVentaComponent).componentInstance;
+  }));
+
+  it('un código de barras se cambia por la referencia antes de buscar', fakeAsync(() => {
+    const buscar = spyOn(component['servicio'], 'buscarProductos').and.returnValue(of([]));
+    component.buscarEnTodosLosProductos('8437017506362');
+    tick();
+    expect(codigosBarras.resolverProducto).toHaveBeenCalledWith('8437017506362');
+    expect(buscar).toHaveBeenCalledWith('38093');
+  }));
+
+  it('sin producto no se busca', fakeAsync(() => {
+    codigosBarras.resolverProducto.and.returnValue(Promise.resolve(null));
+    const buscar = spyOn(component['servicio'], 'buscarProductos').and.returnValue(of([]));
+    component.buscarEnTodosLosProductos('8437017506362');
+    tick();
+    expect(buscar).not.toHaveBeenCalled();
+  }));
 });
