@@ -1,6 +1,6 @@
 import {
   Evento, eventosInscribibles, seGeneraEnlace, textoPlazas, esLineaCurso, sinLineasCurso, textoPedidosCreados,
-  textoModalidadCurso, textoFormatoEvento, textoPlazasLibres, modalidadesConImporte, nombreModalidadEvento
+  textoModalidadCurso, textoFormatoEvento, textoPlazasLibres, modalidadesConImporte, nombreModalidadEvento, textoPreguntaCorreoCursos
 } from './eventos.model';
 
 /** NestoApp#217 (NestoAPI#611): eventos a los que se puede inscribir a un cliente. */
@@ -89,5 +89,20 @@ describe('Modalidades de un evento con su importe (#247)', () => {
     const evento: Evento = { Id: 1, Empresa: '1', Titulo: 'Curso', Fecha: '2026-11-15', ImporteSenal: 0, Activo: true, Modalidades: ['Gratuita'] };
     expect(modalidadesConImporte(evento).map(textoModalidadCurso)).toEqual(['Plaza sin coste: 0 €']);
     expect(modalidadesConImporte({ ...evento, Modalidades: undefined })).toEqual([]);
+  });
+});
+
+/** NestoApp#257 (NestoAPI#753): la pregunta del correo de los cursos según la forma de pago. */
+describe('Pregunta del correo de los cursos (#257)', () => {
+  it('transferencia: con los datos para pagar', () => {
+    expect(textoPreguntaCorreoCursos('TRN')).toBe('¿Le mandamos al cliente un correo con sus cursos y los datos para pagarlos por transferencia (cuenta, concepto e importe)?');
+  });
+  it('efectivo: los paga en la tienda', () => {
+    expect(textoPreguntaCorreoCursos(' efc ')).toBe('¿Le mandamos al cliente un correo con sus cursos diciéndole que los paga en la tienda?');
+  });
+  it('el resto (tarjeta o vacía): el enlace para pagar con tarjeta', () => {
+    expect(textoPreguntaCorreoCursos('TAR')).toBe('¿Le mandamos al cliente un correo con sus cursos y el enlace para pagarlos con tarjeta?');
+    expect(textoPreguntaCorreoCursos('')).toContain('tarjeta');
+    expect(textoPreguntaCorreoCursos(null)).toContain('tarjeta');
   });
 });

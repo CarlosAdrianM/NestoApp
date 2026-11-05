@@ -73,6 +73,13 @@
                       <strong>{{ textoFechaEntregaAgencia }}</strong>
                       <p *ngIf="textoFechaPrometida" class="fecha-prometida">{{ textoFechaPrometida }}</p>
                       <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
+                      <!-- NestoApp#266 / #207 (NestoAPI#577): por qué cada producto no sale ya de Algete y cuándo llega -->
+                      <ng-container *ngIf="detalleFechaEntregaAgencia.length > 0">
+                          <p><a class="enlace-detalle" (click)="verDetalleFechaEntrega = !verDetalleFechaEntrega; $event.stopPropagation()">{{ verDetalleFechaEntrega ? 'Ocultar detalle' : 'Ver detalle por producto' }}</a></p>
+                          <ng-container *ngIf="verDetalleFechaEntrega">
+                              <p *ngFor="let frase of detalleFechaEntregaAgencia" class="detalle-fecha-agencia">{{ frase }}</p>
+                          </ng-container>
+                      </ng-container>
                   </ion-label>
               </ion-item>
               <!-- NestoApp#240: líneas pendientes con la fecha «sin determinar» (31/12/2099) -->

@@ -131,6 +131,23 @@ export function esLineaCurso(linea: any): boolean {
     || (linea.grupo || '').toString().trim().toUpperCase() === GRUPO_CURSOS;
 }
 
+/**
+ * NestoApp#257 (gemela de NestoAPI#753, sugerencia 899): al guardar un pedido con cursos se pregunta si se le manda
+ * al cliente el correo de sus cursos. El texto depende de la forma de pago del pedido: con TRN la API manda los datos
+ * de la transferencia; con EFC, que lo pague en la tienda; con el resto, el enlace para pagar con tarjeta.
+ * Mismos textos que Nesto.
+ */
+export function textoPreguntaCorreoCursos(formaPago: string | null | undefined): string {
+  const forma = (formaPago || '').toString().trim().toUpperCase();
+  if (forma === 'TRN') {
+    return '¿Le mandamos al cliente un correo con sus cursos y los datos para pagarlos por transferencia (cuenta, concepto e importe)?';
+  }
+  if (forma === 'EFC') {
+    return '¿Le mandamos al cliente un correo con sus cursos diciéndole que los paga en la tienda?';
+  }
+  return '¿Le mandamos al cliente un correo con sus cursos y el enlace para pagarlos con tarjeta?';
+}
+
 export function sinLineasCurso<T>(lineas: T[] | null | undefined): T[] {
   return (lineas || []).filter(l => !esLineaCurso(l));
 }

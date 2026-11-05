@@ -186,6 +186,22 @@ export class PlantillaVentaService {
     return this.http.post(url, parametroJson, { headers: headers });
   }
 
+  /**
+   * NestoApp#255 / NestoAPI#723: si el cliente exige el P.O. («Su pedido») en todos sus pedidos. Solo lo trae
+   * GET api/Clientes?empresa&cliente&contacto (ClienteDTO.suPedidoObligatorio); con una API anterior o un
+   * error, false (la API lo rechazará igual con un 400 claro al grabar).
+   */
+  public leerSuPedidoObligatorio(empresa: string, cliente: string, contacto: string): Observable<boolean> {
+    let params: HttpParams = new HttpParams();
+    params = params.append('empresa', empresa);
+    params = params.append('cliente', cliente);
+    params = params.append('contacto', contacto);
+    return this.http.get<any>(Configuracion.API_URL + '/Clientes', { params }).pipe(
+      map(r => r?.suPedidoObligatorio === true || r?.SuPedidoObligatorio === true),
+      catchError(() => of(false))
+    );
+  }
+
   leerCliente(empresa: any, cliente: any, contacto: any): Observable<any> {
     const url = Configuracion.API_URL + "/Clientes/GetClienteCrear";
     let params: HttpParams = new HttpParams();

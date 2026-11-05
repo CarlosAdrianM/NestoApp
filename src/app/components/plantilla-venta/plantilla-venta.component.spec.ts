@@ -26,6 +26,7 @@ const conChequeRegalo = (servicio: any): any => {
   servicio.leerSustitucion = servicio.leerSustitucion ?? (() => of(null));
   servicio.fechaEntregaAgencia = servicio.fechaEntregaAgencia ?? (() => of(null)); // NestoApp#215
   servicio.opcionesModos = servicio.opcionesModos ?? (() => of(null)); // NestoApp#242: API anterior = como siempre
+  servicio.leerSuPedidoObligatorio = servicio.leerSuPedidoObligatorio ?? (() => of(false)); // NestoApp#255
   return servicio;
 };
 
@@ -2998,6 +2999,202 @@ describe('PlantillaVentaComponent: tanda 2.26.0 (#241 #242 #243 #244 #245 #250 #
     it('tocar el selector explica que hay que liberarlo desde el pedido', async () => {
       await component.elegirModoServicio();
       expect(ultimaAlerta().header).toBe('Pedido retenido');
+    });
+  });
+});
+
+/**
+ * Tanda 2.27.0: #255 (P.O. obligatorio por cliente), #257 (correo de los cursos según la forma de pago),
+ * #264 (avisos de grabación del POST/PUT) y #266/#207 (detalle por producto de la fecha de entrega).
+ */
+describe('PlantillaVentaComponent: tanda 2.27.0 (#255 #257 #264 #266)', () => {
+  let component: PlantillaVentaComponent;
+  let fixture: ComponentFixture<PlantillaVentaComponent>;
+  let servicio: any;
+  let alertas: any[];
+
+  const ultimaAlerta = () => alertas[alertas.length - 1];
+  const pulsar = async (alerta: any, texto: string) => {
+    const boton = alerta.buttons.find((b: any) => b.text === texto);
+    if (boton?.handler) { await boton.handler(); }
+  };
+  const lineaCurso = () => ({ producto: '90077', texto: 'MASTERCLASS', grupo: 'CUR', EsCurso: true, cantidad: 1, precio: 100, descuento: 0, cantidadOferta: 0, eventoId: 12, modalidadEvento: 'Reembolsable' });
+
+  beforeEach(waitForAsync(() => {
+    alertas = [];
+    servicio = {
+      opcionesModos: () => of(null),
+      modoFacturacionSugerido: () => of(null),
+      modoServicioSugerido: () => of({ Modo: 4, Nombre: 'X', Motivo: '' }),
+      ofertasSugeridas: () => of([]),
+      validarServirJunto: () => of({ PuedeDesmarcar: true, ProductosProblematicos: [], Mensaje: null }),
+      calcularFechaEntrega: () => of(new Date().toISOString()),
+      cargarGruposBonificables: () => of([]),
+      cargarProductosBonificables: () => of({ Productos: [] }),
+      calcularPortes: () => of({}),
+      leerCliente: () => of({}),
+      sePuedeServirPorGlovo: () => of({ servirPorGlovo: false }),
+      crearPedido: jasmine.createSpy('crearPedido').and.returnValue(of({ numero: 929100 })),
+      modificarPedido: jasmine.createSpy('modificarPedido').and.returnValue(of({})),
+      leerChequeRegalo: () => of(null),
+      leerSuPedidoObligatorio: jasmine.createSpy('leerSuPedidoObligatorio').and.returnValue(of(false))
+    };
+
+    TestBed.configureTestingModule({
+      declarations: [PlantillaVentaComponent],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [IonicModule.forRoot(), RouterTestingModule],
+      providers: [
+        Usuario,
+        { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
+        { provide: EventosService, useValue: { leerEventosPorProducto: () => of([]) } },
+        { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
+        { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
+        { provide: Storage, useValue: {} },
+        // onDidDismiss resuelve enseguida: lo que va «después de la alerta» (avisos de grabación) también se prueba.
+        { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }); } } },
+        { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PlantillaVentaComponent);
+    component = fixture.componentInstance;
+    component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0', cifNif: 'B1' };
+    component['_direccionSeleccionada'] = { contacto: '0', iva: 'G21', servirJunto: false, periodoFacturacion: 'NRM', plazosPago: 'CONTADO', mantenerJunto: false };
+    component['plazosPago'] = 'CONTADO';
+    component['formaPago'] = 'TRN';
+    component['modoServicioSeleccionado'] = 3;
+    component['productosResumen'] = [{ producto: '38093', texto: 'CREMA', grupo: 'COS', cantidad: 2, precio: 100, descuento: 0, iva: 'G21', cantidadOferta: 0 }];
+    spyOn<any>(component, 'reinicializar');
+    spyOn<any>(component, 'detectarOfertasSinBeneficio').and.returnValue([]);
+    spyOn<any>(component, 'esTarjetaPrepago').and.returnValue(false);
+  }));
+
+  describe('P.O. obligatorio por cliente (#255)', () => {
+    it('al elegir el cliente se pregunta a la API si exige el P.O. y se resalta «Su pedido» mientras falte', fakeAsync(() => {
+      servicio.leerSuPedidoObligatorio.and.returnValue(of(true));
+      component.clienteSeleccionado = { empresa: '1', cliente: '20000', contacto: '0', cifNif: 'B2' };
+      tick();
+
+      expect(servicio.leerSuPedidoObligatorio).toHaveBeenCalledWith('1', '20000', '0');
+      expect(component.suPedidoObligatorio).toBeTrue();
+      expect(component.faltaSuPedidoObligatorio).toBeTrue();
+
+      component.suPedido = 'PO-77';
+      expect(component.faltaSuPedidoObligatorio).toBeFalse();
+    }));
+
+    it('un cliente sin la marca no resalta nada', fakeAsync(() => {
+      component.clienteSeleccionado = { empresa: '1', cliente: '20001', contacto: '0', cifNif: 'B2' };
+      tick();
+      expect(component.suPedidoObligatorio).toBeFalse();
+      expect(component.faltaSuPedidoObligatorio).toBeFalse();
+    }));
+
+    it('el mismo cliente no se vuelve a preguntar', fakeAsync(() => {
+      servicio.leerSuPedidoObligatorio.calls.reset();
+      component.clienteSeleccionado = { empresa: '1', cliente: '15191', contacto: '0', cifNif: 'B1' };
+      tick();
+      expect(servicio.leerSuPedidoObligatorio).not.toHaveBeenCalled();
+    }));
+
+    it('el 400 de la API («Su pedido» obligatorio) se enseña tal cual', fakeAsync(() => {
+      servicio.crearPedido.and.returnValue(throwError(() => ({ isBusinessError: true, message: 'El cliente 20000 exige el P.O. («Su pedido») en todos sus pedidos.' })));
+      spyOn<any>(component, 'ofrecerGuardarBorrador');
+
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => (a.message || '').includes('exige el P.O.'))).toBeTrue();
+    }));
+  });
+
+  describe('correo de los cursos (#257)', () => {
+    it('con cursos se pregunta según la forma de pago y la respuesta viaja en EnviarCorreoCursos', fakeAsync(() => {
+      component['productosResumen'].push(lineaCurso());
+      component['formaPago'] = 'TRN';
+
+      component.crearPedido();
+      tick();
+      const pregunta = ultimaAlerta();
+      expect(pregunta.header).toBe('Correo de los cursos');
+      expect(pregunta.message).toContain('transferencia');
+      expect(servicio.crearPedido).not.toHaveBeenCalled();
+
+      pulsar(pregunta, 'Sí, mandarlo');
+      tick();
+
+      expect(servicio.crearPedido).toHaveBeenCalled();
+      expect(servicio.crearPedido.calls.mostRecent().args[0].EnviarCorreoCursos).toBeTrue();
+    }));
+
+    it('«No» manda false; con efectivo el texto habla de la tienda', fakeAsync(() => {
+      component['productosResumen'].push(lineaCurso());
+      component['formaPago'] = 'EFC';
+
+      component.crearPedido();
+      tick();
+      expect(ultimaAlerta().message).toContain('tienda');
+      pulsar(ultimaAlerta(), 'No, sin correo');
+      tick();
+
+      expect(servicio.crearPedido.calls.mostRecent().args[0].EnviarCorreoCursos).toBeFalse();
+    }));
+
+    it('sin cursos no se pregunta ni viaja el campo (la API hace lo de siempre)', fakeAsync(() => {
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => a.header === 'Correo de los cursos')).toBeFalse();
+      expect(servicio.crearPedido).toHaveBeenCalled();
+      expect('EnviarCorreoCursos' in servicio.crearPedido.calls.mostRecent().args[0]).toBeFalse();
+    }));
+  });
+
+  describe('avisos de grabación (#264)', () => {
+    it('tras crear el pedido se enseñan los AvisosGrabacion del POST', fakeAsync(() => {
+      servicio.crearPedido.and.returnValue(of({ numero: 929100, AvisosGrabacion: [{ Tipo: 'ClienteCierraDiaReparto', Mensaje: 'El cliente cierra el martes, que es su día de reparto por nuestra ruta: envíelo por agencia o cambie el día.' }] }));
+
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => a.header === 'Creado')).toBeTrue();
+      const aviso = alertas.find(a => a.header === 'Ojo con este pedido');
+      expect(aviso).toBeDefined();
+      expect(aviso.message).toContain('cierra el martes');
+    }));
+
+    it('sin avisos (API anterior) no sale nada más', fakeAsync(() => {
+      component.crearPedido();
+      tick();
+      expect(alertas.some(a => a.header === 'Ojo con este pedido')).toBeFalse();
+    }));
+
+    it('al modificar, los Avisos del PUT se enseñan igual', fakeAsync(() => {
+      component.pedidoEnEdicionNumero = 929000;
+      servicio.modificarPedido.and.returnValue(of({ Avisos: [{ Tipo: 'ClienteCierraDiaReparto', Mensaje: 'El cliente cierra el martes.' }] }));
+
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => a.header === 'Modificado')).toBeTrue();
+      expect(alertas.find(a => a.header === 'Ojo con este pedido')?.message).toBe('El cliente cierra el martes.');
+    }));
+  });
+
+  describe('detalle por producto de la fecha de entrega (#266, #207)', () => {
+    it('sale del Desglose que ya se pide para la fecha; sin Desglose, nada', () => {
+      component.fechaEntregaAgencia = { FechaEntregaAgencia: '2026-11-05T00:00:00', Aplica: 'Completa', Desglose: [
+        { Origen: 'Algete', Producto: '38093', Unidades: 2 },
+        { Origen: 'Kit', Producto: '44873', Unidades: 1, Kit: '43165' }
+      ] } as any;
+      expect(component.detalleFechaEntregaAgencia).toEqual(['44873: 1 unidad sale desmontando el kit 43165.']);
+
+      component.fechaEntregaAgencia = { FechaEntregaAgencia: '2026-11-05T00:00:00', Aplica: 'Completa' } as any;
+      expect(component.detalleFechaEntregaAgencia).toEqual([]);
+      expect(component.verDetalleFechaEntrega).toBeFalse();
     });
   });
 });

@@ -28,7 +28,7 @@ import {
 import { CambiarClientePedidoRespuesta, puedeCambiarClientePedido, mensajeCambiosCliente } from 'src/app/models/cambio-cliente-pedido.model';
 import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 
-import { FechaEntregaAgencia, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
+import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
 import { BultoPedido, enlacePublicoFotoBulto, textoBulto } from 'src/app/models/bultos-pedido.model';
 import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
 @Component({
@@ -150,9 +150,16 @@ export class PedidoVentaComponent  {
   
   // NestoApp#215 (NestoAPI#606): qué día se entrega a la agencia (ahora) y qué se prometió al crearlo.
   public fechaEntregaAgencia: FechaEntregaAgencia | null = null;
+  /** NestoApp#266 / #207: detalle por producto, plegado hasta que se pide. */
+  public verDetalleFechaEntrega: boolean = false;
+
+  get detalleFechaEntregaAgencia(): string[] {
+      return detallePorLinea(this.fechaEntregaAgencia);
+  }
 
   public cargarFechaEntregaAgencia(empresa: string, numero: number): void {
       this.fechaEntregaAgencia = null;
+      this.verDetalleFechaEntrega = false;
       this.servicio.cargarFechaEntregaAgencia(empresa, numero).subscribe(fecha => this.fechaEntregaAgencia = fecha);
   }
 

@@ -154,6 +154,13 @@
                         <strong>{{ textoFechaEntregaAgencia }}</strong>
                         <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
                         <p *ngIf="fechaEntregaAgencia?.Aviso" class="aviso-fecha-agencia">{{ fechaEntregaAgencia.Aviso }}</p>
+                        <!-- NestoApp#266 (Nesto#599) / #207 (NestoAPI#577): por qué cada producto no sale ya de Algete -->
+                        <ng-container *ngIf="detalleFechaEntregaAgencia.length > 0">
+                            <p><a class="enlace-detalle" (click)="verDetalleFechaEntrega = !verDetalleFechaEntrega; $event.stopPropagation()">{{ verDetalleFechaEntrega ? 'Ocultar detalle' : 'Ver detalle por producto' }}</a></p>
+                            <ng-container *ngIf="verDetalleFechaEntrega">
+                                <p *ngFor="let frase of detalleFechaEntregaAgencia" class="detalle-fecha-agencia">{{ frase }}</p>
+                            </ng-container>
+                        </ng-container>
                     </ion-label>
                 </ion-item>
                 <!-- NestoApp#184 / NestoAPI#506: por qué el servidor propone ese modo.
@@ -259,10 +266,9 @@
                 <ion-checkbox slot="end" [attr.aria-label]="'Aplicar el cupón ' + cupon.Codigo"
                     [checked]="codigoCuponElegido === cupon.Codigo" (ionChange)="elegirCupon(cupon)"></ion-checkbox>
             </ion-item>
+            <!-- NestoApp#256: el mínimo lo dice la API (PedidoMinimo, puede ser 0); no se calcula aquí -->
             <ion-item lines="none" *ngIf="cuponAplicado" [color]="'success'">
-                <ion-label class="ion-text-wrap" style="font-size: 0.85em;">
-                    El pedido tiene que llevar al menos {{ formatearEuros(cuponAplicado.PedidoMinimo) }} de productos (IVA incluido, sin contar cursos ni portes). Al guardar lo comprueba el servidor.
-                </ion-label>
+                <ion-label class="ion-text-wrap" style="font-size: 0.85em;">{{ textoPedidoMinimoCupon }}</ion-label>
             </ion-item>
         </ion-card>
         <ion-item *ngIf="cuponAplicado">
@@ -325,8 +331,13 @@
         <div>
             <h2 class="ion-text-center" color="danger" *ngIf="direccionSeleccionada?.plazosPago === 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
         </div>
-        <ion-item>
-            <ion-input label="Su Pedido / P.O." label-placement="floating" [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente"></ion-input>
+        <!-- NestoApp#255 / NestoAPI#723: para los clientes que exigen el P.O., el campo es obligatorio -->
+        <ion-item [color]="faltaSuPedidoObligatorio ? 'danger' : undefined">
+            <ion-input [label]="suPedidoObligatorio ? 'Su Pedido / P.O. *' : 'Su Pedido / P.O.'" label-placement="floating" [(ngModel)]="suPedido" maxlength="50" placeholder="Número de pedido del cliente" [required]="suPedidoObligatorio"></ion-input>
+        </ion-item>
+        <ion-item lines="none" *ngIf="suPedidoObligatorio">
+            <ion-icon slot="start" name="alert-circle-outline" [color]="faltaSuPedidoObligatorio ? 'danger' : 'medium'"></ion-icon>
+            <ion-label class="ion-text-wrap" style="font-size: 0.85em;" [color]="faltaSuPedidoObligatorio ? 'danger' : 'medium'">Este cliente exige el P.O. en todos sus pedidos: sin él no se podrá grabar el pedido.</ion-label>
         </ion-item>
         <ion-item>
             <ion-label>Crear como presupuesto</ion-label>

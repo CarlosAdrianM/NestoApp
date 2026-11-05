@@ -3,3 +3,14 @@
 .fecha-prometida {
   color: var(--ion-color-warning-shade) !important;
 }
+
+/* NestoApp#266: «Ver detalle por producto» de la fecha de entrega a la agencia */
+.enlace-detalle {
+  color: var(--ion-color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.detalle-fecha-agencia {
+  font-size: 0.85em;
+  color: var(--ion-color-step-600, #666);
+}

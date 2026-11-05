@@ -34,12 +34,14 @@ import {
   LISTA_MODOS_FACTURACION, MODOS_FACTURACION, AVISO_TODO_AHORA, ModoFacturacionSugerido, ModoFacturacionPermitido,
   modoFacturacionDerivado, esModoFacturacionPermitido, huellaModoFacturacion, selectorFacturacionBloqueado
 } from 'src/app/models/modos-facturacion.model';
-import { FechaEntregaAgencia, textoFechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
+import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia } from 'src/app/models/fecha-entrega-agencia.model';
+import { textoAvisosPedido } from 'src/app/models/avisos-pedido.model';
+import { textoPedidoMinimoCupon } from 'src/app/models/cupon.model';
 import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitucion-producto.model';
 import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque, restaChequeRegaloBaseBonificable } from 'src/app/models/cheque-regalo.model';
 import { OpcionesModosPedido, TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK, casillaServirPendienteVisible, facturacionVisible, servirPendienteParaGuardar } from 'src/app/models/opciones-modos.model';
 import { conConfirmacionFechaLejana, leerFechaEntregaLejana } from 'src/app/models/fecha-entrega-lejana.model';
-import { AVISO_CURSO_PREPAGO, EventoCurso, ModalidadEventoCurso, esLineaCurso, sinLineasCurso, textoPedidosCreados } from 'src/app/models/eventos.model';
+import { AVISO_CURSO_PREPAGO, EventoCurso, ModalidadEventoCurso, esLineaCurso, sinLineasCurso, textoPedidosCreados, textoPreguntaCorreoCursos } from 'src/app/models/eventos.model';
 import { EventosService } from '../inscribir-evento/eventos.service';
 import { ModalElegirCursoComponent } from './modal-elegir-curso.component';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
@@ -259,6 +261,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           this._clienteSeleccionado = value;
           this.cargarChequeRegalo(value); // NestoApp#222
           this.cargarCupones(value); // NestoApp#217
+          this.cargarSuPedidoObligatorio(value); // NestoApp#255
       }
   }
   private _pedidoPendienteSeleccionado: number;
@@ -302,6 +305,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
             this._clienteSeleccionado = value;
             this.cargarChequeRegalo(value); // NestoApp#222
             this.cargarCupones(value); // NestoApp#217
+            this.cargarSuPedidoObligatorio(value); // NestoApp#255
             this.cargarProductos(this.clienteSeleccionado);
           }
         }
@@ -662,6 +666,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public plazosPago: any;
   public esPresupuesto: boolean = false;
   public suPedido: string = '';
+  /** NestoApp#255 / NestoAPI#723: el cliente exige el P.O. en todos sus pedidos (la API rechaza con 400 si falta). */
+  public suPedidoObligatorio: boolean = false;
+  private clienteSuPedidoObligatorio: string | null = null;
+  /** NestoApp#257 / NestoAPI#753: lo que contestó el vendedor a «¿le mandamos el correo de los cursos?»; null = no se ha preguntado. */
+  private enviarCorreoCursos: boolean | null = null;
+  /** NestoApp#266: el detalle por producto de la fecha de entrega, plegado hasta que se pide. */
+  public verDetalleFechaEntrega: boolean = false;
   public recogerProducto: boolean = false;
   public respuestaGlovo: any;
   public sePuedeServirPorGlovo: boolean = false;
@@ -972,6 +983,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
   get textoFechaEntregaAgencia(): string {
     return textoFechaEntregaAgencia(this.fechaEntregaAgencia);
+  }
+
+  /** NestoApp#266 (Nesto#599) / #207: por qué cada producto no sale directamente de Algete. [] con una API vieja. */
+  get detalleFechaEntregaAgencia(): string[] {
+    return detallePorLinea(this.fechaEntregaAgencia);
   }
 
   /**
@@ -1898,6 +1914,11 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           'Lineas': [],
       };
 
+      // NestoApp#257 / NestoAPI#753: solo si hay cursos y se ha preguntado; sin el campo la API manda el correo como siempre.
+      if (this.enviarCorreoCursos !== null && this.hayCursosEnPedido) {
+          pedido.EnviarCorreoCursos = this.enviarCorreoCursos;
+      }
+
       // Issue #150: en modo edición, el número de pedido viaja en la cabecera para el PUT.
       if (this.pedidoEnEdicionNumero != null) {
           pedido.numero = this.pedidoEnEdicionNumero;
@@ -2152,11 +2173,49 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           return;
       }
 
+      // NestoApp#257 / NestoAPI#753: con cursos, ¿se le manda al cliente el correo (según su forma de pago)?
+      if (this.hayCursosEnPedido) {
+          this.enviarCorreoCursos = await this.preguntarCorreoCursos();
+      }
+
       if (!this.pedidoPendienteSeleccionado) {
         await this.ejecutarCreacion();
       } else {
         await this.prepararYEjecutarAmpliacion();
       }
+  }
+
+  /**
+   * NestoApp#257: pregunta, de usted, si se le manda al cliente el correo de sus cursos. El texto depende de la
+   * forma de pago (TRN: datos de la transferencia; EFC: pagar en la tienda; resto: enlace de tarjeta).
+   */
+  private async preguntarCorreoCursos(): Promise<boolean> {
+      return new Promise<boolean>(async resolve => {
+          const alert = await this.alertCtrl.create({
+              header: 'Correo de los cursos',
+              message: textoPreguntaCorreoCursos(this.extraerCodigoFormaPago()),
+              backdropDismiss: false,
+              buttons: [
+                  { text: 'No, sin correo', role: 'cancel', handler: () => resolve(false) },
+                  { text: 'Sí, mandarlo', handler: () => resolve(true) }
+              ]
+          });
+          await alert.present();
+      });
+  }
+
+  /**
+   * NestoApp#264 / NestoAPI#764: avisos no bloqueantes del pedido recién grabado (p. ej. el cliente cierra su día
+   * de reparto). Se enseñan después de la confirmación; sin avisos (o con una API anterior) no sale nada.
+   */
+  private async avisarAvisosGrabacion(avisos: any[] | null | undefined): Promise<void> {
+      const texto = textoAvisosPedido(avisos);
+      if (!texto) {
+          return;
+      }
+      const alert = await this.alertCtrl.create({ header: 'Ojo con este pedido', message: texto, buttons: ['Entendido'] });
+      await alert.present();
+      await alert.onDidDismiss();
   }
 
   /** El POST de «Crear pedido» (también el reintento tras confirmar la fecha lejana, #252). */
@@ -2263,6 +2322,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 this.borradorOrigen = null;
                 this.reinicializar();
                 alert.onDidDismiss().then(async () => {
+                    await this.avisarAvisosGrabacion(data.AvisosGrabacion); // NestoApp#264
                     await this.avisarCursosNoCreados(data.AvisosCursos);
                     this.preguntarBorrarBorrador(numeroPedido, borradorOrigen);
                 });
@@ -2504,6 +2564,10 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.regalosSeleccionados = [];
       this.productosBonificablesCount = -1; // Resetear verificación de productos bonificables
       this.suPedido = '';
+      this.suPedidoObligatorio = false; // NestoApp#255
+      this.clienteSuPedidoObligatorio = null;
+      this.enviarCorreoCursos = null; // NestoApp#257
+      this.verDetalleFechaEntrega = false; // NestoApp#266
       this.resultadoPortes = null;
       this.textoPortes = '';
       this.portesGratis = false;
@@ -2953,6 +3017,35 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public codigoCuponElegido: string | null = null;
   private clienteCupones: string | null = null;
 
+  /** NestoApp#255: si el cliente exige el P.O., para resaltar «Su pedido» antes de que la API lo rechace. */
+  public cargarSuPedidoObligatorio(cliente: any): void {
+    const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}` : null;
+    if (clave === this.clienteSuPedidoObligatorio) {
+      return;
+    }
+    this.clienteSuPedidoObligatorio = clave;
+    this.suPedidoObligatorio = false;
+    if (!clave) {
+      return;
+    }
+    this.servicio.leerSuPedidoObligatorio(cliente.empresa.toString().trim(), cliente.cliente.toString().trim(),
+        (cliente.contacto ?? '0').toString().trim()).subscribe(exige => {
+      if (clave === this.clienteSuPedidoObligatorio) {
+        this.suPedidoObligatorio = !!exige;
+      }
+    });
+  }
+
+  /** NestoApp#255: falta el P.O. de un cliente que lo exige (se resalta; la API lo rechaza igual). */
+  get faltaSuPedidoObligatorio(): boolean {
+    return this.suPedidoObligatorio && !(this.suPedido || '').trim();
+  }
+
+  /** NestoApp#256: la condición del cupón aplicado, con el mínimo que diga la API (0 = sin mínimo). */
+  get textoPedidoMinimoCupon(): string {
+    return textoPedidoMinimoCupon(this.cuponAplicado, importe => this.formatearEuros(importe));
+  }
+
   public cargarCupones(cliente: any): void {
     const clave = cliente?.cliente ? `${(cliente.empresa ?? '').toString().trim()}/${cliente.cliente.toString().trim()}` : null;
     if (clave === this.clienteCupones) {
@@ -3147,6 +3240,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
               });
               await alert.present();
               this.reinicializar();
+              // NestoApp#264: en el PUT los avisos vienen en Avisos, con la misma forma que AvisosGrabacion.
+              alert.onDidDismiss().then(() => this.avisarAvisosGrabacion(data?.Avisos));
           },
           async error => {
               await loading.dismiss();
