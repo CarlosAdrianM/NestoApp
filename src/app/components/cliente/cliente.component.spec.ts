@@ -221,6 +221,52 @@ describe('ClienteComponent', () => {
       expect(component.direccionBloqueada).toBeTrue();
     }));
 
+    // NestoApp#271 / NestoAPI#826: la API da calle y número en el formato del país.
+    it('si el detalle trae DireccionCalleNumero se usa tal cual (direcciones extranjeras)', fakeAsync(() => {
+      servicio.leerDetalleDireccion = () => of({ calle: 'Rue de la Paix', numero: '12', codigoPostal: '75002', poblacion: 'Paris', provincia: 'Île-de-France', paisIso: 'fr', direccionCalleNumero: '12 Rue de la Paix' });
+      component.cliente = {};
+
+      component.seleccionarSugerenciaDireccion({ placeId: 'abc' });
+      tick();
+
+      expect(component.cliente.direccionCalleNumero).toBe('12 Rue de la Paix');
+      expect(component.cliente.pais).toBe('FR');
+    }));
+
+    // NestoApp#270 / NestoAPI#821: con un CP nuevo la API devuelve null si no se le mandó nada.
+    it('un CP nuevo no pisa la población y la provincia de Google con null', fakeAsync(() => {
+      spyOn(servicio, 'validarDatosGenerales').and.returnValue(of({ direccionFormateada: 'CALLE MAYOR, 5', poblacion: null, provincia: null, hayErrores: false }));
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR, 5', direccionVerificada: true, codigoPostal: '28099', poblacion: 'MADRID', provincia: 'MADRID' };
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(component.cliente.poblacion).toBe('MADRID');
+      expect(component.cliente.provincia).toBe('MADRID');
+      expect(component.slideActual).toBe(component.DATOS_COMISIONES);
+    }));
+
+    it('la población de la tabla de códigos postales sigue mandando cuando la API la devuelve', fakeAsync(() => {
+      spyOn(servicio, 'validarDatosGenerales').and.returnValue(of({ direccionFormateada: 'CALLE MAYOR, 5', poblacion: 'ALCOBENDAS', provincia: 'MADRID', hayErrores: false }));
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR, 5', direccionVerificada: true, codigoPostal: '28100', poblacion: 'ALCOBENDAS CENTRO', provincia: 'MADRID' };
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(component.cliente.poblacion).toBe('ALCOBENDAS');
+    }));
+
+    it('el 400 de la API («No existe el código postal…») se enseña tal cual', fakeAsync(() => {
+      spyOn(servicio, 'validarDatosGenerales').and.returnValue(throwError(() => ({ message: 'No existe el código postal 28099. Elija la dirección en el buscador de Google para darlo de alta' })));
+      component.cliente = { direccionCalleNumero: 'CALLE MAYOR, 5', direccionVerificada: false, codigoPostal: '28099' };
+      component.cliente.direccionVerificada = true; // para que llegue a llamar
+
+      component.goToDatosComisiones();
+      tick();
+
+      expect(alertCreado.message).toContain('No existe el código postal 28099');
+    }));
+
     it('el botón de limpiar vacía la dirección y la reabre para buscar otra', () => {
       component.cliente = { direccionCalleNumero: 'CALLE MAYOR 5', direccionVerificada: true };
 

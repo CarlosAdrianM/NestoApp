@@ -35,6 +35,12 @@ export class ClienteService {
     // Issue #153 / NestoAPI#306: si la dirección viene del combo de Places, el backend
     // se salta el geocoding de validación (que daba falsos positivos con calles homónimas).
     params = params.append('direccionVerificada', cliente.direccionVerificada ? 'true' : 'false');
+    // NestoApp#270 / NestoAPI#821: con la dirección de Google, un CP español que no está en la
+    // tabla se da de alta con la población y la provincia que dio Google; hay que mandarlas.
+    // El país (ISO, del detalle de Google) decide si se trata como extranjera (NestoAPI#826).
+    if (cliente.pais) { params = params.append('pais', cliente.pais); }
+    if (cliente.poblacion) { params = params.append('poblacion', cliente.poblacion); }
+    if (cliente.provincia) { params = params.append('provincia', cliente.provincia); }
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(

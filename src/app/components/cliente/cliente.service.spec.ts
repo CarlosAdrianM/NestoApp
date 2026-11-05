@@ -57,6 +57,31 @@ describe('ClienteService', () => {
     });
   });
 
+  // NestoApp#270 / NestoAPI#821: un CP español nuevo solo se da de alta si llegan la población y la
+  // provincia de Google; NestoApp#271 / NestoAPI#826: el país decide el formato de la dirección.
+  describe('validarDatosGenerales manda lo de Google (#270, #271)', () => {
+    it('manda poblacion, provincia y pais cuando los hay', () => {
+      service.validarDatosGenerales({ direccionCalleNumero: 'CALLE MAYOR, 5', codigoPostal: '28099', telefono: '9', direccionVerificada: true, poblacion: 'MADRID', provincia: 'MADRID', pais: 'ES' }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url.endsWith('/Clientes/ComprobarDatosGenerales'));
+      expect(req.request.params.get('direccionVerificada')).toBe('true');
+      expect(req.request.params.get('poblacion')).toBe('MADRID');
+      expect(req.request.params.get('provincia')).toBe('MADRID');
+      expect(req.request.params.get('pais')).toBe('ES');
+      req.flush({});
+    });
+
+    it('sin ellos no manda los parámetros (como hasta ahora)', () => {
+      service.validarDatosGenerales({ direccionCalleNumero: 'CALLE MAYOR, 5', codigoPostal: '28013', telefono: '9' }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url.endsWith('/Clientes/ComprobarDatosGenerales'));
+      expect(req.request.params.has('poblacion')).toBeFalse();
+      expect(req.request.params.has('provincia')).toBeFalse();
+      expect(req.request.params.has('pais')).toBeFalse();
+      req.flush({});
+    });
+  });
+
   describe('corregirNif (issue #157)', () => {
     it('hace POST con Cliente y Nif en el body', () => {
       service.corregirNif('15528', '12345678Z').subscribe();

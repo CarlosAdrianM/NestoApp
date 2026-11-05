@@ -269,8 +269,10 @@ export class ClienteComponent implements AfterViewInit {
                   this.cliente.direccion += ", " + this.cliente.direccionAdicional.toUpperCase();
               }
               this.cliente.direccion = this.cliente.direccion.substr(0, 50);
-              this.cliente.poblacion = data.poblacion;
-              this.cliente.provincia = data.provincia;
+              // NestoApp#270: con un CP nuevo la API devuelve lo que se le mandó (o null si no
+              // se le mandó nada): no se pisan los valores de Google con un null.
+              this.cliente.poblacion = data.poblacion ?? this.cliente.poblacion;
+              this.cliente.provincia = data.provincia ?? this.cliente.provincia;
               this.cliente.ruta = data.ruta;
               this.cliente.telefono = data.telefonoFormateado;
               this.cliente.vendedorEstetica = data.vendedorEstetica;
@@ -639,8 +641,12 @@ export class ClienteComponent implements AfterViewInit {
   public seleccionarSugerenciaDireccion(sugerencia: any): void {
       this.servicio.leerDetalleDireccion(sugerencia.placeId, this.sessionTokenDireccion).subscribe(
           (detalle: any) => {
-              this.cliente.direccionCalleNumero = [detalle.calle, detalle.numero].filter(Boolean).join(', ').trim();
+              // NestoApp#271 / NestoAPI#826: la API ya compone calle y número en el formato del país
+              // («12 Rue de la Paix», «Calle Mayor, 12»); el join solo queda de respaldo para una API vieja.
+              this.cliente.direccionCalleNumero = detalle.direccionCalleNumero?.trim() ||
+                  [detalle.calle, detalle.numero].filter(Boolean).join(', ').trim();
               this.cliente.codigoPostal = detalle.codigoPostal;
+              if (detalle.paisIso) { this.cliente.pais = detalle.paisIso.toUpperCase(); }
               // Población/provincia de Google, normalizadas a MAYÚSCULAS (cubre CPs con varias poblaciones).
               if (detalle.poblacion) { this.cliente.poblacion = detalle.poblacion.toUpperCase(); }
               if (detalle.provincia) { this.cliente.provincia = detalle.provincia.toUpperCase(); }
