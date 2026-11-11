@@ -1,4 +1,4 @@
-import { EnvioDevuelto, enviosDevueltosVisibles, estaDecidido, textoDecisionEnvio, textoEstadoEnvioDevuelto, textoResultadoDecision } from './envio-devuelto.model';
+import { EnvioDevuelto, enviosDevueltosSinContestar, enviosDevueltosVisibles, esEnvioDevueltoOIncidentado, textoDevueltosSinContestar, estaDecidido, textoDecisionEnvio, textoEstadoEnvioDevuelto, textoResultadoDecision } from './envio-devuelto.model';
 
 /** NestoApp#267 (NestoAPI#699, corte 2): envíos devueltos y la decisión del vendedor. */
 describe('Envíos devueltos (#267)', () => {
@@ -42,5 +42,31 @@ describe('Envíos devueltos (#267)', () => {
       .toBe('Se ha creado el envío nuevo 124 del pedido 929498. El almacén lo tramita cuando llegue la caja devuelta.\n\nSe le cobran los portes del reenvío.\n\nEl reembolso se mantiene.');
     expect(textoResultadoDecision({ EnvioOrigen: 123, Decision: 'Abonar' })).toBe('Se ha anotado que el cliente no lo quiere: el almacén hará el abono.');
     expect(textoResultadoDecision(null)).toBe('');
+  });
+});
+
+/** NestoApp#273: contestar desde el pedido y el aviso en la lista de pedidos. */
+describe('Envíos devueltos sin contestar (#273)', () => {
+  const envio = (cambios: Partial<EnvioDevuelto> = {}): EnvioDevuelto => ({
+    Numero: 123, Empresa: '1', Cliente: '15191', Contacto: '0', Pedido: 929498, Estado: 4, Fecha: '2026-11-03T00:00:00', Vendedor: 'JM', Decision: 'SinDecidir', ...cambios
+  });
+
+  it('solo los devueltos (4) y los incidentados (3) esperan respuesta', () => {
+    expect(esEnvioDevueltoOIncidentado(4)).toBeTrue();
+    expect(esEnvioDevueltoOIncidentado(3)).toBeTrue();
+    [-1, 0, 1, 2, 5, null, undefined].forEach(estado => expect(esEnvioDevueltoOIncidentado(estado as any)).toBeFalse());
+  });
+
+  it('cuenta los del vendedor que siguen sin decidir', () => {
+    const lista = [envio({ Numero: 1 }), envio({ Numero: 2, Decision: 'Abonar' }), envio({ Numero: 3, Vendedor: 'OTRO' }), envio({ Numero: 4, Estado: 3 })];
+    expect(enviosDevueltosSinContestar(lista, 'JM').map(e => e.Numero).sort()).toEqual([1, 4]);
+    expect(enviosDevueltosSinContestar(lista, null).length).toBe(3);
+    expect(enviosDevueltosSinContestar(null, 'JM')).toEqual([]);
+  });
+
+  it('el texto del aviso, en singular y en plural; sin ninguno, nada', () => {
+    expect(textoDevueltosSinContestar(1)).toBe('Tiene 1 envío devuelto sin contestar');
+    expect(textoDevueltosSinContestar(3)).toBe('Tiene 3 envíos devueltos sin contestar');
+    expect(textoDevueltosSinContestar(0)).toBe('');
   });
 });

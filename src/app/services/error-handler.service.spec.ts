@@ -50,3 +50,23 @@ describe('ErrorHandlerService.extractErrorMessage sin mensaje del servidor (#231
     expect(servicio.extractErrorMessage(error)).toBe('Ha ocurrido un error inesperado');
   });
 });
+
+/** NestoApp#272: la API contesta a veces con el motivo como cadena a secas (Content(HttpStatusCode.Forbidden, "…")). */
+describe('ErrorHandlerService.extractErrorMessage con el motivo como cadena (#272)', () => {
+  const servicio = new ErrorHandlerService(null, null);
+
+  it('un 403 con cuerpo de texto enseña ese texto (envuelto por el interceptor)', () => {
+    const error = procesado(new HttpErrorResponse({ status: 403, url: 'https://api/Documentos/EnlaceDescarga', error: 'Solo los empleados pueden crear enlaces de descarga.' }));
+    expect(servicio.extractErrorMessage(error)).toBe('Solo los empleados pueden crear enlaces de descarga.');
+  });
+
+  it('y también sin envolver, quitando espacios', () => {
+    const error = new HttpErrorResponse({ status: 409, url: 'https://api/x', error: '  El envío 123 ya está decidido.  ' });
+    expect(servicio.extractErrorMessage(error)).toBe('El envío 123 ya está decidido.');
+  });
+
+  it('una página HTML (IIS) no es un motivo: sigue el mensaje de servidor no disponible o el genérico', () => {
+    const error = procesado(new HttpErrorResponse({ status: 500, url: 'https://api/x', error: '<!DOCTYPE html><html><body>Error</body></html>' }));
+    expect(servicio.extractErrorMessage(error)).toBe('Ha ocurrido un error inesperado');
+  });
+});

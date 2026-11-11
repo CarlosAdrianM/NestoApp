@@ -1,4 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { AvisoCondicionesCampana, PeticionAvisoCondicionesCampana } from 'src/app/models/aviso-condiciones-campana.model';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
@@ -38,6 +39,15 @@ export class PlantillaVentaService {
     console.log('Crear pedido - saltarValidacion:', saltarValidacion, '- CreadoSinPasarValidacion:', pedidoAEnviar.CreadoSinPasarValidacion);
 
     return this.http.post(this._baseUrl, JSON.stringify(pedidoAEnviar), { headers: headers });
+  }
+
+  /**
+   * NestoApp#275: ¿el pedido que se va a crear lleva productos de una campaña que exige pago al contado y no va al
+   * contado? Solo lectura. Si falla (red, API anterior), el llamante crea el pedido sin avisar.
+   */
+  public avisoCondicionesCampana(peticion: PeticionAvisoCondicionesCampana): Observable<AvisoCondicionesCampana | null> {
+    // Con tope: si la API no contesta en 8 s, el pedido se crea sin avisar
+    return this.http.post<AvisoCondicionesCampana>(this._baseUrl + '/AvisoCondicionesCampana', peticion).pipe(timeout(8000));
   }
 
   /**

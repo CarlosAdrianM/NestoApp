@@ -1,4 +1,4 @@
-import { saludoSegunHora, textoMovil, textoWhatsAppVarios, urlWhatsApp } from './enlace-descarga.model';
+import { firmaWhatsApp, saludoSegunHora, textoMovil, textoWhatsAppVarios, urlWhatsApp } from './enlace-descarga.model';
 
 /** NestoApp#261 (NestoAPI#737): enlace de WhatsApp con el texto ya escrito. */
 describe('Enlace de WhatsApp (#261)', () => {
@@ -43,5 +43,25 @@ describe('Mensaje de WhatsApp con varios documentos (#69)', () => {
     expect(saludoSegunHora(new Date(2026, 10, 5, 17))).toBe('Buenas tardes');
     expect(saludoSegunHora(new Date(2026, 10, 5, 22))).toBe('Buenas noches');
     expect(textoWhatsAppVarios([])).toBe('');
+  });
+});
+
+/** NestoApp#272: el WhatsApp lo manda el vendedor, así que lo firma él (Carlos, 11/11/26). */
+describe('Mensaje de WhatsApp firmado por quien lo manda (#272)', () => {
+  const enlace = (numero: string, remitente?: string) => ({
+    Url: 'https://api.nuevavision.es/d/' + numero, Caduca: '2026-12-05T00:00:00', Tipo: 'Factura', Numero: numero, Nombre: 'Peluquería Ana', Importe: 10, Moviles: [],
+    Texto: 'TEXTO ' + numero, Remitente: remitente
+  });
+
+  it('con varios documentos firma con el nombre que da la API y la empresa debajo', () => {
+    const texto = textoWhatsAppVarios([enlace('NV1', ' Juan García '), enlace('NV2', 'Juan García')], new Date(2026, 10, 11, 10));
+    expect(texto.endsWith('\n\nUn saludo,\nJuan García\nNueva Visión')).toBeTrue();
+  });
+
+  it('si la API no dice quién lo manda (API anterior), firma la empresa como antes', () => {
+    const texto = textoWhatsAppVarios([enlace('NV1'), enlace('NV2')], new Date(2026, 10, 11, 10));
+    expect(texto.endsWith('\n\nUn saludo,\nNueva Visión')).toBeTrue();
+    expect(firmaWhatsApp(null)).toBe('Un saludo,\nNueva Visión');
+    expect(firmaWhatsApp('Marta Ruiz')).toBe('Un saludo,\nMarta Ruiz\nNueva Visión');
   });
 });

@@ -11,6 +11,9 @@ import { ListaPedidosVentaComponent } from './lista-pedidos-venta.component';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of } from 'rxjs';
 import { PedidoVentaService } from '../pedido-venta/pedido-venta.service';
+import { EnviosAgenciasService } from 'src/app/services/envios-agencias.service';
+import { NavController } from '@ionic/angular';
+import { throwError } from 'rxjs';
 
 describe('ListaPedidosVentaComponent', () => {
   let component: ListaPedidosVentaComponent;
@@ -81,5 +84,38 @@ describe('ListaPedidosVentaComponent: fecha sin determinar y retenidos (#240 / #
     expect(component.estaRetenido({ numero: 929057 })).toBeTrue();
     expect(component.estaRetenido({ numero: 1 })).toBeFalse();
     expect(component.estaRetenido({ numero: 2 })).toBeFalse();
+  });
+
+  describe('envíos devueltos sin contestar (#273)', () => {
+    const envio = (cambios: any = {}) => ({ Numero: 1, Empresa: '1', Cliente: '15191', Contacto: '0', Estado: 4, Fecha: '2026-11-03', Vendedor: 'JM', Decision: 'SinDecidir', ...cambios });
+
+    it('al entrar cuenta los del vendedor que siguen sin decidir y lo dice', () => {
+      (TestBed.inject(Usuario) as any).vendedor = 'JM';
+      spyOn(TestBed.inject(EnviosAgenciasService), 'leerDevueltos').and.returnValue(of([envio(), envio({ Numero: 2, Decision: 'Reenviar' }), envio({ Numero: 3, Vendedor: 'OTRO' }), envio({ Numero: 4, Estado: 3 })] as any));
+
+      component.ionViewWillEnter();
+
+      expect(component.devueltosSinContestar).toBe(2);
+      expect(component.textoDevueltosSinContestar).toBe('Tiene 2 envíos devueltos sin contestar');
+    });
+
+    it('si la API falla (o es anterior) no se enseña nada', () => {
+      component.devueltosSinContestar = 5;
+      spyOn(TestBed.inject(EnviosAgenciasService), 'leerDevueltos').and.returnValue(throwError(() => ({ status: 404 })));
+
+      component.cargarDevueltosSinContestar();
+
+      expect(component.devueltosSinContestar).toBe(0);
+      expect(component.textoDevueltosSinContestar).toBe('');
+    });
+
+    it('el aviso lleva a la lista de envíos devueltos', () => {
+      const nav = TestBed.inject(NavController);
+      spyOn(nav, 'navigateForward');
+
+      component.abrirDevueltos();
+
+      expect(nav.navigateForward).toHaveBeenCalledWith('envios-devueltos');
+    });
   });
 });

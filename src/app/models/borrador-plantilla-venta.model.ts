@@ -104,6 +104,8 @@ export interface BorradorPlantillaVenta {
 
   // Campos específicos NestoApp
   servirPorGlovo?: boolean;
+  /** NestoApp#205 / NestoAPI#571: «Recoge en tienda» marcado por el vendedor. */
+  recogeEnTienda?: boolean;
   mandarCobroTarjeta?: boolean;
   cobroTarjetaCorreo?: string;
   cobroTarjetaMovil?: string;

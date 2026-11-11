@@ -12,6 +12,7 @@ import { ProfileService } from './profile.service';
 import { AppComponent } from 'src/app/app.component';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BuzonNotificacionesService, textoContador } from 'src/app/services/buzon-notificaciones.service';
+import { NovedadesNuevasService } from 'src/app/services/novedades-nuevas.service';
 import { AdjuntoNovedad, MisPerfilesNovedades, filtraPorPerfiles, iconoAdjunto, textoFiltroPerfiles, textoParaPerfiles, GrupoNovedades, Novedad, NovedadesService, agruparPorVersion, colorCategoria, fechaDeVersion, compararVersiones, indiceVersionInstalada, colorEstadoSugerencia, tieneVideo } from 'src/app/services/novedades.service';
 import { VideoNovedadComponent } from '../video-novedad/video-novedad.component';
 import { TipoAportacion } from '../sugerir-caracteristica/sugerir-caracteristica.component';
@@ -62,6 +63,7 @@ export class ProfileComponent {
       private visorFicheros: VisorFicheros,
       public buzon: BuzonNotificacionesService,
       private modalCtrl: ModalController,
+      private novedadesNuevas: NovedadesNuevasService,
       ) {
           this.appVersion.getVersionNumber().then((ver) => this.numeroVersionBinarios = ver);
           this.numeroVersionActualizacion = Configuracion.VERSION;
@@ -473,6 +475,7 @@ export class ProfileComponent {
                 this.cargarSeEstaVendiendo();
                 this.appComponent.registrarDispositivoPush();
                 this.buzon.refrescarContador(); // #176
+                this.novedadesNuevas.comprobar(); // #177 fase 2
             }
         }).catch(error => {
             console.log(error);
@@ -520,6 +523,7 @@ export class ProfileComponent {
             this.cargarParametros();
             this.appComponent.registrarDispositivoPush();
             this.buzon.refrescarContador(); // #176
+            this.novedadesNuevas.comprobar(); // #177 fase 2
         },
         async err => {
             this.error = 'Se ha producido un error al intentar iniciar sesión',

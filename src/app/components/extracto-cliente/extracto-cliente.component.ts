@@ -14,7 +14,7 @@ import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.service';
 import { CuponCliente } from 'src/app/models/cupon.model';
-import { FacturaSeleccionada, textoResultadoEnvioFacturas } from 'src/app/models/envio-facturas.model';
+import { FacturaSeleccionada, resultadoDeErrorEnvioFacturas, textoResultadoEnvioFacturas } from 'src/app/models/envio-facturas.model';
 
 @Component({
     selector: 'app-extracto-cliente',
@@ -119,7 +119,13 @@ export class ExtractoClienteComponent implements AfterViewInit {
           }
       } catch (error) {
           await loading.dismiss();
-          const alert = await this.alertCtrl.create({ header: 'No se han podido enviar las facturas', message: this.errorHandler.extractErrorMessage(error), buttons: ['Ok'] });
+          // NestoApp#272: un 502 con el resultado es «el correo no ha salido» (con su motivo), no «servidor no disponible»
+          const noEnviado = resultadoDeErrorEnvioFacturas(error);
+          const alert = await this.alertCtrl.create({
+              header: noEnviado ? 'No se ha podido enviar' : 'No se han podido enviar las facturas',
+              message: noEnviado ? textoResultadoEnvioFacturas(noEnviado) : this.errorHandler.extractErrorMessage(error),
+              buttons: ['Ok']
+          });
           await alert.present();
       }
   }

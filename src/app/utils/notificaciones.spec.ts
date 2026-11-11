@@ -100,3 +100,18 @@ describe('rutaDeNotificacion: envío devuelto (#267)', () => {
     expect(rutaDeNotificacion({ tipo: 'DevolucionEnvioAgencia', pedido: '929498' })).toBe('/pedido-venta?empresa=1&numero=929498');
   });
 });
+
+describe('rutaDeNotificacion: leads de campaña (#274)', () => {
+  it('un lead nuevo abre la ficha del cliente con su contacto', () => {
+    expect(rutaDeNotificacion({ tipo: 'LeadNuevo', empresa: '1', cliente: '40123', contacto: '2', origen: 'META' }))
+      .toBe('/cliente?empresa=1&cliente=40123&contacto=2');
+  });
+
+  it('el recordatorio de lead sin llamar, también; sin empresa ni contacto, la 1 y el 0', () => {
+    expect(rutaDeNotificacion({ tipo: 'LeadSinLlamar', cliente: '40123' })).toBe('/cliente?empresa=1&cliente=40123&contacto=0');
+  });
+
+  it('sin cliente, a ningún sitio', () => {
+    expect(rutaDeNotificacion({ tipo: 'LeadNuevo', origen: 'META' })).toBeNull();
+  });
+});

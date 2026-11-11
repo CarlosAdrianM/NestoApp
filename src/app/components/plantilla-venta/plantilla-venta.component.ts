@@ -41,6 +41,8 @@ import { SustitucionProducto, preguntaSustitucion } from 'src/app/models/sustitu
 import { ChequeRegaloCliente, baseComputableCheque, esLineaChequeRegalo, faltaParaMinimoCheque, restaChequeRegaloBaseBonificable } from 'src/app/models/cheque-regalo.model';
 import { OpcionesModosPedido, TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK, casillaServirPendienteVisible, facturacionVisible, servirPendienteParaGuardar } from 'src/app/models/opciones-modos.model';
 import { conConfirmacionFechaLejana, leerFechaEntregaLejana } from 'src/app/models/fecha-entrega-lejana.model';
+import { AvisoCondicionesCampana, hayQueAvisarCondicionesCampana, peticionAvisoCondicionesCampana } from 'src/app/models/aviso-condiciones-campana.model';
+import { TEXTO_PORTES_RECOGE_EN_TIENDA, almacenObligaARecoger, almacenPermiteRecoger, esRutaDeRecogida, recogeEnTiendaEfectivo, recogeEnTiendaParaGuardar } from 'src/app/models/recoge-en-tienda.model';
 import { AVISO_CURSO_PREPAGO, EventoCurso, ModalidadEventoCurso, esLineaCurso, sinLineasCurso, textoPedidosCreados, textoPreguntaCorreoCursos } from 'src/app/models/eventos.model';
 import { EventosService } from '../inscribir-evento/eventos.service';
 import { ModalElegirCursoComponent } from './modal-elegir-curso.component';
@@ -680,6 +682,39 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
   public direccionFormateada: string;
   public costeGlovo: number;
   public servirPorGlovo: boolean;
+
+  // ---- NestoApp#205 / NestoAPI#571: «Recoge en tienda» ----
+  /** Lo que ha marcado el vendedor (solo cuenta en Algete; en Alcobendas y Reina se recoge siempre). */
+  private recogeEnTiendaMarcado = false;
+
+  /** Solo en los almacenes que son tienda de recogida y si no va por Glovo. */
+  get recogeEnTiendaVisible(): boolean {
+    return almacenPermiteRecoger(this.almacen) && !this.servirPorGlovo;
+  }
+
+  /** Alcobendas y Reina: marcado y sin poder desmarcarlo. */
+  get recogeEnTiendaFijo(): boolean {
+    return almacenObligaARecoger(this.almacen);
+  }
+
+  get recogeEnTienda(): boolean {
+    return this.recogeEnTiendaVisible && recogeEnTiendaEfectivo(this.almacen, this.recogeEnTiendaMarcado);
+  }
+
+  /** Al cambiarlo se recalculan los portes: si recoge, el resumen no enseña portes ni comisión. */
+  public cambiarRecogeEnTienda(valor: boolean): void {
+    if (this.recogeEnTiendaFijo || !!valor === this.recogeEnTiendaMarcado) {
+      return;
+    }
+    this.recogeEnTiendaMarcado = !!valor;
+    this.firebaseAnalytics.logEvent('plantilla_venta_recoge_en_tienda', { recoge: this.recogeEnTiendaMarcado });
+    this.calcularPortes();
+  }
+
+  /** Lo que viaja en el pedido: null (no tocar) si en este almacén no se ofrece o si va por Glovo. */
+  private recogeEnTiendaParaGuardar(): boolean | null {
+    return this.recogeEnTiendaVisible ? recogeEnTiendaParaGuardar(this.almacen, this.recogeEnTiendaMarcado) : null;
+  }
   public indexActivo: number;
   public textoBotonCrearPedido: string = "Crear Pedido";
   public listaPedidosPendientes: any;
@@ -1747,7 +1782,9 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       Iva: this.direccionSeleccionada.iva || '',
       BaseImponibleProductos: this._selectorPlantillaVenta?.baseImponibleParaPortes || 0,
       AnadirPortes: this.almacen !== 'REI' && this.almacen !== 'ALC',
-      NoCobrarComisionReembolso: this.noCobrarComisionReembolso
+      NoCobrarComisionReembolso: this.noCobrarComisionReembolso,
+      // NestoApp#205 / NestoAPI#571: si recoge en tienda, sin portes ni comisión de reembolso
+      RecogeEnTienda: this.recogeEnTienda
     };
 
     this.servicio.calcularPortes(input).subscribe(
@@ -1766,6 +1803,13 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     if (!this.resultadoPortes || !this.productosResumen || this.productosResumen.length === 0) {
       this.textoPortes = '';
       this.portesGratis = false;
+      return;
+    }
+
+    // NestoApp#205: si recoge en tienda no hay portes ni comisión que enseñar
+    if (this.recogeEnTienda) {
+      this.portesGratis = true;
+      this.textoPortes = TEXTO_PORTES_RECOGE_EN_TIENDA;
       return;
     }
 
@@ -1909,6 +1953,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
           // NestoApp#235 / NestoAPI#670: enlaza las sugerencias que se han enseñado con el pedido.
           'IdSesionSugerencias': this.sugerenciasProductos?.idSesion ?? null,
           'NoCobrarComisionReembolso': this.noCobrarComisionReembolso,
+          // NestoApp#205 / NestoAPI#571: la API pone la ruta de recogida y quita portes y comisión; null = no tocar.
+          'RecogeEnTienda': this.recogeEnTiendaParaGuardar(),
           'suPedido': this.suPedido ? this.suPedido.trim() : null,
           'Usuario': Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
           'Lineas': [],
@@ -2179,9 +2225,49 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       }
 
       if (!this.pedidoPendienteSeleccionado) {
+        // NestoApp#275: solo al crear (no al ampliar ni al modificar) y una vez por creación
+        await this.avisarCondicionesCampana();
         await this.ejecutarCreacion();
       } else {
         await this.prepararYEjecutarAmpliacion();
+      }
+  }
+
+  /**
+   * NestoApp#275: si el pedido lleva productos de una campaña que exige pago al contado (la feria online) y no va al
+   * contado, la API lo dice y se pregunta. «Sí» cambia los plazos a los propuestos (la forma de pago no se toca); «No»
+   * lo deja como estaba. Si la llamada falla, no se avisa: nunca impide crear.
+   */
+  private async avisarCondicionesCampana(): Promise<void> {
+      let aviso: AvisoCondicionesCampana | null = null;
+      try {
+          const peticion = peticionAvisoCondicionesCampana(this.prepararPedido(), this.esTarjetaPrepago());
+          if (!peticion) {
+              return;
+          }
+          aviso = await firstValueFrom(this.servicio.avisoCondicionesCampana(peticion));
+      } catch {
+          return;
+      }
+      if (!hayQueAvisarCondicionesCampana(aviso)) {
+          return;
+      }
+      const cambiar = await new Promise<boolean>(async resolve => {
+          const alert = await this.alertCtrl.create({
+              header: 'Pago al contado',
+              message: aviso.Mensaje,
+              backdropDismiss: false,
+              buttons: [
+                  { text: 'No', role: 'cancel', handler: () => resolve(false) },
+                  { text: 'Sí', handler: () => resolve(true) }
+              ]
+          });
+          await alert.present();
+      });
+      this.firebaseAnalytics.logEvent('plantilla_venta_aviso_campana', { campana: aviso.Campana, cambia: cambiar });
+      if (cambiar) {
+          this.plazosPagoProtegido = null;
+          this.plazosPago = aviso.PlazosPagoPropuestos.trim();
       }
   }
 
@@ -2572,6 +2658,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       this.textoPortes = '';
       this.portesGratis = false;
       this.noCobrarComisionReembolso = false;
+      this.recogeEnTiendaMarcado = false; // NestoApp#205
       this.recogerProducto = false;
       this.sustitucionesRechazadas.clear(); // NestoApp#220
       this.fechaEntregaAgencia = null; // NestoApp#215
@@ -3371,6 +3458,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
 
       // Campos específicos NestoApp
       servirPorGlovo: this.servirPorGlovo || false,
+      recogeEnTienda: this.recogeEnTiendaMarcado, // NestoApp#205
       mandarCobroTarjeta: this.mandarCobroTarjeta || false,
       cobroTarjetaCorreo: this.cobroTarjetaCorreo || '',
       cobroTarjetaMovil: this.cobroTarjetaMovil || ''
@@ -3594,6 +3682,7 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     this.esPresupuesto = borrador.esPresupuesto || false;
     this.fechaEntrega = borrador.fechaEntrega || this.fechaMinima;
     this.servirPorGlovo = borrador.servirPorGlovo || false;
+    this.recogeEnTiendaMarcado = borrador.recogeEnTienda || false; // NestoApp#205
     this.mandarCobroTarjeta = borrador.mandarCobroTarjeta || false;
     this.cobroTarjetaCorreo = borrador.cobroTarjetaCorreo || '';
     this.cobroTarjetaMovil = borrador.cobroTarjetaMovil || '';
@@ -3715,6 +3804,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
       suPedido: '',
       total: 0,
       servirPorGlovo: false,
+      // NestoApp#205: el pedido de la plantilla trae la ruta; se recoge si es de recogida (AM, ALC, REI)
+      recogeEnTienda: dto.RecogeEnTienda ?? esRutaDeRecogida(dto.Ruta),
       mandarCobroTarjeta: false,
       cobroTarjetaCorreo: '',
       cobroTarjetaMovil: ''

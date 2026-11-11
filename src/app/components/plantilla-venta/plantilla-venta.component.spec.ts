@@ -3153,6 +3153,142 @@ describe('PlantillaVentaComponent: tanda 2.27.0 (#255 #257 #264 #266)', () => {
     }));
   });
 
+  describe('aviso de pago al contado con productos de campaña (#275)', () => {
+    const aviso = { Avisar: true, Mensaje: 'Este pedido lleva productos de la feria online, que exigen pago al contado. ¿Cambiar a contado?', PlazosPagoPropuestos: 'CONTADO', Campana: 'FERIA-ONLINE-1126', Productos: ['38093'] };
+
+    beforeEach(() => {
+      component['plazosPago'] = '1/30';
+      component['formaPago'] = 'RCB';
+      servicio.avisoCondicionesCampana = jasmine.createSpy('avisoCondicionesCampana').and.returnValue(of(aviso));
+    });
+
+    it('antes de crear se pregunta a la API con los productos, la forma de pago y los plazos; «Sí» cambia los plazos', fakeAsync(() => {
+      component.crearPedido();
+      tick();
+
+      expect(servicio.avisoCondicionesCampana).toHaveBeenCalledOnceWith({ Empresa: '1', Productos: ['38093'], FormaPago: 'RCB', PlazosPago: '1/30', TienePrepago: false, DescuentoPP: 0 });
+      const pregunta = ultimaAlerta();
+      expect(pregunta.header).toBe('Pago al contado');
+      expect(pregunta.message).toContain('feria online');
+      expect(servicio.crearPedido).not.toHaveBeenCalled();
+
+      pulsar(pregunta, 'Sí');
+      tick();
+
+      expect(servicio.crearPedido.calls.mostRecent().args[0].plazosPago).toBe('CONTADO');
+      expect(servicio.crearPedido.calls.mostRecent().args[0].formaPago).toBe('RCB');
+    }));
+
+    it('«No» crea el pedido como estaba', fakeAsync(() => {
+      component.crearPedido();
+      tick();
+      pulsar(ultimaAlerta(), 'No');
+      tick();
+
+      expect(servicio.crearPedido.calls.mostRecent().args[0].plazosPago).toBe('1/30');
+    }));
+
+    it('si la API dice que no hay que avisar, no se pregunta', fakeAsync(() => {
+      servicio.avisoCondicionesCampana.and.returnValue(of({ Avisar: false, Mensaje: null, PlazosPagoPropuestos: null, Campana: null, Productos: [] }));
+
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => a.header === 'Pago al contado')).toBeFalse();
+      expect(servicio.crearPedido).toHaveBeenCalled();
+    }));
+
+    it('un fallo de la API (red, 404 de una API anterior) no impide crear', fakeAsync(() => {
+      servicio.avisoCondicionesCampana.and.returnValue(throwError(() => ({ status: 404 })));
+
+      component.crearPedido();
+      tick();
+
+      expect(alertas.some(a => a.header === 'Pago al contado')).toBeFalse();
+      expect(servicio.crearPedido).toHaveBeenCalled();
+    }));
+
+    it('al modificar un pedido no se pregunta', fakeAsync(() => {
+      component.pedidoEnEdicionNumero = 929000;
+
+      component.crearPedido();
+      tick();
+
+      expect(servicio.avisoCondicionesCampana).not.toHaveBeenCalled();
+    }));
+  });
+
+  describe('recoge en tienda (#205)', () => {
+    beforeEach(() => {
+      servicio.calcularPortes = jasmine.createSpy('calcularPortes').and.returnValue(of({ ImportePortes: 0, ComisionReembolso: 0, PortesGratis: true, ImporteFaltaParaPortesGratis: 0 }));
+      component['_direccionSeleccionada'].codigoPostal = '28110';
+    });
+
+    it('en Algete sale desmarcado y editable; al marcarlo se recalculan los portes con la marca y viaja en el pedido', fakeAsync(() => {
+      component.almacen = 'ALG';
+      expect(component.recogeEnTiendaVisible).toBeTrue();
+      expect(component.recogeEnTiendaFijo).toBeFalse();
+      expect(component.recogeEnTienda).toBeFalse();
+
+      component.cambiarRecogeEnTienda(true);
+
+      expect(servicio.calcularPortes.calls.mostRecent().args[0].RecogeEnTienda).toBeTrue();
+      expect(component.textoPortes).toBe('Recoge en tienda: sin portes ni comisión de reembolso');
+      component.crearPedido();
+      tick();
+      expect(servicio.crearPedido.calls.mostRecent().args[0].RecogeEnTienda).toBeTrue();
+    }));
+
+    it('en Algete sin marcar viaja false', fakeAsync(() => {
+      component.almacen = 'ALG';
+      component.crearPedido();
+      tick();
+      expect(servicio.crearPedido.calls.mostRecent().args[0].RecogeEnTienda).toBeFalse();
+    }));
+
+    it('en Alcobendas y Reina va fijo y marcado: no se puede desmarcar y viaja true', fakeAsync(() => {
+      component.almacen = 'REI';
+      expect(component.recogeEnTiendaFijo).toBeTrue();
+      expect(component.recogeEnTienda).toBeTrue();
+
+      component.cambiarRecogeEnTienda(false);
+      expect(component.recogeEnTienda).toBeTrue();
+      expect(servicio.calcularPortes).not.toHaveBeenCalled();
+
+      component.crearPedido();
+      tick();
+      expect(servicio.crearPedido.calls.mostRecent().args[0].RecogeEnTienda).toBeTrue();
+    }));
+
+    it('en otro almacén (o por Glovo) no se ofrece y viaja null: la API no toca nada', fakeAsync(() => {
+      component.almacen = 'XXX';
+      expect(component.recogeEnTiendaVisible).toBeFalse();
+      component.crearPedido();
+      tick();
+      expect(servicio.crearPedido.calls.mostRecent().args[0].RecogeEnTienda).toBeNull();
+
+      component.almacen = 'ALG';
+      component.cambiarRecogeEnTienda(true);
+      component.servirPorGlovo = true;
+      expect(component.recogeEnTiendaVisible).toBeFalse();
+      expect(component.recogeEnTienda).toBeFalse();
+    }));
+
+    it('se guarda en el borrador y al modificar un pedido también viaja', fakeAsync(() => {
+      component.almacen = 'ALG';
+      component.cambiarRecogeEnTienda(true);
+      expect(component['crearBorradorDesdeEstadoActual']().recogeEnTienda).toBeTrue();
+      // El pedido que se abre para modificar trae la ruta: AM, ALC y REI son de recogida
+      expect(component['convertirDtoABorrador']({ Ruta: 'AM', Almacen: 'ALG', Lineas: [], Regalos: [] }).recogeEnTienda).toBeTrue();
+      expect(component['convertirDtoABorrador']({ Ruta: 'FW', Almacen: 'ALG', Lineas: [], Regalos: [] }).recogeEnTienda).toBeFalse();
+
+      component.pedidoEnEdicionNumero = 929000;
+      component.crearPedido();
+      tick();
+      expect(servicio.modificarPedido.calls.mostRecent().args[0].RecogeEnTienda).toBeTrue();
+    }));
+  });
+
   describe('avisos de grabación (#264)', () => {
     it('tras crear el pedido se enseñan los AvisosGrabacion del POST', fakeAsync(() => {
       servicio.crearPedido.and.returnValue(of({ numero: 929100, AvisosGrabacion: [{ Tipo: 'ClienteCierraDiaReparto', Mensaje: 'El cliente cierra el martes, que es su día de reparto por nuestra ruta: envíelo por agencia o cambie el día.' }] }));

@@ -14,6 +14,14 @@
 </ion-header>
 
 <ion-content>
+  <!-- NestoApp#273 / NestoAPI#699: envíos devueltos o con incidencia que esperan que el vendedor diga si se reenvían o se abonan -->
+  <ion-item *ngIf="devueltosSinContestar > 0" button detail="true" color="warning" lines="full" (click)="abrirDevueltos()">
+    <ion-icon name="return-down-back" slot="start"></ion-icon>
+    <ion-label class="ion-text-wrap">
+      <h2>{{ textoDevueltosSinContestar }}</h2>
+      <p>Diga si el cliente lo sigue queriendo: volver a enviar o abonar.</p>
+    </ion-label>
+  </ion-item>
   <ion-item lines="none">
     <ion-label>Con imágenes</ion-label>
     <ion-toggle [(ngModel)]="mostrarImagenes" slot="end"></ion-toggle>

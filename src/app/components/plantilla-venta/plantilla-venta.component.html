@@ -142,6 +142,15 @@
                     <ion-note slot="end" color="dark" class="ion-text-wrap ion-text-end">{{ nombreModoServicio }}</ion-note>
                     <ion-icon slot="end" name="caret-down-outline" color="medium" size="small"></ion-icon>
                 </ion-item>
+                <!-- NestoApp#205 / NestoAPI#571: recoge en tienda (sin portes ni comisión). Fijo en Alcobendas y Reina. -->
+                <ion-item *ngIf="recogeEnTiendaVisible">
+                    <ion-label class="ion-text-wrap">
+                        Recoge en tienda
+                        <p *ngIf="recogeEnTiendaFijo">Los pedidos de este almacén se recogen siempre en la tienda.</p>
+                    </ion-label>
+                    <ion-toggle slot="end" aria-label="Recoge en tienda" [disabled]="recogeEnTiendaFijo"
+                        [ngModel]="recogeEnTienda" (ngModelChange)="cambiarRecogeEnTienda($event)"></ion-toggle>
+                </ion-item>
                 <!-- NestoApp#254 / NestoAPI#698: retenido hasta nuevo aviso; se libera desde el pedido -->
                 <ion-item lines="none" *ngIf="estaRetenido" color="danger">
                     <ion-icon slot="start" name="hand-left-outline"></ion-icon>

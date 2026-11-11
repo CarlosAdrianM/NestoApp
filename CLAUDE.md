@@ -61,10 +61,11 @@ Siempre que se vaya a hacer push, hay que:
    ejecuta al promocionar (hasta entonces los vendedores tienen la app que abre la más reciente).
    - Lenguaje de usuario, nunca técnico. Solo cambios que el usuario percibe (ej: portes,
      mensajes de Ganavisiones, PDF con imágenes), no migraciones ni fixes de build.
-   - La app lee `GET api/Novedades` y filtra `Ambito === 'NestoApp'` en cliente (chapuza
-     temporal). El cambio bueno espera a **NestoAPI#495**, que sustituye el criterio de #489:
-     `?ambitos=NestoApp,NestoAPI&desdeId=<última vista>` y parámetro `UltimaNovedadVistaApp`
-     (por Id, no por versión). El popup «qué hay de nuevo» se hace ya con ese criterio.
+   - La lista del perfil lee `GET api/Novedades?ambito=NestoApp`. El aviso «qué hay de nuevo» al iniciar sesión
+     (`NovedadesNuevasService`, #177 fase 2 / **NestoAPI#495**, desde 2.28.0) va por Id:
+     `?ambitos=NestoApp,NestoAPI&desdeId=<última vista>` y parámetro de usuario `UltimaNovedadVistaApp`. Las de
+     ámbito `NestoAPI` solo salen en ese aviso (con su descripción), así que deben estar escritas para el vendedor.
+     Las de una versión de la app posterior a la instalada no se avisan hasta que llega esa versión.
 
 ## Al promocionar a Production
 

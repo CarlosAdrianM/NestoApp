@@ -31,6 +31,7 @@ import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
 import { BultoPedido, enlacePublicoFotoBulto, textoBulto } from 'src/app/models/bultos-pedido.model';
 import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
+import { esEnvioDevueltoOIncidentado } from 'src/app/models/envio-devuelto.model';
 import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
 @Component({
     selector: 'app-pedido-venta',
@@ -1218,6 +1219,25 @@ export class PedidoVentaComponent  {
           case 1: return 'primary';    // Tramitado
           default: return 'medium';    // Pendiente / En curso / Cerrado a mano / Desconocido
       }
+  }
+
+  /** NestoApp#205: el interruptor «Recoge en tienda» solo si la API trae la marca. */
+  get tieneRecogeEnTienda(): boolean {
+      return typeof this.pedido?.RecogeEnTienda === 'boolean';
+  }
+
+  /** NestoApp#273: el envío viene devuelto o está en incidencia: el vendedor dice si se vuelve a enviar o se abona. */
+  public esperaRespuestaDevolucion(enlace: any): boolean {
+      return esEnvioDevueltoOIncidentado(enlace?.Estado);
+  }
+
+  /** Abre la pantalla de decisión de #267 (si ya está decidido, allí se ve quién y cuándo). */
+  public contestarDevolucion(enlace: any): void {
+      if (!enlace?.Numero) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('pedido_venta_contestar_devolucion', { envio: enlace.Numero, estado: enlace.Estado });
+      this.nav.navigateForward('envio-devuelto', { queryParams: { empresa: this.pedido?.empresa || '1', envio: enlace.Numero } });
   }
 
   public async actualizarSeguimiento(enlace: any): Promise<void> {

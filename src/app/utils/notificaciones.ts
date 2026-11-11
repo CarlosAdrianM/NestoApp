@@ -8,6 +8,11 @@ export const TIPO_NOTIFICACION_ANUNCIO_EVENTO = 'AnuncioEvento';
 export const TIPO_NOTIFICACION_PEDIDO_RETENIDO = 'PedidoRetenido';
 /** NestoApp#267 / NestoAPI#699: la agencia ha devuelto un envío: ¿el cliente lo sigue queriendo? (trae envio, pedido, cliente). */
 export const TIPO_NOTIFICACION_DEVOLUCION_ENVIO_AGENCIA = 'DevolucionEnvioAgencia';
+/** NestoApp#274 / NestoAPI#623: ha entrado un lead de campaña, o lleva el plazo sin llamar (traen empresa, cliente, contacto). */
+export const TIPO_NOTIFICACION_LEAD_NUEVO = 'LeadNuevo';
+export const TIPO_NOTIFICACION_LEAD_SIN_LLAMAR = 'LeadSinLlamar';
+/** Los avisos que, sin pedido, abren la ficha del cliente. */
+const TIPOS_QUE_ABREN_EL_CLIENTE = [TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA, TIPO_NOTIFICACION_LEAD_NUEVO, TIPO_NOTIFICACION_LEAD_SIN_LLAMAR];
 
 /**
  * A dónde lleva tocar una push (o el «Ver» del aviso con la app abierta), o null si a ningún sitio.
@@ -42,9 +47,9 @@ export function rutaDeNotificacion(datos: { [clave: string]: any } | null | unde
     const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
     return `/pedido-venta?empresa=${encodeURIComponent(empresa)}&numero=${pedido}`;
   }
-  // Un envío sin pedido: la ficha del cliente. La push no trae contacto; el 0 es el principal.
+  // Un envío sin pedido, o un lead (#274): la ficha del cliente. Si la push no trae contacto, el 0 es el principal.
   const cliente = (datos['cliente'] ?? '').toString().trim();
-  if (datos['tipo'] === TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA && cliente) {
+  if (TIPOS_QUE_ABREN_EL_CLIENTE.includes(datos['tipo']) && cliente) {
     const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
     const contacto = (datos['contacto'] ?? '').toString().trim() || '0';
     return `/cliente?empresa=${encodeURIComponent(empresa)}&cliente=${encodeURIComponent(cliente)}&contacto=${encodeURIComponent(contacto)}`;

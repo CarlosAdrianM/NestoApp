@@ -104,6 +104,22 @@ export function textoDecisionEnvio(envio: EnvioDevuelto | null | undefined): str
   }
 }
 
+/** NestoApp#273: un envío del pedido que la agencia ha devuelto o tiene en incidencia: hay que decir si se reenvía o se abona. */
+export function esEnvioDevueltoOIncidentado(estado: number | null | undefined): boolean {
+  return +estado === ESTADO_ENVIO_DEVUELTO || +estado === ESTADO_ENVIO_INCIDENCIA;
+}
+
+/** NestoApp#273: los del vendedor (sin vendedor, todos) que siguen esperando respuesta. */
+export function enviosDevueltosSinContestar(envios: EnvioDevuelto[] | null | undefined, vendedor: string | null): EnvioDevuelto[] {
+  return enviosDevueltosVisibles(envios, vendedor, true).filter(e => !estaDecidido(e));
+}
+
+/** «Tiene 1 envío devuelto sin contestar» / «Tiene 3 envíos devueltos sin contestar»; '' si no hay ninguno. */
+export function textoDevueltosSinContestar(cuantos: number): string {
+  const n = +cuantos || 0;
+  return n <= 0 ? '' : n === 1 ? 'Tiene 1 envío devuelto sin contestar' : `Tiene ${n} envíos devueltos sin contestar`;
+}
+
 /** La lista del vendedor: los suyos (por el campo Vendedor del envío); sin vendedor, todos. Sin decidir primero, luego por fecha. */
 export function enviosDevueltosVisibles(envios: EnvioDevuelto[] | null | undefined, vendedor: string | null, soloMios: boolean): EnvioDevuelto[] {
   const codigo = (vendedor || '').toString().trim().toUpperCase();

@@ -24,6 +24,7 @@ import { EventoComponent } from './components/evento/evento.component';
 import { EventosComponent } from './components/eventos/eventos.component';
 import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
 import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
+import { PedidosEnRiesgoComponent } from './components/pedidos-en-riesgo/pedidos-en-riesgo.component';
 
 const routes: Routes = [
   {
@@ -120,6 +121,11 @@ const routes: Routes = [
   {
     path: 'envio-devuelto',
     component: EnvioDevueltoComponent
+  },
+  {
+    // NestoApp#248 (NestoAPI#693): pedidos del vendedor con la fecha de entrega prometida en riesgo
+    path: 'pedidos-en-riesgo',
+    component: PedidosEnRiesgoComponent
   },
   {
     path: '',

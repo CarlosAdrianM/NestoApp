@@ -1,0 +1,54 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Pedidos en riesgo</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cargar()" aria-label="Actualizar"><ion-icon slot="icon-only" name="refresh"></ion-icon></ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item lines="none">
+    <ion-label class="ion-text-wrap">
+      <p>Pedidos cuya fecha de entrega prometida ya no se cumple. Toque uno para abrirlo y cambiar cómo se sirve o avisar al cliente.</p>
+    </ion-label>
+  </ion-item>
+  <ion-item>
+    <ion-label>Ver también los resueltos</ion-label>
+    <ion-toggle slot="end" aria-label="Ver también los resueltos" [ngModel]="verResueltos" (ngModelChange)="cambiarVerResueltos($event)"></ion-toggle>
+  </ion-item>
+  <ion-item *ngIf="avisos" lines="full">
+    <ion-label>Avisos que recibo</ion-label>
+    <ion-select slot="end" aria-label="Avisos que recibo" interface="action-sheet" cancelText="Cancelar" [disabled]="guardandoAvisos"
+      [ngModel]="avisos.Valor" (ngModelChange)="cambiarAvisos($event)">
+      <ion-select-option *ngFor="let opcion of avisos.Opciones" [value]="opcion.Valor">{{ opcion.Texto }}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none"><ion-label class="ion-text-wrap">{{ mensaje }}</ion-label></ion-item>
+  <ion-item *ngIf="!cargando && !mensaje && pedidos.length === 0" lines="none">
+    <ion-label class="ion-text-wrap">No tiene ningún pedido con la fecha de entrega en riesgo.</ion-label>
+  </ion-item>
+
+  <ion-list *ngIf="pedidos.length > 0">
+    <ion-item *ngFor="let pedido of pedidos" button detail="true" (click)="abrir(pedido)" [class.resuelto]="resuelto(pedido)">
+      <ion-label class="ion-text-wrap">
+        <p>
+          <ion-badge [color]="colorEstado(pedido)">{{ textoEstado(pedido) }}</ion-badge>
+          Pedido {{ pedido.Pedido }}<span *ngIf="pedido.Ruta"> · ruta {{ pedido.Ruta }}</span>
+        </p>
+        <h2>{{ pedido.NombreCliente }}</h2>
+        <h3>{{ pedido.Cliente }}/{{ pedido.Contacto }} · {{ textoFechas(pedido) }}</h3>
+        <p *ngIf="pedido.Motivo" class="motivo">{{ pedido.Motivo }}</p>
+        <p *ngIf="resuelto(pedido)">{{ textoResolucion(pedido) }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

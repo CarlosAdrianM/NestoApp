@@ -1025,4 +1025,34 @@ describe('PedidoVentaComponent: enviar por WhatsApp (#261)', () => {
     component.enviarPorWhatsApp();
     expect(whatsapp.enviarDocumento).not.toHaveBeenCalled();
   });
+
+  describe('envío devuelto o con incidencia (#273)', () => {
+    it('solo los devueltos (4) y los incidentados (3) ofrecen contestar', () => {
+      expect(component.esperaRespuestaDevolucion({ Numero: 1, Estado: 4 })).toBeTrue();
+      expect(component.esperaRespuestaDevolucion({ Numero: 1, Estado: 3 })).toBeTrue();
+      expect(component.esperaRespuestaDevolucion({ Numero: 1, Estado: 2 })).toBeFalse();
+      expect(component.esperaRespuestaDevolucion({ Numero: 1, Estado: 5 })).toBeFalse();
+    });
+
+    it('«Contestar» abre la pantalla de decisión de ese envío', () => {
+      const nav = (component as any).nav;
+      spyOn(nav, 'navigateForward');
+      component.pedido = { empresa: '1', numero: 929498 } as any;
+
+      component.contestarDevolucion({ Numero: 123, Estado: 4 });
+
+      expect(nav.navigateForward).toHaveBeenCalledWith('envio-devuelto', { queryParams: { empresa: '1', envio: 123 } });
+    });
+  });
+
+  describe('recoge en tienda (#205)', () => {
+    it('el interruptor solo sale si la API trae la marca', () => {
+      component.pedido = { empresa: '1', numero: 929498, RecogeEnTienda: false } as any;
+      expect(component.tieneRecogeEnTienda).toBeTrue();
+      component.pedido = { empresa: '1', numero: 929498 } as any;
+      expect(component.tieneRecogeEnTienda).toBeFalse();
+      component.pedido = null as any;
+      expect(component.tieneRecogeEnTienda).toBeFalse();
+    });
+  });
 });

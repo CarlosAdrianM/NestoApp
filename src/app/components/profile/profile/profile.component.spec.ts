@@ -1,3 +1,4 @@
+import { NovedadesNuevasService } from 'src/app/services/novedades-nuevas.service';
 import { Configuracion } from 'src/app/components/configuracion/configuracion/configuracion.component';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -66,6 +67,7 @@ describe('ProfileComponent', () => {
         { provide: ToastController, useValue: {} },
         { provide: AppComponent, useValue: { registrarDispositivoPush: () => { } } },
         { provide: NovedadesService, useValue: novedadesService },
+        { provide: NovedadesNuevasService, useValue: { comprobar: () => Promise.resolve() } },
         { provide: ProfileService, useValue: profileService },
         { provide: VisorFicheros, useValue: visorFicheros },
         provideHttpClient(withInterceptorsFromDi()),

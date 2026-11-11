@@ -246,6 +246,18 @@ describe('ExtractoClienteComponent: cupones (#217) y facturas por correo / Whats
     expect(component.movimientosSeleccionados.length).toBe(0);
   });
 
+  it('#272: si el correo no sale (502 con el resultado), se enseña el motivo de la API y no «servidor no disponible»', async () => {
+    const resultado = { Enviado: false, Facturas: ['NV1'], Omitidas: [], Correos: ['a@b.com'], Mensaje: 'El correo no se ha podido enviar (el servidor de correo no responde). Vuelve a intentarlo en un rato.' };
+    servicio.enviarFacturasPorCorreo.and.returnValue(throwError(() => ({ statusCode: 502, originalError: { status: 502, error: resultado } })));
+    component.toggleSeleccion({ empresa: '1', documento: 'NV1', importe: 10 });
+
+    await component.mandarFacturasPorCorreo([{ empresa: '1', numero: 'NV1', importe: 10 }], 'a@b.com');
+
+    expect(alertas[0].header).toBe('No se ha podido enviar');
+    expect(alertas[0].message).toContain('El correo no se ha podido enviar');
+    expect(component.movimientosSeleccionados.length).toBe(1); // para volver a intentarlo
+  });
+
   it('sin correo no se manda nada', async () => {
     await component.mandarFacturasPorCorreo([{ empresa: '1', numero: 'NV1', importe: 1 }], ' ; ');
     expect(servicio.enviarFacturasPorCorreo).not.toHaveBeenCalled();

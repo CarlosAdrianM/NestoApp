@@ -57,6 +57,11 @@ export class PedidoVenta {
     public OrigenModoServicio?: string;
     /** NestoApp#252 / NestoAPI#712: false pregunta por fechas a más de 60 días; true ya está confirmado. */
     public ConfirmarFechaEntregaLejana?: boolean;
+    /**
+     * NestoApp#205 / NestoAPI#571: se recoge en la tienda (ruta AM, ALC o REI). Al leer, siempre con valor; al guardar,
+     * la API pone la ruta de recogida y quita portes y comisión (o los vuelve a poner). Una API anterior no lo manda.
+     */
+    public RecogeEnTienda?: boolean | null;
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;

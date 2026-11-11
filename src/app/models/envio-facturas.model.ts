@@ -37,3 +37,12 @@ export function textoResultadoEnvioFacturas(resultado: ResultadoEnvioFacturasCor
   }
   return partes.join('\n\n');
 }
+
+/**
+ * NestoApp#272: si el servidor de correo no acepta el envío, la API contesta 502 con el mismo resultado (Enviado = false y
+ * el motivo en Mensaje). Lo saca del error (envuelto por el interceptor o directo); null si el error es otra cosa.
+ */
+export function resultadoDeErrorEnvioFacturas(error: any): ResultadoEnvioFacturasCorreo | null {
+  const cuerpo = error?.originalError?.error ?? error?.error;
+  return cuerpo && typeof cuerpo === 'object' && cuerpo.Enviado === false ? cuerpo as ResultadoEnvioFacturasCorreo : null;
+}

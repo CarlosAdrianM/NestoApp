@@ -238,6 +238,15 @@
               <ion-label>Avisar con importe cuando coja picking</ion-label>
               <ion-checkbox slot="end" aria-label="Avisar con importe cuando coja picking" [(ngModel)]="pedido.avisarConImporteAlCogerPicking"></ion-checkbox>
           </ion-item>
+          <!-- NestoApp#205 / NestoAPI#571: la API cambia la ruta y quita o pone portes y comisión al guardar.
+               Solo si la API la trae (una anterior no la manda). -->
+          <ion-item *ngIf="tieneRecogeEnTienda">
+              <ion-label class="ion-text-wrap">
+                  Recoge en tienda
+                  <p>Sin portes ni comisión de reembolso. Se aplica al guardar el pedido.</p>
+              </ion-label>
+              <ion-toggle slot="end" aria-label="Recoge en tienda" [(ngModel)]="pedido.RecogeEnTienda"></ion-toggle>
+          </ion-item>
           <ion-item>
               <ion-label>Recoger Producto</ion-label>
               <ion-checkbox slot="end" aria-label="Recoger Producto" [(ngModel)]="recogerProducto"></ion-checkbox>
@@ -254,6 +263,13 @@
                 <ion-button slot="end" fill="clear" *ngIf="enlace.Estado !== 5" (click)="actualizarSeguimiento(enlace)">
                   <ion-icon slot="icon-only" name="refresh"></ion-icon>
                 </ion-button>
+              </ion-item>
+              <!-- NestoApp#273 / NestoAPI#699: devuelto o con incidencia: ¿volver a enviar o abonar? -->
+              <ion-item *ngIf="esperaRespuestaDevolucion(enlace)" lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>¿El cliente lo sigue queriendo? Diga si se vuelve a enviar o se abona.</p>
+                </ion-label>
+                <ion-button slot="end" color="warning" (click)="contestarDevolucion(enlace)">Contestar</ion-button>
               </ion-item>
           </ion-list>
       </ion-list>

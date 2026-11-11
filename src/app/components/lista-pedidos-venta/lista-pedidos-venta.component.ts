@@ -7,6 +7,9 @@ import { ListaPedidosVentaService } from './lista-pedidos-venta.service';
 import { PedidoVentaService } from '../pedido-venta/pedido-venta.service';
 import { esFechaSinDeterminar, textoFechaEntrega } from 'src/app/utils/fechas';
 import { numerosRetenidos } from 'src/app/models/retencion-pedido.model';
+import { Usuario } from 'src/app/models/Usuario';
+import { EnviosAgenciasService } from 'src/app/services/envios-agencias.service';
+import { enviosDevueltosSinContestar, textoDevueltosSinContestar } from 'src/app/models/envio-devuelto.model';
 
 @Component({
     selector: 'app-lista-pedidos-venta',
@@ -80,7 +83,9 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         loadingCtrl: LoadingController, 
         private fileOpener: FileOpener,
         private firebaseAnalytics: FirebaseAnalytics,
-        private pedidoVentaService: PedidoVentaService
+        private pedidoVentaService: PedidoVentaService,
+        private enviosAgencias: EnviosAgenciasService,
+        private usuario: Usuario
         ) {
         super();
         this.servicio = servicio;
@@ -97,6 +102,31 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
 
     public cargarRetenidos(): void {
         this.pedidoVentaService.cargarRetenidos('1').subscribe(lista => this.retenidos = numerosRetenidos(lista));
+    }
+
+    /** NestoApp#273: los envíos devueltos o con incidencia del vendedor que esperan respuesta (volver a enviar o abonar). */
+    public devueltosSinContestar = 0;
+
+    get textoDevueltosSinContestar(): string {
+        return textoDevueltosSinContestar(this.devueltosSinContestar);
+    }
+
+    /** Sin sondeo: al cargar la lista y al volver a ella. Si falla (o la API es anterior), no se enseña nada. */
+    public cargarDevueltosSinContestar(): void {
+        const vendedor = (this.usuario?.vendedor || '').trim();
+        this.enviosAgencias.leerDevueltos().subscribe({
+            next: envios => this.devueltosSinContestar = enviosDevueltosSinContestar(envios, vendedor && vendedor !== 'Sin Vendedor' ? vendedor : null).length,
+            error: () => this.devueltosSinContestar = 0
+        });
+    }
+
+    public abrirDevueltos(): void {
+        this.firebaseAnalytics.logEvent('lista_pedidos_abrir_devueltos', { sinContestar: this.devueltosSinContestar });
+        this.nav.navigateForward('envios-devueltos');
+    }
+
+    ionViewWillEnter(): void {
+        this.cargarDevueltosSinContestar();
     }
 
     public estaRetenido(pedido: any): boolean {

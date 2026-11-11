@@ -17,6 +17,14 @@ export interface EnlaceDescarga {
   Moviles: string[];
   /** El mensaje para el cliente, de usted y con el enlace: el usuario solo pulsa «Enviar». */
   Texto: string;
+  /** NestoApp#272: el nombre de quien lo manda (el vendedor), para firmar; sin él (API anterior), firma la empresa. */
+  Remitente?: string | null;
+}
+
+/** NestoApp#272: «Un saludo, / Juan García / Nueva Visión»: lo manda el vendedor desde su WhatsApp, no administración. */
+export function firmaWhatsApp(remitente: string | null | undefined): string {
+  const nombre = (remitente || '').trim();
+  return `Un saludo,\n${nombre ? `${nombre}\n` : ''}Nueva Visión`;
 }
 
 /** Enlace de WhatsApp con el texto ya escrito; sin móvil, se abre WhatsApp para que se elija el contacto. */
@@ -59,7 +67,7 @@ export function textoWhatsAppVarios(enlaces: EnlaceDescarga[], ahora: Date = new
   return `${saludoSegunHora(ahora)}${nombre ? `, ${nombre}` : ''}:\n\n` +
     `Le enviamos sus ${esPedido ? 'pedidos' : 'facturas'}. Puede descargar${esPedido ? 'los' : 'las'} en PDF desde estos enlaces:\n${lineas.join('\n')}\n\n` +
     (caduca ? `Los enlaces estarán disponibles hasta el ${formatearFechaCorta(caduca)}.\n\n` : '') +
-    'Un saludo,\nNueva Visión';
+    firmaWhatsApp(lista.map(e => e.Remitente).find(r => !!(r || '').trim()));
 }
 
 /** «…123» para distinguir los móviles al elegir uno. */

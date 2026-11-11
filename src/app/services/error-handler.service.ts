@@ -253,6 +253,13 @@ export class ErrorHandlerService {
       return error.error.Message;
     }
 
+    // NestoApp#272: el motivo como cadena a secas (Content(HttpStatusCode.Forbidden, "Solo los empleados…")).
+    // Una página HTML (IIS) no es un motivo.
+    const cuerpo = error?.originalError?.error ?? error?.error;
+    if (typeof cuerpo === 'string' && cuerpo.trim() && !cuerpo.trim().startsWith('<')) {
+      return cuerpo.trim();
+    }
+
     // Otros formatos comunes
     if (error?.error?.error?.message) {
       return error.error.error.message;
