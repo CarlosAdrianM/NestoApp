@@ -73,15 +73,27 @@ Después de que Carlos promocione la versión en AppFlow y ejecute `scripts/Nove
 avisar a los vendedores por push con `scripts/AvisarNuevaVersionNestoApp.ps1` (gemelo del de NestoAPI).
 Desde 2.26.0 usa `POST api/Notificaciones/NuevaVersionNestoApp` (NestoAPI#579), que manda a **todos** los
 dispositivos activos de NestoApp de una vez: ya no hace falta sacar los usuarios de la base de datos. Lo lanza
-Carlos desde Windows: pide el `windows-token` con su usuario del dominio (fuera del dominio da 401: usar
-`-PedirCredenciales` con `NUEVAVISION\Carlos`); desde WSL da 401.
+Carlos desde Windows; desde WSL da 401.
+
+**Dale SIEMPRE a Carlos el comando completo, tal cual, listo para copiar** (pasa en todas las versiones: con la
+ruta relativa `.\scripts\...` falla, porque su PowerShell abre en `C:\Users\Usuario` y el repo está en WSL):
 
 ```powershell
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -SoloListar        # a quién se mandaría
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Prueba            # primero, solo a Carlos
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0                    # luego, a todos
-.\scripts\AvisarNuevaVersionNestoApp.ps1 -Version 2.26.0 -Usuarios Marta    # solo a alguien (si no la recibió)
+# 1) Primero, de prueba, solo a Carlos
+powershell -ExecutionPolicy Bypass -Command "& '\\wsl.localhost\Ubuntu-18.04\home\carlos\dev\NestoApp\scripts\AvisarNuevaVersionNestoApp.ps1' -Version <version> -Prueba -PedirCredenciales"
+
+# 2) Cuando le llegue al móvil, a todos
+powershell -ExecutionPolicy Bypass -Command "& '\\wsl.localhost\Ubuntu-18.04\home\carlos\dev\NestoApp\scripts\AvisarNuevaVersionNestoApp.ps1' -Version <version> -PedirCredenciales"
 ```
+
+- **Recordarle cada vez que el usuario es `NUEVAVISION\Carlos`** (con su contraseña del dominio) en la ventana de
+  credenciales que abre `-PedirCredenciales`. Hace falta porque su sesión de Windows es la local «Usuario», fuera
+  del dominio, y sin credenciales `api/auth/windows-token` da 401.
+- Usar `-Command "& '...'"`, no `-File` (con `-File` la lista de `-Usuarios` llega como un solo texto). No hace
+  falta administrador.
+- Otras variantes, añadiendo el parámetro al mismo comando: `-SoloListar` (a quién se mandaría, sin mandar nada) y
+  `-Usuarios Marta,David` (solo a alguien, si no la recibió).
+- Al acabar escribe «Push de la <version> mandada a N usuarios» y la lista (12 usuarios con la 2.28.0, 11/11/2026).
 - El texto dice que cierren la app **dos veces**: Live Updates (`autoUpdateMethod: 'background'`)
   descarga la versión al arrancar en frío y la estrena en el **siguiente** arranque en frío. Volver
   desde segundo plano no cuenta. Al tocar la push se abre el perfil (`ruta: /profile`).
