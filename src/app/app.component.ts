@@ -15,6 +15,7 @@ import { ErroresService } from './services/errores.service';
 import { rutaDeNotificacion } from './utils/notificaciones';
 import { BuzonNotificacionesService } from './services/buzon-notificaciones.service';
 import { HistorialRutasService } from './services/historial-rutas.service';
+import { GlobosService } from './services/globos.service';
 
 
 @Component({
@@ -38,8 +39,11 @@ export class AppComponent {
     public buzon: BuzonNotificacionesService,
     cache: CacheService,
     // NestoApp#203: se pide aquí para que recuerde las pantallas desde el arranque.
-    historialRutas: HistorialRutasService
+    historialRutas: HistorialRutasService,
+    // NestoAPI#774: los globos («consejos») de lo nuevo, al entrar en cada pantalla.
+    globos: GlobosService
   ) {
+    globos.iniciar();
     this.initializeApp();
     this.registrarCapturaPromesasRechazadas();
 

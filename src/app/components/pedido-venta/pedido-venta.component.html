@@ -64,7 +64,7 @@
                   <ion-button *ngIf="puedeCancelarPagoAPlazos" slot="end" fill="clear" color="danger" (click)="cancelarPagoAPlazos()">Cancelar</ion-button>
               </ion-item>
               <ion-item *ngIf="puedePedirPagoAPlazos" lines="none">
-                  <ion-button expand="block" fill="outline" (click)="pedirPagoAPlazos()">
+                  <ion-button expand="block" fill="outline" (click)="pedirPagoAPlazos()" globoAncla="pedido-venta.PagarAPlazos">
                       <ion-icon slot="start" name="card-outline"></ion-icon>
                       Pagar a plazos ({{ nombreProveedorPlazos }})
                   </ion-button>

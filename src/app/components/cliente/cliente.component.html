@@ -6,7 +6,7 @@
     <ion-title>Cliente</ion-title>
     <!-- NestoApp#259 / NestoAPI#855: solicitar una recogida de este cliente -->
     <ion-buttons slot="end" *ngIf="claveCliente">
-        <ion-button (click)="abrirRecogidas()" aria-label="Recogidas">
+        <ion-button (click)="abrirRecogidas()" aria-label="Recogidas" globoAncla="cliente.Recogidas">
             <ion-icon slot="start" name="cube-outline"></ion-icon>
             Recogidas
         </ion-button>

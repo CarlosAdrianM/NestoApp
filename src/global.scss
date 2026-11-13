@@ -44,3 +44,9 @@ ion-input.has-focus {
 
 /* NestoApp#265: alertas con texto preformateado (saltos de línea de la API) */
 .alerta-preformateada .alert-message { white-space: pre-wrap; text-align: left; }
+
+/* NestoAPI#774: globos («consejos») de lo nuevo */
+ion-popover.globo-popover {
+  --width: 300px;
+  --max-width: 90vw;
+}

@@ -23,7 +23,7 @@
     </ion-label>
   </ion-item>
   <!-- NestoApp#279 / NestoAPI#858: pedidos «todo junto» retenidos en el packing por una falta, esperando que decida el vendedor -->
-  <ion-item *ngIf="retenidosPorFalta.length > 0" button detail="true" color="warning" lines="full" (click)="abrirRetenidoPorFalta()">
+  <ion-item *ngIf="retenidosPorFalta.length > 0" button detail="true" color="warning" lines="full" (click)="abrirRetenidoPorFalta()" globoAncla="lista-pedidos-venta.RetenidosPorFalta">
     <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
     <ion-label class="ion-text-wrap">
       <h2>{{ textoRetenidosPorFalta }}</h2>

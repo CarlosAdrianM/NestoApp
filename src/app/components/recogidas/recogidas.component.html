@@ -33,7 +33,7 @@
       <ion-card-title>Nueva recogida</ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-segment [(ngModel)]="nueva.QuienRecoge" aria-label="Quién la recoge">
+      <ion-segment [(ngModel)]="nueva.QuienRecoge" aria-label="Quién la recoge" globoAncla="recogidas.QuienRecoge">
         <ion-segment-button value="Reparto"><ion-label>La recoge el reparto</ion-label></ion-segment-button>
         <ion-segment-button value="Vendedor"><ion-label>La recojo yo</ion-label></ion-segment-button>
       </ion-segment>
