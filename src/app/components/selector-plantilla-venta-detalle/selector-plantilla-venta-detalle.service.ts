@@ -29,7 +29,8 @@ export class SelectorPlantillaVentaDetalleService {
     params = params.append('productoPrecio', producto.producto);
     params = params.append('cantidad', producto.cantidad);
     params = params.append('aplicarDescuento', producto.aplicarDescuento); //¿aplicarDescuentoFicha?
-    // params = params.append('aplicarDescuento', producto.cantidadOferta === 0  ? producto.aplicarDescuento : false);
+    // #282: con las unidades de oferta, la API devuelve el precio especial si la oferta del producto lo admite
+    params = params.append('cantidadOferta', +producto.cantidadOferta || 0);
 
     return this.http.get(_baseUrl, { params: params });
   }

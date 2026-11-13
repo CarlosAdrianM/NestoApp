@@ -10,6 +10,7 @@ import { AuthService, SesionOutlookCaducadaError } from '../../auth.service';
 import { User } from '../../user';
 import { VersionNativoService } from 'src/app/services/version-nativo.service';
 import { objetoDeQueryParam } from '../../utils/query-param';
+import { esMismoUsuario } from '../../utils/usuarios';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import * as MicrosoftGraph from '@microsoft/microsoft-graph-types';
 import {
@@ -390,7 +391,7 @@ export class RapportComponent implements AfterViewInit {
 
   public sePuedeModificar(): boolean {
       const usuarioActual: string = Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre;
-      const sePuedePorUsuario = !this.modificando && this.rapport && this.rapport.Usuario === usuarioActual;
+      const sePuedePorUsuario = !this.modificando && !!this.rapport && esMismoUsuario(this.rapport.Usuario, usuarioActual);
       const sePuedePorDejarDeVisitar = !this.dejarDeVisitar || (this.rapport && this.rapport.Comentarios && this.rapport.Comentarios.length > 50);
       return sePuedePorUsuario && sePuedePorDejarDeVisitar;
   }

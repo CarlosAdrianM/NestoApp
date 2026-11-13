@@ -124,7 +124,10 @@ describe('SelectorPlantillaVentaComponent', () => {
 
     it('re-estampa stocks sin recargar la plantilla ni perder las cantidades', () => {
       const ponerStocksSpy = spyOn(component['servicio'], 'ponerStocks').and.returnValue(
-        of([{ producto: '111', cantidad: 5, cantidadOferta: 0, cantidadDisponible: 2, stockActualizado: true, stocks: [], colorStock: 'danger' }])
+        of([{ producto: '111', cantidad: 5, cantidadOferta: 0, cantidadDisponible: 2, stocks: [] }])
+      );
+      spyOn(component['servicioDetalle'], 'cargarStockProducto').and.returnValue(
+        of({ stock: 2, cantidadDisponible: 2, cantidadPendienteRecibir: 0, StockDisponibleTodosLosAlmacenes: 2 })
       );
       const cargarDatosSpy = spyOn(component, 'cargarDatos');
 
@@ -135,6 +138,46 @@ describe('SelectorPlantillaVentaComponent', () => {
       const linea = component.datosFiltrados[0];
       expect(linea.cantidad).toBe(5);            // se conserva la cantidad
       expect(linea.cantidadDisponible).toBe(2);  // se actualiza el stock del nuevo almacén
+    });
+
+    // NestoApp#277: PonerStock rellena el disponible legado con el del PRIMER almacén de la lista y no
+    // devuelve stockActualizado ni colorStock. Las líneas con cantidad piden el stock del almacén elegido.
+    it('las líneas con cantidad toman el stock del almacén elegido, no el del primero de la lista (#277)', () => {
+      spyOn(component['servicio'], 'ponerStocks').and.returnValue(
+        of([{ producto: '111', cantidad: 5, cantidadOferta: 0, cantidadDisponible: 0,
+               stocks: [{ almacen: 'ALG', cantidadDisponible: 10 }, { almacen: 'ALC', cantidadDisponible: 0 }] }])
+      );
+      const cargarStock = spyOn(component['servicioDetalle'], 'cargarStockProducto').and.returnValue(
+        of({ stock: 0, cantidadDisponible: 0, cantidadPendienteRecibir: 0, StockDisponibleTodosLosAlmacenes: 10 })
+      );
+      spyOn(component, 'cargarDatos');
+
+      component.ngOnChanges({ almacen: { firstChange: false, currentValue: 'ALC', previousValue: 'ALG', isFirstChange: () => false } });
+
+      expect(cargarStock).toHaveBeenCalledWith(jasmine.objectContaining({ producto: '111' }), 'ALC');
+      const linea = component.datosFiltrados[0];
+      expect(linea.cantidadDisponible).toBe(0);
+      expect(linea.stockActualizado).toBeTrue();
+      expect(linea.colorStock).not.toBe('success');
+      expect(linea.esSobrePedido).toBeTrue();
+    });
+
+    it('las líneas sin cantidad no piden stock y quedan sin dato hasta que se abran (#277)', () => {
+      component['inicializarDatos']([
+        { producto: '222', cantidad: 0, cantidadOferta: 0, cantidadDisponible: 10, stockActualizado: true, colorStock: 'success', precio: 1, descuento: 0 }
+      ]);
+      spyOn(component['servicio'], 'ponerStocks').and.returnValue(
+        of([{ producto: '222', cantidad: 0, cantidadOferta: 0, cantidadDisponible: 10, stocks: [{ almacen: 'ALG', cantidadDisponible: 10 }] }])
+      );
+      const cargarStock = spyOn(component['servicioDetalle'], 'cargarStockProducto');
+      spyOn(component, 'cargarDatos');
+
+      component.ngOnChanges({ almacen: { firstChange: false, currentValue: 'ALC', previousValue: 'ALG', isFirstChange: () => false } });
+
+      expect(cargarStock).not.toHaveBeenCalled();
+      const linea = component.datosFiltrados[0];
+      expect(linea.stockActualizado).toBeFalse();
+      expect(linea.cantidadDisponible).toBe(0);
     });
 
     it('en la carga inicial (firstChange) recarga la plantilla con normalidad', () => {
@@ -152,7 +195,10 @@ describe('SelectorPlantillaVentaComponent', () => {
 
     it('avisa con un toast del recuento de líneas sin stock en el nuevo almacén', () => {
       spyOn(component['servicio'], 'ponerStocks').and.returnValue(
-        of([{ producto: '111', cantidad: 5, cantidadOferta: 0, cantidadDisponible: 2, stockActualizado: true, stocks: [] }])
+        of([{ producto: '111', cantidad: 5, cantidadOferta: 0, cantidadDisponible: 2, stocks: [] }])
+      );
+      spyOn(component['servicioDetalle'], 'cargarStockProducto').and.returnValue(
+        of({ stock: 2, cantidadDisponible: 2, cantidadPendienteRecibir: 0, StockDisponibleTodosLosAlmacenes: 2 })
       );
       spyOn(component, 'cargarDatos');
 

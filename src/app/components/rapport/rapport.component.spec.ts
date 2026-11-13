@@ -52,6 +52,25 @@ describe('RapportComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  // NestoApp#276: el disquete no salía en los rapports propios si se tecleó el usuario con otra caja.
+  describe('disquete para modificar un rapport propio (#276)', () => {
+    beforeEach(() => {
+      component['usuario'].nombre = 'dlopez';
+      component.modificando = false;
+      component.dejarDeVisitar = false;
+    });
+
+    it('sale aunque la BD traiga el usuario con otras mayúsculas y espacios de relleno', () => {
+      component.rapport = { Usuario: 'NUEVAVISION\\DLopez   ', Comentarios: '' } as any;
+      expect(component.sePuedeModificar()).toBeTrue();
+    });
+
+    it('no sale en el rapport de otra persona', () => {
+      component.rapport = { Usuario: 'NUEVAVISION\\Marta', Comentarios: '' } as any;
+      expect(component.sePuedeModificar()).toBeFalse();
+    });
+  });
+
   // NestoApp#253 / NestoAPI#716: resultado del rapport y próximo contacto (chips y fecha).
   describe('resultado del rapport y próximo contacto (#253)', () => {
     it('un chip solo: tocar otro lo cambia, tocar el marcado lo quita', () => {

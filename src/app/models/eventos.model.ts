@@ -235,13 +235,46 @@ export function textoAforo(evento: Evento): string {
   return `${apuntados} ${apuntados === 1 ? 'apuntado' : 'apuntados'} de ${evento.Plazas} plazas (${libres === 1 ? 'queda 1' : `quedan ${libres}`})`;
 }
 
-/** NestoApp#268: la lista de inscritos con «Solo mis clientes». Si la API no dice de quién es nadie, se enseñan todos. */
+/**
+ * NestoApp#278: ¿ocupa plaza? Como `EstadoInscripcionEvento.OcupaPlaza` de la API: no las caducadas ni las anuladas, ni las
+ * que han contestado «No podrá ir» (salvo con la lista ya pasada: Asistió / No asistió manda).
+ */
+export function ocupaPlaza(inscripcion: InscripcionEvento | null | undefined): boolean {
+  const estado = (inscripcion?.Estado || '').trim();
+  if (estado === 'Caducada' || estado === 'Anulada') {
+    return false;
+  }
+  if (estado === 'Asistio' || estado === 'NoAsistio') {
+    return true;
+  }
+  return (inscripcion?.EstadoAsistenciaTexto || '').trim() !== 'No podrá ir';
+}
+
+/** NestoApp#268: la lista de inscritos con «Solo mis clientes». Si la API no dice de quién es nadie, se enseñan todos. #278: las que no ocupan plaza, al final. */
 export function inscripcionesVisibles(inscripciones: InscripcionEvento[] | null | undefined, soloMisClientes: boolean): InscripcionEvento[] {
   const lista = (inscripciones || []).filter(i => !!i);
-  if (!soloMisClientes || !lista.some(i => i.EsDeMisClientes !== null && i.EsDeMisClientes !== undefined)) {
-    return lista;
-  }
-  return lista.filter(i => i.EsDeMisClientes === true);
+  const filtrada = !soloMisClientes || !lista.some(i => i.EsDeMisClientes !== null && i.EsDeMisClientes !== undefined)
+    ? lista
+    : lista.filter(i => i.EsDeMisClientes === true);
+  return [...filtrada.filter(i => ocupaPlaza(i)), ...filtrada.filter(i => !ocupaPlaza(i))];
+}
+
+/**
+ * NestoApp#278 (Novedades 1233): «2 personas apuntadas · 2 caducadas · 1 anulada · 1 no podrá ir». Las apuntadas suman los
+ * asistentes de las que ocupan plaza (como `PlazasOcupadas` de la lista); las demás van aparte.
+ */
+export function textoApuntados(inscripciones: InscripcionEvento[] | null | undefined): string {
+  const lista = (inscripciones || []).filter(i => !!i);
+  const apuntadas = lista.filter(i => ocupaPlaza(i)).reduce((suma, i) => suma + (+(i.Asistentes || 1)), 0);
+  const cuantas = (estado: string) => lista.filter(i => (i.Estado || '').trim() === estado).length;
+  const caducadas = cuantas('Caducada');
+  const anuladas = cuantas('Anulada');
+  const noPodranIr = lista.filter(i => !ocupaPlaza(i)).length - caducadas - anuladas;
+  const partes = [`${apuntadas} ${apuntadas === 1 ? 'persona apuntada' : 'personas apuntadas'}`];
+  if (caducadas) partes.push(`${caducadas} ${caducadas === 1 ? 'caducada' : 'caducadas'}`);
+  if (anuladas) partes.push(`${anuladas} ${anuladas === 1 ? 'anulada' : 'anuladas'}`);
+  if (noPodranIr) partes.push(`${noPodranIr} ${noPodranIr === 1 ? 'no podrá ir' : 'no podrán ir'}`);
+  return partes.join(' · ');
 }
 
 /** «+2» cuando vienen varias personas con la misma inscripción. */

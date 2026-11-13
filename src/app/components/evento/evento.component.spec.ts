@@ -86,6 +86,31 @@ describe('EventoComponent: inscritos e inscribir (#268)', () => {
     expect(componente.asistentesExtra(componente.inscripciones[0])).toBe('+1');
   });
 
+  // NestoApp#278 (Novedades 1233): las caducadas y anuladas no son «personas apuntadas».
+  it('las caducadas, anuladas y «No podrá ir» no cuentan como apuntadas: van aparte y al final (#278)', () => {
+    servicio.leerInscripcionesEvento.and.returnValue(of([
+      inscripcion(1, true, { Estado: 'Caducada', EstadoTexto: 'Caducada' }),
+      inscripcion(2, false, { Asistentes: 2 }),
+      inscripcion(3, true, { Estado: 'Anulada', EstadoTexto: 'Anulada' }),
+      inscripcion(4, true, { Estado: 'Pagada', EstadoAsistenciaTexto: 'No podrá ir' }),
+      inscripcion(5, true, { Estado: 'Caducada', EstadoTexto: 'Caducada' })
+    ]));
+    params.next({ id: '12' });
+    expect(componente.resumenInscritos).toBe('2 personas apuntadas · 2 caducadas · 1 anulada · 1 no podrá ir · 0 inscripciones de mis clientes');
+    componente.soloMisClientes = false;
+    expect(componente.inscripcionesVisibles.map(i => i.Id)).toEqual([2, 1, 3, 4, 5]);
+    expect(componente.ocupaPlaza(componente.inscripciones[0])).toBeFalse();
+    expect(componente.ocupaPlaza(componente.inscripciones[1])).toBeTrue();
+  });
+
+  it('el caso de Novedades 1233: dos caducadas son «0 personas apuntadas · 2 caducadas» (#278)', () => {
+    servicio.leerInscripcionesEvento.and.returnValue(of([
+      inscripcion(1, null, { Estado: 'Caducada' }), inscripcion(2, null, { Estado: 'Caducada' })
+    ]));
+    params.next({ id: '12' });
+    expect(componente.resumenInscritos).toBe('0 personas apuntadas · 2 caducadas');
+  });
+
   it('si la API no da el dato de mis clientes, no hay filtro y se ven todos', () => {
     servicio.leerInscripcionesEvento.and.returnValue(of([inscripcion(1, null), inscripcion(2, null)]));
     params.next({ id: '12' });

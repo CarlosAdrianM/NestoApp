@@ -2,6 +2,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { CacheService } from '../../services/cache.service';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ponerDisponibleDelAlmacen } from 'src/app/models/stock-almacen';
 import { Configuracion } from '../configuracion/configuracion/configuracion.component';
 
 @Injectable({
@@ -76,6 +78,9 @@ export class SelectorPlantillaVentaService {
 
     const parametroJson = JSON.stringify(parametro);
 
-    return this.http.post(url, parametroJson, { headers: headers });
+    // NestoApp#277: el disponible legado viene del primer almacén de la lista; lo cambiamos por el del elegido.
+    return this.http.post<any[]>(url, parametroJson, { headers: headers }).pipe(
+      map(data => Array.isArray(data) ? ponerDisponibleDelAlmacen(data, almacen) : data)
+    );
   }
 }

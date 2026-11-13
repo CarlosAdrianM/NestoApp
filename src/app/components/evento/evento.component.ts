@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { Evento, InscripcionEvento, ModalidadEventoCurso, inscripcionesVisibles, modalidadesConImporte, plazasLibres, textoAforo, textoAsistentesExtra, textoFormatoEvento, textoModalidadCurso, textoPlazas } from 'src/app/models/eventos.model';
+import { Evento, InscripcionEvento, ModalidadEventoCurso, inscripcionesVisibles, modalidadesConImporte, ocupaPlaza, textoApuntados, plazasLibres, textoAforo, textoAsistentesExtra, textoFormatoEvento, textoModalidadCurso, textoPlazas } from 'src/app/models/eventos.model';
 import { EventosService } from '../inscribir-evento/eventos.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ModalElegirClienteComponent } from '../pedido-venta/modal-elegir-cliente.component';
@@ -26,6 +26,7 @@ export class EventoComponent {
   public readonly textoModalidad = textoModalidadCurso;
   public readonly textoAforo = textoAforo;
   public readonly asistentesExtra = textoAsistentesExtra;
+  public readonly ocupaPlaza = ocupaPlaza;
   // NestoApp#268 (Nesto#619): los inscritos, con «Solo mis clientes» marcado para el vendedor.
   public inscripciones: InscripcionEvento[] = [];
   public cargandoInscripciones = false;
@@ -109,14 +110,13 @@ export class EventoComponent {
     return this.inscripciones.some(i => i.EsDeMisClientes !== null && i.EsDeMisClientes !== undefined);
   }
 
-  /** «3 apuntados (de ellos 2 son de mis clientes)». */
+  /** «3 personas apuntadas · 1 caducada · 2 inscripciones de mis clientes» (#278: solo cuentan las que ocupan plaza). */
   get resumenInscritos(): string {
-    const total = this.inscripciones.reduce((suma, i) => suma + (+(i.Asistentes || 1)), 0);
-    const texto = `${total} ${total === 1 ? 'persona apuntada' : 'personas apuntadas'}`;
+    const texto = textoApuntados(this.inscripciones);
     if (!this.puedeFiltrarMisClientes) {
       return texto;
     }
-    const mios = this.inscripciones.filter(i => i.EsDeMisClientes === true).length;
+    const mios = this.inscripciones.filter(i => i.EsDeMisClientes === true && ocupaPlaza(i)).length;
     return `${texto} · ${mios} ${mios === 1 ? 'inscripción de mis clientes' : 'inscripciones de mis clientes'}`;
   }
 

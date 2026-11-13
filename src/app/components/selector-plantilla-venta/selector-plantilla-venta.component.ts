@@ -8,7 +8,10 @@ import { SelectorPlantillaVentaService } from './selector-plantilla-venta.servic
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { LineaPlantillaVenta } from 'src/app/models/borrador-plantilla-venta.model';
 import { Usuario } from 'src/app/models/Usuario';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
+import { catchError, defaultIfEmpty, tap } from 'rxjs/operators';
+import { SelectorPlantillaVentaDetalleService } from '../selector-plantilla-venta-detalle/selector-plantilla-venta-detalle.service';
+import { aplicarStockDelAlmacen, ponerDisponibleDelAlmacen } from 'src/app/models/stock-almacen';
 
 @Component({
     selector: 'selector-plantilla-venta',
@@ -38,7 +41,8 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       private firebaseAnalytics: FirebaseAnalytics,
       private usuario: Usuario,
       private toastCtrl: ToastController,
-      private codigosBarras: CodigosBarrasService) { super(); }
+      private codigosBarras: CodigosBarrasService,
+      private servicioDetalle: SelectorPlantillaVentaDetalleService) { super(); }
 
   @ViewChild('filtro') myProductoSearchBar;
 
@@ -230,19 +234,32 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       this.servicio.ponerStocks(lineas, almacen, false, almacenes).subscribe(
           (data: any[]) => {
               const stockPorProducto = new Map<string, any>();
-              (data || []).forEach(l => stockPorProducto.set((l.producto ?? '').toString().trim(), l));
+              ponerDisponibleDelAlmacen(data || [], almacen).forEach(l => stockPorProducto.set((l.producto ?? '').toString().trim(), l));
               for (const linea of lineas) {
                   const actualizada = stockPorProducto.get((linea.producto ?? '').toString().trim());
                   if (actualizada) {
                       linea.cantidadDisponible = actualizada.cantidadDisponible;
                       linea.stocks = actualizada.stocks;
-                      linea.stockActualizado = actualizada.stockActualizado;
-                      linea.colorStock = actualizada.colorStock;
+                      linea.StockDisponibleTodosLosAlmacenes = actualizada.StockDisponibleTodosLosAlmacenes;
                   }
+                  // NestoApp#277: PonerStock no devuelve stockActualizado ni colorStock, y el color de
+                  // antes era del almacén anterior: la línea queda sin dato hasta pedir el del nuevo.
+                  linea.stockActualizado = false;
+                  linea.colorStock = undefined;
               }
-              // Recalcular colores/sobre-pedido con los nuevos stocks.
-              this.cargarResumen();
-              this.avisarLineasSinStock(almacen, lineas);
+              // Las líneas con cantidad piden el stock completo del almacén elegido (como el detalle);
+              // las demás lo piden al abrirlas.
+              const conCantidad = lineas.filter(l => (+l.cantidad || 0) + (+l.cantidadOferta || 0) > 0);
+              forkJoin(conCantidad.map(linea =>
+                  this.servicioDetalle.cargarStockProducto(linea, almacen).pipe(
+                      tap(stock => aplicarStockDelAlmacen(linea, stock)),
+                      catchError(() => of(null))
+                  )
+              )).pipe(defaultIfEmpty([])).subscribe(() => {
+                  // Recalcular colores/sobre-pedido con los nuevos stocks.
+                  this.cargarResumen();
+                  this.avisarLineasSinStock(almacen, lineas);
+              });
           },
           error => this.errorMessage = <any>error
       );

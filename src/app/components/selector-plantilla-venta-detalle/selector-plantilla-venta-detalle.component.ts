@@ -5,6 +5,7 @@ import { NavController, AlertController, ToastController, NavParams } from '@ion
 import { Events } from 'src/app/services/events.service';
 import { SelectorPlantillaVentaDetalleService } from './selector-plantilla-venta-detalle.service';
 import { objetoDeQueryParam } from '../../utils/query-param';
+import { aplicarStockDelAlmacen, colorStock } from 'src/app/models/stock-almacen';
 
 @Component({
     selector: 'selector-plantilla-venta-detalle',
@@ -81,14 +82,8 @@ export class SelectorPlantillaVentaDetalleComponent implements AfterViewInit {
   private comprobarSiExisteElProducto(producto: any, almacen: any): void {
       this.servicio.cargarStockProducto(this.producto, almacen).subscribe(
           data => {
-              producto.stockActualizado = true;
-              producto.stock = data.stock;
-              producto.cantidadDisponible = data.cantidadDisponible;
-              producto.cantidadPendienteRecibir = data.cantidadPendienteRecibir;
-              producto.StockDisponibleTodosLosAlmacenes = data.StockDisponibleTodosLosAlmacenes;
+              aplicarStockDelAlmacen(producto, data);
               producto.urlImagen = data.urlImagen;
-              console.log("Existe el producto y seleccionamos el color");
-              this.seleccionarColorStock(producto);
           },
           error => { 
               this.errorMessage = <any>error;
@@ -149,32 +144,7 @@ export class SelectorPlantillaVentaDetalleComponent implements AfterViewInit {
   }
 
   private seleccionarColorStock(producto: any): void {
-      let cantidad: number = producto.cantidad;
-      let cantidadOferta: number = producto.cantidadOferta;
-      cantidad = +cantidad;
-      cantidadOferta = +cantidadOferta;
-
-      console.log("Cantidad: " + cantidad + " + " + cantidadOferta);
-      
-      if (cantidad === 0 && cantidadOferta === 0) {
-          producto.colorStock = 'default';
-          console.log("Seleccionamos el color default");
-      } else if (producto.cantidadDisponible >= cantidad + cantidadOferta) {
-          producto.colorStock = 'success';
-          console.log("Seleccionamos el color success");
-      } else if (producto.StockDisponibleTodosLosAlmacenes >= cantidad + cantidadOferta) {
-            producto.colorStock = 'warning';
-            console.log("Seleccionamos el color warning");        
-      } else if (producto.cantidadDisponible + producto.cantidadPendienteRecibir >= cantidad + cantidadOferta) {
-          producto.colorStock = 'primary';
-          console.log("Seleccionamos el color primary");
-      } else if (producto.stock >= cantidad + cantidadOferta) {
-          producto.colorStock = 'dark';
-          console.log("Seleccionamos el color dark");
-      } else {
-          producto.colorStock = 'danger';
-          console.log("Seleccionamos el color danger");
-      }
+      producto.colorStock = colorStock(producto);
   }
 
   public actualizarDescuento(descuento: number): void {
