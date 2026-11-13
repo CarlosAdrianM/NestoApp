@@ -15,6 +15,9 @@ import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo, esRetenido, NOMBRE_MODO_RETENIDO, ModoServicioItem, ORIGEN_MODO_SERVICIO } from 'src/app/models/modos-servicio.model';
 import { RetencionPedido, hastaFechaParaApi, textoRetencion } from 'src/app/models/retencion-pedido.model';
+import { DecisionRetencionPorFalta, RetencionPorFalta, retencionPendienteDelPedido, textoRetencionPorFalta } from 'src/app/models/retencion-por-falta.model';
+import { DisponibilidadPagoAPlazos, EstadoPagoAPlazos, puedeCancelarPagoAPlazos, textoEstadoPagoAPlazos, textoNoDisponible } from 'src/app/models/pago-a-plazos.model';
+import { PagoAPlazosService } from 'src/app/services/pago-a-plazos.service';
 import { OpcionesModosPedido, TEXTO_SERVIR_PENDIENTE_AL_HABER_STOCK, casillaServirPendienteVisible, facturacionVisible, servirPendienteParaGuardar } from 'src/app/models/opciones-modos.model';
 import { leerFechaEntregaLejana } from 'src/app/models/fecha-entrega-lejana.model';
 import { AVISO_SIN_FECHA_ENTREGA, esFechaSinDeterminar, textoFechaEntrega } from 'src/app/utils/fechas';
@@ -83,7 +86,8 @@ export class PedidoVentaComponent  {
     private modalCtrl: ModalController,
     private actionSheetCtrl: ActionSheetController,
     private toastCtrl: ToastController,
-      private envioWhatsApp: EnvioWhatsAppService) {
+      private envioWhatsApp: EnvioWhatsAppService,
+      private pagoAPlazosService: PagoAPlazosService) {
       this.nav = nav;
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
@@ -131,6 +135,8 @@ export class PedidoVentaComponent  {
               this.cargarSeguimientos(empresa, numero);
               this.cargarFechaEntregaAgencia(empresa, numero); // NestoApp#215
               this.cargarBultos(empresa, numero); // NestoApp#223
+              this.cargarRetencionPorFalta(empresa, numero); // NestoApp#279
+              this.cargarPagoAPlazos(empresa, numero); // NestoApp#281
               this.pedirModoFacturacionSugerido();
           },
           async error => {
@@ -339,6 +345,122 @@ export class PedidoVentaComponent  {
           error: async error => {
               await loading.dismiss();
               await this.avisar('No se ha podido retener el pedido', this.errorHandler.extractErrorMessage(error));
+          }
+      });
+  }
+
+  // ---- NestoApp#281 / NestoAPI#864: pagar a plazos el pedido ----
+
+  /** La solicitud del pedido (null sin solicitud o si la API falla). */
+  public pagoAPlazos: EstadoPagoAPlazos | null = null;
+  /** Solo se pregunta si no hay solicitud viva. */
+  public disponibilidadPlazos: DisponibilidadPagoAPlazos | null = null;
+
+  public cargarPagoAPlazos(empresa: string, numero: number): void {
+      this.pagoAPlazos = null;
+      this.disponibilidadPlazos = null;
+      this.pagoAPlazosService.estado(empresa, numero).subscribe(estado => {
+          this.pagoAPlazos = estado?.HaySolicitud ? estado : null;
+          if (!this.pagoAPlazos || !['Pendiente', 'Aprobado', 'Capturado'].includes(this.pagoAPlazos.Estado)) {
+              this.pagoAPlazosService.disponible(empresa, numero).subscribe(d => this.disponibilidadPlazos = d);
+          }
+      });
+  }
+
+  get textoPagoAPlazos(): string {
+      return textoEstadoPagoAPlazos(this.pagoAPlazos);
+  }
+
+  get puedeCancelarPagoAPlazos(): boolean {
+      return puedeCancelarPagoAPlazos(this.pagoAPlazos);
+  }
+
+  get puedePedirPagoAPlazos(): boolean {
+      return !!this.disponibilidadPlazos?.Disponible && !this.puedeCancelarPagoAPlazos && this.pagoAPlazos?.Estado !== 'Capturado';
+  }
+
+  get textoPlazosNoDisponible(): string {
+      return this.pagoAPlazos ? '' : textoNoDisponible(this.disponibilidadPlazos);
+  }
+
+  get nombreProveedorPlazos(): string {
+      return (this.disponibilidadPlazos?.NombreProveedor || this.pagoAPlazos?.NombreProveedor || 'pago a plazos').toString().trim();
+  }
+
+  public async pedirPagoAPlazos(): Promise<void> {
+      if (!this.pedido) {
+          return;
+      }
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      if (await this.pagoAPlazosService.ofrecer(empresa, numero, this.disponibilidadPlazos)) {
+          this.cargarPagoAPlazos(empresa, numero);
+      }
+  }
+
+  public async cancelarPagoAPlazos(): Promise<void> {
+      if (!this.pedido) {
+          return;
+      }
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      if (await this.pagoAPlazosService.preguntarCancelar(empresa, numero, this.nombreProveedorPlazos)) {
+          this.cargarPagoAPlazos(empresa, numero);
+      }
+  }
+
+  // ---- NestoApp#279 / NestoAPI#858: «todo junto» retenido en el packing por una falta ----
+
+  /** La retención Pendiente de este pedido (la push PickingConFaltas con `retenido` abre el pedido), o null. */
+  public retencionPorFalta: RetencionPorFalta | null = null;
+
+  public cargarRetencionPorFalta(empresa: string, numero: number): void {
+      this.retencionPorFalta = null;
+      this.servicio.leerRetenidosPorFalta().subscribe(lista => this.retencionPorFalta = retencionPendienteDelPedido(lista, empresa, numero));
+  }
+
+  get textoRetencionPorFalta(): string {
+      return textoRetencionPorFalta(this.retencionPorFalta);
+  }
+
+  get puedeDecidirRetencionPorFalta(): boolean {
+      return !!this.retencionPorFalta?.PuedeDecidir;
+  }
+
+  public async decidirRetencionPorFalta(decision: DecisionRetencionPorFalta): Promise<void> {
+      if (!this.puedeDecidirRetencionPorFalta) {
+          return;
+      }
+      const servir = decision === 'ServirLoQueHay';
+      const productos = (this.retencionPorFalta.Productos || '').trim() || 'lo que falta';
+      const confirmado = await this.confirmar(
+          servir ? 'Servir lo que hay' : 'Esperar',
+          servir
+              ? `El pedido ${this.pedido.numero} sale ya sin ${productos}, que queda pendiente y se servirá cuando llegue.`
+              : `El pedido ${this.pedido.numero} sale del packing y espera a tener ${productos} para salir completo.`,
+          servir ? 'Servir lo que hay' : 'Esperar');
+      if (!confirmado) {
+          return;
+      }
+      const empresa = this.pedido.empresa;
+      const numero = this.pedido.numero;
+      const loading: any = await this.loadingCtrl.create({ message: 'Guardando la decisión...' });
+      await loading.present();
+      this.servicio.decidirRetencionPorFalta(empresa, numero, decision).subscribe({
+          next: async () => {
+              await loading.dismiss();
+              this.firebaseAnalytics.logEvent('pedido_venta_retencion_falta', { pedido: numero, decision });
+              this.cargarPedido(empresa, numero);
+              const toast = await this.toastCtrl.create({
+                  message: servir ? `Pedido ${numero}: sale con lo que hay.` : `Pedido ${numero}: espera a estar completo.`,
+                  duration: 3000, color: 'success'
+              });
+              await toast.present();
+          },
+          error: async error => {
+              await loading.dismiss();
+              await this.avisar('No se ha podido guardar la decisión', this.errorHandler.extractErrorMessage(error));
+              this.cargarRetencionPorFalta(empresa, numero);
           }
       });
   }

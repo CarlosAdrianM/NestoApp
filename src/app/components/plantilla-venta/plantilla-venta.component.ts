@@ -45,6 +45,7 @@ import { AvisoCondicionesCampana, hayQueAvisarCondicionesCampana, peticionAvisoC
 import { TEXTO_PORTES_RECOGE_EN_TIENDA, almacenObligaARecoger, almacenPermiteRecoger, esRutaDeRecogida, recogeEnTiendaEfectivo, recogeEnTiendaParaGuardar } from 'src/app/models/recoge-en-tienda.model';
 import { AVISO_CURSO_PREPAGO, EventoCurso, ModalidadEventoCurso, esLineaCurso, sinLineasCurso, textoPedidosCreados, textoPreguntaCorreoCursos } from 'src/app/models/eventos.model';
 import { EventosService } from '../inscribir-evento/eventos.service';
+import { PagoAPlazosService } from 'src/app/services/pago-a-plazos.service';
 import { ModalElegirCursoComponent } from './modal-elegir-curso.component';
 import { SaldoAFavor, importeEnlacePago, textoMovimientoAFavor, textoSaldoAFavorAplicado, hayPendienteDePago, formatearEuros } from 'src/app/models/saldo-a-favor.model';
 import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esEntregaUnica, esTodoJunto, modoEfectivo, parsearModoPorDefecto, ModoServicioSugerido, ModoServicioPermitido, esModoPermitido, leerModoServicioNoPermitido, leerModoConPicking, modosDesdePermitidos, nombreModo, esRetenido, origenModoServicio, textoMotivoModoServicio } from 'src/app/models/modos-servicio.model';
@@ -82,7 +83,8 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
     private solicitudCambioModo: SolicitudCambioModoService,
     servicioSugerenciasProductos: SugerenciasProductosService,
     private keyboard: Keyboard,
-    private eventosService: EventosService
+    private eventosService: EventosService,
+    private pagoAPlazos: PagoAPlazosService
     ) {
       this.sugerenciasProductos = new EstadoSugerenciasProductos(servicioSugerenciasProductos, () => this.datosSugerenciasProductos());
       this.almacen = this.usuario.almacen;
@@ -2396,10 +2398,20 @@ export class PlantillaVentaComponent implements IDeactivatableComponent, OnInit,
                 }
                 // NestoApp#244 / NestoAPI#691: si la API ha separado el curso en otro pedido, se dice.
                 const pedidosCreados = textoPedidosCreados(numeroPedido, data.PedidosAdicionales);
+                // NestoApp#281 / NestoAPI#864: si se puede pagar a plazos, se ofrece aquí mismo (tope de 3 s: nunca retrasa más).
+                const empresaPedido = (data.empresa ?? this.clienteSeleccionado?.empresa ?? '1').toString().trim();
+                const plazos = mandarEnlace ? null : await firstValueFrom(this.pagoAPlazos.disponible(empresaPedido, numeroPedido, 3000)).catch(() => null);
+                const botonesCreado: any[] = ['Ok'];
+                if (plazos?.Disponible) {
+                    botonesCreado.push({
+                        text: `Pagar a plazos (${(plazos.NombreProveedor || 'a plazos').trim()})`,
+                        handler: () => { this.pagoAPlazos.ofrecer(empresaPedido, numeroPedido, plazos); }
+                    });
+                }
                 const alert = await this.alertCtrl.create({
                     header: 'Creado',
                     message: (pedidosCreados ? pedidosCreados : 'Pedido ' + numeroPedido + ' creado correctamente') + (avisoSaldo ? '. ' + avisoSaldo : ''),
-                    buttons: ['Ok'],
+                    buttons: botonesCreado,
                 });
                 await alert.present();
                 // Issue #173: si el pedido nace de un borrador cargado, ofrecer borrarlo al

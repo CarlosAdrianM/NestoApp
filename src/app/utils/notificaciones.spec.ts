@@ -115,3 +115,19 @@ describe('rutaDeNotificacion: leads de campaña (#274)', () => {
     expect(rutaDeNotificacion({ tipo: 'LeadNuevo', origen: 'META' })).toBeNull();
   });
 });
+
+describe('rutaDeNotificacion: recogidas solicitadas (#259, NestoAPI#855)', () => {
+  it('confirmada o rechazada abre las recogidas del cliente', () => {
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaResuelta', id: '7', empresa: '1', cliente: '15191', contacto: '0', estado: 'Confirmada', codigoDocumento: 'NR905123' }, 5))
+      .toBe('/recogidas?empresa=1&cliente=15191&contacto=0&aviso=5');
+  });
+
+  it('sin respuesta y anulada, también', () => {
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaSinRespuesta', cliente: '15191', contacto: '2' }, 5)).toBe('/recogidas?empresa=1&cliente=15191&contacto=2&aviso=5');
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaAnulada', cliente: '15191' }, 5)).toBe('/recogidas?empresa=1&cliente=15191&contacto=0&aviso=5');
+  });
+
+  it('sin cliente, a ningún sitio', () => {
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaResuelta', id: '7' })).toBeNull();
+  });
+});

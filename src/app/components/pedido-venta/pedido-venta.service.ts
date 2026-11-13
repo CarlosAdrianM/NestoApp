@@ -9,6 +9,7 @@ import { PedidoVenta } from './pedido-venta';
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { CambiarClientePedidoPeticion, CambiarClientePedidoRespuesta } from 'src/app/models/cambio-cliente-pedido.model';
 import { PedidoRetenidoListado, RetencionPedido, RetenerPedidoPeticion } from 'src/app/models/retencion-pedido.model';
+import { DecisionRetencionPorFalta, RetencionPorFalta } from 'src/app/models/retencion-por-falta.model';
 
 /**
  * Issue #200 (NestoAPI#494): con Agencia = 0, CrearEtiquetaPendiente deja que el comparador
@@ -116,6 +117,22 @@ export class PedidoVentaService {
       map(lista => lista || []),
       catchError(() => of([]))
     );
+  }
+
+  // ---- NestoApp#279 / NestoAPI#858: pedido «todo junto» retenido por una falta ----
+
+  /** Las retenciones Pendiente que puede decidir el usuario. [] si falla (503 sin script) o la API es anterior. */
+  public leerRetenidosPorFalta(): Observable<RetencionPorFalta[]> {
+    return this.http.get<RetencionPorFalta[]>(`${this._baseUrl}/RetenidosPorFalta`).pipe(
+      map(lista => lista || []),
+      catchError(() => of([]))
+    );
+  }
+
+  /** 200 con la retención decidida; 400 / 403 / 409 con `Message` (ya decidida, picking sin terminar…). */
+  public decidirRetencionPorFalta(empresa: string, pedido: number, decision: DecisionRetencionPorFalta): Observable<RetencionPorFalta> {
+    const url = `${this._baseUrl}/${encodeURIComponent((empresa || '1').trim())}/${pedido}/RetencionPorFalta/Decidir`;
+    return this.http.post<RetencionPorFalta>(url, { Decision: decision });
   }
 
   /** NestoApp#198 / NestoAPI#519: pasa el pedido guardado a otro cliente y lo recalcula. */

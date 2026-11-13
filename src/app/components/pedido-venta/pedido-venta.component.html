@@ -57,6 +57,21 @@
                       </ng-template>
                   </ion-modal>
               </ion-item>
+              <!-- NestoApp#281 / NestoAPI#864: pagar a plazos el pedido (Aplázame) -->
+              <ion-item *ngIf="textoPagoAPlazos" lines="none">
+                  <ion-icon slot="start" name="card-outline" [color]="pagoAPlazos?.Estado === 'Rechazado' ? 'danger' : 'primary'"></ion-icon>
+                  <ion-label class="ion-text-wrap">{{ textoPagoAPlazos }}</ion-label>
+                  <ion-button *ngIf="puedeCancelarPagoAPlazos" slot="end" fill="clear" color="danger" (click)="cancelarPagoAPlazos()">Cancelar</ion-button>
+              </ion-item>
+              <ion-item *ngIf="puedePedirPagoAPlazos" lines="none">
+                  <ion-button expand="block" fill="outline" (click)="pedirPagoAPlazos()">
+                      <ion-icon slot="start" name="card-outline"></ion-icon>
+                      Pagar a plazos ({{ nombreProveedorPlazos }})
+                  </ion-button>
+              </ion-item>
+              <ion-item *ngIf="textoPlazosNoDisponible" lines="none">
+                  <ion-label class="ion-text-wrap" color="medium"><p>{{ textoPlazosNoDisponible }}</p></ion-label>
+              </ion-item>
               <ion-item>
                   <ion-label>Fecha Entrega</ion-label>
                   <ion-datetime-button datetime="fechaEntregaPedido"></ion-datetime-button>
@@ -102,6 +117,21 @@
               <ion-item lines="none" *ngIf="estaRetenido" color="danger">
                   <ion-icon slot="start" name="hand-left-outline"></ion-icon>
                   <ion-label class="ion-text-wrap">{{ textoRetencion || 'Retenido hasta nuevo aviso' }}</ion-label>
+              </ion-item>
+              <!-- NestoApp#279 / NestoAPI#858: «todo junto» retenido en el packing por una falta -->
+              <ion-item lines="none" *ngIf="retencionPorFalta" color="warning">
+                  <ion-icon slot="start" name="alert-circle-outline"></ion-icon>
+                  <ion-label class="ion-text-wrap">{{ textoRetencionPorFalta }}</ion-label>
+              </ion-item>
+              <ion-item lines="none" *ngIf="puedeDecidirRetencionPorFalta">
+                  <ion-button expand="block" fill="outline" color="success" (click)="decidirRetencionPorFalta('ServirLoQueHay')">
+                      <ion-icon slot="start" name="cube-outline"></ion-icon>
+                      Servir lo que hay
+                  </ion-button>
+                  <ion-button expand="block" fill="outline" color="medium" (click)="decidirRetencionPorFalta('Esperar')">
+                      <ion-icon slot="start" name="time-outline"></ion-icon>
+                      Esperar
+                  </ion-button>
               </ion-item>
               <!-- NestoApp#174 / NestoAPI#482: el toggle «Servir junto» pasa a ser un selector de modo -->
               <ion-item>

@@ -10,6 +10,7 @@ import { numerosRetenidos } from 'src/app/models/retencion-pedido.model';
 import { Usuario } from 'src/app/models/Usuario';
 import { EnviosAgenciasService } from 'src/app/services/envios-agencias.service';
 import { enviosDevueltosSinContestar, textoDevueltosSinContestar } from 'src/app/models/envio-devuelto.model';
+import { RetencionPorFalta, retencionesPendientes, textoAvisoRetenidosPorFalta } from 'src/app/models/retencion-por-falta.model';
 
 @Component({
     selector: 'app-lista-pedidos-venta',
@@ -125,8 +126,33 @@ export class ListaPedidosVentaComponent extends SelectorBase implements OnInit {
         this.nav.navigateForward('envios-devueltos');
     }
 
+    /** NestoApp#279 / NestoAPI#858: los pedidos «todo junto» retenidos por una falta que puede decidir, del plazo más cercano. */
+    public retenidosPorFalta: RetencionPorFalta[] = [];
+
+    get textoRetenidosPorFalta(): string {
+        return textoAvisoRetenidosPorFalta(this.retenidosPorFalta);
+    }
+
+    /** Sin sondeo, como los devueltos: al cargar la lista y al volver a ella. */
+    public cargarRetenidosPorFalta(): void {
+        this.pedidoVentaService.leerRetenidosPorFalta().subscribe(
+            lista => this.retenidosPorFalta = retencionesPendientes(lista).filter(r => r.PuedeDecidir)
+        );
+    }
+
+    /** Abre el de plazo más cercano; al volver, el aviso cuenta los que quedan. */
+    public abrirRetenidoPorFalta(): void {
+        const primero = this.retenidosPorFalta[0];
+        if (!primero) {
+            return;
+        }
+        this.firebaseAnalytics.logEvent('lista_pedidos_abrir_retenido_falta', { pendientes: this.retenidosPorFalta.length });
+        this.nav.navigateForward('pedido-venta', { queryParams: { empresa: (primero.Empresa || '1').trim(), numero: +primero.Pedido } });
+    }
+
     ionViewWillEnter(): void {
         this.cargarDevueltosSinContestar();
+        this.cargarRetenidosPorFalta();
     }
 
     public estaRetenido(pedido: any): boolean {

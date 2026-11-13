@@ -13,6 +13,7 @@ import { PlantillaVentaComponent } from './plantilla-venta.component';
 import { PlantillaVentaService } from './plantilla-venta.service';
 import { BorradorPlantillaVentaService } from 'src/app/services/borrador-plantilla-venta.service';
 import { Subject, of, throwError } from 'rxjs';
+import { PagoAPlazosService } from 'src/app/services/pago-a-plazos.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { EventosService } from '../inscribir-evento/eventos.service';
 
@@ -40,6 +41,7 @@ describe('PlantillaVentaComponent', () => {
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [IonicModule.forRoot(), RouterTestingModule],
     providers: [
+        { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: {} },
@@ -67,6 +69,7 @@ describe('Portes en PlantillaVenta (#94)', () => {
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     imports: [IonicModule.forRoot(), RouterTestingModule],
     providers: [
+        { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: Storage, useValue: {} },
@@ -186,6 +189,7 @@ describe('Ampliar pedido cuando el servidor lo rechaza (#172)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
@@ -269,6 +273,7 @@ describe('Borrar el borrador al crear el pedido (#173)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: borradorService },
@@ -382,6 +387,7 @@ describe('Modo de servicio (#174)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -561,6 +567,7 @@ describe('Slide de pago sin dirección ni condiciones de pago (#179 / #182)', ()
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -710,6 +717,7 @@ describe('Salir de la plantilla con el botón atrás de Android (#183)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: { leerChequeRegalo: () => of(null), fechaEntregaAgencia: () => of(null), calcularFechaEntrega: () => of(new Date().toISOString()), cargarGruposBonificables: () => of([]), modoFacturacionSugerido: () => of(null) } },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -835,6 +843,7 @@ describe('Ofertas que el pedido podría aplicar (#169)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1037,6 +1046,7 @@ describe('Modo de servicio sugerido por el servidor (#184)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1256,6 +1266,7 @@ describe('Recalcular el modo de servicio al volver al resumen (#185)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1475,6 +1486,7 @@ describe('Modo de facturación en la plantilla (#197)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1625,6 +1637,7 @@ describe('Saldo a favor al mandar el cobro por tarjeta (#206)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1752,6 +1765,7 @@ describe('El modo de servicio elegido por el vendedor se respeta (#230)', () => 
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1897,6 +1911,7 @@ describe('Cheque regalo en la plantilla (#222)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -1990,6 +2005,7 @@ describe('Sustitución de productos que pide Compras (#220)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2080,6 +2096,7 @@ describe('Fecha de entrega a la agencia en la plantilla (#215)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2163,6 +2180,7 @@ describe('Muestras sin stock al salir de «Todo junto» (#232)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2270,6 +2288,7 @@ describe('Muestras por ruta desde Algete antes de grabar (#233)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo({ cargarGruposBonificables: () => of(['COS']), calcularFechaEntrega: () => of(new Date().toISOString()) }) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2349,6 +2368,7 @@ describe('Ofertas combinadas en «Aplicar oferta» (#229)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2452,6 +2472,7 @@ describe('Cupones del cliente en la plantilla (#217)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: servicio },
         { provide: BorradorPlantillaVentaService, useValue: { generarId: () => 'nuevo-id' } },
@@ -2538,6 +2559,7 @@ describe('Abrir «Puede ofrecer» mientras se abre el teclado (2.25.1)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: Keyboard, useValue: teclado },
         { provide: ModalController, useValue: modales },
@@ -2632,6 +2654,7 @@ describe('PlantillaVentaComponent: tanda 2.26.0 (#241 #242 #243 #244 #245 #250 #
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: EventosService, useValue: eventos },
@@ -2913,6 +2936,27 @@ describe('PlantillaVentaComponent: tanda 2.26.0 (#241 #242 #243 #244 #245 #250 #
 
       const creado = alertas.find(a => a.header === 'Creado');
       expect(creado.message).toBe('Se han creado dos pedidos: 929100 (productos) y 929101 (curso). Los cursos se facturan aparte.');
+      expect(creado.buttons).toEqual(['Ok']); // sin pago a plazos disponible, como siempre
+    }));
+
+    // NestoApp#281 / NestoAPI#864: al terminar el pedido, si se puede pagar a plazos, se ofrece en la misma alerta.
+    it('al guardar, si el pedido se puede pagar a plazos, «Creado» lo ofrece (#281)', fakeAsync(() => {
+      spyOn<any>(component, 'reinicializar');
+      spyOn<any>(component, 'preguntarBorrarBorrador');
+      const plazos = TestBed.inject(PagoAPlazosService) as any;
+      const disponibilidad = { Disponible: true, NombreProveedor: 'Aplázame' };
+      spyOn(plazos, 'disponible').and.returnValue(of(disponibilidad));
+      spyOn(plazos, 'ofrecer').and.returnValue(Promise.resolve(true));
+      servicio.crearPedido.and.returnValue(of({ numero: 929100, empresa: '1' }));
+
+      component['ejecutarCreacion']();
+      tick();
+
+      const creado = alertas.find(a => a.header === 'Creado');
+      const boton = creado.buttons.find((b: any) => b.text === 'Pagar a plazos (Aplázame)');
+      expect(boton).toBeDefined();
+      boton.handler();
+      expect(plazos.ofrecer).toHaveBeenCalledWith('1', 929100, disponibilidad);
     }));
   });
 
@@ -3045,6 +3089,7 @@ describe('PlantillaVentaComponent: tanda 2.27.0 (#255 #257 #264 #266)', () => {
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [IonicModule.forRoot(), RouterTestingModule],
       providers: [
+          { provide: PagoAPlazosService, useValue: { disponible: () => of(null), ofrecer: () => Promise.resolve(false) } },
         Usuario,
         { provide: PlantillaVentaService, useValue: conChequeRegalo(servicio) },
         { provide: EventosService, useValue: { leerEventosPorProducto: () => of([]) } },

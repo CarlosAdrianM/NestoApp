@@ -47,6 +47,12 @@ export class ClienteComponent implements AfterViewInit {
       this.servicio.leerOrigenes().subscribe(origenes => this.origenes = origenes || []); // NestoApp#227
       if (this.route.snapshot.queryParams && this.route.snapshot.queryParams.empresa &&
         this.route.snapshot.queryParams.cliente && this.route.snapshot.queryParams.contacto) {
+          // NestoApp#259: para abrir sus recogidas
+          this.claveCliente = {
+              empresa: this.route.snapshot.queryParams.empresa.toString().trim(),
+              cliente: this.route.snapshot.queryParams.cliente.toString().trim(),
+              contacto: this.route.snapshot.queryParams.contacto.toString().trim()
+          };
           this.cargarCliente(
             this.route.snapshot.queryParams.empresa,
             this.route.snapshot.queryParams.cliente,
@@ -201,6 +207,18 @@ export class ClienteComponent implements AfterViewInit {
               await alert.present();
           }
       )    
+  }
+
+  /** NestoApp#259: el cliente que se está modificando (null en un alta). */
+  public claveCliente: { empresa: string, cliente: string, contacto: string } | null = null;
+
+  /** NestoApp#259 / NestoAPI#855: solicitar una recogida de este cliente (y ver las que tiene). */
+  public abrirRecogidas(): void {
+      if (!this.claveCliente) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('cliente_abrir_recogidas', { cliente: this.claveCliente.cliente });
+      this.nav.navigateForward('recogidas', { queryParams: { ...this.claveCliente, nombre: (this.cliente?.nombre || '').toString().trim() } });
   }
 
   private cargarCliente(empresa: string, cliente: string, contacto: string): void {

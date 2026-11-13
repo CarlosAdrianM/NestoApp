@@ -1,6 +1,6 @@
 {
   "name": "nestoapp",
-  "version": "2.28.1",
+  "version": "2.29.0",
   "author": "Grupo Nueva Visión",
   "homepage": "http://www.nuevavision.es/",
   "scripts": {
@@ -45,6 +45,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.0",
     "cordova-plugin-file": "^6.0.2",
     "firebase": "^12.12.0",
+    "jsbarcode": "3.11.6",
     "rxjs": "^7.8.2",
     "swiper": "^12.1.2",
     "tslib": "^2.0.0",

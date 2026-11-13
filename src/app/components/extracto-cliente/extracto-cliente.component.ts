@@ -426,6 +426,21 @@ export class ExtractoClienteComponent implements AfterViewInit {
   }
 
   /** NestoApp#217: inscribir al cliente en un evento (curso) y mandarle el enlace de pago. */
+  /** NestoApp#259 / NestoAPI#855: solicitar una recogida de este cliente (y ver las que tiene). */
+  public abrirRecogidas(): void {
+      const cliente = this.clienteSeleccionado;
+      if (!cliente?.cliente) {
+          return;
+      }
+      this.firebaseAnalytics.logEvent('extracto_cliente_abrir_recogidas', {});
+      this.nav.navigateForward('recogidas', { queryParams: {
+          empresa: (cliente.empresa ?? '1').toString().trim(),
+          cliente: cliente.cliente.toString().trim(),
+          contacto: (cliente.contacto ?? '0').toString().trim(),
+          nombre: (cliente.nombre ?? '').toString().trim()
+      } });
+  }
+
   public async abrirModalEventos(): Promise<void> {
       this.firebaseAnalytics.logEvent("extracto_cliente_abrir_eventos", {});
       const modal = await this.modalCtrl.create({

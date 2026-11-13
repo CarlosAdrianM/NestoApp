@@ -1,0 +1,100 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Recogidas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ion-item lines="full">
+    <ion-label class="ion-text-wrap">
+      <h2>{{ titulo }}</h2>
+      <p>Pida al almacén que recojan algo de este cliente: un aparato para reparar, una devolución… El almacén la confirma o le dice por qué no.</p>
+    </ion-label>
+  </ion-item>
+
+  <!-- Nueva solicitud -->
+  <div class="acciones" *ngIf="!mostrarFormulario">
+    <ion-button expand="block" (click)="abrirFormulario()" [disabled]="cargando || !!mensaje">
+      <ion-icon slot="start" name="add-circle-outline"></ion-icon>
+      Solicitar recogida
+    </ion-button>
+    <p class="pista" *ngIf="haySinResolver">Este cliente ya tiene una recogida sin terminar: no se puede pedir otra hasta que se resuelva.</p>
+  </div>
+
+  <ion-card *ngIf="mostrarFormulario">
+    <ion-card-header>
+      <ion-card-title>Nueva recogida</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-segment [(ngModel)]="nueva.QuienRecoge" aria-label="Quién la recoge">
+        <ion-segment-button value="Reparto"><ion-label>La recoge el reparto</ion-label></ion-segment-button>
+        <ion-segment-button value="Vendedor"><ion-label>La recojo yo</ion-label></ion-segment-button>
+      </ion-segment>
+      <p class="pista" *ngIf="nueva.QuienRecoge === 'Reparto'">Solo para clientes de nuestra ruta de reparto.</p>
+      <p class="pista" *ngIf="nueva.QuienRecoge === 'Vendedor'">Cuando el almacén la confirme, tendrá aquí un código de barras para que se lo lean al entregarlo en Algete.</p>
+      <ion-list>
+        <ion-item>
+          <ion-textarea label="¿Qué hay que recoger?" label-placement="floating" [(ngModel)]="nueva.Texto" maxlength="500" rows="3" autoGrow="true"></ion-textarea>
+        </ion-item>
+        <ion-item>
+          <ion-input label="Bultos" label-placement="floating" type="number" min="1" max="999" [(ngModel)]="nueva.Bultos"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-input label="Factura (opcional)" label-placement="floating" [(ngModel)]="nueva.FacturaOriginal" maxlength="20"></ion-input>
+        </ion-item>
+      </ion-list>
+      <ion-button expand="block" color="success" [disabled]="enviando" (click)="solicitar()">
+        <ion-icon slot="start" name="send-outline"></ion-icon>
+        Solicitar
+      </ion-button>
+      <ion-button expand="block" fill="clear" color="medium" (click)="mostrarFormulario = false">Cancelar</ion-button>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Las del cliente -->
+  <ion-list-header><ion-label>Solicitadas</ion-label></ion-list-header>
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando las recogidas…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none">
+    <ion-label class="ion-text-wrap" color="medium">{{ mensaje }}</ion-label>
+  </ion-item>
+  <ion-item *ngIf="!cargando && !mensaje && recogidas.length === 0" lines="none">
+    <ion-label class="ion-text-wrap" color="medium">Este cliente no tiene recogidas solicitadas.</ion-label>
+  </ion-item>
+
+  <ion-card *ngFor="let recogida of recogidas">
+    <ion-card-header>
+      <ion-card-subtitle>
+        <ion-badge [color]="colorEstado(recogida.Estado)">{{ textoEstado(recogida.Estado) }}</ion-badge>
+        {{ recogida.FechaSolicitud | date:'dd/MM/yy HH:mm' }}
+      </ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <p class="texto">{{ recogida.Texto }}</p>
+      <p>{{ textoRecogida(recogida) }}</p>
+      <p *ngIf="recogida.Estado === 'Rechazada' && recogida.MotivoRechazo" class="motivo">Motivo: {{ recogida.MotivoRechazo }}</p>
+      <p *ngIf="recogida.Estado === 'Anulada' && recogida.MotivoAnulacion" class="motivo">Motivo: {{ recogida.MotivoAnulacion }}</p>
+      <p *ngIf="recogida.CodigoDocumento && !tieneCodigo(recogida)">Nota de recogida {{ recogida.CodigoDocumento }}</p>
+
+      <!-- «La recojo yo», ya confirmada: el código para Algete -->
+      <ng-container *ngIf="tieneCodigo(recogida)">
+        <p class="pista">Enséñelo al entregar la recogida en Algete:</p>
+        <codigo-barras [valor]="recogida.CodigoDocumento"></codigo-barras>
+      </ng-container>
+
+      <ion-button *ngIf="puedeAnular(recogida)" fill="outline" color="danger" size="small" (click)="anular(recogida)">
+        <ion-icon slot="start" name="close-circle-outline"></ion-icon>
+        Anular
+      </ion-button>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

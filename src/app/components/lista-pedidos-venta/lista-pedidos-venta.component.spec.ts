@@ -86,6 +86,32 @@ describe('ListaPedidosVentaComponent: fecha sin determinar y retenidos (#240 / #
     expect(component.estaRetenido({ numero: 2 })).toBeFalse();
   });
 
+  describe('pedidos retenidos por una falta (#279)', () => {
+    const retencion = (extra: any = {}) => ({ Id: 1, Empresa: '1', Pedido: 905123, Plazo: '2026-11-13T12:30:00', Estado: 'Pendiente', PuedeDecidir: true, Productos: 'X', ...extra });
+
+    it('al entrar cuenta los pendientes que puede decidir y el aviso abre el de plazo más cercano', () => {
+      const pedidos = TestBed.inject(PedidoVentaService);
+      spyOn(pedidos, 'leerRetenidosPorFalta').and.returnValue(of([
+        retencion({ Pedido: 2, Plazo: '2026-11-13T13:00:00' }), retencion(), retencion({ Pedido: 3, PuedeDecidir: false })
+      ] as any));
+      const nav = TestBed.inject(NavController);
+      spyOn(nav, 'navigateForward');
+
+      component.ionViewWillEnter();
+      expect(component.retenidosPorFalta.length).toBe(2);
+      expect(component.textoRetenidosPorFalta).toContain('2 pedidos retenidos por una falta');
+
+      component.abrirRetenidoPorFalta();
+      expect(nav.navigateForward).toHaveBeenCalledWith('pedido-venta', { queryParams: { empresa: '1', numero: 905123 } });
+    });
+
+    it('si la API no tiene ninguno (o falla), no hay aviso', () => {
+      spyOn(TestBed.inject(PedidoVentaService), 'leerRetenidosPorFalta').and.returnValue(of([]));
+      component.cargarRetenidosPorFalta();
+      expect(component.textoRetenidosPorFalta).toBe('');
+    });
+  });
+
   describe('envíos devueltos sin contestar (#273)', () => {
     const envio = (cambios: any = {}) => ({ Numero: 1, Empresa: '1', Cliente: '15191', Contacto: '0', Estado: 4, Fecha: '2026-11-03', Vendedor: 'JM', Decision: 'SinDecidir', ...cambios });
 

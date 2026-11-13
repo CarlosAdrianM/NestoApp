@@ -53,6 +53,8 @@ import { EventoComponent } from './components/evento/evento.component';
 import { EventosComponent } from './components/eventos/eventos.component';
 import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
 import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
+import { RecogidasComponent } from './components/recogidas/recogidas.component';
+import { CodigoBarrasComponent } from './components/recogidas/codigo-barras.component';
 import { PedidosEnRiesgoComponent } from './components/pedidos-en-riesgo/pedidos-en-riesgo.component';
 import { VisorImagenComponent } from './components/visor-imagen/visor-imagen.component';
 import { NovedadFeedbackComponent } from './components/profile/novedad-feedback/novedad-feedback.component';
@@ -142,6 +144,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         EventosComponent,
         EnviosDevueltosComponent,
         EnvioDevueltoComponent,
+        RecogidasComponent,
+        CodigoBarrasComponent,
         PedidosEnRiesgoComponent,
         VisorImagenComponent,
         NovedadFeedbackComponent,

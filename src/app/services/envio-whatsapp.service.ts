@@ -103,6 +103,16 @@ export class EnvioWhatsAppService {
     return true;
   }
 
+  /** NestoApp#281: un texto ya escrito (p. ej. el enlace del pago a plazos): se abre WhatsApp para que el vendedor elija el contacto. */
+  public enviarTexto(texto: string): boolean {
+    const limpio = (texto || '').trim();
+    if (!limpio) {
+      return false;
+    }
+    this.abrir(urlWhatsApp(null, limpio));
+    return true;
+  }
+
   /** null = sin móvil (se abre WhatsApp sin número); undefined = el usuario canceló. */
   private async elegirMovil(moviles: string[]): Promise<string | null | undefined> {
     const validos = (moviles || []).map(m => (m || '').toString().trim()).filter(m => !!m);

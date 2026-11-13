@@ -11,6 +11,10 @@ export const TIPO_NOTIFICACION_DEVOLUCION_ENVIO_AGENCIA = 'DevolucionEnvioAgenci
 /** NestoApp#274 / NestoAPI#623: ha entrado un lead de campaña, o lleva el plazo sin llamar (traen empresa, cliente, contacto). */
 export const TIPO_NOTIFICACION_LEAD_NUEVO = 'LeadNuevo';
 export const TIPO_NOTIFICACION_LEAD_SIN_LLAMAR = 'LeadSinLlamar';
+/** NestoApp#259 / NestoAPI#855: la recogida que pidió el vendedor se ha confirmado o rechazado, nadie la contesta o se ha anulado. */
+export const TIPOS_NOTIFICACION_RECOGIDA_SOLICITADA = ['RecogidaSolicitadaResuelta', 'RecogidaSolicitadaSinRespuesta', 'RecogidaSolicitadaAnulada'];
+/** NestoApp#279 / NestoAPI#858: vence el plazo de un «todo junto» retenido por una falta y se espera (trae pedido: abre el pedido). */
+export const TIPO_NOTIFICACION_PEDIDO_RETENIDO_POR_FALTA_ESPERAR = 'PedidoRetenidoPorFaltaEsperar';
 /** Los avisos que, sin pedido, abren la ficha del cliente. */
 const TIPOS_QUE_ABREN_EL_CLIENTE = [TIPO_NOTIFICACION_INCIDENCIA_ENVIO_AGENCIA, TIPO_NOTIFICACION_LEAD_NUEVO, TIPO_NOTIFICACION_LEAD_SIN_LLAMAR];
 
@@ -39,6 +43,13 @@ export function rutaDeNotificacion(datos: { [clave: string]: any } | null | unde
   if (datos['tipo'] === TIPO_NOTIFICACION_DEVOLUCION_ENVIO_AGENCIA && /^\d+$/.test(envio)) {
     const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
     return `/envio-devuelto?empresa=${encodeURIComponent(empresa)}&envio=${envio}&aviso=${aviso}`;
+  }
+  // NestoApp#259: las recogidas solicitadas abren la pantalla de recogidas de ese cliente (con el código NR, si la recoge él).
+  const clienteRecogida = (datos['cliente'] ?? '').toString().trim();
+  if (TIPOS_NOTIFICACION_RECOGIDA_SOLICITADA.includes(datos['tipo']) && clienteRecogida) {
+    const empresa = (datos['empresa'] ?? '').toString().trim() || '1';
+    const contacto = (datos['contacto'] ?? '').toString().trim() || '0';
+    return `/recogidas?empresa=${encodeURIComponent(empresa)}&cliente=${encodeURIComponent(clienteRecogida)}&contacto=${encodeURIComponent(contacto)}&aviso=${aviso}`;
   }
   // NestoApp#202 / NestoAPI#555: regla genérica, como en Nesto: cualquier aviso que lleve el dato
   // «pedido» abre ese pedido (el de coger picking con importe, el retenido que se libera (#254) y los que vengan).

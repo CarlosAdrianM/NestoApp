@@ -13,6 +13,7 @@ import { LineaVenta } from '../linea-venta/linea-venta';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { EnvioWhatsAppService } from 'src/app/services/envio-whatsapp.service';
+import { PagoAPlazosService } from 'src/app/services/pago-a-plazos.service';
 
 describe('PedidoVentaComponent', () => {
   let component: PedidoVentaComponent;
@@ -717,6 +718,7 @@ describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 /
   let servicio: any;
   let plantilla: any;
   let alertas: any[];
+  let plazos: any;
 
   const pedidoBase = (extra: any = {}) => ({
     empresa: '1', numero: 929057, cliente: '15191', contacto: '0', contactoCobro: '0', formaPago: 'TRN', ccc: null,
@@ -748,11 +750,19 @@ describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 /
       cargarParametrosIva: () => of([]),
       modificarPedido: jasmine.createSpy('modificarPedido').and.returnValue(of({})),
       retener: jasmine.createSpy('retener').and.returnValue(of({ Id: 1, Pedido: 929057, Motivo: 'Noviembre', HastaFecha: '2026-11-15T00:00:00', Usuario: 'NUEVAVISION\\Alfredo', Fecha: '2026-10-27T10:00:00' })),
-      liberar: jasmine.createSpy('liberar').and.returnValue(of({ Id: 1, Pedido: 929057, Liberado: '2026-10-27T11:00:00' }))
+      liberar: jasmine.createSpy('liberar').and.returnValue(of({ Id: 1, Pedido: 929057, Liberado: '2026-10-27T11:00:00' })),
+      leerRetenidosPorFalta: jasmine.createSpy('leerRetenidosPorFalta').and.returnValue(of([])),
+      decidirRetencionPorFalta: jasmine.createSpy('decidirRetencionPorFalta').and.returnValue(of({}))
     };
     plantilla = {
       opcionesModos: jasmine.createSpy('opcionesModos').and.returnValue(of(opciones(true, false))),
       modoFacturacionSugerido: jasmine.createSpy('modoFacturacionSugerido').and.returnValue(of(null))
+    };
+    plazos = {
+      estado: jasmine.createSpy('estado').and.returnValue(of(null)),
+      disponible: jasmine.createSpy('disponible').and.returnValue(of(null)),
+      ofrecer: jasmine.createSpy('ofrecer').and.returnValue(Promise.resolve(true)),
+      preguntarCancelar: jasmine.createSpy('preguntarCancelar').and.returnValue(Promise.resolve(true))
     };
     TestBed.configureTestingModule({
       declarations: [PedidoVentaComponent],
@@ -763,6 +773,7 @@ describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 /
         { provide: FirebaseAnalytics, useValue: { logEvent: () => { } } },
         { provide: PedidoVentaService, useValue: servicio },
         { provide: PlantillaVentaService, useValue: plantilla },
+        { provide: PagoAPlazosService, useValue: plazos },
         { provide: AlertController, useValue: { create: (o: any) => { alertas.push(o); return Promise.resolve({ present: () => Promise.resolve(), onDidDismiss: () => Promise.resolve({}) }); } } },
         { provide: LoadingController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() }) } },
         { provide: ToastController, useValue: { create: () => Promise.resolve({ present: () => Promise.resolve() }) } },
@@ -850,6 +861,113 @@ describe('PedidoVentaComponent: retener, opciones de modos, fecha lejana (#254 /
 
       expect(servicio.liberar).toHaveBeenCalledWith('1', 929057);
       expect(servicio.cargarPedido).toHaveBeenCalledTimes(2);
+    }));
+  });
+
+  // NestoApp#281 / NestoAPI#864: pagar a plazos el pedido.
+  describe('pagar a plazos (#281)', () => {
+    const estado = (extra: any = {}) => ({ HaySolicitud: true, Estado: 'Pendiente', NombreProveedor: 'Aplázame', Importe: 300, ...extra });
+    const disponible = (extra: any = {}) => ({ Disponible: true, NombreProveedor: 'Aplázame', Importe: 300, Motivo: null, ...extra });
+
+    it('sin solicitud y disponible: sale el botón con el nombre del proveedor', fakeAsync(() => {
+      plazos.disponible.and.returnValue(of(disponible()));
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(plazos.estado).toHaveBeenCalledWith('1', 929057);
+      expect(component.puedePedirPagoAPlazos).toBeTrue();
+      expect(component.nombreProveedorPlazos).toBe('Aplázame');
+      expect(component.textoPlazosNoDisponible).toBe('');
+    }));
+
+    it('no disponible: no hay botón y se dice el motivo', fakeAsync(() => {
+      plazos.disponible.and.returnValue(of(disponible({ Disponible: false, Motivo: 'El importe es menor que el mínimo.' })));
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.puedePedirPagoAPlazos).toBeFalse();
+      expect(component.textoPlazosNoDisponible).toBe('Aplázame no disponible: El importe es menor que el mínimo.');
+    }));
+
+    it('con una solicitud pendiente: su estado, «Cancelar» y no se vuelve a ofrecer', fakeAsync(() => {
+      plazos.estado.and.returnValue(of(estado()));
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(plazos.disponible).not.toHaveBeenCalled();
+      expect(component.textoPagoAPlazos).toContain('pendiente de que el cliente termine');
+      expect(component.puedeCancelarPagoAPlazos).toBeTrue();
+      expect(component.puedePedirPagoAPlazos).toBeFalse();
+    }));
+
+    it('«Pagar a plazos» lleva el diálogo y, si se pide, recarga el estado', fakeAsync(async () => {
+      plazos.disponible.and.returnValue(of(disponible()));
+      component.cargarPedido('1', 929057);
+      tick();
+      await component.pedirPagoAPlazos();
+      tick();
+      expect(plazos.ofrecer).toHaveBeenCalledWith('1', 929057, jasmine.objectContaining({ Disponible: true }));
+      expect(plazos.estado).toHaveBeenCalledTimes(2);
+    }));
+  });
+
+  // NestoApp#279 / NestoAPI#858: el pedido «todo junto» retenido en el packing por una falta.
+  describe('retenido por una falta: servir lo que hay o esperar (#279)', () => {
+    const retencion = (extra: any = {}) => ({
+      Id: 7, Empresa: '1', Pedido: 929057, Picking: 55, Cliente: '15191', Contacto: '0', NombreCliente: 'LOLA',
+      Productos: '41234 CHAMPÚ X 1L', Fecha: '2026-11-13T10:00:00', Plazo: '2026-11-13T12:30:00', Estado: 'Pendiente',
+      UsuarioDecision: null, FechaDecision: null, PorPlazo: false, PuedeDecidir: true, Mensaje: null, ...extra
+    });
+
+    it('al cargar el pedido busca su retención pendiente y la enseña', fakeAsync(() => {
+      servicio.leerRetenidosPorFalta.and.returnValue(of([retencion({ Pedido: 1 }), retencion()]));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      expect(component.retencionPorFalta?.Id).toBe(7);
+      expect(component.textoRetencionPorFalta).toContain('41234 CHAMPÚ X 1L');
+    }));
+
+    it('sin retención pendiente (o si la API falla) no hay banda', fakeAsync(() => {
+      servicio.leerRetenidosPorFalta.and.returnValue(of([retencion({ Estado: 'Esperar' })]));
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.retencionPorFalta).toBeNull();
+    }));
+
+    it('«Servir lo que hay» pide confirmación, decide y recarga el pedido', fakeAsync(async () => {
+      servicio.leerRetenidosPorFalta.and.returnValue(of([retencion()]));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      const decidiendo = component.decidirRetencionPorFalta('ServirLoQueHay');
+      await Promise.resolve();
+      expect(ultimaAlerta().header).toBe('Servir lo que hay');
+      await pulsar(ultimaAlerta(), 'Servir lo que hay');
+      await decidiendo;
+      tick();
+
+      expect(servicio.decidirRetencionPorFalta).toHaveBeenCalledWith('1', 929057, 'ServirLoQueHay');
+      expect(servicio.cargarPedido).toHaveBeenCalledTimes(2);
+    }));
+
+    it('si la API dice que no (409: ya decidido, picking sin terminar…), enseña su mensaje', fakeAsync(async () => {
+      servicio.leerRetenidosPorFalta.and.returnValue(of([retencion()]));
+      servicio.decidirRetencionPorFalta.and.returnValue(throwError(() => ({ status: 409, error: { Message: 'El picking todavía no está terminado.' } })));
+      component.cargarPedido('1', 929057);
+      tick();
+
+      const decidiendo = component.decidirRetencionPorFalta('Esperar');
+      await Promise.resolve();
+      await pulsar(ultimaAlerta(), 'Esperar');
+      await decidiendo;
+      tick();
+
+      expect(ultimaAlerta().message).toContain('El picking todavía no está terminado.');
+    }));
+
+    it('si no puede decidir, no salen los botones', fakeAsync(() => {
+      servicio.leerRetenidosPorFalta.and.returnValue(of([retencion({ PuedeDecidir: false })]));
+      component.cargarPedido('1', 929057);
+      tick();
+      expect(component.puedeDecidirRetencionPorFalta).toBeFalse();
     }));
   });
 

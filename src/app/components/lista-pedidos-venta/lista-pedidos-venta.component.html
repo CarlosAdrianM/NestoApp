@@ -22,6 +22,14 @@
       <p>Diga si el cliente lo sigue queriendo: volver a enviar o abonar.</p>
     </ion-label>
   </ion-item>
+  <!-- NestoApp#279 / NestoAPI#858: pedidos «todo junto» retenidos en el packing por una falta, esperando que decida el vendedor -->
+  <ion-item *ngIf="retenidosPorFalta.length > 0" button detail="true" color="warning" lines="full" (click)="abrirRetenidoPorFalta()">
+    <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+    <ion-label class="ion-text-wrap">
+      <h2>{{ textoRetenidosPorFalta }}</h2>
+      <p>Servir lo que hay o esperar a tenerlo completo. Si no decide, se espera.</p>
+    </ion-label>
+  </ion-item>
   <ion-item lines="none">
     <ion-label>Con imágenes</ion-label>
     <ion-toggle [(ngModel)]="mostrarImagenes" slot="end"></ion-toggle>
