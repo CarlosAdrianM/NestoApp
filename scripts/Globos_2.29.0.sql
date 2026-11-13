@@ -44,5 +44,11 @@ FROM @g g
 WHERE NOT EXISTS (SELECT 1 FROM dbo.Globos x WHERE x.Aplicacion = g.Aplicacion AND x.Ancla = g.Ancla);
 SELECT @@ROWCOUNT AS GlobosInsertadosAhora;
 
+-- Si se lanzó antes que Novedades_2.29.0.sql (13/11/26 pasó: los cinco quedaron sin NovedadId), al relanzarlo se enlazan.
+UPDATE x SET x.NovedadId = g.NovedadId
+FROM dbo.Globos x JOIN @g g ON g.Aplicacion = x.Aplicacion AND g.Ancla = x.Ancla
+WHERE x.NovedadId IS NULL AND g.NovedadId IS NOT NULL;
+SELECT @@ROWCOUNT AS GlobosEnlazadosASuNovedadAhora;
+
 SELECT Id, Aplicacion, VersionDesde, Pantalla, Ancla, Orden, NovedadId, FechaDesde, FechaHasta, Activo FROM dbo.Globos
 WHERE Aplicacion = 'NestoApp' ORDER BY Pantalla, Orden;
