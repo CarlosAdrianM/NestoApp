@@ -67,6 +67,18 @@ Siempre que se vaya a hacer push, hay que:
      ámbito `NestoAPI` solo salen en ese aviso (con su descripción), así que deben estar escritas para el vendedor.
      Las de una versión de la app posterior a la instalada no se avisan hasta que llega esa versión.
 
+## Globos («consejos») de lo nuevo (NestoAPI#774)
+
+Desde 2.29.0 NestoApp pinta los globos de la tabla `dbo.Globos` (`GlobosService`, arrancado en `AppComponent`).
+- **Pantalla** = la ruta (`pedido-venta`, `cliente`, `recogidas`…). **Ancla** = `<ruta>.<Control>`, puesta en el control con la
+  directiva `globoAncla="pedido-venta.PagarAPlazos"`. Sin ancla: tarjeta centrada. Con ancla, el globo espera hasta 10 s a que el
+  control se vea (botones que salen cuando contesta la API).
+- Al entrar en una pantalla salen como mucho 2, de uno en uno. «Entendido» → `POST api/Globos/{id}/Visto`; tocar fuera lo deja
+  para la próxima sesión. «Ver la novedad» si el globo lleva `NovedadId`.
+- Para algo nuevo que convenga señalar: poner el ancla en el control y crear `scripts/Globos_<version>.sql` (modelo:
+  `scripts/Globos_2.29.0.sql`, con `VersionDesde` = la versión y enlazado a su novedad). Se lanza después de publicar y de
+  ejecutar el SQL de novedades. Texto de usted, máx. 500 caracteres; título máx. 100.
+
 ## Al promocionar a Production
 
 Después de que Carlos promocione la versión en AppFlow y ejecute `scripts/Novedades_<version>.sql`,
