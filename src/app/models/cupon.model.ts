@@ -33,6 +33,45 @@ export interface CuponCliente {
   Producto: string;
   TextoLinea: string;
   UsadoEnPedido?: number | null;
+  /**
+   * NestoApp#291 / NestoAPI#885: es de evento, todavía no vale (Emitido) y QUIEN PREGUNTA puede adelantarlo por excepción
+   * (POST api/Cupones/{codigo}/Adelantar). Una API anterior no lo manda.
+   */
+  SePuedeAdelantar?: boolean;
+  /** NestoApp#291: se adelantó por excepción; quién y cuándo, si la API lo dice. */
+  Adelantado?: boolean;
+  AdelantadoPor?: string | null;
+  AdelantadoEl?: string | null;
+}
+
+export const LONGITUD_MAXIMA_MOTIVO_ADELANTAR_CUPON = 500;
+
+/** NestoApp#291: «Usar ya (excepción)» solo sale si la API dice que este usuario puede adelantar este cupón. */
+export function sePuedeAdelantarCupon(cupon: CuponCliente | null | undefined): boolean {
+  return !!cupon && cupon.SePuedeAdelantar === true && !!(cupon.Codigo || '').trim();
+}
+
+/** El motivo es obligatorio (1..500). Devuelve qué falla, de usted, o '' si vale. */
+export function errorMotivoAdelantarCupon(motivo: string | null | undefined): string {
+  const texto = (motivo || '').trim();
+  if (!texto) {
+    return 'Escriba el motivo de la excepción: es obligatorio.';
+  }
+  if (texto.length > LONGITUD_MAXIMA_MOTIVO_ADELANTAR_CUPON) {
+    return `El motivo no puede pasar de ${LONGITUD_MAXIMA_MOTIVO_ADELANTAR_CUPON} caracteres (lleva ${texto.length}).`;
+  }
+  return '';
+}
+
+/** «Adelantado por excepción por Alberto el 23/11/2026.»; '' si no se ha adelantado (o la API no lo dice). */
+export function textoCuponAdelantado(cupon: CuponCliente | null | undefined): string {
+  if (!cupon || cupon.Adelantado !== true) {
+    return '';
+  }
+  const quien = (cupon.AdelantadoPor || '').toString().trim().replace(/^.*\\/, '');
+  const partes = /^(\d{4})-(\d{2})-(\d{2})/.exec(cupon.AdelantadoEl || '');
+  const cuando = partes ? ` el ${partes[3]}/${partes[2]}/${partes[1]}` : '';
+  return `Adelantado por excepción${quien ? ` por ${quien}` : ''}${cuando}.`;
 }
 
 const normalizar = (texto: any) => (texto ?? '').toString().trim().toUpperCase();

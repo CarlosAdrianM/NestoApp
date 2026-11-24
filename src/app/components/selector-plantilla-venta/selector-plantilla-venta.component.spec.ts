@@ -208,6 +208,40 @@ describe('SelectorPlantillaVentaComponent', () => {
     });
   });
 
+  describe('cliente sin compras (#284, incidencia 1300)', () => {
+    const cargador = () => ({ present: () => Promise.resolve(), dismiss: () => Promise.resolve() });
+
+    it('no es un «Error»: no abre ningún diálogo y lo dice en la lista vacía', async () => {
+      spyOn(component['loadingCtrl'], 'create').and.returnValue(Promise.resolve(cargador() as any));
+      const alerta = spyOn(component['alertCtrl'], 'create');
+      spyOn(component['servicio'], 'getProductos').and.returnValue(of([]));
+      spyOn(component, 'setFocus');
+
+      await component.cargarDatos({ empresa: '1', cliente: '42004', contacto: '0' });
+      await fixture.whenStable();
+
+      expect(alerta).not.toHaveBeenCalled();
+      expect(component.clienteSinCompras).toBeTrue();
+      expect(component.textoClienteSinCompras)
+        .toBe('Este cliente todavía no tiene compras. Busque los productos en el buscador de arriba.');
+      expect(component.setFocus).toHaveBeenCalled();
+    });
+
+    it('al cargar otro cliente se quita el texto', async () => {
+      component.clienteSinCompras = true;
+      spyOn(component['loadingCtrl'], 'create').and.returnValue(Promise.resolve(cargador() as any));
+      spyOn(component['servicio'], 'getProductos').and.returnValue(of([{ producto: '1', aplicarDescuento: true, estado: 0 }]));
+      spyOn(component['servicio'], 'ponerStocks').and.returnValue(of([{ producto: '1', aplicarDescuento: true, estado: 0 }]));
+      component['usuario'].almacenesPlantillaVenta = 'ALG';
+      spyOn(component, 'setFocus');
+
+      await component.cargarDatos({ empresa: '1', cliente: '15191', contacto: '0' });
+      await fixture.whenStable();
+
+      expect(component.clienteSinCompras).toBeFalse();
+    });
+  });
+
   describe('cancelarFoco (2.25.1, la bombilla antes de que salga el teclado)', () => {
     it('el foco pendiente ya no pone el cursor en el buscador ni abre el teclado', fakeAsync(() => {
       const buscador = { setFocus: jasmine.createSpy('setFocus') };

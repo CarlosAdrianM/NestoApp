@@ -12,7 +12,11 @@ import {
   esRetenido,
   textoMotivoModoServicio,
   origenModoServicio,
-  ORIGEN_MODO_SERVICIO
+  ORIGEN_MODO_SERVICIO,
+  esModoElegible,
+  listaModosServicioOfrecidos,
+  modoJuntoConLoPendienteOfrecido,
+  explicacionJuntoConLoPendiente
 } from './modos-servicio.model';
 
 /**
@@ -204,5 +208,43 @@ describe('Origen del modo de servicio (#250)', () => {
 
   it('sin respuesta del servidor, «PorDefecto»', () => {
     expect(origenModoServicio(false, false, null)).toBe('PorDefecto');
+  });
+});
+
+/** NestoApp#287 / NestoAPI sugerencia 1340: modo 6, «Junto con lo pendiente del cliente». */
+describe('Modo 6, junto con lo pendiente del cliente (#287)', () => {
+  const seis = { Modo: 6, Nombre: 'Junto con lo pendiente del cliente', Permitido: true, Motivo: null,
+    Explicacion: 'Saldrá junto con la nota de entrega 929701.', PedidosConLosQueSeJunta: [929701] };
+
+  it('es un «todo junto» y de entrega única, y se conserva con servirJunto marcado', () => {
+    expect(esTodoJunto(6)).toBeTrue();
+    expect(esEntregaUnica(6)).toBeTrue();
+    expect(modoEfectivo(6, true)).toBe(MODOS_SERVICIO.JUNTO_CON_LO_PENDIENTE);
+    expect(modoEfectivo(6, false)).toBe(MODOS_SERVICIO.SEGUN_VAYA_ENTRANDO);
+  });
+
+  it('no vale como modo por defecto (1..4) pero sí se puede elegir', () => {
+    expect(esModoValido(6)).toBeFalse();
+    expect(esModoElegible(6)).toBeTrue();
+    expect(esModoElegible(5)).toBeFalse();
+    expect(nombreModo(6)).toBe('Junto con lo pendiente del cliente');
+  });
+
+  it('solo se ofrece si la API lo trae permitido', () => {
+    expect(listaModosServicioOfrecidos(null).length).toBe(LISTA_MODOS_SERVICIO.length);
+    expect(listaModosServicioOfrecidos([{ ...seis, Permitido: false }]).length).toBe(LISTA_MODOS_SERVICIO.length);
+    const ofrecidos = listaModosServicioOfrecidos([seis]);
+    expect(ofrecidos[ofrecidos.length - 1].codigo).toBe(6);
+    expect(modoJuntoConLoPendienteOfrecido([seis])?.PedidosConLosQueSeJunta).toEqual([929701]);
+  });
+
+  it('un pedido que ya está en 6 lo enseña aunque la API no conteste', () => {
+    expect(listaModosServicioOfrecidos(null, 6).some(m => m.codigo === 6)).toBeTrue();
+  });
+
+  it('la explicación solo sale con el 6 elegido', () => {
+    expect(explicacionJuntoConLoPendiente([seis], 6)).toBe('Saldrá junto con la nota de entrega 929701.');
+    expect(explicacionJuntoConLoPendiente([seis], 1)).toBe('');
+    expect(explicacionJuntoConLoPendiente(null, 6)).toBe('');
   });
 });

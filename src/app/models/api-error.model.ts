@@ -49,6 +49,9 @@ export enum ApiErrorCode {
   MODO_SERVICIO_NO_PERMITIDO = 'MODO_SERVICIO_NO_PERMITIDO', // NestoAPI#518
   MODO_CON_PICKING = 'MODO_CON_PICKING', // NestoAPI#533
   FECHA_ENTREGA_LEJANA = 'FECHA_ENTREGA_LEJANA', // NestoAPI#712
+  PEDIDO_CAMBIADO = 'PEDIDO_CAMBIADO', // NestoAPI#873 (NestoApp#285): otro lo ha guardado desde que se abrió
+  PEDIDO_EN_PREPARACION = 'PEDIDO_EN_PREPARACION', // NestoApp#287: añadir productos a un pedido con picking vivo
+  AMPLIACION_OPCION_NO_VALIDA = 'AMPLIACION_OPCION_NO_VALIDA', // NestoApp#287
 
   // Clientes
   DIAS_CON_PICKING = 'DIAS_CON_PICKING', // NestoAPI#541

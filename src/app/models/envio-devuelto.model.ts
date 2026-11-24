@@ -40,6 +40,12 @@ export interface EnvioDevuelto {
   PortesIncluidos?: boolean;
   UsuarioDecision?: string | null;
   FechaDecision?: string | null;
+  /** NestoAPI#870: la caja ya ha vuelto al almacén. */
+  HaVuelto?: boolean;
+  /** NestoAPI#870: se decidió reenviar pero la caja aún no ha vuelto: el reenvío no puede salir todavía. */
+  ReenvioEsperandoCaja?: boolean;
+  /** NestoApp#290 (sugerencia 1329): no queda nada por hacer con él. Lo calcula la API; una anterior no lo manda. */
+  Resuelto?: boolean;
 }
 
 /** POST …/Reenviar: lo que no venga se copia del envío devuelto. */
@@ -71,6 +77,16 @@ export interface DecisionReenvio {
 export function estaDecidido(envio: EnvioDevuelto | null | undefined): boolean {
   const decision = (envio?.Decision || 'SinDecidir').toString();
   return decision !== 'SinDecidir';
+}
+
+/** NestoApp#290: resuelto = la API dice que ya no queda nada por hacer (la caja ha vuelto, hay decisión y, si se reenvía, ya está tramitado). */
+export function estaResuelto(envio: EnvioDevuelto | null | undefined): boolean {
+  return envio?.Resuelto === true;
+}
+
+/** NestoApp#290: los resueltos se ocultan por defecto, como en Nesto. */
+export function sinResueltos(envios: EnvioDevuelto[] | null | undefined, verResueltos: boolean): EnvioDevuelto[] {
+  return (envios || []).filter(e => verResueltos || !estaResuelto(e));
 }
 
 /** «Devuelto» o «Con incidencia». */

@@ -55,6 +55,13 @@
         <ion-label>Subgrupo ({{producto.Grupo}})</ion-label>
         <p slot="end">{{producto.Subgrupo}}</p>
       </ion-item>
+      <!-- NestoApp#283 (NestoAPI#869): próxima entrada de compra en Algete; el texto viene redactado de la API -->
+      <ion-item *ngIf="proximaEntrada" class="proxima-entrada" globoAncla="producto.ProximaEntrada">
+        <ion-label class="ion-text-wrap">
+          <p>Próxima entrada</p>
+          {{ proximaEntrada }}
+        </ion-label>
+      </ion-item>
     </ion-list>
     <div *ngIf="producto">
       <ion-list *ngFor="let stock of producto.Stocks">

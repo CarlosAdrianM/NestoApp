@@ -23,6 +23,12 @@ export const MODOS_SERVICIO = {
    * desde el selector). Solo se enseña.
    */
   RETENIDO: 5,
+  /**
+   * NestoApp#287 / NestoAPI sugerencia 1340: «Junto con lo pendiente del cliente». Un «todo junto»
+   * (servirJunto = true) que además no sale hasta que pueda salir lo pendiente del mismo contacto.
+   * Solo se ofrece cuando la API lo trae en `Modos` (hay algo con lo que juntarse, o el pedido ya lo tiene).
+   */
+  JUNTO_CON_LO_PENDIENTE: 6,
 
   /**
    * Modo con el que nace un pedido si nadie dice otra cosa (Carlos, 16/09/26): «tras reponer
@@ -63,9 +69,20 @@ export const LISTA_MODOS_SERVICIO: ModoServicioItem[] = [
   }
 ];
 
-/** Los modos que se pueden ELEGIR (1..4). El 5 (retenido) no: lo ponen Retener/Liberar (#254). */
+/** Los modos de siempre (1..4), los únicos que valen como modo por defecto. El 5 (retenido) no: lo ponen
+ * Retener/Liberar (#254). El 6 se elige, pero solo cuando la API lo ofrece (ver esModoElegible). */
 export function esModoValido(modo: number): boolean {
   return modo >= MODOS_SERVICIO.TODO_JUNTO && modo <= MODOS_SERVICIO.AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ;
+}
+
+/** NestoApp#287: «Junto con lo pendiente del cliente» (modo 6). */
+export function esJuntoConLoPendiente(modo: number | null | undefined): boolean {
+  return modo === MODOS_SERVICIO.JUNTO_CON_LO_PENDIENTE;
+}
+
+/** Los que se pueden mandar desde el selector: 1..4 y el 6 (misma regla que `EsElegible` de la API). */
+export function esModoElegible(modo: number): boolean {
+  return esModoValido(modo) || esJuntoConLoPendiente(modo);
 }
 
 /** NestoApp#254: el pedido está retenido hasta nuevo aviso (modo 5). */
@@ -76,13 +93,14 @@ export function esRetenido(modo: number | null | undefined): boolean {
 /** Solo el modo 1 es «servir junto» en el sentido de la columna y de las validaciones
  * (NestoAPI#220/#470): cualquier otro puede servir parcialmente en la primera pasada. */
 export function esTodoJunto(modo: number): boolean {
-  return modo === MODOS_SERVICIO.TODO_JUNTO;
+  // NestoApp#287: el 6 también es «todo junto» (ServirJunto = 1), como en la API.
+  return modo === MODOS_SERVICIO.TODO_JUNTO || esJuntoConLoPendiente(modo);
 }
 
 /** A efectos de portes y de muestras/regalos («1 entrega → todo cuenta», NestoAPI#211):
  * 1 y 4 acaban en una entrega única del resto; 2 y 3 son por entrega. */
 export function esEntregaUnica(modo: number): boolean {
-  return modo === MODOS_SERVICIO.TODO_JUNTO || modo === MODOS_SERVICIO.AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ;
+  return esTodoJunto(modo) || modo === MODOS_SERVICIO.AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ;
 }
 
 /**
@@ -97,7 +115,8 @@ export function modoEfectivo(modoServicio: number | null | undefined, servirJunt
     return MODOS_SERVICIO.RETENIDO;
   }
   if (servirJunto) {
-    return MODOS_SERVICIO.TODO_JUNTO;
+    // NestoApp#287: con servirJunto marcado, el 6 guardado se conserva (misma regla que la API).
+    return esJuntoConLoPendiente(modoServicio) ? MODOS_SERVICIO.JUNTO_CON_LO_PENDIENTE : MODOS_SERVICIO.TODO_JUNTO;
   }
   if (modoServicio === MODOS_SERVICIO.TRAS_REPONER_DE_TIENDAS ||
       modoServicio === MODOS_SERVICIO.AHORA_LO_QUE_HAY_Y_EL_RESTO_DE_UNA_VEZ) {
@@ -109,9 +128,21 @@ export function modoEfectivo(modoServicio: number | null | undefined, servirJunt
 /** NestoApp#254: el nombre del 5, que no está en el selector (contrato con ModosServicio.Nombre de la API). */
 export const NOMBRE_MODO_RETENIDO = 'Retenido';
 
+/** NestoApp#287: el nombre del 6 (contrato con ModosServicio.Nombre de la API). */
+export const NOMBRE_MODO_JUNTO_CON_LO_PENDIENTE = 'Junto con lo pendiente del cliente';
+
+export const ITEM_MODO_JUNTO_CON_LO_PENDIENTE: ModoServicioItem = {
+  codigo: MODOS_SERVICIO.JUNTO_CON_LO_PENDIENTE,
+  nombre: NOMBRE_MODO_JUNTO_CON_LO_PENDIENTE,
+  descripcion: 'No sale hasta que pueda salir junto con lo que el cliente ya tiene pendiente de servir.'
+};
+
 export function nombreModo(modo: number): string {
   if (esRetenido(modo)) {
     return NOMBRE_MODO_RETENIDO;
+  }
+  if (esJuntoConLoPendiente(modo)) {
+    return NOMBRE_MODO_JUNTO_CON_LO_PENDIENTE;
   }
   const item = LISTA_MODOS_SERVICIO.find(m => m.codigo === modo);
   return item ? item.nombre : `Modo ${modo}`;
@@ -191,6 +222,37 @@ export interface ModoServicioPermitido {
   Nombre: string;
   Permitido: boolean;
   Motivo: string | null;
+  /** NestoApp#287: solo en el modo 6, con qué se va a juntar («Saldrá junto con la nota de entrega 929701.»). */
+  Explicacion?: string | null;
+  /** NestoApp#287: solo en el modo 6, los pedidos y notas con los que se junta. */
+  PedidosConLosQueSeJunta?: number[] | null;
+}
+
+/**
+ * NestoApp#287: el modo 6 tal como lo trae la API, o null si no lo ofrece. Solo viene (y permitido) cuando
+ * ese contacto tiene algo pendiente con lo que juntarse o el pedido ya está en 6.
+ */
+export function modoJuntoConLoPendienteOfrecido(modos: ModoServicioPermitido[] | null | undefined): ModoServicioPermitido | null {
+  const modo = (modos || []).find(m => esJuntoConLoPendiente(m.Modo));
+  return modo && modo.Permitido ? modo : null;
+}
+
+/**
+ * NestoApp#287: los modos que enseña el selector. Los cuatro de siempre y, detrás, el 6 solo si la API lo
+ * ofrece o si es el que ya tiene el pedido (para que el selector enseñe su nombre).
+ */
+export function listaModosServicioOfrecidos(modos: ModoServicioPermitido[] | null | undefined, modoActual?: number | null): ModoServicioItem[] {
+  return modoJuntoConLoPendienteOfrecido(modos) || esJuntoConLoPendiente(modoActual)
+    ? [...LISTA_MODOS_SERVICIO, ITEM_MODO_JUNTO_CON_LO_PENDIENTE]
+    : LISTA_MODOS_SERVICIO;
+}
+
+/** NestoApp#287: la frase que va debajo del selector cuando lo elegido es el 6. '' si no hay. */
+export function explicacionJuntoConLoPendiente(modos: ModoServicioPermitido[] | null | undefined, modoActual: number | null | undefined): string {
+  if (!esJuntoConLoPendiente(modoActual)) {
+    return '';
+  }
+  return ((modos || []).find(m => esJuntoConLoPendiente(m.Modo))?.Explicacion || '').trim();
 }
 
 /**

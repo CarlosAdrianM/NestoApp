@@ -1,0 +1,10 @@
+/* NestoApp#280 */
+.pista { font-size: 0.85em; color: var(--ion-color-medium); margin: 8px 0; }
+.motivos { white-space: pre-line; color: var(--ion-text-color); }
+.resolucion { font-weight: 600; }
+.comentario { font-style: italic; }
+ion-badge { margin-right: 6px; vertical-align: middle; }
+.linea { padding: 6px 0; border-top: 1px solid var(--ion-color-step-150, #d9d9d9); }
+.linea.con-error { border-left: 4px solid var(--ion-color-danger); padding-left: 8px; }
+.linea .motivo-error { color: var(--ion-color-danger); font-size: 0.9em; }
+.botones { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }

@@ -1,0 +1,7 @@
+<!-- NestoApp#291 (NestoAPI#885): adelantar por excepción un cupón de evento que todavía no vale -->
+<ion-button *ngIf="sePuedeAdelantar" size="small" fill="outline" [disabled]="enviando" (click)="pedirMotivo(); $event.stopPropagation()"
+  [globoAncla]="ancla">
+  <ion-icon slot="start" name="flash-outline"></ion-icon>
+  Usar ya (excepción)
+</ion-button>
+<p *ngIf="textoAdelantado" class="cupon-adelantado" style="font-size: 0.85em; margin: 2px 0;">{{ textoAdelantado }}</p>

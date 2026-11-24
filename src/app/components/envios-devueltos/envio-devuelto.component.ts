@@ -28,6 +28,8 @@ export class EnvioDevueltoComponent {
   public readonly textoEstado = textoEstadoEnvioDevuelto;
   private empresa = '1';
   private numero = 0;
+  /** NestoApp#290: si se sabe el pedido, solo se piden los devueltos de ese pedido. */
+  private pedido = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -44,6 +46,7 @@ export class EnvioDevueltoComponent {
       if (numero) {
         this.empresa = (params?.empresa || '1').toString().trim() || '1';
         this.numero = numero;
+        this.pedido = Number(params?.pedido) || 0;
         this.cargar();
       }
     });
@@ -61,10 +64,16 @@ export class EnvioDevueltoComponent {
     this.cargando = true;
     this.mensaje = '';
     this.envio = null;
-    this.servicio.leerDevueltos(this.empresa).subscribe({
+    this.servicio.leerDevueltos(this.empresa, this.pedido || null).subscribe({
       next: envios => {
-        this.cargando = false;
         const envio = (envios || []).find(e => +e.Numero === +this.numero) || null;
+        if (!envio && this.pedido) {
+          // Por si el pedido del enlace no casa con el del envío: se busca entre todos.
+          this.pedido = 0;
+          this.cargar();
+          return;
+        }
+        this.cargando = false;
         this.aplicarEnvio(envio);
         if (!envio) {
           this.mensaje = `No se ha encontrado el envío ${this.numero} entre los devueltos de los últimos 60 días.`;
@@ -154,8 +163,10 @@ export class EnvioDevueltoComponent {
     } catch (error) {
       await loading.dismiss();
       const conflicto = error?.status === 409 || error?.statusCode === 409;
+      // NestoApp#290: solo deciden quien hizo el pedido, su vendedor, Almacén, Dirección e Informática; el 403 trae el porqué.
+      const sinPermiso = error?.status === 403 || error?.statusCode === 403;
       const alerta = await this.alertCtrl.create({
-        header: conflicto ? 'Este envío ya está decidido' : 'No se ha podido anotar la decisión',
+        header: conflicto ? 'Este envío ya está decidido' : sinPermiso ? 'No le corresponde decidir este envío' : 'No se ha podido anotar la decisión',
         message: this.errorHandler.extractErrorMessage(error),
         buttons: ['Ok']
       });

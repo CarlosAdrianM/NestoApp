@@ -13,12 +13,16 @@ export class EnviosAgenciasService {
   constructor(private http: HttpClient) { }
 
   /** Los devueltos e incidentados de la empresa (últimos 60 días). Una API anterior da 404 y el llamante lo dice. */
-  public leerDevueltos(empresa: string = Configuracion.EMPRESA_POR_DEFECTO): Observable<EnvioDevuelto[]> {
-    const params = new HttpParams().set('empresa', (empresa || Configuracion.EMPRESA_POR_DEFECTO).toString().trim());
+  public leerDevueltos(empresa: string = Configuracion.EMPRESA_POR_DEFECTO, pedido?: number | null): Observable<EnvioDevuelto[]> {
+    let params = new HttpParams().set('empresa', (empresa || Configuracion.EMPRESA_POR_DEFECTO).toString().trim());
+    // NestoApp#290 (sugerencia 1356): con pedido, solo los de ese pedido.
+    if (Number(pedido) > 0) {
+      params = params.set('pedido', String(Number(pedido)));
+    }
     return this.http.get<EnvioDevuelto[]>(`${Configuracion.API_URL}/EnviosAgencias/Devueltos`, { params }).pipe(map(e => e || []));
   }
 
-  /** El cliente lo sigue queriendo: envío nuevo del mismo pedido. 409 si ya está decidido. */
+  /** El cliente lo sigue queriendo: envío nuevo del mismo pedido. 409 si ya está decidido; 403 si no le toca decidirlo (NestoApp#290). */
   public reenviar(envio: number, datos: ReenviarEnvio): Observable<DecisionReenvio> {
     return this.http.post<DecisionReenvio>(`${Configuracion.API_URL}/EnviosAgencias/${envio}/Reenviar`, datos);
   }

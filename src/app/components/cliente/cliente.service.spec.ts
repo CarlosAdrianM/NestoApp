@@ -121,4 +121,35 @@ describe('ClienteService', () => {
       expect(resultado.contactosActualizados).toBe(2);
     });
   });
+
+  // NestoApp#286 / NestoAPI#874: el número que Google no dio viaja aparte para que la API lo compruebe.
+  describe('validarDatosGenerales con número propio (#286)', () => {
+    const url = Configuracion.API_URL + '/Clientes/ComprobarDatosGenerales';
+
+    it('manda «numero» cuando Google dio la calle sin él', () => {
+      service.validarDatosGenerales({ direccionCalleNumero: 'Calle Sor Livia Alcorta', codigoPostal: '28100', telefono: '', direccionVerificada: true, numeroSinDarPorGoogle: true, numero: ' 13 ' }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === url);
+      expect(req.request.params.get('numero')).toBe('13');
+      req.flush({ DireccionFormateada: 'C/ SOR LIVIA ALCORTA, 13', NumeroSinConfirmarPorGoogle: true, AvisoNumero: '¿Quiere guardarlo igualmente?' });
+    });
+
+    it('la respuesta llega en camelCase con el aviso del número', () => {
+      let respuesta: any;
+      service.validarDatosGenerales({ direccionCalleNumero: 'X', codigoPostal: '28100', telefono: '', direccionVerificada: true, numeroSinDarPorGoogle: true, numero: '13' }).subscribe(r => respuesta = r);
+
+      httpMock.expectOne(r => r.url === url).flush({ DireccionFormateada: 'C/ X, 13', NumeroSinConfirmarPorGoogle: true, AvisoNumero: '¿Quiere guardarlo igualmente?' });
+
+      expect(respuesta.numeroSinConfirmarPorGoogle).toBeTrue();
+      expect(respuesta.avisoNumero).toBe('¿Quiere guardarlo igualmente?');
+    });
+
+    it('no lo manda si Google ya dio el número', () => {
+      service.validarDatosGenerales({ direccionCalleNumero: 'Calle Mayor, 5', codigoPostal: '28013', telefono: '', direccionVerificada: true, numero: '5' }).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === url);
+      expect(req.request.params.has('numero')).toBeFalse();
+      req.flush({});
+    });
+  });
 });

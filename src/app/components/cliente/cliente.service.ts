@@ -50,6 +50,11 @@ export class ClienteService {
     if (cliente.pais) { params = params.append('pais', cliente.pais); }
     if (cliente.poblacion) { params = params.append('poblacion', cliente.poblacion); }
     if (cliente.provincia) { params = params.append('provincia', cliente.provincia); }
+    // NestoApp#286 / NestoAPI#874: el número que se teclea cuando Google dio la calle sin él (cifras o «S/N»);
+    // la API lo comprueba con Google y lo devuelve dentro de DireccionFormateada.
+    if (cliente.numeroSinDarPorGoogle && cliente.numero && cliente.numero.toString().trim()) {
+      params = params.append('numero', cliente.numero.toString().trim());
+    }
 
     return this.http.get(urlLlamada, { params: params })
       .pipe(

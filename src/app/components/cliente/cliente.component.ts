@@ -11,9 +11,15 @@ import { Geolocation } from '../../services/geolocation.service';
 import { ActivatedRoute } from '@angular/router';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
-import { Subject, of } from 'rxjs';
+import { Subject, firstValueFrom, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { ApiErrorCode } from 'src/app/models/api-error.model';
+import {
+  BloqueDireccion, PREFIJO_ENTREGA, RevisionDireccion2, TEXTO_ENTREGA_EN_OTRA_DIRECCION, TITULO_NUMERO_SIN_GOOGLE,
+  TITULO_REVISAR_DIRECCION2, aplicarDetalleGoogle, ayudaCodigoPostal, clienteParaCrear, clienteParaModificar,
+  codigoPostalEditable, componerDireccion2, hayQueRevisarDireccion2, mensajeClienteCreado, motivoNoSePuedeModificar, motivoNoSePuedeSeguir,
+  nuevaRevisionDireccion2, olvidarGoogle, puedeQuitarDireccion2, queEsTocado, quitarDireccion2, textoRevisarDireccion2
+} from 'src/app/models/direccion-alta.model';
 
 @Component({
     selector: 'app-cliente',
@@ -229,6 +235,8 @@ export class ClienteComponent implements AfterViewInit {
               this.cliente.esUnaModificacion = true;
               this.plazosPagoActuales = this.cliente.plazosPago;
               this.diasEnServirGuardados = this.cliente.diasEnServir;
+              // NestoApp#290 / NestoAPI#874 corte 2: la Dirección 2 con la que se abre la ficha
+              this.revision = nuevaRevisionDireccion2(this.cliente);
               this.goToDatosGenerales();
           },
           async error => {
@@ -269,7 +277,12 @@ export class ClienteComponent implements AfterViewInit {
       }, 500);
   }
 
-  goToDatosComisiones() {
+  /**
+   * De «Datos generales» a «Comisiones». NestoApp#286 / #288 / #290: antes de seguir se comprueba lo que falta de la
+   * dirección (número que Google no dio, código postal, «¿Qué es?»), se valida con la API la fiscal y, si se ha
+   * marcado «La entrega es en otra dirección», también la de entrega, por el mismo camino.
+   */
+  async goToDatosComisiones(): Promise<void> {
       if (this.cliente.telefono == 'undefined') {
           this.cliente.telefono = '';
       }
@@ -279,55 +292,206 @@ export class ClienteComponent implements AfterViewInit {
           this.avisarDireccionSinVerificar();
           return;
       }
-      /*
-      if (this.cliente.direccionValidada) {
-          this.slideActual = this.DATOS_COMISIONES;
-          return;
-      }
-      */
-      if (this.cliente.direccion && !this.cliente.direccionCalleNumero) {
-        this.slideActual = this.DATOS_COMISIONES;
-        return;
-    }
-      this.servicio.validarDatosGenerales(this.cliente).subscribe(
-          async data => {
-              this.cliente.direccion = data.direccionFormateada;
-              if (this.cliente.direccionAdicional) {
-                  this.cliente.direccion += ", " + this.cliente.direccionAdicional.toUpperCase();
-              }
-              this.cliente.direccion = this.cliente.direccion.substr(0, 50);
-              // NestoApp#270: con un CP nuevo la API devuelve lo que se le mandó (o null si no
-              // se le mandó nada): no se pisan los valores de Google con un null.
-              this.cliente.poblacion = data.poblacion ?? this.cliente.poblacion;
-              this.cliente.provincia = data.provincia ?? this.cliente.provincia;
-              this.cliente.ruta = data.ruta;
-              this.cliente.telefono = data.telefonoFormateado;
-              this.cliente.vendedorEstetica = data.vendedorEstetica;
-              this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
-              if (!data.hayErrores) {
-                  this.cliente.direccionValidada = true;
-                  this.slideActual = this.DATOS_COMISIONES;
-              }
-              if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
-                  data.clientesMismoTelefono = data.clientesMismoTelefono.filter(c => c.cliente != this.cliente.cliente);
-              }
-              if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
-                  const clientesModal = await this.modalCtrl.create({
-                    component: ClientesMismoTelefonoComponent, 
-                    componentProps: { listaClientes: data.clientesMismoTelefono }
-                  });
-                  await clientesModal.present();
-              }
-          },
-          async error => {
-              const alert = await this.alertCtrl.create({
-                  header: 'Error',
-                  message: 'No se ha podido validar la dirección:\n' + this.motivoDelError(error),
-                  buttons: ['Ok'],
-              });
-              await alert.present();
+      if (this.esAlta) {
+          const motivo = motivoNoSePuedeSeguir(this.cliente) ??
+              (this.hayDireccionEntrega ? motivoNoSePuedeSeguir(this.direccionEntrega, true, PREFIJO_ENTREGA) : null);
+          if (motivo) {
+              await this.avisar('Faltan datos de la dirección', motivo);
+              return;
           }
-      )
+      }
+      const direccionYaPuesta = this.cliente.direccion && !this.cliente.direccionCalleNumero;
+      if (!direccionYaPuesta) {
+          const data = await this.validarDireccion(this.cliente, '', true);
+          if (!data) {
+              return;
+          }
+          this.cliente.vendedorEstetica = data.vendedorEstetica;
+          this.cliente.vendedorPeluqueria = data.vendedorPeluqueria;
+          if (data.hayErrores) {
+              return;
+          }
+          this.cliente.direccionValidada = true;
+      }
+      if (this.hayDireccionEntrega && !(this.direccionEntrega.direccion && this.direccionEntrega.direccionValidada)) {
+          const mismoTelefono = (this.direccionEntrega.telefono || '').trim() === (this.cliente.telefono || '').trim();
+          const data = await this.validarDireccion(this.direccionEntrega, PREFIJO_ENTREGA, !mismoTelefono);
+          if (!data || data.hayErrores) {
+              return;
+          }
+          this.direccionEntrega.direccionValidada = true;
+      }
+      if (!this.esAlta) {
+          // NestoApp#290: si ha cambiado la calle y tenía «¿Qué es?», no se sigue sin revisarlo.
+          if (hayQueRevisarDireccion2(this.cliente, this.revision)) {
+              await this.preguntarRevisarDireccion2();
+              if (hayQueRevisarDireccion2(this.cliente, this.revision)) {
+                  return;
+              }
+          }
+          const motivo = motivoNoSePuedeModificar(this.cliente, this.revision);
+          if (motivo) {
+              await this.avisar('Faltan datos de la dirección', motivo);
+              return;
+          }
+      }
+      this.slideActual = this.DATOS_COMISIONES;
+  }
+
+  /**
+   * Valida una dirección con la API (la fiscal o la de entrega: el mismo camino) y deja en el bloque la dirección
+   * formateada, la población, la provincia, la ruta y el teléfono. Devuelve la respuesta, o null si no se sigue.
+   * NestoAPI#874: si Google no encuentra el número que se ha tecleado, no bloquea: se pregunta.
+   */
+  private async validarDireccion(bloque: BloqueDireccion, prefijo: string, avisarMismoTelefono: boolean): Promise<any> {
+      let data: any;
+      try {
+          data = await firstValueFrom(this.servicio.validarDatosGenerales(bloque));
+      } catch (error) {
+          await this.avisar('Error', prefijo + 'No se ha podido validar la dirección:\n' + this.motivoDelError(error));
+          return null;
+      }
+      data = data || {};
+      if (bloque.numeroSinDarPorGoogle && data.numeroSinConfirmarPorGoogle && !bloque.numeroConfirmadoSinGoogle) {
+          if (!(await this.preguntar(TITULO_NUMERO_SIN_GOOGLE, prefijo + (data.avisoNumero || '')))) {
+              return null; // se queda en «Datos generales» para corregir el número
+          }
+          bloque.numeroConfirmadoSinGoogle = true;
+      }
+      // NestoApp#286: solo calle y número (lo demás va en «¿Qué es?», que es la Dirección 2).
+      bloque.direccion = (data.direccionFormateada || '').substr(0, 50);
+      // NestoApp#270: con un CP nuevo la API devuelve lo que se le mandó (o null si no
+      // se le mandó nada): no se pisan los valores de Google con un null.
+      bloque.poblacion = data.poblacion ?? bloque.poblacion;
+      bloque.provincia = data.provincia ?? bloque.provincia;
+      bloque.ruta = data.ruta;
+      bloque.telefono = data.telefonoFormateado;
+      if (data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
+          data.clientesMismoTelefono = data.clientesMismoTelefono.filter(c => c.cliente != this.cliente.cliente);
+      }
+      if (avisarMismoTelefono && data.clientesMismoTelefono && data.clientesMismoTelefono.length > 0) {
+          const clientesModal = await this.modalCtrl.create({
+            component: ClientesMismoTelefonoComponent,
+            componentProps: { listaClientes: data.clientesMismoTelefono }
+          });
+          await clientesModal.present();
+      }
+      return data;
+  }
+
+  private async avisar(titulo: string, mensaje: string): Promise<void> {
+      const alert = await this.alertCtrl.create({ header: titulo, message: mensaje, buttons: ['Ok'] });
+      await alert.present();
+  }
+
+  /** Pregunta de Sí/No; true solo si contesta «Sí». */
+  private async preguntar(titulo: string, mensaje: string): Promise<boolean> {
+      const alert = await this.alertCtrl.create({
+          header: titulo,
+          message: mensaje,
+          backdropDismiss: false,
+          buttons: [{ text: 'No', role: 'cancel' }, { text: 'Sí', role: 'si' }]
+      });
+      await alert.present();
+      const resultado = await alert.onDidDismiss();
+      return resultado?.role === 'si';
+  }
+
+  // ------------------------------------------------------------------ NestoApp#286 / #288 / #290: «¿Qué es?» y entrega
+
+  /** Se está creando (un cliente nuevo o un contacto), no modificando una ficha. */
+  get esAlta(): boolean {
+      return !this.cliente?.esUnaModificacion;
+  }
+
+  /** NestoApp#288: al crear, el código postal no se teclea salvo que Google no lo dé. */
+  get codigoPostalEditable(): boolean { return codigoPostalEditable(this.cliente, this.esAlta); }
+  get ayudaCodigoPostal(): string { return ayudaCodigoPostal(this.cliente, this.esAlta); }
+
+  /** Para el resumen de «compruebe los datos»: cómo quedará la Dirección 2 (la nueva o, sin tocar, la guardada). */
+  get direccion2Resumen(): string {
+      if (this.revision?.quitar) {
+          return '';
+      }
+      return componerDireccion2(this.cliente).direccion2 || (this.esAlta ? '' : this.revision?.direccion2Guardada || '');
+  }
+
+  get direccion2EntregaResumen(): string {
+      return componerDireccion2(this.direccionEntrega).direccion2 || '';
+  }
+
+  /** Otro número: hay que volver a preguntar a Google. */
+  public numeroCambiado(): void {
+      this.cliente.numeroConfirmadoSinGoogle = false;
+  }
+
+  /** NestoApp#288 / NestoAPI#879: «La entrega es en otra dirección» (solo al crear un cliente nuevo, no un contacto). */
+  public readonly textoEntregaEnOtraDireccion = TEXTO_ENTREGA_EN_OTRA_DIRECCION;
+  public entregaEnOtraDireccion: boolean = false;
+  public direccionEntrega: BloqueDireccion = {};
+
+  get puedeIndicarEntregaEnOtraDireccion(): boolean {
+      return this.esAlta && !this.cliente?.esContacto;
+  }
+
+  get hayDireccionEntrega(): boolean {
+      return this.entregaEnOtraDireccion && this.puedeIndicarEntregaEnOtraDireccion;
+  }
+
+  public cambiarEntregaEnOtraDireccion(valor: boolean): void {
+      this.entregaEnOtraDireccion = !!valor;
+      if (valor && !(this.direccionEntrega.telefono || '').trim() && this.cliente.telefono && this.cliente.telefono !== 'undefined') {
+          this.direccionEntrega.telefono = this.cliente.telefono; // se propone el de la fiscal; se puede cambiar
+      }
+  }
+
+  /** NestoApp#290 / NestoAPI#874 corte 2: la revisión de «¿Qué es?» al modificar (null en un alta). */
+  private revision: RevisionDireccion2 | null = null;
+
+  get avisoRevisarDireccion2(): string | null {
+      return hayQueRevisarDireccion2(this.cliente, this.revision) ? textoRevisarDireccion2(this.revision.direccion2Guardada) : null;
+  }
+
+  get puedeQuitarDireccion2(): boolean {
+      return !this.esAlta && puedeQuitarDireccion2(this.cliente, this.revision);
+  }
+
+  get seQuitaraDireccion2(): boolean {
+      return !!this.revision?.quitar;
+  }
+
+  /** El vendedor ha cambiado «¿Qué es?» (al modificar cuenta como revisado). */
+  public queEsCambiado(): void {
+      queEsTocado(this.cliente, this.revision);
+  }
+
+  /** «Sigue siendo así»: lo que pone en «¿Qué es?» también vale para la dirección nueva. */
+  public confirmarDireccion2(): void {
+      if (this.revision) {
+          this.revision.revisada = true;
+      }
+  }
+
+  /** «Quitar»: el cliente se queda sin «¿Qué es?» (se borra al guardar). */
+  public quitarDireccion2(): void {
+      if (this.revision) {
+          quitarDireccion2(this.cliente, this.revision);
+      }
+  }
+
+  private async preguntarRevisarDireccion2(): Promise<void> {
+      const alert = await this.alertCtrl.create({
+          header: TITULO_REVISAR_DIRECCION2,
+          message: textoRevisarDireccion2(this.revision.direccion2Guardada),
+          backdropDismiss: false,
+          buttons: [
+              { text: 'Cambiarlo', role: 'cancel' },
+              { text: 'Quitar', handler: () => this.quitarDireccion2() },
+              { text: 'Sigue siendo así', handler: () => this.confirmarDireccion2() }
+          ]
+      });
+      await alert.present();
+      await alert.onDidDismiss();
   }
 
   goToDatosPago() {
@@ -377,6 +541,15 @@ export class ClienteComponent implements AfterViewInit {
           this.avisarDireccionSinVerificar();
           return;
       }
+      // NestoApp#286 / #290: backstop de «¿Qué es?», el número y la dirección de entrega.
+      const motivo = this.esAlta
+          ? motivoNoSePuedeSeguir(this.cliente) ??
+              (this.hayDireccionEntrega ? motivoNoSePuedeSeguir(this.direccionEntrega, true, PREFIJO_ENTREGA) : null)
+          : motivoNoSePuedeModificar(this.cliente, this.revision);
+      if (motivo) {
+          this.avisar('Faltan datos de la dirección', motivo);
+          return;
+      }
       if (this.cliente.formaPago == "EFC") {
           this.cliente.iban = "";
       }
@@ -394,13 +567,14 @@ export class ClienteComponent implements AfterViewInit {
       // Issue #168: si lo que se está creando es un contacto de un cliente que ya existe,
       // al terminar se ofrece copiarle las personas de contacto y los CCC del principal.
       const esContactoNuevo: boolean = !!this.cliente.esContacto && !this.cliente.esUnaModificacion;
-      this.servicio.crearCliente(this.cliente).subscribe(
+      // NestoApp#286 / #288: «¿Qué es?», el número propio y, si se ha marcado, la dirección de entrega.
+      const alta = clienteParaCrear(this.cliente, this.hayDireccionEntrega ? this.direccionEntrega : null);
+      this.servicio.crearCliente(alta).subscribe(
           async data => {
               this.firebaseAnalytics.logEvent("crear_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto, "screen_name": "Cliente"});
               const alert = await this.alertCtrl.create({
                   message: 'Cliente',
-                  subHeader: 'Se ha creado correctamente el cliente: ' 
-                  + data.Nº_Cliente + '/'+data.Contacto,
+                  subHeader: mensajeClienteCreado(data),
                   buttons: ['Ok'],
               });
               await alert.present();
@@ -415,6 +589,8 @@ export class ClienteComponent implements AfterViewInit {
                   iban: "",
                   usuario: Configuracion.NOMBRE_DOMINIO + '\\' + this.usuario.nombre,
               };
+              this.entregaEnOtraDireccion = false;
+              this.direccionEntrega = {};
               this.mensajeDatosFiscales = "";
               this.slideActual = this.DATOS_FISCALES;
               
@@ -487,9 +663,11 @@ export class ClienteComponent implements AfterViewInit {
    * en ella y no pierde lo que ha cambiado.
    */
   modificarCliente(confirmarDiasConPicking: boolean = false) {
+      // NestoApp#290: «¿Qué es?» solo viaja si se ha tocado (o «Quitar»); si no, la API conserva lo guardado.
+      const ficha = clienteParaModificar(this.cliente, this.revision);
       const cliente = confirmarDiasConPicking
-          ? { ...this.cliente, confirmarDiasEnServirConPicking: true }
-          : this.cliente;
+          ? { ...ficha, confirmarDiasEnServirConPicking: true }
+          : ficha;
       this.servicio.modificarCliente(cliente).subscribe(
           async data => {
             this.firebaseAnalytics.logEvent("modificar_cliente", {cliente: data.Nº_Cliente, contacto: data.Contacto});
@@ -607,8 +785,8 @@ export class ClienteComponent implements AfterViewInit {
   private async avisarDireccionSinVerificar(): Promise<void> {
       const alert = await this.alertCtrl.create({
           header: 'Falta la dirección',
-          message: 'Elige la dirección de la lista que ofrece Google. Lo que quieras añadir ' +
-              '(portal, local, referencias) va en «Dirección (resto de información)».',
+          message: 'Elija la dirección de la lista que ofrece Google. Lo demás ' +
+              '(piso, local, rótulo, referencias) va en «¿Qué es?».',
           buttons: ['Ok'],
       });
       await alert.present();
@@ -619,8 +797,7 @@ export class ClienteComponent implements AfterViewInit {
    * está junto al campo cuando la dirección ya viene elegida de Google.
    */
   public limpiarDireccion(): void {
-      this.cliente.direccionCalleNumero = "";
-      this.cliente.direccionVerificada = false;
+      olvidarGoogle(this.cliente); // NestoApp#286: también el número y el CP que Google no dio
       this.sugerenciasDireccion = [];
       this.sessionTokenDireccion = null;
       setTimeout(() => {
@@ -643,6 +820,8 @@ export class ClienteComponent implements AfterViewInit {
   public buscarDireccion(evento: any): void {
       const texto = evento?.detail?.value ?? '';
       this.cliente.direccionVerificada = false;
+      this.cliente.codigoPostalSinDarPorGoogle = false;
+      this.cliente.numeroSinDarPorGoogle = false;
       this.terminoBusquedaDireccion$.next(texto);
   }
 
@@ -668,16 +847,9 @@ export class ClienteComponent implements AfterViewInit {
   public seleccionarSugerenciaDireccion(sugerencia: any): void {
       this.servicio.leerDetalleDireccion(sugerencia.placeId, this.sessionTokenDireccion).subscribe(
           (detalle: any) => {
-              // NestoApp#271 / NestoAPI#826: la API ya compone calle y número en el formato del país
-              // («12 Rue de la Paix», «Calle Mayor, 12»); el join solo queda de respaldo para una API vieja.
-              this.cliente.direccionCalleNumero = detalle.direccionCalleNumero?.trim() ||
-                  [detalle.calle, detalle.numero].filter(Boolean).join(', ').trim();
-              this.cliente.codigoPostal = detalle.codigoPostal;
-              if (detalle.paisIso) { this.cliente.pais = detalle.paisIso.toUpperCase(); }
-              // Población/provincia de Google, normalizadas a MAYÚSCULAS (cubre CPs con varias poblaciones).
-              if (detalle.poblacion) { this.cliente.poblacion = detalle.poblacion.toUpperCase(); }
-              if (detalle.provincia) { this.cliente.provincia = detalle.provincia.toUpperCase(); }
-              this.cliente.direccionVerificada = true;
+              // NestoApp#271 / NestoAPI#826: la API ya compone calle y número en el formato del país.
+              // NestoApp#286 / #288: sin código postal se teclea; sin número, se pide aparte (direccion-alta.model).
+              aplicarDetalleGoogle(this.cliente, detalle);
               this.sugerenciasDireccion = [];
               // La sesión de Places termina con el Detalle: la próxima búsqueda abre una nueva.
               this.sessionTokenDireccion = null;

@@ -13,7 +13,25 @@ import { PlantillaVentaService } from '../plantilla-venta/plantilla-venta.servic
 import { ParametrosIva } from 'src/app/models/parametros-iva.model';
 import { ErrorHandlerService } from 'src/app/services/error-handler.service';
 import { ApiErrorCode, ProcessedApiError } from 'src/app/models/api-error.model';
-import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo, esRetenido, NOMBRE_MODO_RETENIDO, ModoServicioItem, ORIGEN_MODO_SERVICIO } from 'src/app/models/modos-servicio.model';
+import { LISTA_MODOS_SERVICIO, MODOS_SERVICIO, esTodoJunto, modoEfectivo, leerModoServicioNoPermitido, leerModoConPicking, nombreModo, esRetenido, NOMBRE_MODO_RETENIDO, ModoServicioItem, ORIGEN_MODO_SERVICIO, listaModosServicioOfrecidos, explicacionJuntoConLoPendiente } from 'src/app/models/modos-servicio.model';
+import {
+    EleccionCampanaSoloEnStock, TITULO_CAMPANA_SOLO_EN_STOCK, cambioQueImportaAlStockDeCampana, hayQuePreguntarCampanaSoloEnStock,
+    mensajesCampanaSoloEnStock, textoPreguntaCampanaSoloEnStock
+} from 'src/app/models/campana-solo-en-stock.model';
+import { CampanaSoloEnStockService } from 'src/app/services/campana-solo-en-stock.service';
+import {
+    AMPLIACION_PEDIDO_NUEVO, AMPLIACION_PEDIR_ALMACEN, OpcionAmpliacionEnPreparacion, PedidoEnPreparacion, TEXTO_AMPLIACION_PEDIDO_NUEVO,
+    TEXTO_AMPLIACION_PEDIR_ALMACEN, TITULO_PEDIDO_EN_PREPARACION, leerPedidoCambiado, leerPedidoEnPreparacion,
+    mensajesAmpliacionEnPreparacion, pedidoNuevoDeLaAmpliacion, usuarioQueCambioElPedido
+} from 'src/app/models/guardado-pedido.model';
+import {
+    ConflictoPedido, TEXTO_CONFIRMAR_RECARGAR_SIN_CAMBIOS, TEXTO_NO_SE_HA_RECARGADO, TEXTO_PUEDE_RECARGAR_CONSERVANDO,
+    TEXTO_RECARGADO_CON_CAMBIOS, TEXTO_RECARGADO_SIN_CAMBIOS, TEXTO_RECARGAR_CONSERVANDO, TEXTO_RECARGAR_SIN_CAMBIOS, TEXTO_SIN_FOTO,
+    TITULO_CONFLICTO, TITULO_PEDIDO_MODIFICADO, TITULO_RECARGAR_PEDIDO, TITULO_RECARGAR_SIN_CAMBIOS, fotoDelPedido,
+    fusionarCambiosPedido, resolverConflicto
+} from 'src/app/models/fusion-cambios-pedido.model';
+import { DondeEstaLoQueFalta, ERROR_DONDE_ESTA_LO_QUE_FALTA, frasesDondeEstaLoQueFalta } from 'src/app/models/donde-esta-lo-que-falta.model';
+import { DondeEstaLoQueFaltaService } from 'src/app/services/donde-esta-lo-que-falta.service';
 import { RetencionPedido, hastaFechaParaApi, textoRetencion } from 'src/app/models/retencion-pedido.model';
 import { DecisionRetencionPorFalta, RetencionPorFalta, retencionPendienteDelPedido, textoRetencionPorFalta } from 'src/app/models/retencion-por-falta.model';
 import { DisponibilidadPagoAPlazos, EstadoPagoAPlazos, puedeCancelarPagoAPlazos, textoEstadoPagoAPlazos, textoNoDisponible } from 'src/app/models/pago-a-plazos.model';
@@ -31,7 +49,7 @@ import {
 import { CambiarClientePedidoRespuesta, puedeCambiarClientePedido, mensajeCambiosCliente } from 'src/app/models/cambio-cliente-pedido.model';
 import { ModalElegirClienteComponent } from './modal-elegir-cliente.component';
 
-import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia, textoFechaPrometida } from 'src/app/models/fecha-entrega-agencia.model';
+import { FechaEntregaAgencia, detallePorLinea, textoFechaEntregaAgencia, textoFechaPrometida, textoJuntoConPendiente } from 'src/app/models/fecha-entrega-agencia.model';
 import { BultoPedido, enlacePublicoFotoBulto, textoBulto } from 'src/app/models/bultos-pedido.model';
 import { VisorImagenComponent } from '../visor-imagen/visor-imagen.component';
 import { esEnvioDevueltoOIncidentado } from 'src/app/models/envio-devuelto.model';
@@ -87,7 +105,9 @@ export class PedidoVentaComponent  {
     private actionSheetCtrl: ActionSheetController,
     private toastCtrl: ToastController,
       private envioWhatsApp: EnvioWhatsAppService,
-      private pagoAPlazosService: PagoAPlazosService) {
+      private pagoAPlazosService: PagoAPlazosService,
+      private campanaSoloEnStock: CampanaSoloEnStockService,
+      private dondeEstaService: DondeEstaLoQueFaltaService) {
       this.nav = nav;
       this.servicio = servicio;
       this.alertCtrl = alertCtrl;
@@ -101,6 +121,50 @@ export class PedidoVentaComponent  {
       });
   }
 
+  /**
+   * Pone en pantalla el pedido recién leído de la API. Con `conMisCambios` (NestoApp#285, «Recargar conservando mis cambios»),
+   * lo guardado es `data` y lo que se ve es ese mismo pedido con los cambios del vendedor encima, sin guardar.
+   */
+  private ponerPedido(data: any, empresa: string, numero: number, conMisCambios?: any): void {
+      this.pedido = data as PedidoVenta;
+      this.modoServicioGuardado = this.modoServicioPedido;
+      // NestoApp#197: lo que trae la API es lo guardado, no una elección del vendedor.
+      this.modoFacturacionTocado = false;
+      this.huellaFacturacion = '';
+      this.sugerenciaFacturacion = null;
+      this.opcionesModos = null; // NestoApp#242
+      this.servirPendienteTocado = false;
+      this.confirmarFechaLejana = false; // NestoApp#252
+      for (let i = 0; i < this.pedido.Lineas.length; i++) {
+          this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
+      }
+      this.iva = this.pedido.iva;
+      this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
+      this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
+      // Cargar no cambia las líneas: sin esto, al RECARGAR el setter ponía a todas las pendientes la fecha de la primera.
+      this._fechaEntrega = null;
+      if (this.pedido.Lineas && this.pedido.Lineas.length > 0) {
+          this.fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
+      }
+      this.huellaGuardada = this.huellaPedido(); // NestoApp#198
+      this.fotoLineas = this.pedido.Lineas.map(l => ({ id: l.id, tipoLinea: l.tipoLinea, Producto: l.Producto, Cantidad: l.Cantidad })); // NestoApp#293
+      this.olvidarEleccionesDelGuardado(); // NestoApp#293 / #287
+      this.cerrarDondeEstaLoQueFalta(); // NestoApp#289
+      this.fotoAlCargar = fotoDelPedido(this.pedido); // NestoApp#285
+      this.usuarioQueLoCambio = null;
+      if (conMisCambios) {
+          this.ponerMisCambiosEncima(conMisCambios);
+      }
+      // Cargar parámetros de IVA y asignarlos a las líneas
+      this.cargarParametrosIva();
+      this.cargarSeguimientos(empresa, numero);
+      this.cargarFechaEntregaAgencia(empresa, numero); // NestoApp#215
+      this.cargarBultos(empresa, numero); // NestoApp#223
+      this.cargarRetencionPorFalta(empresa, numero); // NestoApp#279
+      this.cargarPagoAPlazos(empresa, numero); // NestoApp#281
+      this.pedirModoFacturacionSugerido();
+  }
+
   public async cargarPedido(empresa: string, numero: number): Promise<void> {
       const loading: any = await this.loadingCtrl.create({
           message: 'Cargando Pedido...',
@@ -111,33 +175,7 @@ export class PedidoVentaComponent  {
       this.servicio.cargarPedido(empresa, numero).subscribe(
           data => {
               this.firebaseAnalytics.logEvent("cargar_pedido", {empresa: empresa, pedido: numero});
-              this.pedido = data as PedidoVenta;
-              this.modoServicioGuardado = this.modoServicioPedido;
-              // NestoApp#197: lo que trae la API es lo guardado, no una elección del vendedor.
-              this.modoFacturacionTocado = false;
-              this.huellaFacturacion = '';
-              this.sugerenciaFacturacion = null;
-              this.opcionesModos = null; // NestoApp#242
-              this.servirPendienteTocado = false;
-              this.confirmarFechaLejana = false; // NestoApp#252
-              for (let i = 0; i < this.pedido.Lineas.length; i++) {
-                  this.pedido.Lineas[i] = new LineaVenta(this.pedido.Lineas[i]);
-              }
-              this.iva = this.pedido.iva;
-              this.pedido.plazosPago = this.pedido.plazosPago.trim(); // Cambiar en la API
-              this.pedido.vendedor = this.pedido.vendedor.trim(); // Cambiar en la API
-              if (this.pedido.Lineas && this.pedido.Lineas.length > 0) {
-                  this.fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
-              }
-              this.huellaGuardada = this.huellaPedido(); // NestoApp#198
-              // Cargar parámetros de IVA y asignarlos a las líneas
-              this.cargarParametrosIva();
-              this.cargarSeguimientos(empresa, numero);
-              this.cargarFechaEntregaAgencia(empresa, numero); // NestoApp#215
-              this.cargarBultos(empresa, numero); // NestoApp#223
-              this.cargarRetencionPorFalta(empresa, numero); // NestoApp#279
-              this.cargarPagoAPlazos(empresa, numero); // NestoApp#281
-              this.pedirModoFacturacionSugerido();
+              this.ponerPedido(data, empresa, numero);
           },
           async error => {
               const mensaje = this.errorHandler.extractErrorMessage(error);
@@ -178,6 +216,58 @@ export class PedidoVentaComponent  {
       this.fechaEntregaAgencia = null;
       this.verDetalleFechaEntrega = false;
       this.servicio.cargarFechaEntregaAgencia(empresa, numero).subscribe(fecha => this.fechaEntregaAgencia = fecha);
+  }
+
+  /** NestoApp#287: en modo 6, con qué sale junto y qué lo retrasa (la frase la da la API). */
+  get textoJuntoConPendiente(): string {
+      return textoJuntoConPendiente(this.fechaEntregaAgencia);
+  }
+
+  // ---- NestoApp#289: «¿Dónde está lo que falta?». Se pide al abrir la sección, no al cargar el pedido. ----
+  public verDondeEstaLoQueFalta = false;
+  public cargandoDondeEstaLoQueFalta = false;
+  public dondeEstaLoQueFalta: DondeEstaLoQueFalta | null = null;
+  public errorDondeEstaLoQueFalta: string | null = null;
+
+  get frasesDondeEstaLoQueFalta(): string[] {
+      return frasesDondeEstaLoQueFalta(this.dondeEstaLoQueFalta);
+  }
+
+  private cerrarDondeEstaLoQueFalta(): void {
+      this.verDondeEstaLoQueFalta = false;
+      this.cargandoDondeEstaLoQueFalta = false;
+      this.dondeEstaLoQueFalta = null;
+      this.errorDondeEstaLoQueFalta = null;
+  }
+
+  /** Abre o cierra la sección. Cada vez que se abre se vuelve a preguntar (cambia con las reposiciones). */
+  public alternarDondeEstaLoQueFalta(): void {
+      if (this.verDondeEstaLoQueFalta) {
+          this.verDondeEstaLoQueFalta = false;
+          return;
+      }
+      if (!this.pedido) {
+          return;
+      }
+      this.verDondeEstaLoQueFalta = true;
+      this.cargandoDondeEstaLoQueFalta = true;
+      this.dondeEstaLoQueFalta = null;
+      this.errorDondeEstaLoQueFalta = null;
+      const numero = this.pedido.numero;
+      this.firebaseAnalytics.logEvent('pedido_donde_esta_lo_que_falta', { pedido: numero });
+      this.dondeEstaService.leer(this.pedido.empresa, numero).subscribe({
+          next: dato => {
+              if (+this.pedido?.numero !== +numero) {
+                  return; // ya es otro pedido
+              }
+              this.dondeEstaLoQueFalta = dato;
+              this.cargandoDondeEstaLoQueFalta = false;
+          },
+          error: () => {
+              this.errorDondeEstaLoQueFalta = ERROR_DONDE_ESTA_LO_QUE_FALTA;
+              this.cargandoDondeEstaLoQueFalta = false;
+          }
+      });
   }
 
   get textoFechaEntregaAgencia(): string {
@@ -290,9 +380,16 @@ export class PedidoVentaComponent  {
 
   /** El 5 no se elige nunca: solo entra en la lista para que el selector enseñe su nombre mientras está retenido. */
   get listaModosServicioSelector(): ModoServicioItem[] {
+      // NestoApp#287: el 6 solo si la API lo ofrece (hay algo pendiente con lo que juntarse) o si el pedido ya lo tiene.
+      const ofrecidos = listaModosServicioOfrecidos(this.opcionesModos?.Servicio?.Modos, this.modoServicioPedido);
       return this.estaRetenido
-          ? [...LISTA_MODOS_SERVICIO, { codigo: MODOS_SERVICIO.RETENIDO, nombre: NOMBRE_MODO_RETENIDO, descripcion: 'Retenido hasta nuevo aviso: no sale en el picking.' }]
-          : LISTA_MODOS_SERVICIO;
+          ? [...ofrecidos, { codigo: MODOS_SERVICIO.RETENIDO, nombre: NOMBRE_MODO_RETENIDO, descripcion: 'Retenido hasta nuevo aviso: no sale en el picking.' }]
+          : ofrecidos;
+  }
+
+  /** NestoApp#287: con el 6 elegido, con qué se va a juntar («Saldrá junto con la nota de entrega 929701.»). */
+  get explicacionJuntoConLoPendiente(): string {
+      return explicacionJuntoConLoPendiente(this.opcionesModos?.Servicio?.Modos, this.modoServicioPedido);
   }
 
   get textoRetencion(): string {
@@ -796,7 +893,218 @@ export class PedidoVentaComponent  {
       if (this.modoServicioTocado) {
           pedido.OrigenModoServicio = ORIGEN_MODO_SERVICIO.USUARIO;
       }
+      // NestoApp#293 / #287: las elecciones de ESTE guardado. Sin elección no viaja el campo.
+      delete pedido.CampanaSoloEnStock;
+      delete pedido.AmpliacionEnPreparacion;
+      if (this.eleccionCampanaSoloEnStock) {
+          pedido.CampanaSoloEnStock = this.eleccionCampanaSoloEnStock;
+      }
+      if (this.ampliacionEnPreparacion) {
+          pedido.AmpliacionEnPreparacion = this.ampliacionEnPreparacion;
+      }
       return pedido;
+  }
+
+  // ---- NestoApp#293 (campaña «solo en stock») y #287 (ampliar un pedido en preparación) ----
+
+  /** Las líneas tal como se cargaron o se guardaron la última vez: solo se pregunta por la campaña si este guardado añade producto. */
+  private fotoLineas: any[] = [];
+  /** Lo que el vendedor ha contestado en este guardado. Se respeta en sus reintentos y se olvida al guardar bien. */
+  private eleccionCampanaSoloEnStock: EleccionCampanaSoloEnStock | null = null;
+  private ampliacionEnPreparacion: OpcionAmpliacionEnPreparacion | null = null;
+
+  private olvidarEleccionesDelGuardado(): void {
+      this.eleccionCampanaSoloEnStock = null;
+      this.ampliacionEnPreparacion = null;
+  }
+
+  /**
+   * Antes del PUT: si este guardado añade producto o sube cantidades, se consulta a la API si hay productos de una
+   * campaña «solo en stock» sin stock bastante y se pregunta, como Nesto. «Sí» (por defecto) quita el descuento de la
+   * campaña a lo que no hay; «No» lo mantiene. Si la consulta falla no se pregunta y se guarda como siempre.
+   */
+  public async preguntarCampanaSoloEnStock(): Promise<void> {
+      this.eleccionCampanaSoloEnStock = null;
+      if (!this.pedido || !cambioQueImportaAlStockDeCampana(this.pedido.Lineas, this.fotoLineas)) {
+          return;
+      }
+      const aviso = await firstValueFrom(this.campanaSoloEnStock.consultar(this.pedidoParaGuardar()));
+      if (!hayQuePreguntarCampanaSoloEnStock(aviso)) {
+          return;
+      }
+      this.eleccionCampanaSoloEnStock = await new Promise<EleccionCampanaSoloEnStock>(async resolve => {
+          const alert = await this.alertCtrl.create({
+              header: TITULO_CAMPANA_SOLO_EN_STOCK,
+              message: textoPreguntaCampanaSoloEnStock(aviso),
+              cssClass: 'alerta-texto-con-saltos',
+              backdropDismiss: false,
+              buttons: [
+                  { text: 'No', handler: () => resolve('MantenerDescuento') },
+                  { text: 'Sí', handler: () => resolve('QuitarDescuento') }
+              ]
+          });
+          await alert.present();
+      });
+  }
+
+  /** NestoApp#287: «Hacer un pedido nuevo» y, solo si la API lo ofrece, «Pedir a Almacén». null = ha cancelado. */
+  private elegirAmpliacionEnPreparacion(rechazo: PedidoEnPreparacion): Promise<OpcionAmpliacionEnPreparacion | null> {
+      return new Promise<OpcionAmpliacionEnPreparacion | null>(async resolve => {
+          const buttons: any[] = [{ text: TEXTO_AMPLIACION_PEDIDO_NUEVO, handler: () => resolve(AMPLIACION_PEDIDO_NUEVO) }];
+          if (rechazo.puedePedirAlmacen) {
+              buttons.push({ text: TEXTO_AMPLIACION_PEDIR_ALMACEN, handler: () => resolve(AMPLIACION_PEDIR_ALMACEN) });
+          }
+          buttons.push({ text: 'Cancelar', role: 'cancel', handler: () => resolve(null) });
+          const alert = await this.alertCtrl.create({
+              header: TITULO_PEDIDO_EN_PREPARACION,
+              message: rechazo.mensaje,
+              cssClass: 'alerta-texto-con-saltos',
+              backdropDismiss: false,
+              buttons
+          });
+          await alert.present();
+      });
+  }
+
+  /**
+   * NestoApp#285 / NestoAPI#873: si el error es el 409 PEDIDO_CAMBIADO (otro lo ha guardado desde que se abrió), enseña el
+   * mensaje de la API tal cual y ofrece recargar. No se ha guardado nada. Devuelve true si el error era ese.
+   */
+  private async tratarPedidoCambiado(error: any): Promise<boolean> {
+      const mensaje = leerPedidoCambiado(error);
+      if (!mensaje) {
+          return false;
+      }
+      this.usuarioQueLoCambio = usuarioQueCambioElPedido(error);
+      const eleccion = await this.elegir(TITULO_PEDIDO_MODIFICADO, `${mensaje}\n\n${TEXTO_PUEDE_RECARGAR_CONSERVANDO}`,
+          [TEXTO_RECARGAR_CONSERVANDO, TEXTO_RECARGAR_SIN_CAMBIOS], 'Ahora no');
+      if (eleccion === TEXTO_RECARGAR_CONSERVANDO) {
+          await this.recargarConservandoCambios();
+      } else if (eleccion === TEXTO_RECARGAR_SIN_CAMBIOS) {
+          if (await this.confirmar(TITULO_RECARGAR_SIN_CAMBIOS, TEXTO_CONFIRMAR_RECARGAR_SIN_CAMBIOS, 'Recargar')) {
+              this.cargarPedido(this.pedido.empresa, this.pedido.numero);
+          }
+      }
+      return true;
+  }
+
+  // ---- NestoApp#285 (ampliación) / Nesto#642: «Recargar conservando mis cambios» ----
+
+  /** El pedido tal como se cargó: con él se separa lo que ha cambiado el vendedor de lo que ha guardado otro. */
+  private fotoAlCargar: any = null;
+  /** Quién lo guardó entre medias (del 409), para las preguntas. */
+  private usuarioQueLoCambio: string | null = null;
+
+  /**
+   * Lee el pedido de la API y pone encima los cambios del vendedor (`fusionarCambiosPedido`). Solo pregunta lo que han tocado
+   * los dos; «Cancelar» en una pregunta deja la pantalla como estaba. Al terminar el pedido queda con la versión nueva y los
+   * cambios sin guardar, para que los revise y guarde.
+   */
+  public async recargarConservandoCambios(): Promise<void> {
+      if (!this.pedido || !(this.pedido.numero > 0)) {
+          return;
+      }
+      const empresa = this.pedido.empresa, numero = this.pedido.numero;
+      if (!this.fotoAlCargar) {
+          if (await this.confirmar(TITULO_RECARGAR_PEDIDO, TEXTO_SIN_FOTO, 'Recargar')) {
+              this.cargarPedido(empresa, numero);
+          }
+          return;
+      }
+      const loading: any = await this.loadingCtrl.create({ message: 'Cargando Pedido...' });
+      await loading.present();
+      let servidor: any;
+      try {
+          servidor = await firstValueFrom(this.servicio.cargarPedido(empresa, numero));
+      } catch (error) {
+          await loading.dismiss();
+          await this.avisar('No se ha podido cargar el pedido', this.errorHandler.extractErrorMessage(error));
+          return;
+      }
+      await loading.dismiss();
+
+      const otro = this.usuarioQueLoCambio;
+      const resultado = fusionarCambiosPedido(this.fotoAlCargar, this.pedido, JSON.parse(JSON.stringify(servidor)));
+      for (const conflicto of resultado.conflictos) {
+          const respuesta = await this.preguntarConflicto(conflicto, otro);
+          if (respuesta === null) {
+              await this.avisar(TITULO_RECARGAR_PEDIDO, TEXTO_NO_SE_HA_RECARGADO);
+              return;
+          }
+          resolverConflicto(conflicto, respuesta);
+      }
+      this.ponerPedido(servidor, empresa, numero, resultado.pedido);
+      await this.avisar(TITULO_RECARGAR_PEDIDO,
+          resultado.cambiosAplicados + resultado.conflictos.length === 0 ? TEXTO_RECARGADO_SIN_CAMBIOS : TEXTO_RECARGADO_CON_CAMBIOS);
+  }
+
+  /** true = lo del vendedor; false = lo del otro (lo guardado); null = «Cancelar». */
+  private async preguntarConflicto(conflicto: ConflictoPedido, otro: string | null): Promise<boolean | null> {
+      const eleccion = await this.elegir(TITULO_CONFLICTO, conflicto.pregunta(otro),
+          [conflicto.textoOpcionUsted, conflicto.textoOpcionOtro], 'Cancelar');
+      return eleccion === null ? null : eleccion === conflicto.textoOpcionUsted;
+  }
+
+  /**
+   * `this.pedido` es ya lo guardado (con su huella y su foto). Lo sustituye por ese mismo pedido con los cambios del vendedor
+   * encima, y marca como tocados los modos que haya cambiado para que viajen al guardar.
+   */
+  private ponerMisCambiosEncima(fusionado: any): void {
+      const guardado = this.pedido;
+      fusionado.Lineas = (fusionado.Lineas || []).map((l: any) => new LineaVenta(l));
+      fusionado.plazosPago = (fusionado.plazosPago || '').trim();
+      fusionado.vendedor = (fusionado.vendedor || '').trim();
+      this.pedido = fusionado as PedidoVenta;
+      this.iva = this.pedido.iva;
+      if (this.pedido.Lineas.length > 0 && this.pedido.Lineas[0].fechaEntrega) {
+          this._fechaEntrega = this.pedido.Lineas[0].fechaEntrega.toString();
+      }
+      if (this.pedido.modoFacturacion !== guardado.modoFacturacion) {
+          this.modoFacturacionTocado = true;
+      }
+      if (this.pedido.modoServicio !== guardado.modoServicio) {
+          this.modoServicioTocado = true;
+      }
+  }
+
+  /** Un diálogo con varias opciones; devuelve el texto de la elegida o null si se cierra con la de cancelar. */
+  private elegir(header: string, message: string, opciones: string[], textoCancelar: string): Promise<string | null> {
+      return new Promise<string | null>(async resolve => {
+          const alert = await this.alertCtrl.create({
+              header,
+              message,
+              cssClass: 'alerta-texto-con-saltos',
+              backdropDismiss: false,
+              buttons: [
+                  ...opciones.map(texto => ({ text: texto, handler: () => resolve(texto) })),
+                  { text: textoCancelar, role: 'cancel', handler: () => resolve(null) }
+              ]
+          });
+          await alert.present();
+      });
+  }
+
+  /** Tras guardar: «modificado» y, si los hay, lo que cuenta la API de la ampliación (#287) y de la campaña (#293). */
+  private async avisarModificado(respuesta: any): Promise<void> {
+      const avisos = respuesta?.Avisos ?? respuesta?.avisos ?? [];
+      const parrafos = ['Pedido modificado correctamente', ...mensajesAmpliacionEnPreparacion(avisos)];
+      const deCampana = mensajesCampanaSoloEnStock(avisos);
+      if (deCampana.length > 0) {
+          parrafos.push(`${TITULO_CAMPANA_SOLO_EN_STOCK}:\n${deCampana.join('\n')}`);
+      }
+      const pedidoNuevo = pedidoNuevoDeLaAmpliacion(respuesta);
+      const empresa = this.pedido.empresa;
+      const buttons: any[] = pedidoNuevo
+          ? [{ text: 'Ok', role: 'cancel' },
+             { text: `Abrir el pedido ${pedidoNuevo}`, handler: () => { this.nav.navigateForward('pedido-venta', { queryParams: { empresa, numero: pedidoNuevo } }); } }]
+          : ['Ok'];
+      const alert = await this.alertCtrl.create({
+          header: 'Modificado',
+          message: parrafos.join('\n\n'),
+          cssClass: 'alerta-texto-con-saltos',
+          buttons
+      });
+      await alert.present();
   }
 
   // ---- NestoApp#252 / NestoAPI#712: aviso al grabar con fecha de entrega a más de 60 días ----
@@ -1014,13 +1322,14 @@ export class PedidoVentaComponent  {
 
   public async modificarPedido(): Promise<void> {
       this.confirmarFechaLejana = false; // NestoApp#252: cada guardado nuevo vuelve a preguntar
+      this.olvidarEleccionesDelGuardado(); // NestoApp#293 / #287: y las elecciones son de cada guardado
       const confirm = await this.alertCtrl.create({
           header: 'Confirmar',
           message: '¿Está seguro que quiere modificar el pedido?',
           buttons: [
               {
                   text: 'Sí',
-                  handler: () => { this.enviarModificacion(false); }
+                  handler: () => { this.guardarPreguntando(); }
               },
               {
                   text: 'No',
@@ -1036,7 +1345,13 @@ export class PedidoVentaComponent  {
   }
 
 
-  /** El PUT de «Modificar» (y su reintento tras confirmar la fecha lejana, #252). */
+  /** NestoApp#293: primero la pregunta de la campaña «solo en stock» (si toca) y después el PUT. */
+  public async guardarPreguntando(): Promise<void> {
+      await this.preguntarCampanaSoloEnStock();
+      await this.enviarModificacion(false);
+  }
+
+  /** El PUT de «Modificar» (y su reintento tras confirmar la fecha lejana, #252, o elegir qué hacer con lo añadido, #287). */
   public async enviarModificacion(forzado: boolean): Promise<void> {
       const loading: any = await this.loadingCtrl.create({
           message: forzado ? 'Modificando Pedido (sin validar)...' : 'Modificando Pedido...',
@@ -1049,13 +1364,10 @@ export class PedidoVentaComponent  {
               // Sincronizar la etiqueta de recogida según el checkbox, igual que
               // plantilla-venta crea la etiqueta tras crear el pedido.
               await this.sincronizarRecogerProducto();
+              // NestoApp#285: la recarga trae la versión nueva y, con «QuitarDescuento» (#293), las líneas que ha partido la API.
+              this.olvidarEleccionesDelGuardado();
               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
-              const alert = await this.alertCtrl.create({
-                  header: 'Modificado',
-                  message: 'Pedido modificado correctamente',
-                  buttons: ['Ok'],
-              });
-              await alert.present();
+              await this.avisarModificado(data);
               await loading.dismiss();
           },
           async error => {
@@ -1085,6 +1397,7 @@ export class PedidoVentaComponent  {
                       await loading.present();
 
                       this.pedido.EsPresupuesto = false;
+                      this.olvidarEleccionesDelGuardado();
                       this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
                           async data => {
                               this.cargarPedido(this.pedido.empresa, this.pedido.numero);
@@ -1097,6 +1410,12 @@ export class PedidoVentaComponent  {
                               await loading.dismiss();
                           },
                           async error => {
+                              if (leerPedidoCambiado(error)) { // NestoApp#285
+                                  this.pedido.EsPresupuesto = true;
+                                  await loading.dismiss();
+                                  await this.tratarPedidoCambiado(error);
+                                  return;
+                              }
                               const mensaje = this.errorHandler.extractErrorMessage(error);
                               const alert = await this.alertCtrl.create({
                                   header: 'Error',
@@ -1165,6 +1484,7 @@ export class PedidoVentaComponent  {
                           }
                       });
                       this.pedido.EsPresupuesto = true;
+                      this.olvidarEleccionesDelGuardado();
 
                       this.servicio.modificarPedido(this.pedidoParaGuardar()).subscribe(
                           async data => {
@@ -1409,6 +1729,20 @@ export class PedidoVentaComponent  {
    * Maneja errores de modificación de pedido, permitiendo forzar si el usuario tiene permiso
    */
   private async manejarErrorModificacionPedido(error: ProcessedApiError, yaForzado: boolean): Promise<void> {
+      // NestoApp#285 / NestoAPI#873: otro ha guardado el pedido desde que se abrió. No se ha guardado nada: recargar.
+      if (await this.tratarPedidoCambiado(error)) {
+          return;
+      }
+      // NestoApp#287: se añaden productos a un pedido que ya está en preparación. El vendedor elige y se repite el PUT.
+      const enPreparacion = leerPedidoEnPreparacion(error);
+      if (enPreparacion) {
+          const eleccion = await this.elegirAmpliacionEnPreparacion(enPreparacion);
+          if (eleccion) {
+              this.ampliacionEnPreparacion = eleccion;
+              await this.enviarModificacion(yaForzado);
+          }
+          return;
+      }
       // NestoApp#252 / NestoAPI#712: la fecha de entrega va a más de 60 días: se pregunta y, con «Sí», se repite.
       const fechaLejana = await this.preguntarFechaLejana(error);
       if (fechaLejana === true) {

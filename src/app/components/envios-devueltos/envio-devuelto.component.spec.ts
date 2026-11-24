@@ -35,7 +35,7 @@ describe('EnvioDevueltoComponent (#267)', () => {
   it('carga el envío de la push y precarga la dirección y los teléfonos para corregirlos', () => {
     params.next({ empresa: '1', envio: '123', aviso: '1' });
 
-    expect(servicio.leerDevueltos).toHaveBeenCalledWith('1');
+    expect(servicio.leerDevueltos).toHaveBeenCalledWith('1', null);
     expect(componente.envio.Numero).toBe(123);
     expect(componente.decidido).toBeFalse();
     expect(componente.datos.Direccion).toBe('CALLE MAYOR, 5');
@@ -85,6 +85,30 @@ describe('EnvioDevueltoComponent (#267)', () => {
     await esperar();
     expect(servicio.abonar).toHaveBeenCalledWith(123);
     expect(alertas[1].header).toBe('Se abona');
+  });
+
+  it('#290: con el pedido en el enlace solo se piden los devueltos de ese pedido; si no está ahí, se busca entre todos', () => {
+    params.next({ empresa: '1', envio: '123', pedido: '929498' });
+    expect(servicio.leerDevueltos).toHaveBeenCalledWith('1', 929498);
+    expect(componente.envio.Numero).toBe(123);
+
+    servicio.leerDevueltos.calls.reset();
+    servicio.leerDevueltos.and.returnValues(of([]), of([envio()]));
+    params.next({ empresa: '1', envio: '123', pedido: '111' });
+    expect(servicio.leerDevueltos.calls.allArgs()).toEqual([['1', 111], ['1', null]]);
+    expect(componente.envio.Numero).toBe(123);
+  });
+
+  it('#290: un 403 (no le corresponde decidirlo) enseña el mensaje de la API tal cual', async () => {
+    params.next({ envio: '123' });
+    servicio.abonar.and.returnValue(throwError(() => ({ status: 403, message: 'Este envío solo lo puede decidir quien hizo el pedido, su vendedor o Almacén.' })));
+
+    await componente.abonar();
+    await pulsar(alertas[0], 'Sí, abonar');
+    await esperar();
+
+    expect(alertas[1].header).toBe('No le corresponde decidir este envío');
+    expect(alertas[1].message).toBe('Este envío solo lo puede decidir quien hizo el pedido, su vendedor o Almacén.');
   });
 
   it('un 409 (ya decidido en Nesto) enseña el mensaje de la API y recarga', async () => {

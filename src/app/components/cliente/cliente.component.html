@@ -59,7 +59,7 @@
               </ion-item>
               <ion-item lines="none" *ngIf="!cliente.direccion && !direccionBloqueada">
                   <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
-                      Escribe y elige la dirección de la lista. Portal, local o referencias van en «resto de información».
+                      Escriba y elija la dirección de la lista. Piso, local o referencias van en «¿Qué es?».
                   </ion-label>
               </ion-item>
               <!-- Issue #152/#153: sugerencias de Google Places (proxy de NestoAPI) -->
@@ -72,11 +72,23 @@
                       <ion-note slot="end">Powered by Google</ion-note>
                   </ion-item>
               </ion-list>
-              <ion-item *ngIf="!cliente.direccion">
-                  <ion-input label="Dirección (resto de información)" label-placement="floating" #direccionAdicional type="text" [(ngModel)]="cliente.direccionAdicional" name="direccionAdicional" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              <!-- NestoApp#286 / NestoAPI#874: Google dio la calle sin número: se pide aparte (solo el portal) -->
+              <ion-item *ngIf="!cliente.direccion && cliente.numeroSinDarPorGoogle">
+                  <ion-input label="Número" label-placement="floating" type="text" placeholder="Por ejemplo, 13 o 13 B, o S/N si no tiene" [(ngModel)]="cliente.numero" name="numero" (ionInput)="numeroCambiado()"></ion-input>
               </ion-item>
+              <ion-item lines="none" *ngIf="!cliente.direccion && cliente.numeroSinDarPorGoogle">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">Google no tiene el número de esta calle: escríbalo (o «S/N» si no tiene).</ion-label>
+              </ion-item>
+              <!-- NestoApp#286 / #290: «¿Qué es?» (piso, local, casa, nave u otro): la Dirección 2 para el repartidor -->
+              <que-es-direccion [bloque]="cliente" [esAlta]="esAlta" ancla="cliente.QueEs"
+                  [avisoRevisar]="avisoRevisarDireccion2" [puedeQuitar]="puedeQuitarDireccion2" [seQuitara]="seQuitaraDireccion2"
+                  (cambiado)="queEsCambiado()" (confirmar)="confirmarDireccion2()" (quitar)="quitarDireccion2()"></que-es-direccion>
+              <!-- NestoApp#288: al crear, el código postal sale de Google; solo se teclea si Google no lo da -->
               <ion-item>
-                  <ion-input label="Código Postal" label-placement="floating" type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" [readonly]="cliente.direccionVerificada" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+                  <ion-input label="Código Postal" label-placement="floating" type="text" [(ngModel)]="cliente.codigoPostal" name="codigoPostal" [readonly]="!codigoPostalEditable" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
+              </ion-item>
+              <ion-item lines="none" *ngIf="ayudaCodigoPostal">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ ayudaCodigoPostal }}</ion-label>
               </ion-item>
               <ion-item *ngIf="cliente.direccionValidada">
                   <ion-input label="Población" label-placement="floating" type="text" [(ngModel)]="cliente.poblacion" name="poblacion" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
@@ -87,6 +99,18 @@
               <ion-item>
                   <ion-input label="Teléfono" label-placement="floating" type="text" [(ngModel)]="cliente.telefono" name="telefono" (ionFocus)="seleccionarTexto($event)" (mouseup)="$event.preventDefault()"></ion-input>
               </ion-item>
+              <!-- NestoApp#288 / NestoAPI#879: dirección de entrega distinta en la misma alta (solo cliente nuevo) -->
+              <ion-item *ngIf="puedeIndicarEntregaEnOtraDireccion">
+                  <ion-label class="ion-text-wrap">{{ textoEntregaEnOtraDireccion }}</ion-label>
+                  <ion-toggle slot="end" [attr.aria-label]="textoEntregaEnOtraDireccion" name="entregaEnOtraDireccion" globoAncla="cliente.EntregaEnOtraDireccion"
+                      [checked]="entregaEnOtraDireccion" (ionChange)="cambiarEntregaEnOtraDireccion($event.detail.checked)"></ion-toggle>
+              </ion-item>
+              <ion-item lines="none" *ngIf="hayDireccionEntrega">
+                  <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+                      La dirección de arriba es la fiscal. Con esta se crea un contacto, que queda como entrega por defecto.
+                  </ion-label>
+              </ion-item>
+              <bloque-direccion-alta *ngIf="hayDireccionEntrega" [bloque]="direccionEntrega"></bloque-direccion-alta>
               <!-- NestoApp#227 / NestoAPI#623: origen del cliente (campañas). Opcional salvo que venga de una campaña -->
               <ion-item *ngIf="origenes.length > 0">
                   <ion-label>Origen</ion-label>
@@ -127,11 +151,12 @@
           <ion-card *ngIf="slideActual == DATOS_COMISIONES">
               <ion-card-content>
                   <p (click)="slideActual = DATOS_FISCALES"><strong>{{cliente.nombre}}</strong></p>
-                  <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}</p>
+                  <p (click)="slideActual = DATOS_GENERALES">{{cliente.direccion}}<span *ngIf="direccion2Resumen">, {{ direccion2Resumen }}</span></p>
                   <p (click)="slideActual = DATOS_GENERALES"><u>{{cliente.codigoPostal}} {{cliente.poblacion}} ({{cliente.provincia}})</u></p>
                   <p></p>
                   <p *ngIf="cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!==''" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call"></ion-icon> {{cliente.telefono}}</p>
                   <p *ngIf="!(cliente && cliente.telefono && cliente.telefono !== 'undefined' && cliente.telefono.trim()!=='')" style="color:red;" (click)="slideActual = DATOS_GENERALES"><ion-icon name="call" color="danger"></ion-icon> SIN TELÉFONO</p>
+                  <p *ngIf="hayDireccionEntrega && direccionEntrega.direccion" (click)="slideActual = DATOS_GENERALES"><ion-icon name="cube-outline"></ion-icon> Entrega: {{ direccionEntrega.direccion }}<span *ngIf="direccion2EntregaResumen">, {{ direccion2EntregaResumen }}</span> · {{ direccionEntrega.codigoPostal }} {{ direccionEntrega.poblacion }}</p>
                   <p *ngIf="textoOrigen" (click)="slideActual = DATOS_GENERALES"><ion-icon name="megaphone-outline"></ion-icon> Origen: {{ textoOrigen }}</p>
                   <p *ngIf="cliente && cliente.nif">CIF/NIF: {{cliente.nif}}</p>
               </ion-card-content>

@@ -17,6 +17,8 @@ export class ProductoComponent implements OnInit, OnDestroy {
   public producto: any;
   public clientes: any;
   public videos: any[] = [];
+  /** NestoApp#283 / NestoAPI#869: la frase de la próxima entrada en Algete. Vacía = no se pinta. */
+  public proximaEntrada: string = '';
   public vistaSeleccionada: string = "info";
   private loadingActivo: HTMLIonLoadingElement | null = null;
 
@@ -63,6 +65,7 @@ export class ProductoComponent implements OnInit, OnDestroy {
     this.loadingActivo = loading;
 
     await loading.present();
+    this.cargarProximaEntrada();
     this.servicio.cargar("1", this.productoActual, true)
       .subscribe(
         async data => {
@@ -88,6 +91,23 @@ export class ProductoComponent implements OnInit, OnDestroy {
           this.loadingActivo = null;
         }
       );
+  }
+
+  /** NestoApp#283: aparte de la ficha (si falla o tarda, la ficha sale igual). Se descarta si ya se ha pedido otro producto. */
+  public cargarProximaEntrada(): void {
+    const producto = (this.productoActual || '').toString().trim();
+    this.proximaEntrada = '';
+    if (!producto) {
+      return;
+    }
+    this.servicio.cargarProximaEntrada(producto).subscribe({
+      next: texto => {
+        if (producto === (this.productoActual || '').toString().trim()) {
+          this.proximaEntrada = texto || '';
+        }
+      },
+      error: () => { this.proximaEntrada = ''; }
+    });
   }
 
   async cargarClientes() {

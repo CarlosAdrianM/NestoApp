@@ -36,6 +36,20 @@ describe('EnviosDevueltosComponent (#267)', () => {
     expect(nav.navigateForward).toHaveBeenCalledWith('envio-devuelto', { queryParams: { empresa: '1', envio: 7 } });
   });
 
+  it('#290: los resueltos no salen si no se piden, y al abrir uno con pedido viaja el pedido', () => {
+    servicio.leerDevueltos.and.returnValue(of([envio(), envio({ Numero: 4, Decision: 'Abonar', Resuelto: true, Pedido: 930001 })]));
+    componente = new EnviosDevueltosComponent(servicio, { vendedor: 'JM' } as any, nav, { logEvent: () => { } } as any);
+    componente.ionViewWillEnter();
+
+    expect(componente.visibles.map(e => e.Numero)).toEqual([1]);
+    expect(componente.numeroResueltos).toBe(1);
+    componente.verResueltos = true;
+    expect(componente.visibles.map(e => e.Numero)).toEqual([1, 4]);
+
+    componente.abrir(componente.visibles[1]);
+    expect(nav.navigateForward).toHaveBeenCalledWith('envio-devuelto', { queryParams: { empresa: '1', envio: 4, pedido: 930001 } });
+  });
+
   it('con una API anterior (404) lo dice', () => {
     servicio.leerDevueltos.and.returnValue(throwError(() => ({ status: 404 })));
     componente = new EnviosDevueltosComponent(servicio, { vendedor: 'JM' } as any, nav, { logEvent: () => { } } as any);

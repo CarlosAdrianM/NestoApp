@@ -15,6 +15,8 @@ import { ChequeRegaloCliente } from '../../models/cheque-regalo.model';
 import { CuponCliente } from '../../models/cupon.model';
 import { SustitucionProducto } from '../../models/sustitucion-producto.model';
 import { FechaEntregaAgencia } from '../../models/fecha-entrega-agencia.model';
+import { AvisoCampanaSoloEnStock } from '../../models/campana-solo-en-stock.model';
+import { CampanaSoloEnStockService } from '../../services/campana-solo-en-stock.service';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +25,7 @@ export class PlantillaVentaService {
 
   static ngInjectableDef = undefined;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private campanaSoloEnStock: CampanaSoloEnStockService) { }
 
   private _baseUrl: string = Configuracion.API_URL + '/PedidosVenta';
 
@@ -69,6 +71,14 @@ export class PlantillaVentaService {
    * líneas y el número en la cabecera). El servidor conserva las líneas en albarán/factura
    * aunque no vengan en el payload y bloquea las líneas con picking modificadas.
    */
+  /**
+   * NestoApp#293 / NestoAPI#889: ¿el pedido que se va a guardar lleva productos de una campaña «solo en stock» de los
+   * que no hay bastante? Solo lectura; nunca lanza (si falla, { HayAviso: false } y se guarda como siempre).
+   */
+  public avisoCampanaSoloEnStock(pedido: any): Observable<AvisoCampanaSoloEnStock> {
+    return this.campanaSoloEnStock.consultar(pedido);
+  }
+
   public modificarPedido(pedido: any, saltarValidacion: boolean = false): Observable<any> {
     let headers: any = new HttpHeaders();
     headers = headers.append('Content-Type', 'application/json');

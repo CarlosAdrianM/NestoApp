@@ -3,7 +3,7 @@ import { NavController } from '@ionic/angular';
 import { Usuario } from 'src/app/models/Usuario';
 import { EnviosAgenciasService } from 'src/app/services/envios-agencias.service';
 import { FirebaseAnalytics } from 'src/app/services/firebase-analytics.service';
-import { EnvioDevuelto, enviosDevueltosVisibles, estaDecidido, textoEstadoEnvioDevuelto } from 'src/app/models/envio-devuelto.model';
+import { EnvioDevuelto, enviosDevueltosVisibles, estaDecidido, estaResuelto, sinResueltos, textoEstadoEnvioDevuelto } from 'src/app/models/envio-devuelto.model';
 
 /**
  * NestoApp#267 (NestoAPI#699): los envíos devueltos o con incidencia de los últimos 60 días, los del vendedor primero
@@ -20,6 +20,9 @@ export class EnviosDevueltosComponent {
   public cargando = false;
   public mensaje = '';
   public soloMios = true;
+  /** NestoApp#290: los resueltos (nada por hacer) no salen si no se piden, como en Nesto. */
+  public verResueltos = false;
+  public readonly resuelto = estaResuelto;
   public readonly textoEstado = textoEstadoEnvioDevuelto;
   public readonly decidido = estaDecidido;
 
@@ -37,7 +40,16 @@ export class EnviosDevueltosComponent {
   }
 
   get visibles(): EnvioDevuelto[] {
+    return sinResueltos(this.delVendedor, this.verResueltos);
+  }
+
+  private get delVendedor(): EnvioDevuelto[] {
     return enviosDevueltosVisibles(this.envios, this.tieneVendedor ? this.usuario.vendedor : null, this.soloMios);
+  }
+
+  /** Cuántos resueltos hay (de los que tocaría ver): si no hay ninguno, el interruptor no sale. */
+  get numeroResueltos(): number {
+    return this.delVendedor.filter(e => estaResuelto(e)).length;
   }
 
   public cargar(): void {
@@ -60,6 +72,6 @@ export class EnviosDevueltosComponent {
   }
 
   public abrir(envio: EnvioDevuelto): void {
-    this.nav.navigateForward('envio-devuelto', { queryParams: { empresa: envio.Empresa || '1', envio: envio.Numero } });
+    this.nav.navigateForward('envio-devuelto', { queryParams: { empresa: envio.Empresa || '1', envio: envio.Numero, ...(envio.Pedido ? { pedido: envio.Pedido } : {}) } });
   }
 }

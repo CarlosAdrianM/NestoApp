@@ -1,6 +1,6 @@
 import { CodigosBarrasService } from '../../services/codigos-barras.service';
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, OnChanges } from '@angular/core';
-import { esLineaCurso } from 'src/app/models/eventos.model';
+import { esLineaCurso, esLineaFormacion, vaEnPedidoAparte } from 'src/app/models/eventos.model';
 import { Keyboard } from '../../services/keyboard.service';
 import { AlertController, LoadingController, NavController, ToastController } from '@ionic/angular';
 import { SelectorBase } from '../selectorbase/selectorbase.component';
@@ -73,7 +73,14 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
     }
   }
 
+  /** NestoApp#284: el cliente todavía no tiene compras servidas (la plantilla sale vacía; se busca arriba). */
+  public clienteSinCompras = false;
+  public static readonly TEXTO_CLIENTE_SIN_COMPRAS =
+      'Este cliente todavía no tiene compras. Busque los productos en el buscador de arriba.';
+  public readonly textoClienteSinCompras = SelectorPlantillaVentaComponent.TEXTO_CLIENTE_SIN_COMPRAS;
+
   public async cargarDatos(cliente: any): Promise<void> {
+      this.clienteSinCompras = false;
       const loading = await this.loadingCtrl.create({
           message: 'Cargando Productos...',
       });
@@ -86,14 +93,9 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
               if (data.length === 0) {
                 await loading.dismiss();
                 this.loadingActivo = null;
-                  const alert: any = await this.alertCtrl.create({
-                      header: 'Error',
-                      message: 'Este cliente no tiene histórico de compras',
-                      buttons: ['Ok'],
-                  });
-                  await alert.present();
-                  await alert.onDidDismiss();
-                  this.setFocus();
+                // NestoApp#284: un cliente sin compras no es un error. Se dice en la lista vacía qué hacer.
+                this.clienteSinCompras = true;
+                this.setFocus();
               } else {
                 this.servicio.ponerStocks(data, this.almacen, false, this.usuario.almacenesPlantillaVenta.split(',')).subscribe(
                     async data => {
@@ -155,6 +157,11 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
       return esLineaCurso(producto);
   }
 
+  /** NestoApp#290: formación sin evento; se mete como una línea normal y la API la saca a un pedido aparte. */
+  public esFormacion(producto: any): boolean {
+      return esLineaFormacion(producto);
+  }
+
   public cargarResumen(): any[] {
       const productosResumen: any[] = [];
       this.baseImponiblePedido = 0;
@@ -178,7 +185,7 @@ export class SelectorPlantillaVentaComponent extends SelectorBase implements OnD
                   : 0;
               this.baseImponiblePedido += importeLinea + importeOferta;
               // NestoApp#244: los cursos van en un pedido aparte y no cuentan para los portes.
-              if (!this.esSobrePedidoParaPortes(value) && !esLineaCurso(value)) {
+              if (!this.esSobrePedidoParaPortes(value) && !vaEnPedidoAparte(value)) { // #290: ni la formación
                   this.baseImponibleParaPortes += importeLinea + importeOferta;
               }
 

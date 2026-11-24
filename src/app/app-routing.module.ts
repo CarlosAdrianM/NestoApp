@@ -25,7 +25,9 @@ import { EventosComponent } from './components/eventos/eventos.component';
 import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
 import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
 import { RecogidasComponent } from './components/recogidas/recogidas.component';
+import { AutorizacionesPedidoComponent } from './components/autorizaciones-pedido/autorizaciones-pedido.component';
 import { PedidosEnRiesgoComponent } from './components/pedidos-en-riesgo/pedidos-en-riesgo.component';
+import { MiAlmacenComponent } from './components/mi-almacen/mi-almacen.component';
 
 const routes: Routes = [
   {
@@ -129,9 +131,19 @@ const routes: Routes = [
     component: RecogidasComponent
   },
   {
+    // NestoApp#280 / #290 (Novedades 1258): autorizaciones de pedidos que no pasan la validación (?id= abre una)
+    path: 'autorizaciones-pedido',
+    component: AutorizacionesPedidoComponent
+  },
+  {
     // NestoApp#248 (NestoAPI#693): pedidos del vendedor con la fecha de entrega prometida en riesgo
     path: 'pedidos-en-riesgo',
     component: PedidosEnRiesgoComponent
+  },
+  {
+    // NestoApp#292 (NestoAPI#894): lo que el vendedor tiene en su almacén ficticio (solo consulta)
+    path: 'mi-almacen',
+    component: MiAlmacenComponent
   },
   {
     path: '',

@@ -64,6 +64,9 @@ export const PLAZAS_SIN_LIMITE = 999;
 /** Lo que dice el aviso al grabar un pedido con cursos (NestoAPI#691: van en un pedido aparte, prepago). */
 export const AVISO_CURSO_PREPAGO = 'El curso va en un pedido aparte con prepago: se cobra por adelantado y el cliente recibe el enlace de pago de la inscripción. Los cursos se facturan aparte y no cuentan para portes, Ganavisiones ni ofertas.';
 
+/** NestoApp#290: lo que dice el resumen cuando el pedido mezcla productos y formación sin evento. */
+export const AVISO_FORMACION_APARTE = 'La formación va en un pedido aparte: se factura aparte y no cuenta para portes, Ganavisiones ni cupones.';
+
 /** Los nombres que enseñan TNV y Nesto para cada modalidad. */
 export function nombreModalidadEvento(modalidad: string | null | undefined): string {
   switch ((modalidad || '').trim()) {
@@ -123,12 +126,26 @@ export function modalidadesConImporte(evento: Evento): ModalidadEventoCurso[] {
  */
 export const GRUPO_CURSOS = 'CUR';
 
+/**
+ * NestoApp#290 (incidencia 1398, NestoAPI «Formación sin evento»): formación del grupo CUR que no es de ningún evento
+ * (90324, las MF…). La búsqueda la trae con EsFormacion = true y EsCurso = false: se mete como una línea normal (sin
+ * evento ni modalidad) y al guardar la API la separa sola en un pedido aparte de la serie CV.
+ */
+export function esLineaFormacion(linea: any): boolean {
+  return !!linea && (linea.EsFormacion === true || linea.esFormacion === true);
+}
+
 export function esLineaCurso(linea: any): boolean {
-  if (!linea) {
+  if (!linea || esLineaFormacion(linea)) {
     return false;
   }
   return linea.EsCurso === true || linea.esCurso === true || !!linea.eventoId
     || (linea.grupo || '').toString().trim().toUpperCase() === GRUPO_CURSOS;
+}
+
+/** Cursos y formación: van en un pedido aparte y no cuentan para portes, Ganavisiones, regalos, ofertas ni cupones. */
+export function vaEnPedidoAparte(linea: any): boolean {
+  return esLineaCurso(linea) || esLineaFormacion(linea);
 }
 
 /**
@@ -149,17 +166,31 @@ export function textoPreguntaCorreoCursos(formaPago: string | null | undefined):
 }
 
 export function sinLineasCurso<T>(lineas: T[] | null | undefined): T[] {
-  return (lineas || []).filter(l => !esLineaCurso(l));
+  return (lineas || []).filter(l => !vaEnPedidoAparte(l));
 }
 
-/** «Se han creado dos pedidos: N (productos) y M (curso). Los cursos se facturan aparte.» */
+export const MOTIVO_PEDIDO_FORMACION = 'Formación';
+
+/**
+ * «Se han creado dos pedidos: N (productos) y M (curso). Los cursos se facturan aparte.» Con formación sin evento
+ * (NestoApp#290, Motivo «Formación»): «… y M (formación). La formación se factura aparte.»
+ */
 export function textoPedidosCreados(numeroPrincipal: number | string, pedidosAdicionales: { Numero: number; Motivo?: string }[] | null | undefined): string | null {
   const adicionales = (pedidosAdicionales || []).filter(p => p && p.Numero);
   if (adicionales.length === 0) {
     return null;
   }
-  const cursos = adicionales.map(p => p.Numero).join(', ');
-  return `Se han creado dos pedidos: ${numeroPrincipal} (productos) y ${cursos} (curso). Los cursos se facturan aparte.`;
+  const esFormacion = (p: { Motivo?: string }) => (p.Motivo || '').trim().toLowerCase() === MOTIVO_PEDIDO_FORMACION.toLowerCase();
+  const cursos = adicionales.filter(p => !esFormacion(p)).map(p => p.Numero);
+  const formacion = adicionales.filter(esFormacion).map(p => p.Numero);
+  if (formacion.length === 0) {
+    return `Se han creado dos pedidos: ${numeroPrincipal} (productos) y ${cursos.join(', ')} (curso). Los cursos se facturan aparte.`;
+  }
+  if (cursos.length === 0) {
+    return `Se han creado dos pedidos: ${numeroPrincipal} (productos) y ${formacion.join(', ')} (formación). La formación se factura aparte.`;
+  }
+  return `Se han creado varios pedidos: ${numeroPrincipal} (productos), ${cursos.join(', ')} (curso) y ${formacion.join(', ')} (formación). `
+    + 'Los cursos y la formación se facturan aparte.';
 }
 
 export type FormaPagoInscripcion = 'Tarjeta' | 'Transferencia' | 'Efectivo';

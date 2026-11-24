@@ -1,5 +1,5 @@
 import {
-  Evento, eventosInscribibles, seGeneraEnlace, textoPlazas, esLineaCurso, sinLineasCurso, textoPedidosCreados,
+  Evento, eventosInscribibles, seGeneraEnlace, textoPlazas, esLineaCurso, esLineaFormacion, vaEnPedidoAparte, sinLineasCurso, textoPedidosCreados,
   textoModalidadCurso, textoFormatoEvento, textoPlazasLibres, modalidadesConImporte, nombreModalidadEvento, textoPreguntaCorreoCursos,
   eventosProximos, textoAforo, inscripcionesVisibles, textoAsistentesExtra, modalidadesInscripcion
 } from './eventos.model';
@@ -73,6 +73,32 @@ describe('Cursos en la plantilla (#244)', () => {
       .toBe('Se han creado dos pedidos: 929100 (productos) y 929101 (curso). Los cursos se facturan aparte.');
     expect(textoPedidosCreados(929100, null)).toBeNull();
     expect(textoPedidosCreados(929100, [])).toBeNull();
+  });
+});
+
+/** NestoApp#290 (incidencia 1398): formación sin evento en la plantilla. */
+describe('Formación sin evento en la plantilla (#290)', () => {
+  it('la formación no es un curso (no se pide evento), aunque sea del grupo CUR', () => {
+    const formacion = { producto: '90324', grupo: 'CUR', EsFormacion: true, EsCurso: false };
+    expect(esLineaFormacion(formacion)).toBeTrue();
+    expect(esLineaCurso(formacion)).toBeFalse();
+    expect(esLineaFormacion({ producto: '90077', EsCurso: true })).toBeFalse();
+    expect(esLineaFormacion({ producto: 'MF1', esFormacion: true })).toBeTrue();
+    expect(esLineaFormacion(null)).toBeFalse();
+  });
+
+  it('va en un pedido aparte: no cuenta en los cálculos del pedido de productos', () => {
+    const lineas = [{ producto: 'A', grupo: 'COS' }, { producto: '90324', grupo: 'CUR', EsFormacion: true }, { producto: 'C', EsCurso: true }];
+    expect(vaEnPedidoAparte(lineas[1])).toBeTrue();
+    expect(vaEnPedidoAparte(lineas[0])).toBeFalse();
+    expect(sinLineasCurso(lineas).map(l => l.producto)).toEqual(['A']);
+  });
+
+  it('al guardar se dice que la formación ha ido a otro pedido', () => {
+    expect(textoPedidosCreados(929100, [{ Numero: 929101, Motivo: 'Formación' }]))
+      .toBe('Se han creado dos pedidos: 929100 (productos) y 929101 (formación). La formación se factura aparte.');
+    expect(textoPedidosCreados(929100, [{ Numero: 929101, Motivo: 'Cursos' }, { Numero: 929102, Motivo: 'Formación' }]))
+      .toBe('Se han creado varios pedidos: 929100 (productos), 929101 (curso) y 929102 (formación). Los cursos y la formación se facturan aparte.');
   });
 });
 

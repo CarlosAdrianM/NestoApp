@@ -15,7 +15,7 @@
         <ion-label class="ion-text-wrap">
           <ion-icon name="contact" [color]="colorEstado(cliente.estado)" slot="start"></ion-icon>
           <h2 class="ion-text-wrap">{{ cliente.nombre }}</h2>
-          <h3 class="ion-text-wrap">{{ cliente.direccion }}</h3>
+          <h3 class="ion-text-wrap">{{ cliente.direccionCompleta || cliente.direccion }}</h3>
           <p class="ion-text-wrap">{{ cliente.codigoPostal }} {{ cliente.poblacion }} ({{ cliente.provincia }})</p>
           <p class="ion-text-wrap">{{ cliente.cliente }} - {{ cliente.telefono }}</p>
           <p class="ion-text-wrap">{{ cliente.comentarios }}</p>

@@ -26,6 +26,18 @@ describe('EnviosAgenciasService (#267)', () => {
     expect(resultado.length).toBe(1);
   });
 
+  it('#290: con pedido, filtra por ese pedido; sin él, no manda el parámetro', () => {
+    service.leerDevueltos('1', 929498).subscribe();
+    const req = httpMock.expectOne(r => r.url === Configuracion.API_URL + '/EnviosAgencias/Devueltos');
+    expect(req.request.params.get('pedido')).toBe('929498');
+    req.flush([]);
+
+    service.leerDevueltos('1', null).subscribe();
+    const sinPedido = httpMock.expectOne(r => r.url === Configuracion.API_URL + '/EnviosAgencias/Devueltos');
+    expect(sinPedido.request.params.has('pedido')).toBeFalse();
+    sinPedido.flush([]);
+  });
+
   it('reenviar manda la dirección corregida y los portes', () => {
     service.reenviar(123, { Direccion: 'CALLE MAYOR, 5', IncluirPortes: false }).subscribe();
     const req = httpMock.expectOne(Configuracion.API_URL + '/EnviosAgencias/123/Reenviar');

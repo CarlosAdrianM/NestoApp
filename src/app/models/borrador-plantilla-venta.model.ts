@@ -32,6 +32,8 @@ export interface LineaPlantillaVenta {
   descuentoOferta?: number;
   // NestoApp#244 / NestoAPI#691: un curso, con el evento y la modalidad elegidos.
   esCurso?: boolean;
+  /** NestoApp#290: formación sin evento (línea normal que la API saca a un pedido aparte). */
+  esFormacion?: boolean;
   eventoId?: number;
   modalidadEvento?: string;
   textoEvento?: string;

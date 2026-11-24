@@ -1,0 +1,91 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Autorizaciones de pedidos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <ion-item lines="full">
+    <ion-label class="ion-text-wrap">
+      <p>{{ ayuda }}</p>
+    </ion-label>
+  </ion-item>
+
+  <ion-item lines="full">
+    <ion-label>Ver también las resueltas</ion-label>
+    <ion-toggle slot="end" aria-label="Ver también las resueltas" [checked]="verResueltas" [disabled]="cargando"
+      (ionChange)="cambiarVerResueltas($event.detail.checked)"></ion-toggle>
+  </ion-item>
+
+  <ion-list-header><ion-label>{{ cargando ? 'Solicitudes' : resumen }}</ion-label></ion-list-header>
+  <ion-item *ngIf="cargando" lines="none">
+    <ion-spinner slot="start" name="crescent"></ion-spinner>
+    <ion-label>Cargando las solicitudes…</ion-label>
+  </ion-item>
+  <ion-item *ngIf="mensaje" lines="none">
+    <ion-label class="ion-text-wrap" color="medium">{{ mensaje }}</ion-label>
+  </ion-item>
+  <ion-item *ngIf="!cargando && !mensaje && solicitudes.length === 0" lines="none">
+    <ion-label class="ion-text-wrap" color="medium">
+      {{ puedeAutorizar ? 'No hay solicitudes de autorización.' : 'No tiene solicitudes de autorización. Se piden desde la plantilla de venta, cuando un pedido no pasa la validación.' }}
+    </ion-label>
+  </ion-item>
+
+  <ion-card *ngFor="let solicitud of solicitudes">
+    <ion-card-header (click)="abrir(solicitud)">
+      <ion-card-subtitle>
+        <ion-badge [color]="colorEstado(solicitud.Estado)">{{ solicitud.Estado }}</ion-badge>
+        {{ solicitud.FechaSolicitud | date:'dd/MM/yy HH:mm' }}
+        <span *ngIf="!esSuya(solicitud)"> · {{ textoSolicitante(solicitud) }}</span>
+      </ion-card-subtitle>
+      <ion-card-title class="ion-text-wrap">{{ textoCliente(solicitud) }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>{{ solicitud.Importe | currency:'EUR' }} · {{ solicitud.NumeroLineas }} {{ solicitud.NumeroLineas === 1 ? 'línea' : 'líneas' }}</p>
+      <p class="motivos">{{ textoMotivos(solicitud) }}</p>
+      <p *ngIf="solicitud.Comentario" class="comentario">«{{ solicitud.Comentario }}»</p>
+      <p *ngIf="!estaPendiente(solicitud)" class="resolucion">{{ textoResolucion(solicitud) }}</p>
+
+      <!-- El pedido tal como se mandó, con las líneas que no pasan marcadas -->
+      <ng-container *ngIf="abierta === solicitud.Id">
+        <p *ngIf="cargandoLineas" class="pista">Cargando las líneas…</p>
+        <p *ngIf="mensajeLineas" class="pista">{{ mensajeLineas }}</p>
+        <div *ngFor="let linea of lineas" class="linea" [class.con-error]="!!linea.MotivoError">
+          <div><strong>{{ linea.Producto }}</strong> {{ linea.Descripcion }}</div>
+          <div>{{ linea.Cantidad }} × {{ linea.Precio | currency:'EUR' }}<span *ngIf="linea.Descuento"> · {{ linea.Descuento | percent:'1.0-2' }} dto.</span></div>
+          <div *ngIf="linea.MotivoError" class="motivo-error">{{ linea.MotivoError }}</div>
+        </div>
+      </ng-container>
+
+      <div class="botones">
+        <ion-button fill="clear" size="small" (click)="abrir(solicitud)">
+          <ion-icon slot="start" [name]="abierta === solicitud.Id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+          {{ abierta === solicitud.Id ? 'Ocultar las líneas' : 'Ver las líneas' }}
+        </ion-button>
+        <ion-button *ngIf="solicitud.PedidoCreado" fill="outline" size="small" (click)="abrirPedidoCreado(solicitud)">
+          <ion-icon slot="start" name="open-outline"></ion-icon>
+          Abrir el pedido {{ solicitud.PedidoCreado }}
+        </ion-button>
+        <ion-button *ngIf="puedeAutorizarEsta(solicitud)" color="success" size="small" [disabled]="ocupado" (click)="autorizar(solicitud)">
+          <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+          Autorizar y crear el pedido
+        </ion-button>
+        <ion-button *ngIf="puedeAutorizarEsta(solicitud)" color="danger" fill="outline" size="small" [disabled]="ocupado" (click)="denegar(solicitud)">
+          <ion-icon slot="start" name="close-circle-outline"></ion-icon>
+          Denegar
+        </ion-button>
+        <ion-button *ngIf="puedeAnular(solicitud)" color="danger" fill="outline" size="small" [disabled]="ocupado" (click)="anular(solicitud)">
+          <ion-icon slot="start" name="trash-outline"></ion-icon>
+          Anular mi solicitud
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

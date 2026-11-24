@@ -131,3 +131,46 @@ describe('rutaDeNotificacion: recogidas solicitadas (#259, NestoAPI#855)', () =>
     expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaResuelta', id: '7' })).toBeNull();
   });
 });
+
+/** NestoApp#287, #290, #291 y #280: las push nuevas de noviembre de 2026. */
+describe('rutaDeNotificacion: avisos nuevos (#287, #290, #291, #280)', () => {
+  it('ampliación de un pedido en preparación: abre el pedido; si lo añadido pasó a uno nuevo, ese', () => {
+    expect(rutaDeNotificacion({ tipo: 'AmpliacionPedidoEnPreparacion', accion: 'respuesta', estado: 'Entra', pedido: '931007', picking: '5' }))
+      .toBe('/pedido-venta?empresa=1&numero=931007');
+    expect(rutaDeNotificacion({ tipo: 'AmpliacionPedidoEnPreparacion', estado: 'NoEntra', empresa: '1', pedido: '931007', pedidoNuevo: '931050' }))
+      .toBe('/pedido-venta?empresa=1&numero=931050');
+    expect(rutaDeNotificacion({ tipo: 'AmpliacionPedidoEnPreparacion', estado: 'SinRespuesta', pedido: '931007', pedidoNuevo: '' }))
+      .toBe('/pedido-venta?empresa=1&numero=931007');
+  });
+
+  it('«junto con lo pendiente» esperando 15 días abre el pedido', () => {
+    expect(rutaDeNotificacion({ tipo: 'PedidoJuntoConPendienteEsperando', empresa: '1', pedido: '930100', cliente: '15191', contacto: '0', juntoCon: '929701' }))
+      .toBe('/pedido-venta?empresa=1&numero=930100');
+  });
+
+  it('entrega incompleta del reparto: el pedido si viene; sin pedido, a ningún sitio', () => {
+    expect(rutaDeNotificacion({ tipo: 'EntregaIncompletaReparto', empresa: '1', envio: '555', cliente: '15191', pedido: '930200' }))
+      .toBe('/pedido-venta?empresa=1&numero=930200');
+    expect(rutaDeNotificacion({ tipo: 'EntregaIncompletaReparto', empresa: '1', envio: '555', cliente: '15191' })).toBeNull();
+  });
+
+  it('cupón adelantado y el cliente no asiste: abre la ficha del cliente', () => {
+    expect(rutaDeNotificacion({ tipo: 'CuponAdelantadoSinAsistir', empresa: '1', cliente: '15191', contacto: '2' }))
+      .toBe('/cliente?empresa=1&cliente=15191&contacto=2');
+  });
+
+  it('autorización de pedido resuelta: autorizada abre el pedido creado; denegada, la solicitud', () => {
+    expect(rutaDeNotificacion({ tipo: 'AutorizacionPedidoResuelta', id: '12', estado: 'Autorizada', empresa: '1', pedido: '931200' }))
+      .toBe('/pedido-venta?empresa=1&numero=931200');
+    expect(rutaDeNotificacion({ tipo: 'AutorizacionPedidoResuelta', id: '12', estado: 'Denegada', empresa: '1', cliente: '15191' }, 7))
+      .toBe('/autorizaciones-pedido?id=12&aviso=7');
+    expect(rutaDeNotificacion({ tipo: 'AutorizacionPedidoResuelta', estado: 'Denegada' })).toBeNull();
+  });
+
+  it('la recogida que el repartidor no recogió, o recogió con un comentario, abre las recogidas del cliente', () => {
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaNoRecogida', id: '4', empresa: '1', cliente: '15191', contacto: '0', estado: 'Confirmada', texto: 'Cerrado' }, 3))
+      .toBe('/recogidas?empresa=1&cliente=15191&contacto=0&aviso=3');
+    expect(rutaDeNotificacion({ tipo: 'RecogidaSolicitadaComentario', id: '4', empresa: '1', cliente: '15191', contacto: '0', estado: 'Recogida', texto: 'Sin el manípulo' }, 3))
+      .toBe('/recogidas?empresa=1&cliente=15191&contacto=0&aviso=3');
+  });
+});

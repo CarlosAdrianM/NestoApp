@@ -88,6 +88,8 @@
                       <strong>{{ textoFechaEntregaAgencia }}</strong>
                       <p *ngIf="textoFechaPrometida" class="fecha-prometida">{{ textoFechaPrometida }}</p>
                       <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
+                      <!-- NestoApp#287: en «Junto con lo pendiente del cliente», con qué sale y qué lo retrasa -->
+                      <p *ngIf="textoJuntoConPendiente">{{ textoJuntoConPendiente }}</p>
                       <!-- NestoApp#266 / #207 (NestoAPI#577): por qué cada producto no sale ya de Algete y cuándo llega -->
                       <ng-container *ngIf="detalleFechaEntregaAgencia.length > 0">
                           <p><a class="enlace-detalle" (click)="verDetalleFechaEntrega = !verDetalleFechaEntrega; $event.stopPropagation()">{{ verDetalleFechaEntrega ? 'Ocultar detalle' : 'Ver detalle por producto' }}</a></p>
@@ -95,6 +97,20 @@
                               <p *ngFor="let frase of detalleFechaEntregaAgencia" class="detalle-fecha-agencia">{{ frase }}</p>
                           </ng-container>
                       </ng-container>
+                  </ion-label>
+              </ion-item>
+              <!-- NestoApp#289: dónde está cada producto que no está listo en Algete. Se pide al abrir, no al cargar el pedido -->
+              <ion-item lines="none" *ngIf="pedido?.numero && !pedido?.EsPresupuesto" button="true" detail="false"
+                  (click)="alternarDondeEstaLoQueFalta()" globoAncla="pedido-venta.DondeEstaLoQueFalta">
+                  <ion-icon slot="start" name="location-outline" color="primary"></ion-icon>
+                  <ion-label class="ion-text-wrap">¿Dónde está lo que falta?</ion-label>
+                  <ion-icon slot="end" [name]="verDondeEstaLoQueFalta ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+              </ion-item>
+              <ion-item lines="none" *ngIf="verDondeEstaLoQueFalta">
+                  <ion-label class="ion-text-wrap">
+                      <p *ngIf="cargandoDondeEstaLoQueFalta"><ion-spinner name="dots"></ion-spinner></p>
+                      <p *ngIf="errorDondeEstaLoQueFalta">{{ errorDondeEstaLoQueFalta }}</p>
+                      <p *ngFor="let frase of frasesDondeEstaLoQueFalta" class="detalle-fecha-agencia">{{ frase }}</p>
                   </ion-label>
               </ion-item>
               <!-- NestoApp#240: líneas pendientes con la fecha «sin determinar» (31/12/2099) -->
@@ -140,6 +156,10 @@
                       [value]="modoServicioPedido" [disabled]="estaRetenido" (ionChange)="cambiarModoServicio($event.detail.value)">
                       <ion-select-option *ngFor="let modo of listaModosServicioSelector" [value]="modo.codigo" [disabled]="modo.codigo === 5">{{ modo.nombre }}</ion-select-option>
                   </ion-select>
+              </ion-item>
+              <!-- NestoApp#287: con «Junto con lo pendiente del cliente», con qué se va a juntar -->
+              <ion-item lines="none" *ngIf="explicacionJuntoConLoPendiente">
+                  <ion-label class="ion-text-wrap"><p>{{ explicacionJuntoConLoPendiente }}</p></ion-label>
               </ion-item>
               <ion-item lines="none" *ngIf="puedeRetener || estaRetenido">
                   <ion-button *ngIf="puedeRetener" expand="block" fill="outline" color="danger" (click)="retenerPedido()">

@@ -3,7 +3,7 @@
       <ion-icon *ngIf="direccion.plazosPago !== 'CR'" [color]="colorEstado(direccion.estado)" name="map" slot="start"></ion-icon>
       <ion-icon *ngIf="direccion.plazosPago === 'CR'" color="danger" name="alert" slot="start"></ion-icon>
       <ion-label class="ion-text-wrap">
-        <h4 class="media-heading">{{direccion.direccion}}</h4>
+        <h4 class="media-heading">{{direccion.direccionCompleta || direccion.direccion}}</h4>
         <p>{{direccion.codigoPostal}} {{direccion.poblacion}} ({{direccion.provincia}})</p>
         <h2 ion-text color="danger" *ngIf="direccion.plazosPago === 'CR'">¡¡¡ CONTADO RIGUROSO !!!</h2>
       </ion-label>

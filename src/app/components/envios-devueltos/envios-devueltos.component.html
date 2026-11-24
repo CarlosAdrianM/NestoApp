@@ -15,13 +15,18 @@
     <ion-label>Solo los míos</ion-label>
     <ion-toggle slot="end" aria-label="Solo los míos" [(ngModel)]="soloMios"></ion-toggle>
   </ion-item>
+  <!-- NestoApp#290 (sugerencia 1329): los resueltos se ocultan por defecto -->
+  <ion-item *ngIf="numeroResueltos > 0" lines="full">
+    <ion-label>Ver también los resueltos ({{ numeroResueltos }})</ion-label>
+    <ion-toggle slot="end" aria-label="Ver también los resueltos" [(ngModel)]="verResueltos"></ion-toggle>
+  </ion-item>
   <ion-item *ngIf="cargando" lines="none">
     <ion-spinner slot="start" name="crescent"></ion-spinner>
     <ion-label>Cargando…</ion-label>
   </ion-item>
   <ion-item *ngIf="mensaje" lines="none"><ion-label class="ion-text-wrap">{{ mensaje }}</ion-label></ion-item>
   <ion-item *ngIf="!cargando && !mensaje && visibles.length === 0" lines="none">
-    <ion-label class="ion-text-wrap">No hay envíos devueltos ni con incidencia en los últimos 60 días.</ion-label>
+    <ion-label class="ion-text-wrap">{{ numeroResueltos > 0 ? 'No queda ningún envío devuelto por resolver.' : 'No hay envíos devueltos ni con incidencia en los últimos 60 días.' }}</ion-label>
   </ion-item>
 
   <ion-list *ngIf="visibles.length > 0">
@@ -32,6 +37,8 @@
           <ion-badge *ngIf="!decidido(envio)" color="primary">Sin decidir</ion-badge>
           <ion-badge *ngIf="envio.Decision === 'Reenviar'" color="success">Se reenvía</ion-badge>
           <ion-badge *ngIf="envio.Decision === 'Abonar'" color="medium">Se abona</ion-badge>
+          <ion-badge *ngIf="resuelto(envio)" color="medium">Resuelto</ion-badge>
+          <ion-badge *ngIf="envio.ReenvioEsperandoCaja" color="warning">Esperando la caja</ion-badge>
           Envío {{ envio.Numero }}<span *ngIf="envio.Pedido"> · pedido {{ envio.Pedido }}</span> · {{ envio.Fecha | date:'dd/MM/yy' }}
         </p>
         <h2>{{ envio.Nombre }}</h2>

@@ -57,9 +57,11 @@ export class AppComponent {
       { title: 'Clientes', url: '/cliente', icon: 'people' },
       { title: 'NIF incorrectos', url: '/nif-incorrectos', icon: 'alert-circle' },
       { title: 'Ofertas autorizadas', url: '/ofertas-autorizadas', icon: 'pricetags' },
+      { title: 'Autorizaciones de pedidos', url: '/autorizaciones-pedido', icon: 'shield-checkmark' }, // NestoApp#280
       { title: 'Eventos', url: '/eventos', icon: 'calendar' }, // NestoApp#268
       { title: 'Envíos devueltos', url: '/envios-devueltos', icon: 'return-down-back' }, // NestoApp#267
       { title: 'Pedidos en riesgo', url: '/pedidos-en-riesgo', icon: 'hourglass' }, // NestoApp#248
+      { title: 'Mi almacén', url: '/mi-almacen', icon: 'cube' }, // NestoApp#292
       // Los avisos se abren con la campana del perfil (o desde la push); sugerir y «Algo no
       // funciona», al pie de las novedades del perfil (#209).
       { title: 'Usuario', url: '/profile', icon: 'person' },

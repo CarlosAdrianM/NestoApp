@@ -40,7 +40,7 @@
           <ion-icon name="download" (click)="descargarPedido($event, pedido)" slot="start"></ion-icon>
           <ion-label class="ion-text-wrap">
             <h2>{{pedido.nombre}}</h2>
-            <h3>{{pedido.direccion}}</h3>
+            <h3>{{pedido.direccionCompleta || pedido.direccion}}</h3>
             <!-- NestoApp#240: año con cuatro cifras y «Sin fecha» para las notas de entrega sin determinar -->
             <p>{{pedido.cliente}} - {{textoFecha(pedido.fecha)}} ({{pedido.baseImponible | currency:'EUR' }})</p>
             <ion-badge color="warning" *ngIf="sinFecha(pedido)">Sin fecha de entrega</ion-badge>

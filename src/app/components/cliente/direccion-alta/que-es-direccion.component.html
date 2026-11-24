@@ -1,0 +1,44 @@
+<!-- NestoApp#286 / NestoAPI#874: lo que necesita el repartidor para encontrar la dirección -->
+<ion-item>
+    <ion-label>¿Qué es?</ion-label>
+    <ion-select slot="end" aria-label="¿Qué es la dirección?" interface="action-sheet" [cancelText]="'Cancelar'" placeholder="Elija"
+        [(ngModel)]="bloque.tipoLugar" name="tipoLugar{{sufijo}}" (ionChange)="alCambiar()" [globoAncla]="ancla">
+        <ion-select-option *ngFor="let tipo of tipos" [value]="tipo.codigo">{{ tipo.nombre }}</ion-select-option>
+    </ion-select>
+</ion-item>
+<ion-item *ngIf="esPiso">
+    <ion-input label="Piso" label-placement="floating" type="text" placeholder="Por ejemplo, 1 o BAJO" [(ngModel)]="bloque.piso" name="piso{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item *ngIf="esPiso">
+    <ion-input label="Puerta" label-placement="floating" type="text" placeholder="Por ejemplo, D" [(ngModel)]="bloque.puerta" name="puerta{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item *ngIf="esLocal">
+    <ion-input label="Número de local (opcional)" label-placement="floating" type="text" [(ngModel)]="bloque.numeroLocal" name="numeroLocal{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item *ngIf="esLocal">
+    <ion-input label="Rótulo de la entrada" label-placement="floating" type="text" [(ngModel)]="bloque.rotulo" name="rotulo{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item lines="none" *ngIf="esLocal">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+        Lo que pone en el rótulo de la entrada (el nombre comercial, no el fiscal): es lo que busca el repartidor.
+    </ion-label>
+</ion-item>
+<ion-item *ngIf="esNave">
+    <ion-input label="Número de nave" label-placement="floating" type="text" [(ngModel)]="bloque.numeroNave" name="numeroNave{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item *ngIf="esOtro">
+    <ion-input label="Describa el lugar" label-placement="floating" type="text" placeholder="Por ejemplo, Centro comercial, planta 2" [(ngModel)]="bloque.otroTexto" name="otroTexto{{sufijo}}" (ionInput)="alCambiar()"></ion-input>
+</ion-item>
+<ion-item lines="none" *ngIf="vistaPrevia && !avisoRevisar">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">Se guardará como: <strong>{{ vistaPrevia }}</strong></ion-label>
+</ion-item>
+<ion-item lines="none" *ngIf="aviso">
+    <ion-label class="ion-text-wrap" color="danger" style="font-size: 0.85em;">{{ aviso }}</ion-label>
+</ion-item>
+<ion-item lines="none" *ngIf="seQuitara">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">Se quitará «¿Qué es?» al guardar.</ion-label>
+</ion-item>
+<div class="ion-padding-horizontal" *ngIf="avisoRevisar || puedeQuitar">
+    <ion-button size="small" *ngIf="avisoRevisar" (click)="confirmar.emit()">Sigue siendo así</ion-button>
+    <ion-button size="small" fill="outline" *ngIf="puedeQuitar" (click)="quitar.emit()">Quitar</ion-button>
+</div>

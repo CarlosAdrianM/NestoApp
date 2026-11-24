@@ -62,6 +62,13 @@ export class PedidoVenta {
      * la API pone la ruta de recogida y quita portes y comisión (o los vuelve a poner). Una API anterior no lo manda.
      */
     public RecogeEnTienda?: boolean | null;
+    /** NestoApp#285 / NestoAPI#873: versión (opaca) del pedido tal como se leyó. Se devuelve en el PUT: si otro lo ha
+     * guardado entre medias, la API contesta 409 PEDIDO_CAMBIADO sin guardar nada. Una API anterior no la manda. */
+    public Version?: string | null;
+    /** NestoApp#293 / NestoAPI#889: solo de entrada. «QuitarDescuento» o «MantenerDescuento»; sin elección no se manda. */
+    public CampanaSoloEnStock?: string | null;
+    /** NestoApp#287: solo de entrada. «PedidoNuevo» o «PedirAlmacen» al añadir productos a un pedido en preparación. */
+    public AmpliacionEnPreparacion?: string | null;
     public EsPresupuesto: boolean;
     public notaEntrega: boolean;
     public usuario: string;

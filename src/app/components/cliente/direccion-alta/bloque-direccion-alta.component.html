@@ -1,0 +1,49 @@
+<!-- NestoApp#288: la segunda dirección del alta (la de entrega), con las mismas preguntas que la fiscal -->
+<ion-item *ngIf="bloque.direccion">
+    <ion-input label="Dirección de entrega" label-placement="floating" type="text" [(ngModel)]="bloque.direccion" name="direccionActual{{sufijo}}" [disabled]="true"></ion-input>
+    <ion-button slot="end" fill="clear" (click)="limpiar()" aria-label="Borrar la dirección de entrega para buscar otra">
+        <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+    </ion-button>
+</ion-item>
+<ion-item *ngIf="!bloque.direccion">
+    <ion-input label="Dirección de entrega (solo calle y número)" label-placement="floating" type="text" [(ngModel)]="bloque.direccionCalleNumero" name="direccion{{sufijo}}" [readonly]="!!bloque.direccionVerificada" (ionInput)="buscar($event)"></ion-input>
+    <ion-button slot="end" fill="clear" *ngIf="bloque.direccionVerificada" (click)="limpiar()" aria-label="Borrar la dirección de entrega para buscar otra">
+        <ion-icon slot="icon-only" name="close-circle-outline"></ion-icon>
+    </ion-button>
+</ion-item>
+<ion-item lines="none" *ngIf="!bloque.direccion && !bloque.direccionVerificada">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">
+        Escriba y elija la dirección de la lista. Piso, local o referencias van en «¿Qué es?».
+    </ion-label>
+</ion-item>
+<ion-list *ngIf="!bloque.direccion && sugerencias.length > 0" class="sugerencias-direccion">
+    <ion-item *ngFor="let sugerencia of sugerencias" button detail="false" (click)="elegir(sugerencia)">
+        <ion-icon name="location-outline" slot="start"></ion-icon>
+        <ion-label class="ion-text-wrap">{{ sugerencia.descripcion }}</ion-label>
+    </ion-item>
+    <ion-item lines="none" class="powered-by-google">
+        <ion-note slot="end">Powered by Google</ion-note>
+    </ion-item>
+</ion-list>
+<ion-item *ngIf="!bloque.direccion && bloque.numeroSinDarPorGoogle">
+    <ion-input label="Número" label-placement="floating" type="text" placeholder="Por ejemplo, 13 o 13 B, o S/N si no tiene" [(ngModel)]="bloque.numero" name="numero{{sufijo}}" (ionInput)="numeroCambiado()"></ion-input>
+</ion-item>
+<ion-item lines="none" *ngIf="!bloque.direccion && bloque.numeroSinDarPorGoogle">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">Google no tiene el número de esta calle: escríbalo (o «S/N» si no tiene).</ion-label>
+</ion-item>
+<que-es-direccion [bloque]="bloque" [esAlta]="true" [sufijo]="sufijo"></que-es-direccion>
+<ion-item>
+    <ion-input label="Código postal de la entrega" label-placement="floating" type="text" [(ngModel)]="bloque.codigoPostal" name="codigoPostal{{sufijo}}" [readonly]="!cpEditable"></ion-input>
+</ion-item>
+<ion-item lines="none" *ngIf="ayudaCp">
+    <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ ayudaCp }}</ion-label>
+</ion-item>
+<ion-item>
+    <ion-input label="Teléfono de la entrega" label-placement="floating" type="text" [(ngModel)]="bloque.telefono" name="telefono{{sufijo}}"></ion-input>
+</ion-item>
+<ion-item>
+    <ion-input label="Comentarios de ruta (para el repartidor)" label-placement="floating" type="text" maxlength="50" [(ngModel)]="bloque.comentariosRuta" name="comentariosRuta{{sufijo}}"></ion-input>
+</ion-item>
+<ion-item>
+    <ion-input label="Comentarios de picking (para el almacén)" label-placement="floating" type="text" maxlength="50" [(ngModel)]="bloque.comentariosPicking" name="comentariosPicking{{sufijo}}"></ion-input>
+</ion-item>

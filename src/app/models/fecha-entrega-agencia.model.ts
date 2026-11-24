@@ -21,6 +21,25 @@ export interface FechaEntregaAgencia {
   Aviso?: string | null;
   /** NestoApp#266 / NestoAPI#606 (09/10): de dónde sale cada producto. Una API vieja no lo manda. */
   Desglose?: PartidaFechaEntregaAgencia[] | null;
+  /** NestoApp#287 (modo de servicio 6): con qué sale junto y qué lo retrasa. Null si el pedido no está en 6. */
+  JuntoConPendiente?: JuntoConPendienteFecha | null;
+}
+
+/** NestoApp#287 / NestoAPI sugerencia 1340: la fecha de un pedido «Junto con lo pendiente del cliente». */
+export interface JuntoConPendienteFecha {
+  Pedidos?: number[] | null;
+  Documentos?: string | null;
+  Fecha?: string | null;
+  FechaPropia?: string | null;
+  LoRetrasaLoPendiente?: boolean;
+  DocumentoQueRetrasa?: string | null;
+  /** La frase hecha: «Sale el lunes 30/11/2026, junto con la nota de entrega 929701, que espera…». */
+  Texto?: string | null;
+}
+
+/** La frase de «junto con lo pendiente», o '' si el pedido no va en ese modo. */
+export function textoJuntoConPendiente(fecha: FechaEntregaAgencia | null | undefined): string {
+  return (fecha?.JuntoConPendiente?.Texto || '').trim();
 }
 
 /**

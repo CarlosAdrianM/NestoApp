@@ -163,6 +163,8 @@
                         <strong>{{ textoFechaEntregaAgencia }}</strong>
                         <p *ngIf="fechaEntregaAgencia?.Motivo">{{ fechaEntregaAgencia.Motivo }}</p>
                         <p *ngIf="fechaEntregaAgencia?.Aviso" class="aviso-fecha-agencia">{{ fechaEntregaAgencia.Aviso }}</p>
+                        <!-- NestoApp#287: en «Junto con lo pendiente del cliente», con qué sale y qué lo retrasa -->
+                        <p *ngIf="fechaEntregaAgencia?.JuntoConPendiente?.Texto">{{ fechaEntregaAgencia.JuntoConPendiente.Texto }}</p>
                         <!-- NestoApp#266 (Nesto#599) / #207 (NestoAPI#577): por qué cada producto no sale ya de Algete -->
                         <ng-container *ngIf="detalleFechaEntregaAgencia.length > 0">
                             <p><a class="enlace-detalle" (click)="verDetalleFechaEntrega = !verDetalleFechaEntrega; $event.stopPropagation()">{{ verDetalleFechaEntrega ? 'Ocultar detalle' : 'Ver detalle por producto' }}</a></p>
@@ -176,6 +178,10 @@
                      NestoApp#245 (novedad 731): si lo elegido no es lo recomendado, se dice «Recomendado: …». -->
                 <ion-item lines="none" *ngIf="textoMotivoModoServicio">
                     <ion-label class="ion-text-wrap" color="medium" style="font-size: 0.85em;">{{ textoMotivoModoServicio }}</ion-label>
+                </ion-item>
+                <!-- NestoApp#287: con «Junto con lo pendiente del cliente», con qué se va a juntar -->
+                <ion-item lines="none" *ngIf="explicacionJuntoConLoPendiente">
+                    <ion-label class="ion-text-wrap" style="font-size: 0.85em;">{{ explicacionJuntoConLoPendiente }}</ion-label>
                 </ion-item>
                 <!-- NestoApp#187: y por qué no se pueden elegir los demás -->
                 <ion-item lines="none" *ngIf="modosServicioNoPermitidos.length > 0">
@@ -267,7 +273,11 @@
         <!-- NestoApp#217 (NestoAPI#613): cupones del cliente; solo se aplica el que se marque (uno por pedido) -->
         <ion-card *ngIf="cupones.length > 0" [color]="cuponesParaAplicar.length > 0 ? 'success' : 'light'">
             <ion-card-content>
-                <p *ngFor="let cupon of cupones"><strong>{{ cupon.Mensaje }}</strong></p>
+                <ng-container *ngFor="let cupon of cupones">
+                    <p><strong>{{ cupon.Mensaje }}</strong></p>
+                    <!-- NestoApp#291 (NestoAPI#885): «Usar ya (excepción)» si este usuario puede adelantarlo -->
+                    <app-adelantar-cupon [cupon]="cupon" ancla="plantilla-venta.UsarCuponYa"></app-adelantar-cupon>
+                </ng-container>
                 <p *ngIf="cuponYaEnPedido">El pedido ya lleva un cupón: solo se puede aplicar uno.</p>
             </ion-card-content>
             <ion-item lines="none" *ngFor="let cupon of cuponesParaAplicar" [color]="'success'">
@@ -302,6 +312,11 @@
         <ion-item *ngIf="hayCursosEnPedido" color="warning" lines="none">
             <ion-icon slot="start" name="school-outline"></ion-icon>
             <ion-label class="ion-text-wrap">{{ avisoCursoPrepago }}</ion-label>
+        </ion-item>
+        <!-- NestoApp#290 (incidencia 1398): formación sin evento junto a productos; la API la saca a un pedido aparte -->
+        <ion-item *ngIf="hayFormacionAparte" color="light" lines="none">
+            <ion-icon slot="start" name="school-outline"></ion-icon>
+            <ion-label class="ion-text-wrap">{{ avisoFormacionAparte }}</ion-label>
         </ion-item>
         <selector-formas-pago *ngIf="direccionSeleccionada?.iva" cliente="{{clienteSeleccionado.cliente}}" (seleccionar)="cambiarFormaPago($event)" [totalPedido]="totalPedidoPlazosPago" [tipoIva]="direccionSeleccionada?.iva" [seleccionado]="formaPago"></selector-formas-pago>
         <!-- NestoApp#189: con recibo bancario, qué cuenta se carga (o aviso si no hay ninguna válida) -->

@@ -26,6 +26,8 @@ import { SelectorFormasPagoComponent } from './components/selector-formas-pago/s
 import { SelectorPlazosPagoComponent } from './components/selector-plazos-pago/selector-plazos-pago.component';
 import { SelectorCCCComponent } from './components/selector-ccc/selector-ccc.component';
 import { ClientesMismoTelefonoComponent } from './components/cliente/clientes-mismo-telefono';
+import { QueEsDireccionComponent } from './components/cliente/direccion-alta/que-es-direccion.component';
+import { BloqueDireccionAltaComponent } from './components/cliente/direccion-alta/bloque-direccion-alta.component';
 import { SelectorAlmacenesComponent } from './components/selector-almacenes/selector-almacenes.component';
 import { SelectorDireccionesEntregaComponent } from './components/selector-direcciones-entrega/selector-direcciones-entrega.component';
 import { SelectorProductosComponent } from './components/selector-productos/selector-productos.component';
@@ -54,10 +56,13 @@ import { EventosComponent } from './components/eventos/eventos.component';
 import { EnviosDevueltosComponent } from './components/envios-devueltos/envios-devueltos.component';
 import { EnvioDevueltoComponent } from './components/envios-devueltos/envio-devuelto.component';
 import { RecogidasComponent } from './components/recogidas/recogidas.component';
+import { AutorizacionesPedidoComponent } from './components/autorizaciones-pedido/autorizaciones-pedido.component';
 import { CodigoBarrasComponent } from './components/recogidas/codigo-barras.component';
 import { GloboComponent } from './components/globo/globo.component';
 import { GloboAnclaDirective } from './components/globo/globo-ancla.directive';
 import { PedidosEnRiesgoComponent } from './components/pedidos-en-riesgo/pedidos-en-riesgo.component';
+import { MiAlmacenComponent } from './components/mi-almacen/mi-almacen.component';
+import { AdelantarCuponComponent } from './components/adelantar-cupon/adelantar-cupon.component';
 import { VisorImagenComponent } from './components/visor-imagen/visor-imagen.component';
 import { NovedadFeedbackComponent } from './components/profile/novedad-feedback/novedad-feedback.component';
 import { CapturaAdjuntaComponent } from './components/profile/captura-adjunta/captura-adjunta.component';
@@ -118,6 +123,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         SelectorVendedoresComponent,
         ClienteComponent,
         ClientesMismoTelefonoComponent,
+        QueEsDireccionComponent,
+        BloqueDireccionAltaComponent,
         SelectorFormasPagoComponent,
         SelectorPlazosPagoComponent,
         SelectorCCCComponent,
@@ -147,10 +154,13 @@ export function MSALInstanceFactory(): IPublicClientApplication {
         EnviosDevueltosComponent,
         EnvioDevueltoComponent,
         RecogidasComponent,
+        AutorizacionesPedidoComponent, // NestoApp#280
         CodigoBarrasComponent,
         GloboComponent,
         GloboAnclaDirective,
         PedidosEnRiesgoComponent,
+        MiAlmacenComponent,
+        AdelantarCuponComponent,
         VisorImagenComponent,
         NovedadFeedbackComponent,
         CapturaAdjuntaComponent,

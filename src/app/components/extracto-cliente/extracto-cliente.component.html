@@ -51,9 +51,13 @@
       <ion-card-subtitle>Cupones</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
-      <p *ngFor="let cupon of cupones" class="cupon">
-        <ion-badge [color]="colorEstadoCupon(cupon.Estado)">{{ cupon.Estado }}</ion-badge> {{ cupon.Mensaje }}
-      </p>
+      <ng-container *ngFor="let cupon of cupones">
+        <p class="cupon">
+          <ion-badge [color]="colorEstadoCupon(cupon.Estado)">{{ cupon.Estado }}</ion-badge> {{ cupon.Mensaje }}
+        </p>
+        <!-- NestoApp#291 (NestoAPI#885): «Usar ya (excepción)» si este usuario puede adelantarlo -->
+        <app-adelantar-cupon [cupon]="cupon" ancla="extracto-cliente.UsarCuponYa"></app-adelantar-cupon>
+      </ng-container>
       <p class="pista-cupon">El cupón se aplica en la plantilla, al hacer el pedido.</p>
     </ion-card-content>
   </ion-card>
